@@ -26,9 +26,15 @@ typedef struct _nativeContext {
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0,
 
+#include <android/log.h>
+#define MYLOG_TAG "LELINK"
+#define LOGI(fmt,arg...) __android_log_print(ANDROID_LOG_INFO, MYLOG_TAG, fmt, ##arg)
+
 extern nativeContext_t gNativeContext;
 
 int initTask(void);
+void airConfig(void *ptr, char *json);
+void cmdSend(void *ptr, char *json);
 
 #ifdef __cplusplus
 extern "C" {

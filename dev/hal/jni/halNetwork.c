@@ -20,7 +20,7 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
         }
     }
 
-    // ioctlsocket(*sock, FIONBIO, &mode);
+	fcntl(*sock, F_SETFL, O_NONBLOCK, 1);
     setsockopt(*sock, SOL_SOCKET, SO_BROADCAST, (char *)broadcastEnable, sizeof(int));
 
     return 0;
