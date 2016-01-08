@@ -72,11 +72,10 @@ void cmdSend(void *ptr, char *json)
 		LELOGE("cmdSend parse error!\n");
 		return;
 	}
-	LOGI("cmdSend: %s\n", json);
 	node.ndPort = LOCAL_PORT;
-	node.cmdId = value["cmdId"].asInt();
-	node.subCmdId = value["subCmdId"].asInt();
-	strncpy(node.ndIP, value["addr"].asCString(), MAX_IPLEN);
+	node.cmdId = value[PJK_CMD].asInt();
+	node.subCmdId = value[PJK_SUBCMD].asInt();
+	strncpy(node.ndIP, value[PJK_ADDR].asCString(), MAX_IPLEN);
 	nwPostCmd(gNativeContext.ctxR2R, &node);
 }
 
@@ -96,8 +95,13 @@ static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo)
 {
 	Json::Value root;
 
-	root["cmdId"] = cmdInfo->cmdId;
-	root["subCmdId"] = cmdInfo->subCmdId;
+	root[PJK_STATUS] = cmdInfo->status;
+	root[PJK_ADDR] = cmdInfo->ndIP;
+	root[PJK_UUID] = (char *) (cmdInfo->uuid);
+	root[PJK_CMD] = cmdInfo->cmdId;
+	root[PJK_SUBCMD] = cmdInfo->subCmdId;
+	root[PJK_TOKEN] = (char *) (cmdInfo->token);
+	root[PJK_SEQID] = cmdInfo->seqId;
 	return c2js(env, root.toStyledString().c_str());
 }
 /*
@@ -108,7 +112,6 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
 	JNIEnv *env;
 	int ret = 0;
 
-	LOGI("%s...\n", __FUNCTION__);
 	THREAD_ATTACH(gNativeContext.jvm, env);
 	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage,
 	com_letv_lelink_LeLink_MSG_TYPE_REMOTERESPOND, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) data, len));
@@ -121,7 +124,6 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
 	JNIEnv *env;
 	int ret = 0;
 
-	LOGI("%s...\n", __FUNCTION__);
 	THREAD_ATTACH(gNativeContext.jvm, env);
 	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage,
 	com_letv_lelink_LeLink_MSG_TYPE_REMOTERESPOND, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) payloadBody, len));
@@ -133,7 +135,6 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
 	JNIEnv *env;
 	int ret = 0;
 
-	LOGI("%s...\n", __FUNCTION__);
 	THREAD_ATTACH(gNativeContext.jvm, env);
 	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage,
 	com_letv_lelink_LeLink_MSG_TYPE_REMOTEREQUEST, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) payloadBody, len));
@@ -146,7 +147,6 @@ int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, 
 	JNIEnv *env;
 	int ret = 0;
 
-	LOGI("%s...\n", __FUNCTION__);
 	THREAD_ATTACH(gNativeContext.jvm, env);
 	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage,
 	com_letv_lelink_LeLink_MSG_TYPE_LOCALRESPOND, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) data, len));

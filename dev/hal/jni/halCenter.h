@@ -8,6 +8,7 @@
 #ifndef HALCENTER_H_
 #define HALCENTER_H_
 
+#include <android/log.h>
 #include "json.h"
 #include "leconfig.h"
 #include "protocol.h"
@@ -25,10 +26,17 @@ typedef struct _nativeContext {
 } nativeContext_t;
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0,
-
-#include <android/log.h>
 #define MYLOG_TAG "LELINK"
 #define LOGI(fmt,arg...) __android_log_print(ANDROID_LOG_INFO, MYLOG_TAG, fmt, ##arg)
+
+/* protocol's json key */
+#define PJK_STATUS		"status"
+#define PJK_ADDR		"addr"
+#define PJK_UUID		"uuid"
+#define PJK_CMD			"cmdId"
+#define PJK_SUBCMD		"subCmdId"
+#define PJK_TOKEN		"token"
+#define PJK_SEQID		"seqId"
 
 extern nativeContext_t gNativeContext;
 

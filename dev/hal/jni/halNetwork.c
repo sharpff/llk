@@ -64,5 +64,63 @@ int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int lenIP, int *
     return ret;
 }
 
+int halGetSelfAddr(char *ip, int size, int *port) {
+    void * tmpAddrPtr=NULL;
+    struct ifaddrs * ifAddrStruct=NULL;
+
+    size = (strlen(SELF_IP)+1) > size ? size : (strlen(SELF_IP)+1);
+    memcpy(ip, SELF_IP, size);// TODO: caution
+
+    return strlen(ip);
+}
+// #include <fcntl.h>
+// #include <errno.h>
+// #include <sys/ioctl.h>
+// #include <net/if.h>
+
+// #define  MAXINTERFACES  5
+
+//     // specified the iterface
+//     char ifName[] = "eth0";
+//     struct ifconf ifc;
+//     struct ifreq buf[MAXINTERFACES];
+//     char cIP[32] = {0};
+//     int tmpSock = 0;
+//     ifc.ifc_len = sizeof(buf);
+//     ifc.ifc_len = sizeof(buf);
+//     ifc.ifc_buf = (caddr_t)buf;
+//     if ((tmpSock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
+//     {
+//         APPLOGE("socket ERR\r\n");
+//         return 0;
+//     }
+
+//     if (!ioctl(tmpSock, SIOCGIFCONF, (char *)&ifc)) //ioctl.h
+//     {
+//         int intrface = ifc.ifc_len / sizeof (struct ifreq);
+//         while (intrface-- > 0)
+//         {
+//             if (strcmp(buf[intrface].ifr_name, ifName) == 0)
+//             {
+//                 if (!(ioctl(tmpSock, SIOCGIFADDR, (char *)&buf[intrface])))
+//                 {
+//                     char* ip = inet_ntoa(((struct sockaddr_in*)(&buf[intrface].ifr_addr))->sin_addr);
+//                     strcpy(cIP, ip);
+//                     break;
+//                 }
+//             }
+//         }
+//     }
+
+//     close(tmpSock);
+
+//     int cLen = strlen(cIP);
+//     if (lenIP < cLen)
+//         return 0;
+
+//     memset(ip, 0, lenIP);
+//     strncpy(ip, cIP, cLen);
+//     return 1;
+// }
 
 
