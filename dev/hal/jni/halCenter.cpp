@@ -72,10 +72,13 @@ void cmdSend(void *ptr, char *json)
 		LELOGE("cmdSend parse error!\n");
 		return;
 	}
+	node.timeoutRef = 2;
 	node.ndPort = LOCAL_PORT;
 	node.cmdId = value[PJK_CMD].asInt();
 	node.subCmdId = value[PJK_SUBCMD].asInt();
+	node.seqId = value[PJK_SEQID].asInt();
 	strncpy(node.ndIP, value[PJK_ADDR].asCString(), MAX_IPLEN);
+	LOGI("send: %s.%d %d.%d-%d\n", node.ndIP, node.ndPort, node.cmdId, node.subCmdId, node.seqId);
 	nwPostCmd(gNativeContext.ctxR2R, &node);
 }
 
@@ -86,7 +89,7 @@ static void *netTaskFun(void *data)
 	{
 		doPollingQ2A(gNativeContext.ctxQ2A);
 		doPollingR2R(gNativeContext.ctxR2R);
-		delayms(1000);
+		delayms(200);
 	}
 	return NULL;
 }
@@ -95,13 +98,13 @@ static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo)
 {
 	Json::Value root;
 
-	root[PJK_STATUS] = cmdInfo->status;
-	root[PJK_ADDR] = cmdInfo->ndIP;
-	root[PJK_UUID] = (char *) (cmdInfo->uuid);
 	root[PJK_CMD] = cmdInfo->cmdId;
 	root[PJK_SUBCMD] = cmdInfo->subCmdId;
+	root[PJK_ADDR] = cmdInfo->ndIP;
+	root[PJK_UUID] = (char *) (cmdInfo->uuid);
 	root[PJK_TOKEN] = (char *) (cmdInfo->token);
 	root[PJK_SEQID] = cmdInfo->seqId;
+	root[PJK_STATUS] = cmdInfo->status;
 	return c2js(env, root.toStyledString().c_str());
 }
 /*

@@ -542,6 +542,7 @@ int nwPostCmd(void *ctx, const void *node)
     node_p->needReq = 1;
     node_p->needRsp = (LELINK_CMD_DISCOVER_REQ == node_p->cmdId) ? 0xFF : 1;
     node_p->randID = genRand();
+	node_p->timeStamp = halGetTimeStamp();
     if (!node_p->uuid[0])
         getTerminalUUID(node_p->uuid);
 
@@ -813,8 +814,8 @@ static int isNeedDelCB(CACHE_NODE_TYPE *currNode)
     // timeout
     if (currNode->timeoutRef && (halGetTimeStamp() - currNode->timeStamp) > currNode->timeoutRef)
     {
-        LELOG("isNeedDelCB timeoutRef[%d] cmd[%d][%d] left needRsp[%d] \r\n", 
-            currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->needRsp);
+        LELOG("isNeedDelCB timeoutRef[%d] cmd[%d][%d]-%d left needRsp[%d] \r\n",
+            currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->seqId, currNode->needRsp);
         return 1;
     }
 

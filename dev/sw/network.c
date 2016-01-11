@@ -128,7 +128,7 @@ int nwUDPSendto(void *ctx, const char *ip, int port, const uint8_t *buf, int len
     CommonCtx *info = (CommonCtx *)ctx;
 
     ret = halNwUDPSendto(info->sock, ip, port, buf, len);
-    LELOG("socket[%d] nwUDPSendto [%s:%d][%d]\r\n", info->sock, ip, port, ret);
+//    LELOGW("socket[%d] nwUDPSendto [%s:%d][%d]\r\n", info->sock, ip, port, ret);
 
     return ret;
 }
@@ -136,17 +136,21 @@ int nwUDPSendto(void *ctx, const char *ip, int port, const uint8_t *buf, int len
 
 int nwUDPRecvfrom(void *ctx, uint8_t *buf, int len, char *ip, int lenIP, uint16_t *port)
 {
-    int ret;
-    // char selfIP[MAX_IPLEN] = {0};
-    // int port = 0;
-    CommonCtx *info = (CommonCtx *)ctx;
+	int ret, lenSelfIP;
+	char selfIP[MAX_IPLEN] = {0};
+	CommonCtx *info = (CommonCtx *)ctx;
+
+again:
     ret = halNwUDPRecvfrom(info->sock, buf, len, ip, lenIP, port);
-    if (ret >= 0) {
-        LELOG("nwUDPRecvfrom [%s:%d][%d]\r\n", ip, *port, ret);
+    if (ret < 0) {
+    	return ret;
     }
-    // if (halGetSelfAddr(selfIP, MAX_IPLEN, &port)) {
-        
-    // }
+	if ((lenSelfIP = halGetSelfAddr(selfIP, MAX_IPLEN, &port)) > 0) {
+		if (!strncmp(ip, selfIP, lenIP > lenSelfIP ? lenSelfIP : lenIP)) {
+			goto again;
+		}
+	}
+    LELOG("nwUDPRecvfrom [%s:%d][%d]\r\n", ip, *port, ret);
     return ret;
 }
 

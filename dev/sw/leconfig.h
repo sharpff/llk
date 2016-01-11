@@ -63,9 +63,9 @@ extern "C"
 // #define REMOTE_IP "10.58.187.59"
 // #define REMOTE_IP "10.58.184.174"
 // #define REMOTE_IP "10.58.187.104"
-#define REMOTE_IP "10.58.185.120"
+//#define REMOTE_IP "10.58.185.120"
 
-// #define REMOTE_IP "115.182.94.173"
+#define REMOTE_IP "115.182.94.173"
 #define REMOTE_PORT 5546
 #else
 // internal test

@@ -32,7 +32,7 @@
     usleep(ms*1000)
 
 // test only
-#define SELF_IP "192.168.3.103"
+#define SELF_IP "192.168.3.106"
 
 #define LE_DEBUG
 
