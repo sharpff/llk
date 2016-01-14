@@ -1020,6 +1020,7 @@ static void cbCtrlCmdRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteRsp -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCtrlCmdRemoteRsp -e\r\n");
     return;
 }

@@ -6,6 +6,7 @@
  */
 
 #include <pthread.h>
+#include "base64.h"
 #include "halCenter.h"
 #include "jniLeLink.h"
 #include "airconfig_ctrl.h"
@@ -73,12 +74,24 @@ void cmdSend(void *ptr, char *json)
 		return;
 	}
 	node.timeoutRef = 2;
-	node.ndPort = LOCAL_PORT;
 	node.cmdId = value[PJK_CMD].asInt();
 	node.subCmdId = value[PJK_SUBCMD].asInt();
 	node.seqId = value[PJK_SEQID].asInt();
-	strncpy(node.ndIP, value[PJK_ADDR].asCString(), MAX_IPLEN);
-	LOGI("send: %s.%d %d.%d-%d\n", node.ndIP, node.ndPort, node.cmdId, node.subCmdId, node.seqId);
+	if (!value[PJK_ADDR].isNull()) {
+		node.ndPort = LOCAL_PORT;
+		strncpy(node.ndIP, value[PJK_ADDR].asCString(), MAX_IPLEN);
+	}
+	if (!value[PJK_UUID].isNull()) {
+		strncpy((char *) node.uuid, value[PJK_UUID].asCString(), MAX_UUID);
+	}
+	if (!value[PJK_TOKEN].isNull()) {
+		s = value[PJK_TOKEN].asCString();
+		const char *p = base64_decode(s).c_str();
+		strncpy((char *) node.token, p, AES_LEN);
+		LOGI("str:[%s]", s.c_str());
+		LOGI("%02X,%02X,%02X", p[0], p[1], p[AES_LEN-1]);
+	}
+	LOGI("send: %s.%d %d.%d-%d\n", node.ndIP[0] ? node.ndIP : "default", node.ndPort, node.cmdId, node.subCmdId, node.seqId);
 	nwPostCmd(gNativeContext.ctxR2R, &node);
 }
 
@@ -97,12 +110,14 @@ static void *netTaskFun(void *data)
 static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo)
 {
 	Json::Value root;
+	std::string base64Token;
 
+	base64Token = base64_encode((unsigned char *) (cmdInfo->token), AES_LEN);
 	root[PJK_CMD] = cmdInfo->cmdId;
 	root[PJK_SUBCMD] = cmdInfo->subCmdId;
 	root[PJK_ADDR] = cmdInfo->ndIP;
 	root[PJK_UUID] = (char *) (cmdInfo->uuid);
-	root[PJK_TOKEN] = (char *) (cmdInfo->token);
+	root[PJK_TOKEN] = base64Token.c_str(); // (char *) (cmdInfo->token);
 	root[PJK_SEQID] = cmdInfo->seqId;
 	root[PJK_STATUS] = cmdInfo->status;
 	return c2js(env, root.toStyledString().c_str());
@@ -112,13 +127,23 @@ static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo)
  */
 int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len)
 {
-	JNIEnv *env;
 	int ret = 0;
+	JNIEnv *env;
+	jbyte *jdata;
+	jbyteArray jbytes;
 
 	THREAD_ATTACH(gNativeContext.jvm, env);
+	jbytes = c2bytes(env, (const char *) data, len);
 	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage,
-	com_letv_lelink_LeLink_MSG_TYPE_REMOTERESPOND, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) data, len));
+	com_letv_lelink_LeLink_MSG_TYPE_LOCALREQUEST, getJsonCmdHeaderInfo(env, cmdInfo), jbytes);
+	if (ret > 0 && ret < len) {
+		jdata = env->GetByteArrayElements(jbytes, NULL);
+		memcpy(data, jdata, ret);
+		env->ReleaseByteArrayElements(jbytes, jdata, JNI_ABORT);
+		data[ret++] = '\0';
+	}
 	THREAD_DETACH(gNativeContext.jvm);
+	LOGI("fill buffer(%dbytes):\n%s", ret, data);
 	return ret;
 }
 

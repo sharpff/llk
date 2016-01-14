@@ -11,6 +11,7 @@ typedef struct
 }PoolCommonCtx;
 
 static PoolCommonCtx poolCommonCtx[MAX_CTX_SIZE];
+#define LOGI(fmt,arg...) __android_log_print(ANDROID_LOG_INFO, TAG_LOG, fmt, ##arg)
 
 static CommonCtx *newCtx()
 {
@@ -128,7 +129,7 @@ int nwUDPSendto(void *ctx, const char *ip, int port, const uint8_t *buf, int len
     CommonCtx *info = (CommonCtx *)ctx;
 
     ret = halNwUDPSendto(info->sock, ip, port, buf, len);
-//    LELOGW("socket[%d] nwUDPSendto [%s:%d][%d]\r\n", info->sock, ip, port, ret);
+    LOGI("socket[%d] nwUDPSendto [%s:%d][%d]", info->sock, ip, port, ret);
 
     return ret;
 }
@@ -150,7 +151,7 @@ again:
 			goto again;
 		}
 	}
-    LELOG("nwUDPRecvfrom [%s:%d][%d]\r\n", ip, *port, ret);
+	LOGI("nwUDPRecvfrom [%s:%d][%d]", ip, *port, ret);
     return ret;
 }
 

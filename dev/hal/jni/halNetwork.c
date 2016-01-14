@@ -64,7 +64,9 @@ int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int lenIP, int *
     return ret;
 }
 
-int halGetSelfAddr(char *ip, int size, int *port) {
+#if 0
+int halGetSelfAddr(char *ip, int size, int *port)
+{
     void * tmpAddrPtr=NULL;
     struct ifaddrs * ifAddrStruct=NULL;
 
@@ -73,54 +75,43 @@ int halGetSelfAddr(char *ip, int size, int *port) {
 
     return strlen(ip);
 }
-// #include <fcntl.h>
-// #include <errno.h>
-// #include <sys/ioctl.h>
-// #include <net/if.h>
+#else
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#define  MAXINTERFACES  5
 
-// #define  MAXINTERFACES  5
+int halGetSelfAddr(char *ip, int size, int *port)
+{
+	int sockfd, nIf;
+	struct ifconf ifc;
+	char ifName[] = "wlan0", *p;
+	struct ifreq buf[MAXINTERFACES];
+	ifc.ifc_len = sizeof(buf);
+	ifc.ifc_len = sizeof(buf);
+	ifc.ifc_buf = (caddr_t) buf;
 
-//     // specified the iterface
-//     char ifName[] = "eth0";
-//     struct ifconf ifc;
-//     struct ifreq buf[MAXINTERFACES];
-//     char cIP[32] = {0};
-//     int tmpSock = 0;
-//     ifc.ifc_len = sizeof(buf);
-//     ifc.ifc_len = sizeof(buf);
-//     ifc.ifc_buf = (caddr_t)buf;
-//     if ((tmpSock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
-//     {
-//         APPLOGE("socket ERR\r\n");
-//         return 0;
-//     }
+	if ((sockfd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		APPLOGE("socket ERR\r\n");
+		return -1;
+	}
 
-//     if (!ioctl(tmpSock, SIOCGIFCONF, (char *)&ifc)) //ioctl.h
-//     {
-//         int intrface = ifc.ifc_len / sizeof (struct ifreq);
-//         while (intrface-- > 0)
-//         {
-//             if (strcmp(buf[intrface].ifr_name, ifName) == 0)
-//             {
-//                 if (!(ioctl(tmpSock, SIOCGIFADDR, (char *)&buf[intrface])))
-//                 {
-//                     char* ip = inet_ntoa(((struct sockaddr_in*)(&buf[intrface].ifr_addr))->sin_addr);
-//                     strcpy(cIP, ip);
-//                     break;
-//                 }
-//             }
-//         }
-//     }
-
-//     close(tmpSock);
-
-//     int cLen = strlen(cIP);
-//     if (lenIP < cLen)
-//         return 0;
-
-//     memset(ip, 0, lenIP);
-//     strncpy(ip, cIP, cLen);
-//     return 1;
-// }
-
-
+	ip[0] = '\0';
+	if (!ioctl(sockfd, SIOCGIFCONF, (char *) &ifc)) {
+		nIf = ifc.ifc_len / sizeof(struct ifreq);
+		while (nIf-- > 0)
+		{
+			if (strcmp(buf[nIf].ifr_name, ifName) == 0) {
+				if (!(ioctl(sockfd, SIOCGIFADDR, (char *) &buf[nIf]))) {
+					p = (char *)inet_ntoa(((struct sockaddr_in*) (&buf[nIf].ifr_addr))->sin_addr);
+					strncpy(ip, p, size);
+					break;
+				}
+			}
+		}
+	}
+	close(sockfd);
+	return strlen(ip);
+}
+#endif

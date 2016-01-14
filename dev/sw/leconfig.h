@@ -56,7 +56,7 @@ extern "C"
 // #define REMOTE_IP "10.154.252.130"
 // #define REMOTE_IP "192.168.31.142"
 
-#if 1
+#if 0
 // vpn out side
 // #define REMOTE_IP "192.168.3.107"
 // #define REMOTE_PORT 5545
@@ -69,7 +69,7 @@ extern "C"
 #define REMOTE_PORT 5546
 #else
 // internal test
-#define REMOTE_IP "192.168.1.104"
+#define REMOTE_IP "10.58.185.120"
 #define REMOTE_PORT 5546 
 
 #endif
