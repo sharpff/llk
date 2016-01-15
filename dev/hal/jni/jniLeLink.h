@@ -17,19 +17,19 @@ extern "C" {
 #define com_letv_lelink_LeLink_MSG_TYPE_REMOTERESPOND 4L
 /*
  * Class:     com_letv_lelink_LeLink
+ * Method:    getSDKInfo
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_com_letv_lelink_LeLink_getSDKInfo
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_letv_lelink_LeLink
  * Method:    init
  * Signature: (Ljava/lang/String;)J
  */
 JNIEXPORT jlong JNICALL Java_com_letv_lelink_LeLink_init
   (JNIEnv *, jobject, jstring);
-
-/*
- * Class:     com_letv_lelink_LeLink
- * Method:    getSDKInfo
- * Signature: (J)Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_com_letv_lelink_LeLink_getSDKInfo
-  (JNIEnv *, jobject, jlong);
 
 /*
  * Class:     com_letv_lelink_LeLink

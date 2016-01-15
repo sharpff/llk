@@ -3,9 +3,9 @@ package com.letv.lelink;
 public class LeLink {
 
 	private long mPtr = 0;
-	
-	private LeLink() {
-		mPtr = init(null);
+
+	private LeLink(String info) {
+		mPtr = init(info);
 	}
 
 	private static final int MSG_TYPE_LOCALREQUEST = 1;
@@ -13,42 +13,46 @@ public class LeLink {
 	private static final int MSG_TYPE_REMOTEREQUEST = 3;
 	private static final int MSG_TYPE_REMOTERESPOND = 4;
 
-	/*
-	 * Parameter
+	/**
 	 * 
-	 * jsonStr<json>: null
-	 *  
-	 * Return
-	 *  
-	 * native C pointer
+	 * @return
+	 * 		SDK information
+	 * 
+	 * @hide
+	 */
+	private static native String getSDKInfo();
+
+	/**
+	 * 
+	 * @param jsonStr
+	 * 		null
+	 * 
+	 * @return
+	 * 		native C pointer
+	 * 
+	 * @hide
 	 */
 	private native long init(String jsonStr);
 
-	/*
-	 * Parameter
+	/**
 	 * 
-	 * ptr: 
-	 *  
-	 * Return
-	 *  
-	 * SDK information
-	 */
-	private native String getSDKInfo(long ptr);
-
-	/*
-	 * Parameter
+	 * @param ptr
 	 * 
-	 * jsonStr<json> - String ssid; String passwd; int delay(ms); int type(1-mutilcast, 2-broadcast)
+	 * @param jsonStr
+	 * 		String ssid; String passwd; int delay(ms); int type(1-mutilcast, 2-broadcast)
 	 * 
+	 * @hide
 	 */
 	private native void airConfig(long ptr, String jsonStr);
 
-	/*
-	 * Parameter
+	/**
 	 * 
-	 * cmdJson<Json> - String addr; int cmdId; int subCmdId; int seqid
+	 * @param ptr
 	 * 
-	 * dataStr - userdata
+	 * @param jsonStr
+	 *		String addr; int cmdId; int subCmdId; int seqid
+	 *
+	 * @hide
 	 */
 	private native void send(long ptr, String jsonStr);
 

@@ -12,19 +12,33 @@
 #include "airconfig_ctrl.h"
 
 nativeContext_t gNativeContext = {
-		"lelink v0.3 " __DATE__ " " __TIME__,
+		"lelink v0.4 " __DATE__ " " __TIME__,
 		true
 };
 
 static void *netTaskFun(void *data);
 static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo);
 
-int initTask(void)
+int initTask(char *json)
 {
 	int ret;
 	pthread_t id;
 	LelinkInfo info;
+	std::string s;
+	Json::Value value;
+	Json::Reader reader;
 
+	s = std::string(static_cast<char *>(json));
+	if (!reader.parse(s, value)) {
+		LELOGE("airConfig parse error!\n");
+		return -1;
+	}
+	LOGI("info:\n%s", json);
+	info.pubkey = (uint8_t *)value[FJK_PUBLIC_KEY].asCString();
+	info.pubkeyLen = strlen((char *)info.pubkey);
+	info.signature = (uint8_t *)value[FJK_SIGNATURE].asCString();
+	info.signatureLen = strlen((char *)info.signature);
+	strncpy(info.uuid, value[PJK_UUID].asCString(), MAX_UUID);
 	lelinkInit(&info);
 	gNativeContext.ctxR2R = lelinkNwNew(REMOTE_IP, REMOTE_PORT, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);

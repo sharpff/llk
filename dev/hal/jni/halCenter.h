@@ -35,6 +35,8 @@ typedef struct _nativeContext {
 #define FJK_PASSWD		"passwd"
 #define FJK_DELAY		"delay" // ms
 #define FJK_TIMEOUT		"timeout" // sec
+#define FJK_PUBLIC_KEY	"public_key"
+#define FJK_SIGNATURE	"signature"
 
 /* protocol's json key */
 #define PJK_STATUS		"status"
@@ -47,7 +49,7 @@ typedef struct _nativeContext {
 
 extern nativeContext_t gNativeContext;
 
-int initTask(void);
+int initTask(char *json);
 void airConfig(void *ptr, char *json);
 void cmdSend(void *ptr, char *json);
 
