@@ -12,7 +12,7 @@
 #include "airconfig_ctrl.h"
 
 nativeContext_t gNativeContext = {
-		"lelink v0.1",
+		"lelink v0.2 " __DATE__ " " __TIME__,
 		true
 };
 
@@ -35,10 +35,10 @@ int initTask(void)
 
 void airConfig(void *ptr, char *json)
 {
-	int timeout;
 	std::string s;
 	Json::Value value;
 	Json::Reader reader;
+	int delay, type;
 	char parambuf[256];
 	const char *ssid, *passwd;
 	const char *aes = "912EC803B2CE49E4A541068D495AB570";
@@ -48,11 +48,13 @@ void airConfig(void *ptr, char *json)
 		LELOGE("airConfig parse error!\n");
 		return;
 	}
-	ssid = value["ssid"].asCString();
-	passwd = value["passwd"].asCString();
-	timeout = value["timeout"].asInt();
+	type = value[FJK_TYPE].asInt();
+	delay = value[FJK_DELAY].asInt();
+	ssid = value[FJK_SSID].asCString();
+	passwd = value[FJK_PASSWD].asCString();
 
-	snprintf(parambuf, sizeof(parambuf), "SSID=%s,PASSWD=%s,AES=%s,TYPE=1,DELAY=10", ssid, passwd, aes);
+	snprintf(parambuf, sizeof(parambuf), "SSID=%s,PASSWD=%s,AES=%s,TYPE=%d,DELAY=%d",
+			ssid, passwd, aes, type, delay);
 	LOGI("airConfig: %s\n", parambuf);
 	void *context = airconfig_new(parambuf);
 //	void *context = airconfig_new("SSID=TP-LINK_JJFA1,PASSWD=987654321,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10");
@@ -73,7 +75,7 @@ void cmdSend(void *ptr, char *json)
 		LELOGE("cmdSend parse error!\n");
 		return;
 	}
-	node.timeoutRef = 2;
+	node.timeoutRef = value[FJK_TIMEOUT].asInt();
 	node.cmdId = value[PJK_CMD].asInt();
 	node.subCmdId = value[PJK_SUBCMD].asInt();
 	node.seqId = value[PJK_SEQID].asInt();
@@ -91,7 +93,8 @@ void cmdSend(void *ptr, char *json)
 		LOGI("str:[%s]", s.c_str());
 		LOGI("%02X,%02X,%02X", p[0], p[1], p[AES_LEN-1]);
 	}
-	LOGI("send: %s.%d %d.%d-%d\n", node.ndIP[0] ? node.ndIP : "default", node.ndPort, node.cmdId, node.subCmdId, node.seqId);
+	LOGI("send: %s.%d %d.%d-%d, timeout: %d\n",
+			node.ndIP[0] ? node.ndIP : "default", node.ndPort, node.cmdId, node.subCmdId, node.seqId, node.timeoutRef);
 	nwPostCmd(gNativeContext.ctxR2R, &node);
 }
 
@@ -143,41 +146,49 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
 		data[ret++] = '\0';
 	}
 	THREAD_DETACH(gNativeContext.jvm);
-	LOGI("fill buffer(%dbytes):\n%s", ret, data);
 	return ret;
 }
 
-void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len)
+void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len)
 {
-	JNIEnv *env;
 	int ret = 0;
+	JNIEnv *env;
 
 	THREAD_ATTACH(gNativeContext.jvm, env);
 	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage,
-	com_letv_lelink_LeLink_MSG_TYPE_REMOTERESPOND, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) payloadBody, len));
+	com_letv_lelink_LeLink_MSG_TYPE_REMOTERESPOND, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) data, len));
 	THREAD_DETACH(gNativeContext.jvm);
 }
 
-int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len)
+int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len)
 {
-	JNIEnv *env;
 	int ret = 0;
+	JNIEnv *env;
 
 	THREAD_ATTACH(gNativeContext.jvm, env);
 	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage,
-	com_letv_lelink_LeLink_MSG_TYPE_REMOTEREQUEST, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) payloadBody, len));
+	com_letv_lelink_LeLink_MSG_TYPE_REMOTEREQUEST, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) data, len));
 	THREAD_DETACH(gNativeContext.jvm);
 	return ret;
 }
 
 int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, char *nw, int nwLenOut)
 {
-	JNIEnv *env;
 	int ret = 0;
+	JNIEnv *env;
+	jbyte *jdata;
+	jbyteArray jbytes;
 
 	THREAD_ATTACH(gNativeContext.jvm, env);
+	jbytes = c2bytes(env, (const char *) data, len > nwLenOut ? len : nwLenOut);
 	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage,
-	com_letv_lelink_LeLink_MSG_TYPE_LOCALRESPOND, getJsonCmdHeaderInfo(env, cmdInfo), c2bytes(env, (const char *) data, len));
+	com_letv_lelink_LeLink_MSG_TYPE_LOCALRESPOND, getJsonCmdHeaderInfo(env, cmdInfo), jbytes);
+	if (ret > 0 && ret < len) {
+		jdata = env->GetByteArrayElements(jbytes, NULL);
+		memcpy(nw, jdata, ret);
+		env->ReleaseByteArrayElements(jbytes, jdata, JNI_ABORT);
+		nw[ret++] = '\0';
+	}
 	THREAD_DETACH(gNativeContext.jvm);
 	return ret;
 }

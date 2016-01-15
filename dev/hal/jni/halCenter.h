@@ -29,6 +29,13 @@ typedef struct _nativeContext {
 #define MYLOG_TAG "LELINK"
 #define LOGI(fmt,arg...) __android_log_print(ANDROID_LOG_INFO, MYLOG_TAG, fmt, ##arg)
 
+/* function's json key */
+#define FJK_TYPE		"type"
+#define FJK_SSID		"ssid"
+#define FJK_PASSWD		"passwd"
+#define FJK_DELAY		"delay" // ms
+#define FJK_TIMEOUT		"timeout" // sec
+
 /* protocol's json key */
 #define PJK_STATUS		"status"
 #define PJK_ADDR		"addr"

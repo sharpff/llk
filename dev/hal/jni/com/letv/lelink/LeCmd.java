@@ -60,9 +60,11 @@ public class LeCmd {
 	}
 
 	public class K {
+		public static final String TYPE = "type";
 		public static final String SSID = "ssid";
 		public static final String PASSWD = "passwd";
-		public static final String TIMEOUT = "timeout";
+		public static final String DELAY = "delay"; // ms
+		public static final String TIMEOUT = "timeout"; // sec
 		public static final String REMOTE_ADDR = "remoteIP";
 
 		public static final String STATUS = "status";
@@ -75,6 +77,8 @@ public class LeCmd {
 	}
 
 	public class V {
+		public static final int AIR_CONFIG_TYPE_MULTICAST = 1;
+		public static final int AIR_CONFIG_TYPE_BROADCAST = 2;
 		public static final String BROADCAST_ADDR = "255.255.255.255";
 	}
 }

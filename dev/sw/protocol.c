@@ -642,7 +642,7 @@ static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *t
 
 static int forEachNodeR2RFindTokenIP(CACHE_NODE_TYPE *currNode, void *uData) {
     FindToken *ft = (FindToken *)uData;
-    if (0 == memcmp(currNode->ndIP, ft->what, MAX_IPLEN)) {
+    if (currNode->token[0] && 0 == memcmp(currNode->ndIP, ft->what, MAX_IPLEN)) {
         memcpy(ft->token, currNode->token, ft->lenToken);
         return 1;
     }
