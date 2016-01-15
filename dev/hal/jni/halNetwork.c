@@ -5,23 +5,33 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
     int ret = 0, mode = 1;
     struct sockaddr_in local_addr;
     *sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    if (selfPort > 0) {
+    uint16_t port = (uint16_t)selfPort;
+    if (port > 0) {
         bzero(&local_addr, sizeof(local_addr));
 
         local_addr.sin_family = AF_INET;
-        local_addr.sin_port = htons(selfPort);
-        APPLOG("bind: sock[%d] port[%d]\r\n", *sock, selfPort);
+        local_addr.sin_port = htons(port);
         if((ret = bind(*sock, (struct sockaddr *)&local_addr, sizeof(local_addr))) != 0) 
         {
-            APPLOGE("Bind udp port fail: %d.\r\n", ret);
+            #ifdef LE_DEBUG
+            while (ret) {
+                port += 1;
+                local_addr.sin_port = htons(port);
+                if((ret = bind(*sock, (struct sockaddr *)&local_addr, sizeof(local_addr))) != 0) {
+                    APPLOGE("rebinding... udp port[%d] fail: %d.\r\n", port, ret);
+                }
+            }
+            #else
+            APPLOGE("Bind udp port[%d] fail: %d.\r\n", port, ret);
             close(*sock);
             return -1;
+            #endif
         }
+        APPLOG("bind: sock[%d] port[%d]\r\n", *sock, port);
     }
 
 	fcntl(*sock, F_SETFL, O_NONBLOCK, 1);
-    setsockopt(*sock, SOL_SOCKET, SO_BROADCAST, (char *)broadcastEnable, sizeof(int));
+	setsockopt(*sock, SOL_SOCKET, SO_BROADCAST, (char *)broadcastEnable, sizeof(int));
 
     return 0;
 }
@@ -45,21 +55,39 @@ int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int l
     return ret;
 }
 
-int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int lenIP, int *port) {
+// int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int lenIP, int *port) {
+//     int ret;
+//     struct sockaddr_in from_addr;
+//     socklen_t len_from = sizeof(struct sockaddr_in);
+//     ret = recvfrom(sock, buf, len, 0, (struct sockaddr *)&from_addr, (socklen_t *)&len_from);
+//     if (ret > 0)
+//     {
+//         const char *p = (const char *)inet_ntoa(from_addr.sin_addr); 
+//         int len1 = strlen(p);
+//         if (lenIP < len1)
+//         {
+//             len1 = lenIP;
+//         }
+//         *port = htons(from_addr.sin_port);
+//         strncpy(ip, p, len1);
+//     }
+//     return ret;
+// }
+
+int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint16_t *port) {
     int ret;
     struct sockaddr_in from_addr;
     socklen_t len_from = sizeof(struct sockaddr_in);
     ret = recvfrom(sock, buf, len, 0, (struct sockaddr *)&from_addr, (socklen_t *)&len_from);
-    if (ret > 0)
-    {
-        const char *p = (const char *)inet_ntoa(from_addr.sin_addr); 
-        int len1 = strlen(p);
-        if (lenIP < len1)
-        {
-            len1 = lenIP;
+    if (ret >= 0) {
+        char p[16] = {0};
+        inet_ntop(AF_INET, (void *)&(from_addr.sin_addr), p, sizeof(p));
+        int size = strlen(p) + 1;
+        if (sizeIP < size) {
+            size = sizeIP;
         }
         *port = htons(from_addr.sin_port);
-        strncpy(ip, p, len1);
+        memcpy(ip, p, size - 1);
     }
     return ret;
 }

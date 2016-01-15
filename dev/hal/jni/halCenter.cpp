@@ -12,7 +12,7 @@
 #include "airconfig_ctrl.h"
 
 nativeContext_t gNativeContext = {
-		"lelink v0.2 " __DATE__ " " __TIME__,
+		"lelink v0.3 " __DATE__ " " __TIME__,
 		true
 };
 
@@ -23,10 +23,11 @@ int initTask(void)
 {
 	int ret;
 	pthread_t id;
+	LelinkInfo info;
 
-	lelinkInit();
-	gNativeContext.ctxR2R = nwNew(REMOTE_IP, REMOTE_PORT, PORT_ONLY_FOR_VM, 0);
-	gNativeContext.ctxQ2A = nwNew(NULL, 0, NW_SELF_PORT, 0);
+	lelinkInit(&info);
+	gNativeContext.ctxR2R = lelinkNwNew(REMOTE_IP, REMOTE_PORT, PORT_ONLY_FOR_VM, 0);
+	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
 		return ret;
 	}
@@ -95,7 +96,7 @@ void cmdSend(void *ptr, char *json)
 	}
 	LOGI("send: %s.%d %d.%d-%d, timeout: %d\n",
 			node.ndIP[0] ? node.ndIP : "default", node.ndPort, node.cmdId, node.subCmdId, node.seqId, node.timeoutRef);
-	nwPostCmd(gNativeContext.ctxR2R, &node);
+	lelinkNwPostCmd(gNativeContext.ctxR2R, &node);
 }
 
 static void *netTaskFun(void *data)
@@ -103,8 +104,8 @@ static void *netTaskFun(void *data)
 	LOGI("LeLink Task run...\n");
 	while (gNativeContext.runTask)
 	{
-		doPollingQ2A(gNativeContext.ctxQ2A);
-		doPollingR2R(gNativeContext.ctxR2R);
+		lelinkDoPollingQ2A(gNativeContext.ctxQ2A);
+		lelinkDoPollingR2R(gNativeContext.ctxR2R);
 		delayms(200);
 	}
 	return NULL;
