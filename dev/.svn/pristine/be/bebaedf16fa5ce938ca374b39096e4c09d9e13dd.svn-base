@@ -372,6 +372,9 @@
 #ifndef __UINT64_MAX__
 #define __UINT64_MAX__ 18446744073709551615ULL
 #endif
+#ifndef DEBUG
+#define DEBUG 1
+#endif
 #ifndef __INT8_TYPE__
 #define __INT8_TYPE__ signed char
 #endif
@@ -470,6 +473,9 @@
 #endif
 #ifndef linux
 #define linux 1
+#endif
+#ifndef LINUX
+#define LINUX 1
 #endif
 #ifndef __EXCEPTIONS
 #define __EXCEPTIONS 1
@@ -690,12 +696,6 @@
 #ifndef __ATOMIC_RELEASE
 #define __ATOMIC_RELEASE 3
 #endif
-#ifndef NDEBUG
-#define NDEBUG 
-#endif
-#ifndef RELEASE
-#define RELEASE 
-#endif
 #endif
 
 // --- Include directories begin --- //
@@ -707,6 +707,9 @@
 ///usr/lib/gcc/i686-linux-gnu/4.8/include-fixed
 ///usr/include/i386-linux-gnu
 ///usr/include
+//../../sw
+//../../hal/linux
+//../../sw/mbedtls-2.2.0_crypto/include
 // --- Include directories end --- //
 
 

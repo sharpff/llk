@@ -1,4 +1,8 @@
-#include "halHeader.h"
+#ifdef __LE_SDK__
+#undef __LE_SDK__
+#endif
+#include "leconfig.h"
+// #include "halHeader.h"
 
 int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
 
@@ -13,7 +17,7 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
         local_addr.sin_port = htons(port);
         if((ret = bind(*sock, (struct sockaddr *)&local_addr, sizeof(local_addr))) != 0) 
         {
-            #ifdef LE_DEBUG
+            #ifdef BIND_DEBUG
             while (ret) {
                 port += 1;
                 local_addr.sin_port = htons(port);
@@ -45,6 +49,7 @@ int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int l
     int ret;
     struct sockaddr_in to_addr;
     
+    APPLOGW("sendto %s.%d", ip, port);
     memset((char *)&to_addr, 0, sizeof(to_addr));
 
     to_addr.sin_family = AF_INET;
@@ -88,6 +93,7 @@ int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint
         }
         *port = htons(from_addr.sin_port);
         memcpy(ip, p, size - 1);
+        ip[size - 1] = 0;
     }
     return ret;
 }

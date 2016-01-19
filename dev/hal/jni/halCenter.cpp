@@ -6,10 +6,12 @@
  */
 
 #include <pthread.h>
+#include "io.h"
 #include "base64.h"
-#include "halCenter.h"
+#include "halHeader.h"
 #include "jniLeLink.h"
 #include "airconfig_ctrl.h"
+#include "halCenter.h"
 
 nativeContext_t gNativeContext = {
 		"lelink v0.4 " __DATE__ " " __TIME__,
@@ -23,7 +25,7 @@ int initTask(char *json)
 {
 	int ret;
 	pthread_t id;
-	LelinkInfo info;
+	AuthData authData;
 	std::string s;
 	Json::Value value;
 	Json::Reader reader;
@@ -34,12 +36,13 @@ int initTask(char *json)
 		return -1;
 	}
 	LOGI("info:\n%s", json);
-	info.pubkey = (uint8_t *)value[FJK_PUBLIC_KEY].asCString();
-	info.pubkeyLen = strlen((char *)info.pubkey);
-	info.signature = (uint8_t *)value[FJK_SIGNATURE].asCString();
-	info.signatureLen = strlen((char *)info.signature);
-	strncpy(info.uuid, value[PJK_UUID].asCString(), MAX_UUID);
-	lelinkInit(&info);
+
+	strncpy((char *) authData.pubkey, value[FJK_PUBLIC_KEY].asCString(), MAX_RSA_PUBKEY);
+	authData.pubkeyLen = strlen((char *) authData.pubkey);
+	strncpy((char *) authData.signature, value[FJK_SIGNATURE].asCString(), RSA_LEN);
+	authData.signatureLen = strlen((char *) authData.signature);
+	strncpy((char *) authData.uuid, value[PJK_UUID].asCString(), MAX_UUID);
+	lelinkInit(&authData);
 	gNativeContext.ctxR2R = lelinkNwNew(REMOTE_IP, REMOTE_PORT, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {

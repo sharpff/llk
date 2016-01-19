@@ -37,3 +37,17 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
 int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
     return 0;
 }
+
+int halGetMac(uint8_t *mac, int len) {
+    if (6 > len || NULL == mac) {
+        return -1;
+    }
+
+    mac[0] = 0x12;
+    mac[1] = 0x34;
+    mac[2] = 0x56;
+    mac[3] = 0xAB;
+    mac[4] = 0xCD;
+    mac[5] = 0xEF;
+    return 0;
+}

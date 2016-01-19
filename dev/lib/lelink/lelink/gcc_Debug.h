@@ -152,6 +152,9 @@
 #ifndef __USER_LABEL_PREFIX__
 #define __USER_LABEL_PREFIX__ 
 #endif
+#ifndef __LE_SDK__
+#define __LE_SDK__ 1
+#endif
 #ifndef __STDC_HOSTED__
 #define __STDC_HOSTED__ 1
 #endif
@@ -710,6 +713,8 @@
 //../../sw
 //../../hal/linux
 //../../sw/mbedtls-2.2.0_crypto/include
+//../../sw/jsmn
+//../../sw/crypto
 // --- Include directories end --- //
 
 

@@ -12,10 +12,10 @@ AR := ar
 OBJCOPY := objcopy
 
 #Additional flags
-PREPROCESSOR_MACROS := DEBUG LINUX
-INCLUDE_DIRS := ../../sw ../../hal/linux ../../sw/mbedtls-2.2.0_crypto/include
-LIBRARY_DIRS := ../../lib/lelink/Debug
-LIBRARY_NAMES := pthread lelink
+PREPROCESSOR_MACROS := DEBUG LINUX __LE_SDK__
+INCLUDE_DIRS := ../../sw ../../hal/linux ../../sw/mbedtls-2.2.0_crypto/include ../../sw/jsmn ../../sw/crypto
+LIBRARY_DIRS := 
+LIBRARY_NAMES := 
 ADDITIONAL_LINKER_INPUTS := 
 MACOS_FRAMEWORKS := 
 LINUX_PACKAGES := 

@@ -43,7 +43,7 @@ typedef struct
 /* Read/Write info */
 typedef struct {
     uint8_t name[MAX_STR_LEN];
-    uint8_t new0;
+    uint8_t new;
     uint8_t bind;
     uint8_t lock;
 }ALIGNED DevCfg;
