@@ -1245,7 +1245,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         ginStateCloudLinked = 0;
         return;
     }
-
+#if 0
     if (isNeedToRedirect(dataIn, dataLen, ip, &port)) {
         CACHE_NODE_TYPE node = { 0 };
         node.cmdId = LELINK_CMD_CLOUD_AUTH_REQ;
@@ -1260,6 +1260,10 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         ginStateCloudAuthed = 2;
     }
     ginStateCloudLinked = 2;
+#else
+	halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
+    ginStateCloudLinked = 2;
+#endif
 
     LELOG("cbCloudGetTargetRemoteRsp -e\r\n");
 }

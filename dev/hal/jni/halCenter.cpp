@@ -35,12 +35,16 @@ int initTask(char *json)
 		LELOGE("airConfig parse error!\n");
 		return -1;
 	}
-	LOGI("info:\n%s", json);
-
-	strncpy((char *) authData.pubkey, value[FJK_PUBLIC_KEY].asCString(), MAX_RSA_PUBKEY);
-	authData.pubkeyLen = strlen((char *) authData.pubkey);
-	strncpy((char *) authData.signature, value[FJK_SIGNATURE].asCString(), RSA_LEN);
-	authData.signatureLen = strlen((char *) authData.signature);
+//	LOGI("info:\n%s", json);
+	// public key
+	s = base64_decode(value[FJK_PUBLIC_KEY].asString());
+	authData.pubkeyLen = s.length();
+	memcpy(authData.pubkey, s.c_str(), s.length());
+	// signature
+	s = base64_decode(value[FJK_SIGNATURE].asString());
+	authData.signatureLen = s.length();
+	memcpy(authData.signature, s.c_str(), s.length());
+	// uuid
 	strncpy((char *) authData.uuid, value[PJK_UUID].asCString(), MAX_UUID);
 	lelinkInit(&authData);
 	gNativeContext.ctxR2R = lelinkNwNew(REMOTE_IP, REMOTE_PORT, PORT_ONLY_FOR_VM, 0);
