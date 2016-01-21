@@ -47,7 +47,7 @@ int syncUTC(char *json, int jsonLen) {
     int32_t redirect = 0;
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
-    // json_string_t jretobj = {0};
+    json_string_t jretobj = {0};
 
     // LELOG("syncUTC [0x%x, %d], [0x%x, %d], [0x%x, %d]", jsonToken, sizeof(jsonToken), &jobj, sizeof(jobj), &jretobj, sizeof(jretobj));
     // LELOG("jobj 0x%x, 0x%x, 0x%x, 0x%x, 0x%x", &(jobj.parser), jobj.js, jobj.tokens, jobj.cur, &(jobj.num_tokens));

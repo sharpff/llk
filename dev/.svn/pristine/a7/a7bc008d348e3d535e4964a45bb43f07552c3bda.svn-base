@@ -147,7 +147,7 @@ static CmdRecord tblCmdType[] = {
     { 0, 0, 0, 0 }
 };
 
-// #define TEST_RSA
+#define TEST_RSA
 #define TEST_MD5
 #define TEST_AES
 #define TEST_JSON
