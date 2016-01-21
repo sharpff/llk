@@ -136,11 +136,17 @@ int nwUDPSendto(void *ctx, const char *ip, int port, const uint8_t *buf, int len
 
 int nwUDPRecvfrom(void *ctx, uint8_t *buf, int len, char *ip, int lenIP, uint16_t *port)
 {
-    int ret;
-    // char selfIP[MAX_IPLEN] = {0};
-    // int port = 0;
+	int ret;
+	char selfIP[MAX_IPLEN] = { 0 };
+	int selfPort = 0, lenSelfIP = 0;
     CommonCtx *info = (CommonCtx *)ctx;
+
     ret = halNwUDPRecvfrom(info->sock, buf, len, ip, lenIP, port);
+    if ((lenSelfIP = halGetSelfAddr(selfIP, MAX_IPLEN, &selfPort)) > 0) {
+        if (!strncmp(ip, selfIP, lenIP > lenSelfIP ? lenSelfIP : lenIP)) {                                                                      
+        	return 0;
+        }
+    }   
     if (ret >= 0) {
         LELOG("nwUDPRecvfrom [%s:%d][%d]\r\n", ip, *port, ret);
     }
