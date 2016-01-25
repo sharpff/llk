@@ -137,14 +137,16 @@ static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo)
 	Json::Value root;
 	std::string base64Token;
 
-	base64Token = base64_encode((unsigned char *) (cmdInfo->token), AES_LEN);
 	root[PJK_CMD] = cmdInfo->cmdId;
 	root[PJK_SUBCMD] = cmdInfo->subCmdId;
 	root[PJK_ADDR] = cmdInfo->ndIP;
 	root[PJK_UUID] = (char *) (cmdInfo->uuid);
-	root[PJK_TOKEN] = base64Token.c_str(); // (char *) (cmdInfo->token);
 	root[PJK_SEQID] = cmdInfo->seqId;
 	root[PJK_STATUS] = cmdInfo->status;
+	if (cmdInfo->token[0]) {
+		base64Token = base64_encode((unsigned char *) (cmdInfo->token), AES_LEN);
+		root[PJK_TOKEN] = base64Token.c_str(); // (char *) (cmdInfo->token);
+	}
 	return c2js(env, root.toStyledString().c_str());
 }
 /*
