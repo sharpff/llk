@@ -776,7 +776,7 @@ static int forEachNodeR2RFindTokenIP(CACHE_NODE_TYPE *currNode, void *uData) {
     }
     return 0;
 }
-static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *token, int lenToken) {
+static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_UUID], uint8_t *token, int lenToken) {
 
     int ret = 0;
     int i = 0;
@@ -1164,14 +1164,12 @@ static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint
 static int cbCtrlCmdLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
 
     int ret = 0;
-    int encType;
     char reqCtrlCmd[128];
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdLocalReq -s\r\n");
 
     ret = halCBLocalReq(ctx, cmdInfo, reqCtrlCmd, sizeof(reqCtrlCmd));
-	encType = cmdInfo->token[0] ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
-	ret = doPack(ctx, encType, cmdInfo, (const uint8_t *) reqCtrlCmd, ret, dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)reqCtrlCmd, ret, dataOut, dataLen);
     
     LELOG("cbCtrlCmdLocalReq [%d] -e\r\n", ret);
     return ret;
