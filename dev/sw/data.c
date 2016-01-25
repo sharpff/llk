@@ -226,6 +226,8 @@ int getVer(char fwVer[32], int size) {
 }
 
 
+#ifdef __MRVL_MW300__
+
 #include "misc.h"
 #include "jsonv2.h"
 #include "jsgen.h"
@@ -262,10 +264,6 @@ static struct {
 		"}",
 		{ 0, 0, 0, 0, },
 };
-
-int getTerminalStatus(char *status, int len) {
-	return snprintf(status, len, devSt.fmt, devSt.sw.idx1, devSt.sw.idx2, devSt.sw.idx3, devSt.sw.idx4, ginStateCloudAuthed);
-}
 
 static void printhex(char *buf, int len)
 {
@@ -329,10 +327,20 @@ static int uartInit(void)
 	gUartDev = uart_drv_open(UART1_ID, 9600);
 	return 0;
 }
+#endif
+
+int getTerminalStatus(char *status, int len) {
+#ifdef __MRVL_MW300__
+	return snprintf(status, len, devSt.fmt, devSt.sw.idx1, devSt.sw.idx2, devSt.sw.idx3, devSt.sw.idx4, ginStateCloudAuthed);
+#else
+	return snprintf(status, len, "%s", "{}");
+#endif
+}
 
 #define NUM_TOKENS	128
 int setTerminalStatus(const char *status, int len)
 {
+#ifdef __MRVL_MW300__
 	char buf[128];
 	int n = 0, ret = -1;
     jobj_t jobj;
@@ -398,6 +406,7 @@ int setTerminalStatus(const char *status, int len)
 		wmprintf("Read  %d: \t", n);
 		printhex(buf, n);
 	}
+#endif
 	return 0;
 }
 

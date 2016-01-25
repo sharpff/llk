@@ -1252,7 +1252,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         ginStateCloudLinked = 0;
         return;
     }
-
+#if 0
     if (isNeedToRedirect(dataIn, dataLen, ip, &port)) {
         CACHE_NODE_TYPE node = { 0 };
         node.cmdId = LELINK_CMD_CLOUD_AUTH_REQ;
@@ -1267,6 +1267,10 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         ginStateCloudAuthed = 2;
     }
     ginStateCloudLinked = 2;
+#else
+	halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
+    ginStateCloudLinked = 2;
+#endif
 
     LELOG("cbCloudGetTargetRemoteRsp -e\r\n");
 }
@@ -1351,10 +1355,11 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     // } else {
     //     sprintf(out, "{\"now\":{%s},\"token\":\"%s\"}", status, token);
     // }
-    sprintf(out, "{\"now\":%s,\"token\":\"%s\"}", status, token);
+    sprintf(out, "{\"status\":%s,\"token\":\"%s\"}", status, token);
     LELOG("%s\r\n", out);
+    ret = strlen(out);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)out, strlen(out), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)out, ret, dataOut, dataLen);
     
     LELOG("cbCloudHeartBeatLocalReq [%d] -e\r\n", ret);
     return ret;
