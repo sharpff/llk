@@ -629,13 +629,13 @@ void event_wlan_init_done(void *data)
     return;
     #endif
 
-#if 0
+#if 1
     {
         extern int preGenStableInfo2Flash(void);
         ret = preGenStableInfo2Flash();
         APPLOG("preGenStableInfo2Flash [%d] \r\n", ret);
     }
-#else
+#endif
     // sector 0x1000(512pcs), block 0x10000(32pcs)
 
     ret = lelinkStorageInit(0x12C000, 0x3E000, 0x100);
@@ -649,7 +649,6 @@ void event_wlan_init_done(void *data)
     lelink_start();
 
     // testRSA();
-#endif
 }
 
 /* This is the main event handler for this project. The application framework

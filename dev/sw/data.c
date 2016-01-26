@@ -252,16 +252,14 @@ static struct {
 		unsigned char idx4 :1;
 	} sw;
 } devSt = {
-		"{"
-			"\""DEV_FMT_STATUS"\":"
-				"{"
-					"\""DEV_FMT_ST_IDX1"\":%d,"
-					"\""DEV_FMT_ST_IDX2"\":%d,"
-					"\""DEV_FMT_ST_IDX3"\":%d,"
-					"\""DEV_FMT_ST_IDX4"\":%d"
-				"},"
-			"\""DEV_FMT_CLOUD"\":%d"
-		"}",
+		"\""DEV_FMT_STATUS"\":"
+			"{"
+				"\""DEV_FMT_ST_IDX1"\":%d,"
+				"\""DEV_FMT_ST_IDX2"\":%d,"
+				"\""DEV_FMT_ST_IDX3"\":%d,"
+				"\""DEV_FMT_ST_IDX4"\":%d"
+			"},"
+		"\""DEV_FMT_CLOUD"\":%d",
 		{ 0, 0, 0, 0, },
 };
 
@@ -333,7 +331,7 @@ int getTerminalStatus(char *status, int len) {
 #ifdef __MRVL_MW300__
 	return snprintf(status, len, devSt.fmt, devSt.sw.idx1, devSt.sw.idx2, devSt.sw.idx3, devSt.sw.idx4, ginStateCloudAuthed);
 #else
-	return snprintf(status, len, "%s", "{}");
+	return snprintf(status, len, "{\"status\":%s}", "{}");
 #endif
 }
 
@@ -398,7 +396,7 @@ int setTerminalStatus(const char *status, int len)
 	acmd.st &= acmd.en;
 	setCmdCrc(&acmd);
 	uart_drv_write(gUartDev, (uint8_t *) &acmd, sizeof(acmd));
-	wmprintf("Write %d:\t", sizeof(acmd));
+	wmprintf("Write %d:\r\n", sizeof(acmd));
 	printhex((char *) &acmd, sizeof(acmd));
 	//从串口中读取数据
 	n = uart_drv_read(gUartDev, (uint8_t *) buf, sizeof(buf));

@@ -1089,12 +1089,12 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-	char rspDiscover[1024] = { "{\"status\":" };
+	char rspDiscover[1024] = "{";
     LELOG("cbDiscoverLocalRsp -s\r\n");
     // gen status
-	ret = getTerminalStatus(rspDiscover - strlen(rspDiscover), sizeof(rspDiscover) - strlen(rspDiscover));
+	ret = getTerminalStatus(rspDiscover + strlen(rspDiscover), sizeof(rspDiscover) - strlen(rspDiscover));
 
-    strcpy(&rspDiscover[ret - 1], ",\"uuid\":\"");
+    strcpy(&rspDiscover[strlen(rspDiscover)], ",\"uuid\":\"");
     getTerminalUUID((uint8_t *)rspDiscover + strlen(rspDiscover), MAX_UUID);
     
     strcpy(&rspDiscover[strlen(rspDiscover)], "\",\"ip\":\"");
@@ -1152,9 +1152,10 @@ static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint
     int ret = 0;
     int encType;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char rspCtrlCmd[1024] = {0};
+    char rspCtrlCmd[1024] = "{";
     LELOG("cbCtrlCmdLocalRsp -s\r\n");
-    ret = getTerminalStatus(rspCtrlCmd, sizeof(rspCtrlCmd));
+    ret = getTerminalStatus(rspCtrlCmd + strlen(rspCtrlCmd), sizeof(rspCtrlCmd) - strlen(rspCtrlCmd));
+	strcat(rspCtrlCmd, "}");
 	encType = (ginStateCloudAuthed == 2) ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
 	ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspCtrlCmd, strlen(rspCtrlCmd), dataOut, dataLen);
     LELOG("cbCtrlCmdLocalRsp -e\r\n");
@@ -1355,7 +1356,7 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     // } else {
     //     sprintf(out, "{\"now\":{%s},\"token\":\"%s\"}", status, token);
     // }
-    sprintf(out, "{\"status\":%s,\"token\":\"%s\"}", status, token);
+    sprintf(out, "{%s,\"token\":\"%s\"}", status, token);
     LELOG("%s\r\n", out);
     ret = strlen(out);
 
@@ -1435,7 +1436,9 @@ static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, co
     LELOG("cbCloudMsgCtrlR2TLocalRsp -s\r\n");
     ret = halCBLocalRsp(ctx, cmdInfo, data, len, status, sizeof(status));
     if (!ret) {
-        ret = getTerminalStatus(status, sizeof(status));
+		status[0] = '{', status[0] = '\0';
+        ret = getTerminalStatus(status + strlen(status), sizeof(status) - strlen(status));
+        strcat(status, "}");
     }
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TLocalRsp -e\r\n");
