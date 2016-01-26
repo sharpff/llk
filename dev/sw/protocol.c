@@ -1089,10 +1089,10 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char rspDiscover[1024] = {0};
+	char rspDiscover[1024] = { "{\"status\":" };
     LELOG("cbDiscoverLocalRsp -s\r\n");
     // gen status
-    ret = getTerminalStatus(rspDiscover, sizeof(rspDiscover));
+	ret = getTerminalStatus(rspDiscover - strlen(rspDiscover), sizeof(rspDiscover) - strlen(rspDiscover));
 
     strcpy(&rspDiscover[ret - 1], ",\"uuid\":\"");
     getTerminalUUID((uint8_t *)rspDiscover + strlen(rspDiscover), MAX_UUID);
