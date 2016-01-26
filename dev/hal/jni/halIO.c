@@ -1,4 +1,8 @@
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
 #include "leconfig.h"
+
 int halFlashInit(void)
 {
     return 0;
@@ -38,16 +42,33 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
     return 0;
 }
 
-int halGetMac(uint8_t *mac, int len) {
-    if (6 > len || NULL == mac) {
-        return -1;
-    }
+int halGetMac(uint8_t *mac, int len)
+{
+	int sockfd;
+	struct ifreq tmp;
+	char mac_addr[30];
 
-    mac[0] = 0x12;
-    mac[1] = 0x34;
-    mac[2] = 0x56;
-    mac[3] = 0xAB;
-    mac[4] = 0xCD;
-    mac[5] = 0xEF;
-    return 0;
+	if (6 > len || NULL == mac) {
+		return -1;
+	}
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) {
+		LELOGE("Can't get mac. socket open error\r\n");
+		return -1;
+	}
+	memset(&tmp, 0, sizeof(struct ifreq));
+	strncpy(tmp.ifr_name, "wlan0", sizeof(tmp.ifr_name) - 1);
+	if ((ioctl(sockfd, SIOCGIFHWADDR, &tmp)) < 0) {
+		LELOGE("Can't get mac. socket open error\r\n");
+		close(sockfd);
+		return -1;
+	}
+	mac[0] = tmp.ifr_hwaddr.sa_data[0];
+	mac[1] = tmp.ifr_hwaddr.sa_data[1];
+	mac[2] = tmp.ifr_hwaddr.sa_data[2];
+	mac[3] = tmp.ifr_hwaddr.sa_data[3];
+	mac[4] = tmp.ifr_hwaddr.sa_data[4];
+	mac[5] = tmp.ifr_hwaddr.sa_data[5];
+	close(sockfd);
+	return 0;
 }

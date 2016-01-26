@@ -1369,7 +1369,7 @@ static void cbCloudHeartBeatRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCloudHeartBeatRemoteRsp -s\r\n");
-    LELOG("[%d]\r\n", dataLen);
+	halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudHeartBeatRemoteRsp -e\r\n");
 }
 

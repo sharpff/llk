@@ -63,8 +63,8 @@ extern "C"
 // #define REMOTE_IP "10.58.187.104"
 // #define REMOTE_IP "10.58.185.120"
 
-#define REMOTE_IP "10.58.185.126"
-//#define REMOTE_IP "10.204.28.134"
+//#define REMOTE_IP "10.58.185.126"
+#define REMOTE_IP "10.204.28.134"
 //#define REMOTE_IP "115.182.94.173"
 #define REMOTE_PORT 5546
 #else
