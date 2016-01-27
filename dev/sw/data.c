@@ -286,6 +286,7 @@ typedef struct _cmd {
 	u_int8_t reserve;
 	u_int8_t en;
 	u_int8_t st;
+	u_int8_t num;
 } __attribute__((packed)) cmd_t;
 
 static cmd_t acmd = {
@@ -301,9 +302,7 @@ static cmd_t acmd = {
 static void setCmdCrc(cmd_t *pCmd)
 {
 	int i;
-	pCmd->crc = 0;
 	u_int16_t sum = 0xbeaf;
-	u_int8_t *p = (u_int8_t *)pCmd;
 
 	for (i = 0; i < sizeof(*pCmd); i++) {
 		sum += p[i];
@@ -313,22 +312,61 @@ static void setCmdCrc(cmd_t *pCmd)
 
 static int uartInit(void)
 {
+    uint32_t stop = UART_STOPBITS_1;
+    uint32_t parity = UART_PARITY_NONE;
+
 	/* Initilize UART1 with 8bit. This will register UART1 MDEV handler */
 	uart_drv_init(UART1_ID, UART_8BIT);
-	/* Enable DMA on UART1 */
-	uart_drv_xfer_mode(UART1_ID, UART_DMA_ENABLE);
 	/* Set DMA block size */
 	uart_drv_dma_rd_blk_size(UART1_ID, 64);
 //	/* Set internal rx ringbuffer size to 3K */
 	uart_drv_rxbuf_size(UART1_ID, 1024);
 	/* Open UART1 with baud rate. This will return mdev UART1 handle */
 	gUartDev = uart_drv_open(UART1_ID, 9600);
+
 	return 0;
 }
 #endif
 
 int getTerminalStatus(char *status, int len) {
 #ifdef __MRVL_MW300__
+	cmd_t cmd;
+	char buf[32];
+	int i, n = 0;
+
+	if (!gUartDev) {
+		uartInit();
+	}
+	if (!gUartDev) {
+		wmprintf("getTerminalStatus, open uart error!\r\n");
+		return -1;
+	}
+	for (i = 0; i < 3; i++) {
+		cmd = acmd;
+		cmd.crc = 0;
+		cmd.cmd = 0x0001;
+		cmd.st = cmd.en = 0x0;
+		cmd.crc = getCmdCrc((uint8_t *) &cmd, sizeof(cmd) - 1);
+		n = uart_drv_write(gUartDev, (uint8_t *) &cmd, sizeof(cmd) - 1);
+		wmprintf("Get Write %d:\r\n", n);
+		printhex((char *) &cmd, n);
+		os_thread_sleep(os_msec_to_ticks(50));
+		//从串口中读取数据
+		n = uart_drv_read(gUartDev, (uint8_t *) buf, sizeof(buf));
+		if (0 < n) {
+			wmprintf("Get Read  %d: \r\n", n);
+			printhex(buf, n);
+			memcpy((char *) &cmd, buf, n);
+			if (cmd.head == acmd.head && cmd.len == 4 && cmd.cmd == 0x0004) {
+				devSt.sw.idx1 = (cmd.st >> 0) & 0x01;
+				devSt.sw.idx2 = (cmd.st >> 1) & 0x01;
+				devSt.sw.idx3 = (cmd.st >> 2) & 0x01;
+				devSt.sw.idx4 = (cmd.st >> 3) & 0x01;
+				wmprintf("Get new state: 0x%02x\r\n", cmd.st);
+				break;
+			}
+		}
+	}
 	return snprintf(status, len, devSt.fmt, devSt.sw.idx1, devSt.sw.idx2, devSt.sw.idx3, devSt.sw.idx4, ginStateCloudAuthed);
 #else
 	return snprintf(status, len, "{\"status\":%s}", "{}");
@@ -339,9 +377,9 @@ int getTerminalStatus(char *status, int len) {
 int setTerminalStatus(const char *status, int len)
 {
 #ifdef __MRVL_MW300__
+    jobj_t jobj;
 	char buf[128];
 	int n = 0, ret = -1;
-    jobj_t jobj;
     jsontok_t jsonToken[NUM_TOKENS];
 
     if(!status || len <= 0){
@@ -351,6 +389,9 @@ int setTerminalStatus(const char *status, int len)
 	if (!gUartDev) {
 		uartInit();
 	}
+	if (!gUartDev) {
+		wmprintf("setTerminalStatus, open uart error!\r\n");
+		return -1;
 #if 1
 	if (WM_SUCCESS != json_init(&jobj, jsonToken, NUM_TOKENS, (char *)status, len)) {
 		wmprintf("setTerminalStatus, get json error!\r\n");
@@ -386,14 +427,9 @@ int setTerminalStatus(const char *status, int len)
     	acmd.st |= (devSt.sw.idx4 << 3);
     	wmprintf("index4: %d\r\n", devSt.sw.idx4);
     }
-#else
-	acmd.en = 0x0F;
-	acmd.st++;
-	if (acmd.st > 0xFF) {
-		acmd.st = 0;
-	}
 #endif
 	acmd.st &= acmd.en;
+	acmd.crc = getCmdCrc((uint8_t *)&acmd, sizeof(acmd) - 1);
 	setCmdCrc(&acmd);
 	uart_drv_write(gUartDev, (uint8_t *) &acmd, sizeof(acmd));
 	wmprintf("Write %d:\r\n", sizeof(acmd));
