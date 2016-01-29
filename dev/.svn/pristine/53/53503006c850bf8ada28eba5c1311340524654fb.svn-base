@@ -47,6 +47,7 @@
 #include <wm_net.h>
 #include <httpd.h>
 #include <wifidirectutl.h>
+#include <nw_utils.h>
 
 #include <lelink/sw/leconfig.h>
 #include <lelink/sw/airconfig.h>
@@ -531,6 +532,19 @@ void sniffer_cb(const wlan_frame_t *frame, const uint16_t len)
     }
 }
 
+
+void printOutBytes(const uint8_t buf[], int len) {
+    int i = 0;
+    APPPRINTF("print out: [%d]\r\n", len);
+    for (i = 0; i < len; i++) {
+        APPPRINTF("%02x ", buf[i]);
+        if ((i + 1) % 16 == 0) {
+            APPPRINTF("\r\n");
+        }
+    }
+    APPPRINTF("\n"); 
+}
+
 /*
  * Handler invoked when WLAN subsystem is ready.
  *
@@ -629,26 +643,145 @@ void event_wlan_init_done(void *data)
     return;
     #endif
 
-#if 1
+#if 0
     {
-        extern int preGenStableInfo2Flash(void);
-        ret = preGenStableInfo2Flash();
-        APPLOG("preGenStableInfo2Flash [%d] \r\n", ret);
-    }
-#endif
-    // sector 0x1000(512pcs), block 0x10000(32pcs)
+#include <lelink/sw/sengine.h>
 
-    ret = lelinkStorageInit(0x12C000, 0x3E000, 0x100);
-    if (0 > ret) {
+        uint32_t parity = UART_PARITY_NONE;
+        uint32_t stop = UART_STOPBITS_1;
+        uint32_t baud = 9600;
+        mdev_t  *uartPort;
+        uint8_t buf[] = {0x12, 0x34, 0xab, 0xcd};
+        int count = sizeof(buf) + 1;
+
+        // extern int preGenStableInfo2Flash(void);
+        // ret = preGenStableInfo2Flash();
+        // APPLOG("preGenStableInfo2Flash [%d] \r\n", ret);
+
+        #if 0
+        ret = uart_drv_init(UART1_ID, UART_8BIT);
+        APPLOG("uart_drv_init [%d] \r\n", ret);
+        ret = uart_drv_set_opts(UART1_ID, parity, stop, UART_PARITY_NONE);
+        APPLOG("uart_drv_set_opts [%d] \r\n", ret);
+        uartPort = uart_drv_open(UART1_ID, baud);
+        APPLOG("uart_drv_open [%d] \r\n", uartPort);
+        while (count--) { // 4, 3, 2, 1
+            ret = uart_drv_write(uartPort, &buf[sizeof(buf) - count], 1);
+            APPLOG("uart_drv_write [%d] \r\n", ret);
+            os_thread_sleep(os_msec_to_ticks(1000));
+        }
+        while (1) {
+            int i = 0;
+            ret = uart_drv_read(uartPort, buf, sizeof(buf));
+            APPLOG("uart_drv_read [%d]\r\n", ret);
+            if (ret > 0) {
+                for (i = 0; i < ret; i++) {
+                    APPPRINTF("%02x ", buf[i]);
+                }
+                APPPRINTF("\r\n");
+            }
+            os_thread_sleep(os_msec_to_ticks(1000));
+        }
+        #endif
+
+        #if 1
+        {
+            // #define PAGE_SIZE 0x100
+            #define PAGE_SIZE (0x1000)
+            #define WRITE_SIZE 8*1024
+            #define PIECES (WRITE_SIZE/PAGE_SIZE)
+            #define START_ADDR (0x1E0000)
+
+            mdev_t * dev = NULL;
+            int ret, counts = 4;
+            int pieces = PIECES, i, j;
+            static uint8_t data[PAGE_SIZE] = {0};
+            static uint8_t out[WRITE_SIZE] = {0};
+            int tmpAddr = 0;
+
+            while (counts--) {
+                os_thread_sleep(os_msec_to_ticks(1000));
+                APPLOG("waiting... [%d]\r\n", counts);
+            }
+            for (i = 0; i < pieces; i++) {
+                int m = 0;
+                tmpAddr = START_ADDR + i*PAGE_SIZE;
+                for (j = 0; j < PAGE_SIZE; j++) {
+                    data[m++] = j;
+                }
+                data[sizeof(data) - 1] = i;
+                dev = (mdev_t *)flash_drv_open(FL_INT);
+                ret = flash_drv_erase((mdev_t *)dev, tmpAddr, PAGE_SIZE);
+                APPLOG("flash_drv_erase idx[%d][0x%x] ret[%d]\r\n", i, tmpAddr, ret);
+                ret = flash_drv_write((mdev_t *)dev, data, PAGE_SIZE, tmpAddr);
+                APPLOG("flash_drv_write idx[%d][0x%x] ret[%d]\r\n", i, tmpAddr, ret);
+                memset(out, 0, sizeof(out));
+                flash_drv_close((mdev_t *)dev);
+
+                // os_thread_sleep(os_msec_to_ticks(100));
+
+                dev = (mdev_t *)flash_drv_open(FL_INT);
+                ret = flash_drv_read(dev, out, PAGE_SIZE, tmpAddr);
+                APPLOG("flash_drv_read [0x%x] ret[%d]\r\n", tmpAddr, ret);
+                if (0 == ret) {
+                    ret = PAGE_SIZE;
+                }
+                printOutBytes(out, PAGE_SIZE); 
+                flash_drv_close((mdev_t *)dev);
+                APPLOG("flash_drv_close\n");
+            }
+
+            dev = (mdev_t *)flash_drv_open(FL_INT);
+            memset(out, 0, sizeof(out));
+            ret = flash_drv_read(dev, out, sizeof(out), START_ADDR);
+            APPLOG("flash_drv_read [0x%x] ret[%d]\r\n", START_ADDR, ret);
+            if (0 == ret) {
+                ret = sizeof(out);
+            }
+            flash_drv_close((mdev_t *)dev);
+
+            printOutBytes(out, ret); 
+
+            APPLOG("flash pieces reading...\r\n");
+            for (i = 0; i < pieces; i++) {
+                tmpAddr = START_ADDR + i*PAGE_SIZE;
+                dev = (mdev_t *)flash_drv_open(FL_INT);
+                memset(out, 0, PAGE_SIZE);
+                ret = flash_drv_read(dev, out, PAGE_SIZE, tmpAddr);
+                APPLOG("flash_drv_read [0x%x] ret[%d]\r\n", tmpAddr, ret);
+                if (0 == ret) {
+                    ret = PAGE_SIZE;
+                }
+                flash_drv_close((mdev_t *)dev);
+
+                printOutBytes(out, ret); 
+            }
+        }
+        #endif
+
         return;
     }
+#else
+    os_dump_mem_stats();
+
+    // sector 0x1000(512pcs), block 0x10000(32pcs)
+    ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000);
+    if (0 > ret) {
+        APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
+        return;
+    }
+
+    // protocol
     ret = lelinkInit(NULL);
     if (0 > ret) {
         return;
     }
     lelink_start();
+    
+    // flash
+    // testFlash();
 
-    // testRSA();
+#endif
 }
 
 /* This is the main event handler for this project. The application framework
@@ -730,21 +863,35 @@ static void modules_init()
         dbg("Error: sysinfo_init failed");
         appln_critical_error_handler((void *) -WM_FAIL);
     }
+
+    ret = nw_utils_cli_init();
+    if (ret != WM_SUCCESS) {
+        dbg("Error: nw_utils_cli_init failed");
+        appln_critical_error_handler((void *) -WM_FAIL);
+    }
 	return;
 }
 
 int main()
 {
+    // int count = 0;
     modules_init();
 
     dbg("Build Time: " __DATE__ " " __TIME__ "");
+    // while (1) {
+    //     count++;
+    //     wmprintf("Hello World: iteration %d\r\n", count);
 
+    //     /* Sleep  5 seconds */
+    //     os_thread_sleep(os_msec_to_ticks(3000));
+    // }
 
-
+#if 1
 	/* Start the application framework */
 	if (app_framework_start(common_event_handler) != WM_SUCCESS) {
 		dbg("Failed to start application framework");
 				appln_critical_error_handler((void *) -WM_FAIL);
 	}
+#endif
 	return 0;
 }

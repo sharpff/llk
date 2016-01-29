@@ -3,6 +3,9 @@
 #include "pack.h"
 #include "protocol.h"
 #include "utility.h"
+#include "sengine.h"
+#include "network.h"
+#include "io.h"
 
 extern int8_t ginStateCloudAuthed;
 
@@ -35,6 +38,9 @@ static uint8_t ginPubkeyTerminalDer[MAX_RSA_PUBKEY];
 static int ginPubkeyTerminalDerLen;
 static uint8_t ginSignature[RSA_LEN];
 static uint8_t ginUUID[MAX_UUID];
+static char ginCachedStatus[UDP_MTU];
+static char ginRemoteIP[MAX_REMOTE];
+static uint16_t ginRemotePort;
 
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
@@ -202,10 +208,24 @@ void setTerminalUUID(const uint8_t *uuid, int len) {
     memcpy(ginUUID, uuid, MAX_UUID);
 }
 
-void getOriServerIP(char IP[], int len, uint16_t *port) {
-    const char *ip = REMOTE_IP;
-    *port = REMOTE_PORT;
-    memcpy(IP, (void *)ip, strlen(ip) > len ? len : strlen(ip));
+void setOriRemoteServer(const char *ip, int len, uint16_t port) {
+    if (len >= sizeof(ginRemoteIP)) {
+        return; 
+    }
+    memcpy(ginRemoteIP, ip, len);
+    ginRemoteIP[len] = 0;
+    ginRemotePort = port;
+
+}
+void getOriRemoteServer(char *ip, int len, uint16_t *port) {
+    int remoteIPLen = strlen(ginRemoteIP);
+
+    if (len <= remoteIPLen) {
+        return;
+    }
+    memcpy(ip, ginRemoteIP, remoteIPLen);
+    ip[remoteIPLen] = 0;
+    *port = ginRemotePort;
 }
 
 uint16_t getProtocolVer() {
@@ -221,227 +241,76 @@ int getVer(char fwVer[32], int size) {
         return -1;
     }
     memset(fwVer, 0, 32);
-    sprintf(fwVer, "%04d.%04d.%04d", PF_VAL, getSWVer(), getProtocolVer());
+    sprintf(fwVer, "%04d.%04d.%04d", PF_VAL, getProtocolVer(), getSWVer());
     return 0;
 }
 
-
-#ifdef __MRVL_MW300__
-
-#include "misc.h"
-#include "jsonv2.h"
-#include "jsgen.h"
-#include <stdarg.h>
-
-#define DEV_FMT_CTROL	"ctrl"
-#define DEV_FMT_STATUS	"status"
-#define DEV_FMT_CLOUD	"cloud"
-#define DEV_FMT_ST_IDX1	"idx1"
-#define DEV_FMT_ST_IDX2	"idx2"
-#define DEV_FMT_ST_IDX3	"idx3"
-#define DEV_FMT_ST_IDX4	"idx4"
-
-static mdev_t *gUartDev = NULL;
-
-static struct {
-	const char *fmt;
-	struct {
-		unsigned char idx1 :1;
-		unsigned char idx2 :1;
-		unsigned char idx3 :1;
-		unsigned char idx4 :1;
-	} sw;
-} devSt = {
-		"\""DEV_FMT_STATUS"\":"
-			"{"
-				"\""DEV_FMT_ST_IDX1"\":%d,"
-				"\""DEV_FMT_ST_IDX2"\":%d,"
-				"\""DEV_FMT_ST_IDX3"\":%d,"
-				"\""DEV_FMT_ST_IDX4"\":%d"
-			"},"
-		"\""DEV_FMT_CLOUD"\":%d",
-		{ 0, 0, 0, 0, },
-};
-
-static void printhex(char *buf, int len)
-{
-	int i = 0, tmp;
-
-	for (i = 0; i < len; i++) {
-		tmp = buf[i];
-		tmp &= 0xff;
-		wmprintf("%02X ", tmp);
-		if ((i + 1) % 8 == 0) {
-			wmprintf("\r\n");
-		}
-	}
-	wmprintf("\r\n");
+int setTerminalStatus(const char *status, int len) {
+    return sengineSetStatus((char *)status, len);
 }
-
-typedef struct _cmd {
-	u_int32_t head;
-	u_int16_t crc;
-	u_int16_t cmd;
-	u_int16_t len;
-	u_int8_t reserve;
-	u_int8_t en;
-	u_int8_t st;
-	u_int8_t num;
-} __attribute__((packed)) cmd_t;
-
-static cmd_t acmd = {
-		0x5A5AA5A5,
-		0xC0D0,
-		0x0002,
-		0x0003,
-		0x00,
-		0x0F,
-		0x0F,
-		};
-
-static void setCmdCrc(cmd_t *pCmd)
-{
-	int i;
-	u_int16_t sum = 0xbeaf;
-
-	for (i = 0; i < sizeof(*pCmd); i++) {
-		sum += p[i];
-	}
-	pCmd->crc = sum;
-}
-
-static int uartInit(void)
-{
-    uint32_t stop = UART_STOPBITS_1;
-    uint32_t parity = UART_PARITY_NONE;
-
-	/* Initilize UART1 with 8bit. This will register UART1 MDEV handler */
-	uart_drv_init(UART1_ID, UART_8BIT);
-	/* Set DMA block size */
-	uart_drv_dma_rd_blk_size(UART1_ID, 64);
-//	/* Set internal rx ringbuffer size to 3K */
-	uart_drv_rxbuf_size(UART1_ID, 1024);
-	/* Open UART1 with baud rate. This will return mdev UART1 handle */
-	gUartDev = uart_drv_open(UART1_ID, 9600);
-
-	return 0;
-}
-#endif
 
 int getTerminalStatus(char *status, int len) {
-#ifdef __MRVL_MW300__
-	cmd_t cmd;
-	char buf[32];
-	int i, n = 0;
+    // const int fixSize = 16;
+    int ret = 0;
+    // uint8_t json[UDP_MTU] = {0};
+    const char prefixStatus[16] = "{\"status\":";
+    const char suffixCloud[16] = ",\"cloud\":%d";
+    // if (len <= (ret + sizeof(prefixStatus) + sizeof(suffixCloud))) {
+    //     return 0;
+    // }
+    LELOG("call getTerminalStatus start \r\n");
 
-	if (!gUartDev) {
-		uartInit();
-	}
-	if (!gUartDev) {
-		wmprintf("getTerminalStatus, open uart error!\r\n");
-		return -1;
-	}
-	for (i = 0; i < 3; i++) {
-		cmd = acmd;
-		cmd.crc = 0;
-		cmd.cmd = 0x0001;
-		cmd.st = cmd.en = 0x0;
-		cmd.crc = getCmdCrc((uint8_t *) &cmd, sizeof(cmd) - 1);
-		n = uart_drv_write(gUartDev, (uint8_t *) &cmd, sizeof(cmd) - 1);
-		wmprintf("Get Write %d:\r\n", n);
-		printhex((char *) &cmd, n);
-		os_thread_sleep(os_msec_to_ticks(50));
-		//从串口中读取数据
-		n = uart_drv_read(gUartDev, (uint8_t *) buf, sizeof(buf));
-		if (0 < n) {
-			wmprintf("Get Read  %d: \r\n", n);
-			printhex(buf, n);
-			memcpy((char *) &cmd, buf, n);
-			if (cmd.head == acmd.head && cmd.len == 4 && cmd.cmd == 0x0004) {
-				devSt.sw.idx1 = (cmd.st >> 0) & 0x01;
-				devSt.sw.idx2 = (cmd.st >> 1) & 0x01;
-				devSt.sw.idx3 = (cmd.st >> 2) & 0x01;
-				devSt.sw.idx4 = (cmd.st >> 3) & 0x01;
-				wmprintf("Get new state: 0x%02x\r\n", cmd.st);
-				break;
-			}
-		}
-	}
-	return snprintf(status, len, devSt.fmt, devSt.sw.idx1, devSt.sw.idx2, devSt.sw.idx3, devSt.sw.idx4, ginStateCloudAuthed);
-#else
-	return snprintf(status, len, "{\"status\":%s}", "{}");
-#endif
+    // prefix 
+    if (len <= sizeof(prefixStatus)) {
+        LELOGW("getTerminalStatus 'len' is too small [%d]\r\n", len);
+        return 0;
+    }
+    strcpy(status, "\"status\":");
+
+    // script status
+    ret = sengineGetStatus(status + strlen(status), len - strlen(status));
+    if (0 >= ret) {
+        LELOGW("getTerminalStatus sengineGetStatus ret [%d]\r\n", ret);
+        ret = cacheGetTerminalStatus(status, len);
+        if (0 >= ret) {
+            strcpy(status, "\"status\":");
+            strcpy(status + strlen(status), "{}");
+            LELOGW("getTerminalStatus make status [%s]\r\n", status);
+            return strlen(status);
+        }
+    }
+
+    // suffix cloud
+    if (len <= (ret + sizeof(suffixCloud) + strlen(prefixStatus))) {
+        LELOGW("getTerminalStatus 'len' is too small for total [%d]\r\n", len);
+        return 0;
+    }
+    sprintf(status + strlen(status), suffixCloud, ginStateCloudAuthed);
+
+    cacheSetTerminalStatus(status, strlen(status));
+    LELOG("what status [%s]\r\n", status);
+    return strlen(status);
 }
 
-#define NUM_TOKENS	128
-int setTerminalStatus(const char *status, int len)
-{
-#ifdef __MRVL_MW300__
-    jobj_t jobj;
-	char buf[128];
-	int n = 0, ret = -1;
-    jsontok_t jsonToken[NUM_TOKENS];
-
-    if(!status || len <= 0){
-		wmprintf("setTerminalStatus, buffer error!\r\n");
-    	return -1;
+void cacheSetTerminalStatus(const char *status, int len) {
+    if (len >= sizeof(ginCachedStatus)) {
+        return;
     }
-	if (!gUartDev) {
-		uartInit();
-	}
-	if (!gUartDev) {
-		wmprintf("setTerminalStatus, open uart error!\r\n");
-		return -1;
-#if 1
-	if (WM_SUCCESS != json_init(&jobj, jsonToken, NUM_TOKENS, (char *)status, len)) {
-		wmprintf("setTerminalStatus, get json error!\r\n");
-		return -1;
-	}
-//    int json_get_val_str(jobj_t *jobj, char *key, char *value, int max_len);
-	if (WM_SUCCESS != json_get_composite_object(&jobj, DEV_FMT_CTROL)) {
-		wmprintf("setTerminalStatus, get control json error!\r\n");
-		return -1;
-	}
-	acmd.en = acmd.st = 0;
-    if (WM_SUCCESS == json_get_val_int(&jobj, DEV_FMT_ST_IDX1, &ret)) {
-    	devSt.sw.idx1 = !!ret;
-    	acmd.en |= (0x1 << 0);
-    	acmd.st |= (devSt.sw.idx1 << 0);
-    	wmprintf("index1: %d\r\n", devSt.sw.idx1);
+    memcpy(ginCachedStatus, status, len);
+    ginCachedStatus[len] = 0;
+    return;
+}
+int cacheGetTerminalStatus(char *status, int len) {
+    int cachedStatusLen = strlen(ginCachedStatus);
+    if (0 == ginCachedStatus[0]) {
+        return 0;
     }
-    if (WM_SUCCESS == json_get_val_int(&jobj, DEV_FMT_ST_IDX2, &ret)) {
-    	devSt.sw.idx2 = !!ret;
-    	acmd.en |= (0x1 << 1);
-    	acmd.st |= (devSt.sw.idx2 << 1);
-    	wmprintf("index2: %d\r\n", devSt.sw.idx2);
+    if (len <= cachedStatusLen) {
+        return 0;
     }
-    if (WM_SUCCESS == json_get_val_int(&jobj, DEV_FMT_ST_IDX3, &ret)) {
-    	devSt.sw.idx3 = !!ret;
-    	acmd.en |= (0x1 << 2);
-    	acmd.st |= (devSt.sw.idx3 << 2);
-    	wmprintf("index3: %d\r\n", devSt.sw.idx3);
-    }
-    if (WM_SUCCESS == json_get_val_int(&jobj, DEV_FMT_ST_IDX4, &ret)) {
-    	devSt.sw.idx4 = !!ret;
-    	acmd.en |= (0x1 << 3);
-    	acmd.st |= (devSt.sw.idx4 << 3);
-    	wmprintf("index4: %d\r\n", devSt.sw.idx4);
-    }
-#endif
-	acmd.st &= acmd.en;
-	acmd.crc = getCmdCrc((uint8_t *)&acmd, sizeof(acmd) - 1);
-	setCmdCrc(&acmd);
-	uart_drv_write(gUartDev, (uint8_t *) &acmd, sizeof(acmd));
-	wmprintf("Write %d:\r\n", sizeof(acmd));
-	printhex((char *) &acmd, sizeof(acmd));
-	//从串口中读取数据
-	n = uart_drv_read(gUartDev, (uint8_t *) buf, sizeof(buf));
-	if (0 < n) {
-		wmprintf("Read  %d: \t", n);
-		printhex(buf, n);
-	}
-#endif
-	return 0;
+    memcpy(status, ginCachedStatus, cachedStatusLen);
+    status[cachedStatusLen] = 0;
+    return cachedStatusLen;
 }
 
 /* TODO: Debug only */
