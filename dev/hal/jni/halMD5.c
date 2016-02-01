@@ -1,8 +1,4 @@
-#ifdef __LE_SDK__
-#undef __LE_SDK__
-#endif
-#include "leconfig.h"
-// #include "halHeader.h"
+#include "halHeader.h"
 
 
 //#include <stdio.h>

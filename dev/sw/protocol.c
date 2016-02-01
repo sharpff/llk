@@ -151,7 +151,9 @@ static CmdRecord tblCmdType[] = {
 #define TEST_AES
 #define TEST_JSON
 // #define TEST_FLASH
+#ifndef __ANDROID__
 #define TEST_SENGINE
+#endif
 
 #ifdef TEST_AES
 
@@ -409,7 +411,7 @@ void testSengine() {
 }
 #endif
 
-int lelinkInit() {
+int lelinkInit(void *auth) {
     int ret = 0;
     void **ioHdl = NULL;
 
@@ -431,6 +433,7 @@ int lelinkInit() {
         goto failed;
     }
 
+#ifndef __ANDROID__
     ret = sengineInit();
     if (0 != ret) {
         LELOGE("sengineInit ret[%d]\r\n", ret);
@@ -442,11 +445,12 @@ int lelinkInit() {
         LELOGE("ioInit ioHdl[%p]\r\n", ioHdl);
         goto failed;
     }
+#endif
 
 
     // this case should be dev
-    // if (NULL == auth) {
-        // load from flash
+     if (NULL == auth) {
+//         load from flash
         AuthCfg authCfg;
         // int ret;
         ret = lelinkStorageReadAuthCfg(&authCfg);
@@ -463,17 +467,17 @@ int lelinkInit() {
         setOriRemoteServer(authCfg.data.remote, strlen(authCfg.data.remote), authCfg.data.port);
         // test only
         getOriRemoteServer(authCfg.data.remote, MAX_REMOTE, &(authCfg.data.port));
-    // } else {
-    //     uint8_t mac[6] = {0};
-    //     if (0 == halGetMac(mac, sizeof(mac))) {
-    //         char macStr[13] = {0};
-    //         bytes2hexStr(mac, sizeof(mac), (uint8_t*)macStr, sizeof(macStr));
-    //         memcpy(((AuthData *)(auth))->uuid + 20, macStr, 12);
-    //     }
-    //     setTerminalUUID(((AuthData *)(auth))->uuid, MAX_UUID);
-    //     setTerminalPublicKey(((AuthData *)(auth))->pubkey, ((AuthData *)(auth))->pubkeyLen);
-    //     setTerminalSignature(((AuthData *)(auth))->signature, ((AuthData *)(auth))->signatureLen);        
-    // }
+     } else {
+         uint8_t mac[6] = {0};
+         if (0 == halGetMac(mac, sizeof(mac))) {
+             char macStr[13] = {0};
+             bytes2hexStr(mac, sizeof(mac), (uint8_t*)macStr, sizeof(macStr));
+             memcpy(((AuthData *)(auth))->uuid + 20, macStr, 12);
+         }
+         setTerminalUUID(((AuthData *)(auth))->uuid, MAX_UUID);
+         setTerminalPublicKey(((AuthData *)(auth))->pubkey, ((AuthData *)(auth))->pubkeyLen);
+         setTerminalSignature(((AuthData *)(auth))->signature, ((AuthData *)(auth))->signatureLen);
+     }
 
 
 #ifdef TEST_MD5
@@ -502,10 +506,12 @@ failed:
 }
 
 void lelinkDeinit() {
+#ifndef __ANDROID__
     halDeLockInit();
     halDeAESInit();
     halDeFlashInit();
     ioDeInit(1);
+#endif
 }
 
 int lelinkDoPollingQ2A(void *ctx) {
@@ -1317,7 +1323,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         // auth done
         syncUTC(dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
-        halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+        halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
         ginStateCloudAuthed = 2;
     }
     ginStateCloudLinked = 2;

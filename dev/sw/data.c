@@ -246,7 +246,11 @@ int getVer(char fwVer[32], int size) {
 }
 
 int setTerminalStatus(const char *status, int len) {
+#ifndef __ANDROID__
     return sengineSetStatus((char *)status, len);
+#else
+    return 0;
+#endif
 }
 
 int getTerminalStatus(char *status, int len) {
@@ -268,14 +272,18 @@ int getTerminalStatus(char *status, int len) {
     strcpy(status, "\"status\":");
 
     // script status
+#ifndef __ANDROID__
     ret = sengineGetStatus(status + strlen(status), len - strlen(status));
+#else
+    ret = 0;
+#endif
     if (0 >= ret) {
-        LELOGW("getTerminalStatus sengineGetStatus ret [%d]\r\n", ret);
+//        LELOGW("getTerminalStatus sengineGetStatus ret [%d]\r\n", ret);
         ret = cacheGetTerminalStatus(status, len);
         if (0 >= ret) {
             strcpy(status, "\"status\":");
             strcpy(status + strlen(status), "{}");
-            LELOGW("getTerminalStatus make status [%s]\r\n", status);
+//            LELOGW("getTerminalStatus make status [%s]\r\n", status);
             return strlen(status);
         }
     }

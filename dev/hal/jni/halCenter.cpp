@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include "io.h"
 #include "base64.h"
+#include "utility.h"
 #include "halHeader.h"
 #include "jniLeLink.h"
 #include "airconfig_ctrl.h"
@@ -25,10 +26,10 @@ int initTask(char *json)
 {
 	int ret;
 	pthread_t id;
-	AuthData authData;
 	std::string s;
 	Json::Value value;
 	Json::Reader reader;
+	AuthData auth;
 
 	s = std::string(static_cast<char *>(json));
 	if (!reader.parse(s, value)) {
@@ -38,16 +39,20 @@ int initTask(char *json)
 //	LOGI("info:\n%s", json);
 	// public key
 	s = base64_decode(value[FJK_PUBLIC_KEY].asString());
-	authData.pubkeyLen = s.length();
-	memcpy(authData.pubkey, s.c_str(), s.length());
+	auth.pubkeyLen = s.length();
+	memcpy(auth.pubkey, s.c_str(), s.length());
 	// signature
 	s = base64_decode(value[FJK_SIGNATURE].asString());
-	authData.signatureLen = s.length();
-	memcpy(authData.signature, s.c_str(), s.length());
+	auth.signatureLen = s.length();
+	memcpy(auth.signature, s.c_str(), s.length());
 	// uuid
-	strncpy((char *) authData.uuid, value[PJK_UUID].asCString(), MAX_UUID);
-	lelinkInit(&authData);
-	gNativeContext.ctxR2R = lelinkNwNew(REMOTE_IP, REMOTE_PORT, PORT_ONLY_FOR_VM, 0);
+	strncpy((char *) auth.uuid, value[PJK_UUID].asCString(), MAX_UUID);
+	// server addr
+	strncpy(auth.remote, "10.204.28.134", MAX_REMOTE);
+	// server port
+	auth.port = 5546;
+	lelinkInit(&auth);
+	gNativeContext.ctxR2R = lelinkNwNew(auth.remote, auth.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
 		return ret;

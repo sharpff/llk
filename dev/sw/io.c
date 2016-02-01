@@ -298,11 +298,13 @@ void *ioInit(int ioType) {
         case IO_TYPE_UART: {
             int baud = 0, dataBits = 0, stopBits = 0, flowCtrl = 0, PARITY = 0;
             char parity = 0;
+#ifndef __ANDROID__
             ret = sengineGetDevProfile(json, sizeof(json));
             if (0 >= ret) {
                 LELOGW("ioInit sengineGetDevProfile ret[%d]\r\n", ret);
                 return NULL;
             }
+#endif
             ret = getUartInfo(json, ret, &baud, &dataBits, &stopBits, &parity, &flowCtrl);
             if (0 > ret) {
                 LELOGW("ioInit getUartInfo ret[%d]\r\n", ret);

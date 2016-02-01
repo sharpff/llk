@@ -1,7 +1,22 @@
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include "leconfig.h"
+#include "halHeader.h"
+#include <errno.h>
+
+void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
+    return (void *)0xffffffff;
+}
+
+int halUartClose(void *dev) {
+    return 0;
+}
+
+int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
+    return len;
+}
+
+int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
+    return len;
+}
+
 
 int halFlashInit(void)
 {
@@ -13,23 +28,19 @@ int halFlashDeinit(void)
     return 0;
 }
 
-int halIOWrite(int type, const char *protocol, int protocolLen, uint8_t *io, int ioLen, void *userData) {
+
+static int ginMinSize = 0x1000; // 4k
+#define GET_PAGE_SIZE(l) \
+    ((((l - 1) / ginMinSize) + 1)*ginMinSize)
+void *halFlashOpen(void)
+{
+    return (void *)0xffffffff;
+}
+
+int halFlashClose(void *dev)
+{
     return 0;
 }
-
-int halIORead(int type, const uint8_t *io, int ioLen, char *protocol, int protocolLen, void *userData) {
-    return 0;
-}
-
-
-void *halFlashOpen(void){
-	return (void *)0xFFFFFFFF;
-}
-
-int halFlashClose(void *dev){
-    return 0;
-}
-
 int halFlashErase(void *dev, uint32_t startAddr, uint32_t size){
     return 0;
 }
@@ -53,13 +64,13 @@ int halGetMac(uint8_t *mac, int len)
 	}
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) {
-		LELOGE("Can't get mac. socket open error\r\n");
+		APPLOGE("Can't get mac. socket open error\r\n");
 		return -1;
 	}
 	memset(&tmp, 0, sizeof(struct ifreq));
 	strncpy(tmp.ifr_name, "wlan0", sizeof(tmp.ifr_name) - 1);
 	if ((ioctl(sockfd, SIOCGIFHWADDR, &tmp)) < 0) {
-		LELOGE("Can't get mac. socket open error\r\n");
+		APPLOGE("Can't get mac. socket open error\r\n");
 		close(sockfd);
 		return -1;
 	}

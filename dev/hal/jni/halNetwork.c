@@ -1,8 +1,4 @@
-#ifdef __LE_SDK__
-#undef __LE_SDK__
-#endif
-#include "leconfig.h"
-// #include "halHeader.h"
+#include "halHeader.h"
 
 int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
 
@@ -49,13 +45,13 @@ int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int l
     int ret;
     struct sockaddr_in to_addr;
     
-    APPLOGW("sendto %s.%d", ip, port);
     memset((char *)&to_addr, 0, sizeof(to_addr));
 
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(port);
     to_addr.sin_addr.s_addr = inet_addr(ip);
     ret = sendto(sock, buf, len, 0, (struct sockaddr *)&to_addr, sizeof(to_addr));
+    APPLOGW("sendto %s:%d, ret = %d", ip, port, ret);
  
     return ret;
 }
@@ -98,18 +94,6 @@ int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint
     return ret;
 }
 
-#if 0
-int halGetSelfAddr(char *ip, int size, int *port)
-{
-    void * tmpAddrPtr=NULL;
-    struct ifaddrs * ifAddrStruct=NULL;
-
-    size = (strlen(SELF_IP)+1) > size ? size : (strlen(SELF_IP)+1);
-    memcpy(ip, SELF_IP, size);// TODO: caution
-
-    return strlen(ip);
-}
-#else
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/ioctl.h>
@@ -148,4 +132,3 @@ int halGetSelfAddr(char *ip, int size, int *port)
 	close(sockfd);
 	return strlen(ip);
 }
-#endif

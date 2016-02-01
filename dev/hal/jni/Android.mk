@@ -1,7 +1,8 @@
 LOCAL_PATH := $(call my-dir)
 
-SW_FILES := $(wildcard $(LOCAL_PATH)/../../sw/*.c)
-SW_FILES := $(SW_FILES:$(LOCAL_PATH)/%=%)
+SW_FILES := airconfig.c airconfig_ctrl.c cache.c convertor.c data.c io.c misc.c \
+network.c pack.c protocol.c state.c utility.c
+SW_FILES := $(addprefix ../../sw/, $(SW_FILES))
 SW_CRYPTO_FILES := $(wildcard $(LOCAL_PATH)/../../sw/crypto/*.c)
 SW_CRYPTO_FILES := $(SW_CRYPTO_FILES:$(LOCAL_PATH)/%=%)
 SW_JSMN_FILES := $(wildcard $(LOCAL_PATH)/../../sw/jsmn/*.c)

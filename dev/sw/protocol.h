@@ -203,7 +203,7 @@ typedef struct
  * 'auth' is an obj of AuthData, that could be referred in io.h
  * Just pass NULL if loading from flash.
  */
-int lelinkInit();
+int lelinkInit(void *auth);
 void lelinkDeinit();
 
 int lelinkDoPollingQ2A(void *ctx);

@@ -1,14 +1,7 @@
-#ifdef __LE_SDK__
-#undef __LE_SDK__
-#endif
-#include "leconfig.h"
-// #include "halHeader.h"
-// #include <stdio.h>
-// #include <string.h>
-// #include "joylinkCrypto.h"
-// #include "joylinkErrno.h"
+#include "halHeader.h"
+#include "protocol.h"
 
-static int joylinkPadding(uint8_t *data, uint32_t len, uint32_t maxLen, int isPKCS5)
+static int lelinkPadding(uint8_t *data, uint32_t len, uint32_t maxLen, int isPKCS5)
 {
     if (isPKCS5)
     {
@@ -19,7 +12,7 @@ static int joylinkPadding(uint8_t *data, uint32_t len, uint32_t maxLen, int isPK
             padding = 16 - ( len % 16 );
         
         if ( ( len + padding ) > maxLen )
-            return -1;
+            return LELINK_ERR_ENCINFO_ERR;
         
         for ( i=0; i<padding; i++ )
             data[len + i] = padding;
@@ -29,15 +22,15 @@ static int joylinkPadding(uint8_t *data, uint32_t len, uint32_t maxLen, int isPK
     {
         len = (len + 15) & 0xfffffff0;
         if (len > maxLen)
-            return -1;
+            return LELINK_ERR_ENCINFO_ERR;
         return len;
     }
 }
 
-static int joylinkUnPadding(uint8_t *data, uint32_t len, int isPKCS5)
+static int lelinkUnPadding(uint8_t *data, uint32_t len, int isPKCS5)
 {
     if ( len % 16 )
-        return -1;
+        return LELINK_ERR_ENCINFO_ERR;
     
     if (isPKCS5)
     {
@@ -48,7 +41,7 @@ static int joylinkUnPadding(uint8_t *data, uint32_t len, int isPKCS5)
         for (i=0; i<padding; i++)
         {
             if (data[len - 1 - i] != padding)
-                return -2;
+                return LELINK_ERR_RECV_DATA_ERR;
         }
         
         return len - padding;
@@ -64,7 +57,7 @@ typedef struct
     int nr;                     /*!<  number of rounds  */
     unsigned long *rk;          /*!<  AES round keys    */
     unsigned long buf[68];      /*!<  unaligned data    */
-}joylinkEnc2Context;
+}lelinkEnc2Context;
 
 /*
  * 32-bit integer manipulation macros (little endian)
@@ -119,9 +112,9 @@ static unsigned long RCON[10];
 #define JOYLINKXTIME(x) ( ( x << 1 ) ^ ( ( x & 0x80 ) ? 0x1B : 0x00 ) )
 #define JOYLINKMUL(x,y) ( ( x && y ) ? pow[(log[x]+log[y]) % 255] : 0 )
 
-static int joylink_enc2_init_done = 0;
+static int lelink_enc2_init_done = 0;
 
-static void joylink_enc2_gen_tables( void )
+static void lelink_enc2_gen_tables( void )
 {
     int i, x, y, z;
     int pow[256];
@@ -200,15 +193,15 @@ static void joylink_enc2_gen_tables( void )
 /*
  * AES key schedule (encryption)
  */
-static int joylink_enc2_setkey_enc(joylinkEnc2Context *ctx, const unsigned char *key, unsigned int keysize)
+static int lelink_enc2_setkey_enc(lelinkEnc2Context *ctx, const unsigned char *key, unsigned int keysize)
 {
     unsigned int i;
     unsigned long *RK;
     
-    if( joylink_enc2_init_done == 0 )
+    if( lelink_enc2_init_done == 0 )
     {
-        joylink_enc2_gen_tables();
-        joylink_enc2_init_done = 1;
+        lelink_enc2_gen_tables();
+        lelink_enc2_init_done = 1;
     }
     
     switch( keysize )
@@ -299,10 +292,10 @@ static int joylink_enc2_setkey_enc(joylinkEnc2Context *ctx, const unsigned char 
 /*
  * AES key schedule (decryption)
  */
-static int joylink_enc2_setkey_dec( joylinkEnc2Context *ctx, const unsigned char *key, unsigned int keysize )
+static int lelink_enc2_setkey_dec( lelinkEnc2Context *ctx, const unsigned char *key, unsigned int keysize )
 {
     int i, j;
-    joylinkEnc2Context cty;
+    lelinkEnc2Context cty;
     unsigned long *RK;
     unsigned long *SK;
     int ret;
@@ -317,7 +310,7 @@ static int joylink_enc2_setkey_dec( joylinkEnc2Context *ctx, const unsigned char
     
     ctx->rk = RK = ctx->buf;
     
-    ret = joylink_enc2_setkey_enc( &cty, key, keysize );
+    ret = lelink_enc2_setkey_enc( &cty, key, keysize );
     if( ret != 0 )
         return( ret );
     
@@ -344,7 +337,7 @@ static int joylink_enc2_setkey_dec( joylinkEnc2Context *ctx, const unsigned char
     *RK++ = *SK++;
     *RK++ = *SK++;
     
-    memset( &cty, 0, sizeof( joylinkEnc2Context ) );
+    memset( &cty, 0, sizeof( lelinkEnc2Context ) );
     
     return( 0 );
 }
@@ -398,7 +391,7 @@ RT3[ ( Y0 >> 24 ) & 0xFF ];    \
 /*
  * AES-ECB block encryption/decryption
  */
-static int joylink_enc2_crypt_ecb( joylinkEnc2Context *ctx,
+static int lelink_enc2_crypt_ecb( lelinkEnc2Context *ctx,
                              int mode,
                              const unsigned char input[16],
                              unsigned char output[16] )
@@ -493,7 +486,7 @@ static int joylink_enc2_crypt_ecb( joylinkEnc2Context *ctx,
 /*
  * AES-CBC buffer encryption/decryption
  */
-static int joylink_enc2_crypt_cbc( joylinkEnc2Context *ctx,
+static int lelink_enc2_crypt_cbc( lelinkEnc2Context *ctx,
                              int mode,
                              size_t length,
                              unsigned char iv[16],
@@ -511,7 +504,7 @@ static int joylink_enc2_crypt_cbc( joylinkEnc2Context *ctx,
         while( length > 0 )
         {
             memcpy( temp, input, 16 );
-            joylink_enc2_crypt_ecb( ctx, mode, input, output );
+            lelink_enc2_crypt_ecb( ctx, mode, input, output );
             
             for( i = 0; i < 16; i++ )
                 output[i] = (unsigned char)( output[i] ^ iv[i] );
@@ -530,7 +523,7 @@ static int joylink_enc2_crypt_cbc( joylinkEnc2Context *ctx,
             for( i = 0; i < 16; i++ )
                 output[i] = (unsigned char)( input[i] ^ iv[i] );
             
-            joylink_enc2_crypt_ecb( ctx, mode, output, output );
+            lelink_enc2_crypt_ecb( ctx, mode, output, output );
             memcpy( iv, output, 16 );
             
             input  += 16;
@@ -550,24 +543,24 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
 {
     int dl;
     int ret;
-    joylinkEnc2Context ctx;
+    lelinkEnc2Context ctx;
     
-    memset(&ctx, 0, sizeof(joylinkEnc2Context));
+    memset(&ctx, 0, sizeof(lelinkEnc2Context));
     if (!type)
     {
-        joylink_enc2_setkey_dec(&ctx, key, keyLen);
-        ret = joylink_enc2_crypt_cbc(&ctx, type, (size_t)(*len), iv, data, data);
-        dl = joylinkUnPadding(data, (uint32_t)(*len), isPKCS5);
+        lelink_enc2_setkey_dec(&ctx, key, keyLen);
+        ret = lelink_enc2_crypt_cbc(&ctx, type, (size_t)(*len), iv, data, data);
+        dl = lelinkUnPadding(data, (uint32_t)(*len), isPKCS5);
         if (dl < 0)
             return dl;
     }
     else
     {
-        dl = joylinkPadding(data, *len, maxLen, isPKCS5);
+        dl = lelinkPadding(data, *len, maxLen, isPKCS5);
         if (dl < 0)
             return dl;
-        joylink_enc2_setkey_enc(&ctx, key, keyLen);
-        ret = joylink_enc2_crypt_cbc(&ctx, type, (size_t)dl, iv, data, data);
+        lelink_enc2_setkey_enc(&ctx, key, keyLen);
+        ret = lelink_enc2_crypt_cbc(&ctx, type, (size_t)dl, iv, data, data);
     }
     
     *len = dl;
