@@ -1231,6 +1231,7 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     LELOG("cbCtrlCmdRemoteReq -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, dataIn);
     ret = setTerminalStatus(dataIn, dataLen);
+	getTerminalStatus(data, sizeof(data));
     LELOG("cbCtrlCmdRemoteReq [%d] -e\r\n", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);
@@ -1479,9 +1480,12 @@ static void cbCloudMsgCtrlC2RRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, 
 
 
 static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    uint8_t data[1024] = {0};
     LELOG("cbCloudMsgCtrlR2TRemoteReq -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, dataIn);
     // setCurrentR2T
+    setTerminalStatus(dataIn, dataLen);
+	getTerminalStatus(data, sizeof(data));
     LELOG("cbCloudMsgCtrlR2TRemoteReq -e\r\n");
     return halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
 }

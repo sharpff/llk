@@ -254,21 +254,10 @@ int setTerminalStatus(const char *status, int len) {
 }
 
 int getTerminalStatus(char *status, int len) {
-    // const int fixSize = 16;
     int ret = 0;
-    // uint8_t json[UDP_MTU] = {0};
-    const char prefixStatus[16] = "{\"status\":";
     const char suffixCloud[16] = ",\"cloud\":%d";
-    // if (len <= (ret + sizeof(prefixStatus) + sizeof(suffixCloud))) {
-    //     return 0;
-    // }
-    LELOG("call getTerminalStatus start \r\n");
 
-    // prefix 
-    if (len <= sizeof(prefixStatus)) {
-        LELOGW("getTerminalStatus 'len' is too small [%d]\r\n", len);
-        return 0;
-    }
+    LELOG("call getTerminalStatus start \r\n");
     strcpy(status, "\"status\":");
 
     // script status
@@ -278,24 +267,25 @@ int getTerminalStatus(char *status, int len) {
     ret = 0;
 #endif
     if (0 >= ret) {
-//        LELOGW("getTerminalStatus sengineGetStatus ret [%d]\r\n", ret);
-        ret = cacheGetTerminalStatus(status, len);
+        LELOGW("getTerminalStatus sengineGetStatus ret [%d]\r\n", ret);
+//        ret = cacheGetTerminalStatus(status, len);
         if (0 >= ret) {
             strcpy(status, "\"status\":");
             strcpy(status + strlen(status), "{}");
-//            LELOGW("getTerminalStatus make status [%s]\r\n", status);
-            return strlen(status);
+            LELOGW("getTerminalStatus make status [%s]\r\n", status);
+//            return strlen(status);
+            ret = strlen(status);
         }
     }
 
     // suffix cloud
-    if (len <= (ret + sizeof(suffixCloud) + strlen(prefixStatus))) {
+    if (len <= (ret + sizeof(suffixCloud) + strlen(status))) {
         LELOGW("getTerminalStatus 'len' is too small for total [%d]\r\n", len);
         return 0;
     }
     sprintf(status + strlen(status), suffixCloud, ginStateCloudAuthed);
 
-    cacheSetTerminalStatus(status, strlen(status));
+//    cacheSetTerminalStatus(status, strlen(status));
     LELOG("what status [%s]\r\n", status);
     return strlen(status);
 }
