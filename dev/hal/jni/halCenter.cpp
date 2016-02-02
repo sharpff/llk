@@ -15,7 +15,7 @@
 #include "halCenter.h"
 
 nativeContext_t gNativeContext = {
-		"lelink v0.4 " __DATE__ " " __TIME__,
+		"lelink v0.5 " __DATE__ " " __TIME__,
 		true
 };
 
