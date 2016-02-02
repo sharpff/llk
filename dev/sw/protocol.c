@@ -1243,9 +1243,10 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
 static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0, encType = -1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char rspCtrlCmd[1024] = {0};
+    char rspCtrlCmd[1024] = "{";
     LELOG("cbCtrlCmdLocalRsp -s\r\n");
-    ret = getTerminalStatus(rspCtrlCmd, sizeof(rspCtrlCmd));
+	ret = getTerminalStatus(rspCtrlCmd + strlen(rspCtrlCmd), sizeof(rspCtrlCmd) - strlen(rspCtrlCmd));
+	strcat(rspCtrlCmd, "}");
     encType = (2 == ginStateCloudAuthed) ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspCtrlCmd, strlen(rspCtrlCmd), dataOut, dataLen);
     LELOG("cbCtrlCmdLocalRsp -e\r\n");

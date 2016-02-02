@@ -114,11 +114,8 @@ void cmdSend(void *ptr, char *json)
 		strncpy((char *) node.uuid, value[PJK_UUID].asCString(), MAX_UUID);
 	}
 	if (!value[PJK_TOKEN].isNull()) {
-		s = value[PJK_TOKEN].asCString();
-		const char *p = base64_decode(s).c_str();
-		strncpy((char *) node.token, p, AES_LEN);
-		LOGI("str:[%s]", s.c_str());
-		LOGI("%02X,%02X,%02X", p[0], p[1], p[AES_LEN-1]);
+		LOGI("token:[%s]\r\n", value[PJK_TOKEN].asCString());
+		hexStr2bytes(value[PJK_TOKEN].asCString(), node.token, AES_LEN);
 	}
 	LOGI("send: %s.%d %d.%d-%d, timeout: %d\n",
 			node.ndIP[0] ? node.ndIP : "default", node.ndPort, node.cmdId, node.subCmdId, node.seqId, node.timeoutRef);
@@ -149,8 +146,9 @@ static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo)
 	root[PJK_SEQID] = cmdInfo->seqId;
 	root[PJK_STATUS] = cmdInfo->status;
 	if (cmdInfo->token[0]) {
-		base64Token = base64_encode((unsigned char *) (cmdInfo->token), AES_LEN);
-		root[PJK_TOKEN] = base64Token.c_str(); // (char *) (cmdInfo->token);
+		char hexbuf[AES_LEN * 2 + 1] = { 0 };
+		bytes2hexStr(cmdInfo->token, AES_LEN, (uint8_t *) hexbuf, sizeof(hexbuf));
+		root[PJK_TOKEN] = (char *) (hexbuf);
 	}
 	return c2js(env, root.toStyledString().c_str());
 }
