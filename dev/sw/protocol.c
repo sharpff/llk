@@ -1493,15 +1493,15 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
 static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char status[1024] = {0};
+    char out[1024] = {0};
+    char status[256] = {0};
     LELOG("cbCloudMsgCtrlR2TLocalRsp -s\r\n");
     ret = halCBLocalRsp(ctx, cmdInfo, data, len, status, sizeof(status));
     if (!ret) {
-		status[0] = '{', status[0] = '\0';
-        ret = getTerminalStatus(status + strlen(status), sizeof(status) - strlen(status));
-        strcat(status, "}");
+        ret = getTerminalStatus(status, sizeof(status));
+        ret = snprintf(out, sizeof(out), "{%s}", status);
     }
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
+	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)out, ret, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TLocalRsp -e\r\n");
     return ret;
 }
