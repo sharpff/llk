@@ -339,6 +339,7 @@ void **ioGetHdl() {
             return NULL;
         }
         whatType = getWhatCvtType(json, ret);
+        whatType--;
         if (0 > whatType) {
             return NULL;
         }

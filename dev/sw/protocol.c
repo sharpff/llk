@@ -494,7 +494,9 @@ int lelinkInit(void *auth) {
 #endif
 
 
+    return ret;
 failed:
+    while(1);
     return ret;
 }
 
