@@ -285,7 +285,7 @@ int getTerminalStatus(char *status, int len) {
     }
     sprintf(status + strlen(status), suffixCloud, ginStateCloudAuthed);
 
-//    cacheSetTerminalStatus(status, strlen(status));
+    cacheSetTerminalStatus(status, strlen(status));
     LELOG("what status [%s]\r\n", status);
     return strlen(status);
 }

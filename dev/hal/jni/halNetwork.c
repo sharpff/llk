@@ -132,3 +132,9 @@ int halGetSelfAddr(char *ip, int size, int *port)
 	close(sockfd);
 	return strlen(ip);
 }
+
+int halGetBroadCastAddr(char *broadcastAddr, int len) {
+    const char *ip = "1.2.3.255";
+    strcpy(broadcastAddr, ip);
+    return strlen(ip);
+}

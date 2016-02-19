@@ -7,12 +7,14 @@
 
 #include <pthread.h>
 #include "io.h"
+#include "state.h"
 #include "base64.h"
 #include "utility.h"
+#include "leconfig.h"
 #include "halHeader.h"
 #include "jniLeLink.h"
-#include "airconfig_ctrl.h"
 #include "halCenter.h"
+#include "airconfig_ctrl.h"
 
 nativeContext_t gNativeContext = {
 		"lelink v0.5 " __DATE__ " " __TIME__,
@@ -127,10 +129,10 @@ static void *netTaskFun(void *data)
 	LOGI("LeLink Task run...\n");
 	while (gNativeContext.runTask)
 	{
-		lelinkDoPollingQ2A(gNativeContext.ctxQ2A);
-		lelinkDoPollingR2R(gNativeContext.ctxR2R);
-		delayms(200);
+        lelinkPollingState(200, gNativeContext.ctxR2R, gNativeContext.ctxQ2A);
 	}
+    lelinkNwDelete(gNativeContext.ctxQ2A);
+    lelinkNwDelete(gNativeContext.ctxR2R);
 	return NULL;
 }
 

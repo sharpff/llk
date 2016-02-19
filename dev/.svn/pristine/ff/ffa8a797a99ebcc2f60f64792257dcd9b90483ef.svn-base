@@ -114,11 +114,9 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     }
     lelinkDoPollingQ2A(ginCtxQ2A);
     lelinkDoPollingR2R(ginCtxR2R);
-#ifndef __ANDROID__
     if (senginePollingIsNeedToReset()) {
         resetConfigData();
     }
-#endif
     return changeState(ret, &ginStateCntx, i);
 }
 

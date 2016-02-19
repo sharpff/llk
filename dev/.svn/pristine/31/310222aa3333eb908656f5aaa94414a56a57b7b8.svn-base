@@ -410,11 +410,9 @@ void testSengine() {
 }
 #endif
 
-int lelinkInit(void *auth) {
+int lelinkInit() {
     int ret = 0;
-    AuthCfg authCfg;
     void **ioHdl = NULL;
-    uint8_t mac[6] = {0};
 
     ret = halLockInit();
     if (0 != ret) {
@@ -434,7 +432,6 @@ int lelinkInit(void *auth) {
         goto failed;
     }
 
-#ifndef __ANDROID__
     ret = sengineInit();
     if (0 != ret) {
         LELOGE("sengineInit ret[%d]\r\n", ret);
@@ -446,11 +443,14 @@ int lelinkInit(void *auth) {
         LELOGE("ioInit ioHdl[%p]\r\n", ioHdl);
         goto failed;
     }
-#endif
+
 
     // this case should be dev
-    if (NULL == auth) {
+    // if (NULL == auth) 
+    {
         // load from flash
+        uint8_t mac[6] = {0};
+        AuthCfg authCfg;
         // int ret;
         ret = lelinkStorageReadAuthCfg(&authCfg);
         if (0 > ret) {
@@ -460,18 +460,30 @@ int lelinkInit(void *auth) {
             ret = -100;
             goto failed;
         }
-        auth = &authCfg.data;
-     }
-     if (0 == halGetMac(mac, sizeof(mac))) {
-         char macStr[13] = {0};
-         bytes2hexStr(mac, sizeof(mac), (uint8_t*)macStr, sizeof(macStr));
-         memcpy(((AuthData *)(auth))->uuid + 20, macStr, 12);
-     }
-     setTerminalUUID(((AuthData *)(auth))->uuid, MAX_UUID);
-     setTerminalPublicKey(((AuthData *)(auth))->pubkey, ((AuthData *)(auth))->pubkeyLen);
-     setTerminalSignature(((AuthData *)(auth))->signature, ((AuthData *)(auth))->signatureLen);
-     setOriRemoteServer(((AuthData *)(auth))->remote, strlen(((AuthData *)(auth))->remote), ((AuthData *)(auth))->port);
-     getOriRemoteServer(((AuthData *)(auth))->remote, MAX_REMOTE, &(((AuthData *)(auth))->port));
+        setTerminalPublicKey(authCfg.data.pubkey, authCfg.data.pubkeyLen);
+        setTerminalSignature(authCfg.data.signature, authCfg.data.signatureLen);        
+        setOriRemoteServer(authCfg.data.remote, strlen(authCfg.data.remote), authCfg.data.port);
+        // test only
+        getOriRemoteServer(authCfg.data.remote, MAX_REMOTE, &(authCfg.data.port));
+        if (0 == halGetMac(mac, sizeof(mac))) {
+            char macStr[13] = {0};
+            bytes2hexStr(mac, sizeof(mac), (uint8_t*)macStr, sizeof(macStr));
+            memcpy(authCfg.data.uuid + 20, macStr, 12);
+        }
+        setTerminalUUID(authCfg.data.uuid, MAX_UUID);
+    } 
+    // else {
+    //     uint8_t mac[6] = {0};
+    //     if (0 == halGetMac(mac, sizeof(mac))) {
+    //         char macStr[13] = {0};
+    //         bytes2hexStr(mac, sizeof(mac), (uint8_t*)macStr, sizeof(macStr));
+    //         memcpy(((AuthData *)(auth))->uuid + 20, macStr, 12);
+    //     }
+    //     setTerminalUUID(((AuthData *)(auth))->uuid, MAX_UUID);
+    //     setTerminalPublicKey(((AuthData *)(auth))->pubkey, ((AuthData *)(auth))->pubkeyLen);
+    //     setTerminalSignature(((AuthData *)(auth))->signature, ((AuthData *)(auth))->signatureLen);        
+    // }
+
 
 #ifdef TEST_MD5
     testMD5();
@@ -499,12 +511,10 @@ failed:
 }
 
 void lelinkDeinit() {
-#ifndef __ANDROID__
     halDeLockInit();
     halDeAESInit();
     halDeFlashInit();
     ioDeInit(IO_TYPE_UART);
-#endif
 }
 
 int lelinkDoPollingQ2A(void *ctx) {
@@ -902,7 +912,8 @@ static int forEachNodeR2RPostSendCB(CACHE_NODE_TYPE *currNode, void *uData)
     //int protocolBufLen = UDP_MTU;
     //uint16_t seqId = 0;
     //int ret = 0;
-    char ipTmp[MAX_IPLEN] = { 0 };
+    char ipTmp[MAX_IPLEN] =
+    { 0 };
     int portTmp = 0;
     // only for RemoteRsp
     //int protocolBufLen = (int)uData;
@@ -1150,12 +1161,12 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-	char rspDiscover[1024] = "{";
+    char rspDiscover[1024] = {0};
     LELOG("cbDiscoverLocalRsp -s\r\n");
     // gen status
-	ret = getTerminalStatus(rspDiscover + strlen(rspDiscover), sizeof(rspDiscover) - strlen(rspDiscover));
+    ret = getTerminalStatus(rspDiscover, sizeof(rspDiscover));
 
-    strcpy(&rspDiscover[strlen(rspDiscover)], ",\"uuid\":\"");
+    strcpy(&rspDiscover[ret - 1], ",\"uuid\":\"");
     getTerminalUUID((uint8_t *)rspDiscover + strlen(rspDiscover), MAX_UUID);
     
     strcpy(&rspDiscover[strlen(rspDiscover)], "\",\"ip\":\"");
@@ -1217,13 +1228,12 @@ static void cbCtrlCmdRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
     return;
 }
 static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    int ret = 1;//, type = 0;
-    uint8_t data[1024] = {0};
+    int ret = 1;
+    // uint8_t data[1024] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteReq -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, dataIn);
     ret = setTerminalStatus((const char *)dataIn, dataLen);
-	getTerminalStatus((char *)data, sizeof(data));
     LELOG("cbCtrlCmdRemoteReq [%d] -e\r\n", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);
@@ -1236,10 +1246,9 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
 static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0, encType = -1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char rspCtrlCmd[1024] = "{";
+    char rspCtrlCmd[1024] = {0};
     LELOG("cbCtrlCmdLocalRsp -s\r\n");
-	ret = getTerminalStatus(rspCtrlCmd + strlen(rspCtrlCmd), sizeof(rspCtrlCmd) - strlen(rspCtrlCmd));
-	strcat(rspCtrlCmd, "}");
+    ret = getTerminalStatus(rspCtrlCmd, sizeof(rspCtrlCmd));
     encType = (2 == ginStateCloudAuthed) ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspCtrlCmd, strlen(rspCtrlCmd), dataOut, dataLen);
     LELOG("cbCtrlCmdLocalRsp -e\r\n");
@@ -1258,12 +1267,12 @@ static int cbCtrlGetStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, con
     return ret;
 }
 static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-    int ret = 0;// type = 0;
+    int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    uint8_t status[1024] = {0};
+    char status[1024] = {0};
     LELOG("cbCtrlGetStatusLocalRsp -s\r\n");
 
-    ret = getTerminalStatus((char *)status, sizeof(status));
+    ret = getTerminalStatus(status, sizeof(status));
     ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
     // ret = getTerminalStatus(binStatus, sizeof(binStatus));
     LELOG("cbCtrlGetStatusLocalRsp -e\r\n");
@@ -1320,7 +1329,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         // auth done
         syncUTC(dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
-        halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
+        halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
         ginStateCloudAuthed = 2;
     }
     ginStateCloudLinked = 2;
@@ -1409,11 +1418,10 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     // } else {
     //     sprintf(out, "{\"now\":{%s},\"token\":\"%s\"}", status, token);
     // }
-    sprintf(out, "{%s,\"token\":\"%s\"}", status, token);
+    sprintf(out, "{\"now\":%s,\"token\":\"%s\"}", status, token);
     LELOG("%s\r\n", out);
-    ret = strlen(out);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)out, ret, dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)out, strlen(out), dataOut, dataLen);
     
     LELOG("cbCloudHeartBeatLocalReq [%d] -e\r\n", ret);
     return ret;
@@ -1475,28 +1483,26 @@ static void cbCloudMsgCtrlC2RRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, 
 
 
 static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    uint8_t data[1024] = {0};
+    
     LELOG("cbCloudMsgCtrlR2TRemoteReq -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, dataIn);
     // setCurrentR2T
     setTerminalStatus((const char *)dataIn, dataLen);
-	getTerminalStatus((char *)data, sizeof(data));
+
     LELOG("cbCloudMsgCtrlR2TRemoteReq -e\r\n");
-    return halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
+    return 1;
 }
 
 static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char out[1024] = {0};
-    char status[256] = {0};
+    char status[1024] = {0};
     LELOG("cbCloudMsgCtrlR2TLocalRsp -s\r\n");
     ret = halCBLocalRsp(ctx, cmdInfo, data, len, status, sizeof(status));
     if (!ret) {
         ret = getTerminalStatus(status, sizeof(status));
-        ret = snprintf(out, sizeof(out), "{%s}", status);
     }
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)out, ret, dataOut, dataLen);
+	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TLocalRsp -e\r\n");
     return ret;
 }
