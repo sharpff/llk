@@ -25,7 +25,7 @@ function stringToTable( sta )
 end
 
 function LOGTBL(tblObj)
-	local str = ""
+	local str = "LUA: "
 	for i = 1, #tblObj do 
 		str = str..string.format('%02x ', tblObj[i])
 	end
@@ -77,23 +77,21 @@ end
 function cvtStd2Pri(json)
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]
-	local cmdTbl = { 0xa5, 0xa5, 0x5a, 0x5a, 0x00, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00, 0x0f, 0x00 }
+	local cmdTbl = { 0xa5, 0xa5, 0x5a, 0x5a, 0x00, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00 }
 	local dataStr = ""
     local sum = 0xbeaf
 
-	if (ctrl["idx1"] == 1) then
-		cmdTbl[13] = cmdTbl[13] | 0x01
+    for i = 1, 4 do
+    	idx = "idx"..i
+    	print(idx, ctrl[idx])
+    	if(ctrl[idx] ~= nil) then
+			cmdTbl[12] = cmdTbl[12] | (0x01 << (i - 1))
+    		if(ctrl[idx] == 1) then
+				cmdTbl[13] = cmdTbl[13] | (0x01 << (i - 1))
+    		end
+    	end
     end
-	if (ctrl["idx2"] == 1) then
-		cmdTbl[13] = cmdTbl[13] | 0x02
-    end
-	if (ctrl["idx3"] == 1) then
-		cmdTbl[13] = cmdTbl[13] | 0x04
-    end
-	if (ctrl["idx4"] == 1) then
-		cmdTbl[13] = cmdTbl[13] | 0x08
-    end
-
+    
     for i = 1, #cmdTbl do
         sum = sum + cmdTbl[i]
     end
@@ -118,6 +116,8 @@ function cvtPri2Std(bin)
 
     if dataTbl[1] == 0xa5 and dataTbl[2] == 0xa5 and dataTbl[3] == 0x5a and dataTbl[4] == 0x5a then
         str = string.format(str, (dataTbl[13] >> 0) & 0x1, (dataTbl[13] >> 1) & 0x1, (dataTbl[13] >> 2) & 0x1, (dataTbl[13] >> 3) & 0x1)
+    else
+        str = string.format(str, -1, -1, -1, -1)
     end
     print (str)
     return string.len(str), str

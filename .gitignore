@@ -1,5 +1,8 @@
 *.d
 dev/hal/jni/obj
 dev/hal/jni/libs
+dev/app/*.bin
 dev/app/linux/Debug/
+dev/lib/lelink/Debug/
+dev/lib/sengine/Debug/
 /*~
