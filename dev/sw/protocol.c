@@ -1487,6 +1487,29 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     return halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
 }
 
+int updatefw(void)
+{
+    int status;
+    const char *update_url = "http://115.182.63.167/fei/le_demo.bin";
+    struct partition_entry *p = rfget_get_passive_firmware();
+
+    LELOG("waiting update, now version: %s-%s\r\n", __DATE__, __TIME__);
+
+    /* Perform FW update later */
+    LELOG("\r\nfw update url: %s", update_url);
+    if (p == NULL) {
+        LELOGE("Failed to get passive partition");
+        return -WM_FAIL;
+    }    
+    status = rfget_client_mode_update(update_url, p, NULL);
+    if (status != WM_SUCCESS) {
+        LELOGE("Failed to perform fw_update ");
+        return -WM_FAIL;
+    }
+    LELOG("update successed\r\n");
+    return WM_SUCCESS;
+}
+
 static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
@@ -1499,6 +1522,7 @@ static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, co
         ret = snprintf(out, sizeof(out), "{%s}", status);
     }
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)out, ret, dataOut, dataLen);
+    updatefw();
     LELOG("cbCloudMsgCtrlR2TLocalRsp -e\r\n");
     return ret;
 }

@@ -265,6 +265,13 @@ static int stateProcCloudLinked(StateContext *cntx) {
     }
 }
 
+#include <header.h>
+#include <misc.h>
+#include <rfget.h>
+#include <flash.h>
+#include <httpc.h>
+#include <ftfs.h>
+#include <partition.h>
 static int stateProcCloudAuthed(StateContext *cntx) {
     // int ret = 0;
     LELOG("stateProcCloudAuthed [%d]\r\n", ginStateCloudAuthed);
@@ -272,6 +279,32 @@ static int stateProcCloudAuthed(StateContext *cntx) {
     if (0 == ginConfigStatus) {
         return -1;
     }
+    /*{*/
+        /*int status;                                                                                                                                                          */
+        /*http_session_t handle;*/
+        /*http_resp_t *resp = NULL;*/
+        /*const httpc_cfg_t *cfg = NULL;*/
+        /*[>const char *url_str = "http://g3.letv.cn/190/24/107/resolve-smart/0/gujian_ceshi.bin";<]*/
+        /*const char *url_str = "http://115.182.63.167/fei/le_demo.bin";*/
+
+        /*rfget_init();*/
+        /*status = httpc_get(url_str, &handle, &resp, cfg);*/
+        /*if (status != 0) {*/
+            /*rf_e("Unable to connect to server");*/
+            /*return -1;*/
+        /*}   */
+        /*if (resp->status_code != 200) {*/
+            /*rf_e("HTTP Error %d", resp->status_code);*/
+            /*return -1;*/
+        /*}   */
+        /*if (resp->chunked) {*/
+            /*rf_e("HTTP chunked fs update is not supported");*/
+            /*return -1;*/
+        /*}  */
+        /*LELOGE("url:%s\r\n", url_str);*/
+        /*LELOGE("filesize:%d\r\n", resp->content_length);*/
+        /*delayms(1000 * 10);*/
+    /*}*/
 
     TIMEOUT_BEGIN(12000)
         NodeData node = {0};
