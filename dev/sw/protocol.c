@@ -1488,89 +1488,6 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     return halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
 }
 
-#include <httpc.h>
-
-typedef enum {
-    UPDATE_TYPE_FW,
-    UPDATE_TYPE_FW_SCRIPT,
-    UPDATE_TYPE_LK_SCRIPT,
-} updateType_t;
-
-typedef struct _updateInfo {
-    http_session_t session;
-    unsigned int imgLen;
-    unsigned int nowLen;
-} updateInfo_t;
-
-static size_t fetchDataFromUrlCb(void *priv, void *buf, size_t max_len)
-{
-    int ret;
-    updateInfo_t *handle = (updateInfo_t *) priv;
-
-    ret = http_read_content(handle->session, buf, max_len);
-    handle->nowLen += ret;
-    LELOG("Client callback: Trying to read %d bytes from stream, ret = %d. %d/%d\r\n", 
-            max_len, ret, handle->nowLen, handle->imgLen);
-    return ret;
-}
-
-int updateImage(updateType_t type, const char *url, const char *sig)
-{
-    http_resp_t *resp;
-    int status = -WM_FAIL;
-    updateInfo_t info = {0};
-
-    LELOG("waiting update, now version: %s-%s\r\n", __DATE__, __TIME__);
-    status = httpc_get(url, &info.session, &resp, NULL);
-    if (status != 0) {
-        LELOGE("Unable to connect to server\r\n");
-        goto skip_update;
-    }   
-    if (resp->status_code != 200) {
-        LELOGE("HTTP Error %d", resp->status_code);
-        status = -WM_FAIL;
-        goto skip_update;
-    }
-    if (resp->chunked) {
-        LELOGE("HTTP chunked fs update is not supported\r\n");
-        status = -WM_FAIL;
-        goto skip_update;
-    }
-    switch (type) {
-        case UPDATE_TYPE_FW:
-            {
-                struct partition_entry *p;
-
-                p = rfget_get_passive_firmware();
-                /*const char *update_url = "http://115.182.63.167/fei/le_demo.bin";*/
-                /* Perform FW update later */
-                if (p == NULL) {
-                    LELOGE("Failed to get passive partition\r\n");
-                    status = -WM_FAIL;
-                } else {
-                    info.imgLen = resp->content_length;
-                    status = update_firmware(fetchDataFromUrlCb, (void *)&info, info.imgLen, p);
-                }
-            }
-            break;
-        case UPDATE_TYPE_FW_SCRIPT:
-            status = -WM_FAIL;
-            break;
-        case UPDATE_TYPE_LK_SCRIPT:
-            status = -WM_FAIL;
-            break;
-        default:
-            status = -WM_FAIL;
-            break;
-    }
-    if(status == WM_SUCCESS) {
-        LELOG("Update image successed!\r\n");
-    }
-skip_update:
-    http_close_session(&info.session);
-    return status;
-}
-
 static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
@@ -1583,7 +1500,7 @@ static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, co
         ret = snprintf(out, sizeof(out), "{%s}", status);
     }
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)out, ret, dataOut, dataLen);
-    updateImage(UPDATE_TYPE_FW, "http://115.182.63.167/fei/le_demo.bin", NULL);
+    halUpdateImage(0, "http://115.182.63.167/fei/le_demo.bin", NULL);
     LELOG("cbCloudMsgCtrlR2TLocalRsp -e\r\n");
     return ret;
 }

@@ -805,6 +805,61 @@ int common_event_handler(int event, void *data)
 	return 0;
 }
 
+extern int halUpdateImage(int type, const char *url, const char *sig);
+void le_ota(int argc, char **argv)
+{
+    int c;
+    bool start_update = false;
+    static int type = 0;
+    static const char *sig = NULL;
+    static char url[64] = "http://115.182.63.167/fei/le_demo.bin";
+
+    cli_optind = 1;
+    while ((c = cli_getopt(argc, argv, "t:u:sp")) != -1) {
+        switch (c) {
+            case 's':
+                start_update = true;
+                break;
+            case 't':
+                 type = atoi(cli_optarg);
+                break;
+            case 'u':
+                strncpy(url, cli_optarg, sizeof(url));
+                break;
+            case 'p':
+                break;
+            default:
+                goto end;
+        }
+
+    }
+    wmprintf("Now update info, type = %d, url = %s\r\n", type, url);
+    if(start_update) {
+        halUpdateImage(type, url, sig);
+    }
+    return;
+end:
+    wmprintf("%s Usage:\r\n", argv[0]);
+    wmprintf("-s start update\r\n");
+    wmprintf("-t set update image type. (0-fw, 1-fw-script, 2-lk-script)\r\n");
+    wmprintf("-u set update image url, max 64 bytes\r\n");
+    wmprintf("-p print now update information\r\n");
+}
+
+static struct cli_command le_utils[] = { 
+    {"lo", "letv ota", le_ota},
+};
+
+int le_utils_cli_init(void)                                                                                                                                            
+{
+    int i;
+
+    for (i = 0; i < sizeof(le_utils) / sizeof(struct cli_command); i++)
+        if (cli_register_command(&le_utils[i]))
+            return -WM_FAIL;
+    return WM_SUCCESS;
+}
+
 static void modules_init()
 {
 	int ret;
@@ -863,6 +918,11 @@ static void modules_init()
     ret = nw_utils_cli_init();
     if (ret != WM_SUCCESS) {
         dbg("Error: nw_utils_cli_init failed");
+        appln_critical_error_handler((void *) -WM_FAIL);
+    }
+    ret = le_utils_cli_init();
+    if (ret != WM_SUCCESS) {
+        dbg("Error: le_utils_cli_init failed");
         appln_critical_error_handler((void *) -WM_FAIL);
     }
 	return;

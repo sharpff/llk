@@ -45,5 +45,6 @@ inline char * hal_strcpy(char *dst, const char *src);
 inline long int hal_strtol(const char *str, char **c, int adecimal);
 inline char *hal_strstr(const char *haystack, const char *needle);
 inline int hal_sprintf(char *buf, const char *fmt, ...);
+int halUpdateImage(int type, const char *url, const char *sig);
 
 #endif
