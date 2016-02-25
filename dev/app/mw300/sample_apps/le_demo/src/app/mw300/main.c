@@ -54,6 +54,7 @@
 #include <lelink/sw/protocol.h>
 #include <lelink/sw/state.h>
 #include <lelink/sw/io.h>
+#include <lelink/sw/ota.h>
 // test only
 #include <lelink/sw/misc.h>
 
@@ -841,7 +842,7 @@ void le_ota(int argc, char **argv)
     }
     wmprintf("OTA INFO: Type %d, URL %s\r\n", type, url);
     if(startflag) {
-        halUpdateImage(type, url, sig);
+        leOTA(type, url, sig);
     }
     return;
 end:

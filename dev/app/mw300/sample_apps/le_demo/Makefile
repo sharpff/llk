@@ -74,6 +74,7 @@ SRCS = ./app/mw300/main.c \
 	./hal/Marvell/halRSA.c \
 	./hal/Marvell/halConvertor.c \
 	./hal/Marvell/halIO.c \
+	./hal/Marvell/halOTA.c \
 	board.c 
 # SRCS = main.c \
 # 	halAirConfig.c \

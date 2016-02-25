@@ -5,6 +5,7 @@
 #include "convertor.h"
 #include "io.h"
 #include "data.h"
+#include "ota.h"
 #include "utility.h"
 #include "airconfig_ctrl.h"
 
@@ -1593,6 +1594,46 @@ static void cbCloudReportOTADoRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo,
     return;
 }
 
+int leOTA(updateType_t type, const char *url, const char *sig)
+{
+    int ret, status = -1;
+    updateInfo_t info = {0};
+
+    LELOG("update type = %d, url = %s\r\n", type, url);
+    if(type < 0 || type >= UPDATE_TYPE_MAX) {
+        LELOGE("Update type error, %d\r\n", type);
+        goto skip_update;
+    }
+    ret = halHttpOpen(&info, url);
+    if(ret < 0) {
+        LELOGE("Http open error\r\n");
+        goto skip_update;
+    }
+    switch (type) {
+        case UPDATE_TYPE_FW:
+            status = halUpdateFirmware(&info);
+            break;
+        case UPDATE_TYPE_FW_SCRIPT:
+            status = halUpdateScript((void *)&info, &ginScriptCfg);
+            break;
+        case UPDATE_TYPE_LK_SCRIPT:
+            status = -1;
+            break;
+        default:
+            status = -1;
+            LELOGE("Update type(%d) error\r\n", type);
+            break;
+    }
+    if(status) {
+        LELOGE("Update error! status = %d\r\n", status);
+    } else {
+        LELOG("Update image successed!\r\n");
+    }
+skip_update:
+    halHttpClose(&info);
+    return status;
+}
+
 static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len) {
     // int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);  
@@ -1600,7 +1641,7 @@ static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     // char uuid[64] = {0};
     // char query[128] = {0};
     LELOG("cbCloudIndOTARemoteReq -s\r\n");
-    halUpdateImage(0, "http://115.182.63.167/fei/le_demo.bin", NULL);
+    leOTA(UPDATE_TYPE_FW, "http://115.182.63.167/fei/le_demo.bin", NULL);
     LELOG("cbCloudIndOTARemoteReq -e\r\n");
     return 1;
 }
