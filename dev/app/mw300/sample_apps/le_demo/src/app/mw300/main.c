@@ -805,11 +805,13 @@ int common_event_handler(int event, void *data)
 	return 0;
 }
 
+extern int getVer(char fwVer[32], int size);
 extern int halUpdateImage(int type, const char *url, const char *sig);
 void le_ota(int argc, char **argv)
 {
     int c;
-    bool start_update = false;
+    char fwVer[32] = {0};
+    bool optflag = false, startflag = false;
     static int type = 0;
     static const char *sig = NULL;
     static char url[64] = "http://115.182.63.167/fei/le_demo.bin";
@@ -818,32 +820,37 @@ void le_ota(int argc, char **argv)
     while ((c = cli_getopt(argc, argv, "t:u:sp")) != -1) {
         switch (c) {
             case 's':
-                start_update = true;
+                startflag = true;
+                optflag = true;
                 break;
             case 't':
-                 type = atoi(cli_optarg);
+                type = atoi(cli_optarg);
+                optflag = true;
                 break;
             case 'u':
                 strncpy(url, cli_optarg, sizeof(url));
+                optflag = true;
                 break;
-            case 'p':
-                break;
+            case 'h':
             default:
                 goto end;
         }
-
     }
-    wmprintf("Now update info, type = %d, url = %s\r\n", type, url);
-    if(start_update) {
+    if (!optflag) {
+        goto end;  
+    }
+    wmprintf("OTA INFO: Type %d, URL %s\r\n", type, url);
+    if(startflag) {
         halUpdateImage(type, url, sig);
     }
     return;
 end:
-    wmprintf("%s Usage:\r\n", argv[0]);
+    getVer(fwVer, sizeof(fwVer));
+    wmprintf("%s Usage(v%s):\r\n", argv[0], fwVer);
     wmprintf("-s start update\r\n");
-    wmprintf("-t set update image type. (0-fw, 1-fw-script, 2-lk-script)\r\n");
-    wmprintf("-u set update image url, max 64 bytes\r\n");
-    wmprintf("-p print now update information\r\n");
+    wmprintf("-t set update image type. (%d) (0-fw, 1-fw-script, 2-lk-script)\r\n", type);
+    wmprintf("-u set update image url, max 64 bytes. (%s)\r\n", url);
+    wmprintf("-h display this message\r\n");
 }
 
 static struct cli_command le_utils[] = { 

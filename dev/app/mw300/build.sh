@@ -4,6 +4,7 @@
 RM="rm -f"
 COPY="cp -prf"
 MKDIR="mkdir -p"
+MAIN_PATH="`pwd`/../../"
 
 if [ ! -n "$WMSDK" ]; then
     echo "Please set SDK path first. \$WMSDK"
@@ -39,10 +40,14 @@ function do_copy()
     popd > /dev/null 2>&1
 }
 
-do_copy "`pwd`"  $WMSDK
-do_copy "`pwd`/../../hal/Marvell/" "$WMSDK/sample_apps/le_demo/src/hal/Marvell/"
-do_copy "`pwd`/../../sw/" "$WMSDK/wmsdk/external/lelink/sw/"
-do_copy "`pwd`/../../sw/sengine/" "$WMSDK/wmsdk/external/sengine"
+
+touch "$MAIN_PATH/sw/data.c"
+$MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
+
+do_copy "$MAIN_PATH/app/mw300"  $WMSDK
+do_copy "$MAIN_PATH/hal/Marvell/" "$WMSDK/sample_apps/le_demo/src/hal/Marvell/"
+do_copy "$MAIN_PATH/sw/" "$WMSDK/wmsdk/external/lelink/sw/"
+do_copy "$MAIN_PATH/sw/sengine/" "$WMSDK/wmsdk/external/sengine"
 
 $MKDIR $WMSDK/sample_apps/le_demo/obj/app/mw300
 $MKDIR $WMSDK/sample_apps/le_demo/obj/hal/Marvell

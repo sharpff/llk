@@ -6,6 +6,7 @@
 #include "sengine.h"
 #include "network.h"
 #include "io.h"
+#include "version.h" // Auto generate by SVN
 
 extern int8_t ginStateCloudAuthed;
 
@@ -232,8 +233,13 @@ uint16_t getProtocolVer() {
     return 0x0001;
 }
 
-uint16_t getSWVer() {
-    return 0x0001;
+const char *getSWVer() {
+    return SW_VERSION;
+}
+
+const char *getScriptVer() {
+    // TODO: get it from script
+    return "1.0";
 }
 
 int getVer(char fwVer[32], int size) {
@@ -241,7 +247,7 @@ int getVer(char fwVer[32], int size) {
         return -1;
     }
     memset(fwVer, 0, 32);
-    sprintf(fwVer, "%04d.%04d.%04d", PF_VAL, getProtocolVer(), getSWVer());
+    sprintf(fwVer, "%d-%s-%d-%s", PF_VAL, getSWVer(), getProtocolVer(), getScriptVer());
     return 0;
 }
 
