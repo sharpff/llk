@@ -847,9 +847,10 @@ void le_ota(int argc, char **argv)
     return;
 end:
     getVer(fwVer, sizeof(fwVer));
-    wmprintf("%s Usage(v%s):\r\n", argv[0], fwVer);
+    wmprintf("%s Usage(%s, %s %s):\r\n", argv[0], fwVer, __DATE__, __TIME__);
     wmprintf("-s start update\r\n");
-    wmprintf("-t set update image type. (%d) (0-fw, 1-fw-script, 2-lk-script)\r\n", type);
+    wmprintf("-t set update image type. %d (%d-fw, %d-fw-script, %d-ia-script)\r\n", 
+            type, OTA_TYPE_FW, OTA_TYPE_FW_SCRIPT, OTA_TYPE_IA_SCRIPT);
     wmprintf("-u set update image url, max 64 bytes. (%s)\r\n", url);
     wmprintf("-h display this message\r\n");
 }

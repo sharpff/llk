@@ -1,12 +1,12 @@
 #include "ota.h"
 
-int leOTA(updateType_t type, const char *url, const char *sig)
+int leOTA(OTAType_t type, const char *url, const char *sig)
 {
     int ret, status = -1;
-    updateInfo_t info = {0};
+    OTAInfo_t info = {0};
 
     LELOG("update type = %d, url = %s\r\n", type, url);
-    if(type < 0 || type >= UPDATE_TYPE_MAX) {
+    if(type < 0 || type >= OTA_TYPE_MAX) {
         LELOGE("Update type error, %d\r\n", type);
         goto skip_update;
     }
@@ -16,13 +16,19 @@ int leOTA(updateType_t type, const char *url, const char *sig)
         goto skip_update;
     }
     switch (type) {
-        case UPDATE_TYPE_FW:
+        case OTA_TYPE_FW:
             status = halUpdateFirmware(&info);
             break;
-        case UPDATE_TYPE_FW_SCRIPT:
+        case OTA_TYPE_FW_SCRIPT:
             status = halUpdateScript((void *)&info, &ginScriptCfg);
+            if(!status && ginScriptCfg.data.size > 0) {
+                ginScriptCfg.csum = crc8((const uint8_t *)&(ginScriptCfg.data), sizeof(ginScriptCfg.data));
+                //lelinkStorageWriteScriptCfg();
+            } else {
+                status = -1;
+            }
             break;
-        case UPDATE_TYPE_LK_SCRIPT:
+        case OTA_TYPE_IA_SCRIPT:
             status = -1;
             break;
         default:

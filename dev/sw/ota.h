@@ -5,25 +5,25 @@
 #include "sengine.h"
 
 typedef enum {
-    UPDATE_TYPE_FW,
-    UPDATE_TYPE_FW_SCRIPT,
-    UPDATE_TYPE_LK_SCRIPT,
-    UPDATE_TYPE_MAX,
-} updateType_t;
+    OTA_TYPE_FW,
+    OTA_TYPE_FW_SCRIPT,
+    OTA_TYPE_IA_SCRIPT,
+    OTA_TYPE_MAX,
+} OTAType_t;
 
 typedef struct _updateInfo {
     void *session;
     unsigned int imgLen;
     unsigned int nowLen;
-} updateInfo_t;
+} OTAInfo_t;
 
 // hal
-int halHttpOpen(updateInfo_t *info, const char *url);
-int halUpdateFirmware(updateInfo_t *info);
-int halUpdateScript(updateInfo_t *info, ScriptCfg *scriptCfg);
-void halHttpClose(updateInfo_t *info);
+int halHttpOpen(OTAInfo_t *info, const char *url);
+int halUpdateFirmware(OTAInfo_t *info);
+int halUpdateScript(OTAInfo_t *info, ScriptCfg *scriptCfg);
+void halHttpClose(OTAInfo_t *info);
 
 // sw
-int leOTA(updateType_t type, const char *url, const char *sig);
+int leOTA(OTAType_t type, const char *url, const char *sig);
 
 #endif /* end of include guard: _OTA_H_ */

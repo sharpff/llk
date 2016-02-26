@@ -1426,7 +1426,6 @@ static void cbCloudHeartBeatRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCloudHeartBeatRemoteRsp -s\r\n");
-    LELOG("Now version: %s-%s\r\n", __DATE__, __TIME__);
 	halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudHeartBeatRemoteRsp -e\r\n");
 }
@@ -1601,7 +1600,7 @@ static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     // char uuid[64] = {0};
     // char query[128] = {0};
     LELOG("cbCloudIndOTARemoteReq -s\r\n");
-    leOTA(UPDATE_TYPE_FW, "http://115.182.63.167/fei/le_demo.bin", NULL);
+    leOTA(OTA_TYPE_FW, "http://115.182.63.167/fei/le_demo.bin", NULL);
     LELOG("cbCloudIndOTARemoteReq -e\r\n");
     return 1;
 }

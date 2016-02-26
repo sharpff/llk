@@ -1,12 +1,11 @@
 #include <rfget.h>
 #include <httpc.h>
 #include <lelink/sw/leconfig.h>
-#include <lelink/sw/utility.h>
 #include <lelink/sw/ota.h>
 
 static size_t httpFetchData(void *priv, void *buf, size_t max_len);
 
-int halHttpOpen(updateInfo_t *info, const char *url)
+int halHttpOpen(OTAInfo_t *info, const char *url)
 {
     int status = -1;
     http_resp_t *resp;
@@ -36,7 +35,7 @@ err_out:
     return -1;
 }
 
-void halHttpClose(updateInfo_t *info)
+void halHttpClose(OTAInfo_t *info)
 {
     if(info && info->session) {
         http_close_session(info->session);
@@ -44,7 +43,7 @@ void halHttpClose(updateInfo_t *info)
     }
 }
 
-int halUpdateFirmware(updateInfo_t *info)
+int halUpdateFirmware(OTAInfo_t *info)
 {
     struct partition_entry *p = (struct partition_entry *)rfget_get_passive_firmware();
     /* Perform FW update later */
@@ -55,7 +54,7 @@ int halUpdateFirmware(updateInfo_t *info)
     return update_firmware(httpFetchData, (void *)info, info->imgLen, p);
 }
 
-int halUpdateScript(updateInfo_t *info, ScriptCfg *scriptCfg)
+int halUpdateScript(OTAInfo_t *info, ScriptCfg *scriptCfg)
 {
     int ret = 0, aSize = 256, nSize = 0;
 
@@ -77,8 +76,6 @@ int halUpdateScript(updateInfo_t *info, ScriptCfg *scriptCfg)
         return -1;
     }
     scriptCfg->data.size = nSize;
-    scriptCfg->csum = crc8((const uint8_t *)&(scriptCfg->data), sizeof(scriptCfg->data));
-    /*lelinkStorageWriteScriptCfg();*/
     APPLOG("Update script successed\r\n");
     return 0;
 }
@@ -86,13 +83,12 @@ int halUpdateScript(updateInfo_t *info, ScriptCfg *scriptCfg)
 static size_t httpFetchData(void *priv, void *buf, size_t max_len)
 {
     int ret;
-    updateInfo_t *info = (updateInfo_t *) priv;
+    OTAInfo_t *info = (OTAInfo_t *) priv;
 
     if((ret = http_read_content(*(http_session_t *)info->session, buf, max_len)) > 0){
         info->nowLen += ret;
     }
-    APPLOG("Updating: Trying to read %d bytes from stream, ret = %d. %d/%d\r\n", 
-            max_len, ret, info->nowLen, info->imgLen);
+    APPLOG("%d/%d\r\n", info->nowLen, info->imgLen);
     return ret;
 }
 
