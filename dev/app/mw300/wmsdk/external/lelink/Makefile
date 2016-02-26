@@ -78,6 +78,7 @@ SOURCE := ${PROTOCOL_DIR}/airconfig.c \
 		${PROTOCOL_DIR}/data.c \
 		${PROTOCOL_DIR}/misc.c \
 		${PROTOCOL_DIR}/network.c \
+		${PROTOCOL_DIR}/ota.c \
 		${PROTOCOL_DIR}/pack.c \
 		${PROTOCOL_DIR}/protocol.c \
 		${PROTOCOL_DIR}/state.c \

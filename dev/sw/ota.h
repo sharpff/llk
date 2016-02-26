@@ -17,11 +17,13 @@ typedef struct _updateInfo {
     unsigned int nowLen;
 } updateInfo_t;
 
-int leOTA(updateType_t type, const char *url, const char *sig);
-
+// hal
 int halHttpOpen(updateInfo_t *info, const char *url);
 int halUpdateFirmware(updateInfo_t *info);
 int halUpdateScript(updateInfo_t *info, ScriptCfg *scriptCfg);
 void halHttpClose(updateInfo_t *info);
+
+// sw
+int leOTA(updateType_t type, const char *url, const char *sig);
 
 #endif /* end of include guard: _OTA_H_ */
