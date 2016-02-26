@@ -20,10 +20,11 @@ int leOTA(OTAType_t type, const char *url, const char *sig)
             status = halUpdateFirmware(&info);
             break;
         case OTA_TYPE_FW_SCRIPT:
+            memset(&ginScriptCfg, 0, sizeof(ginScriptCfg));
             status = halUpdateScript((void *)&info, &ginScriptCfg);
             if(!status && ginScriptCfg.data.size > 0) {
                 ginScriptCfg.csum = crc8((const uint8_t *)&(ginScriptCfg.data), sizeof(ginScriptCfg.data));
-                //lelinkStorageWriteScriptCfg();
+                status = lelinkStorageWriteScriptCfg(&ginScriptCfg);
             } else {
                 status = -1;
             }
