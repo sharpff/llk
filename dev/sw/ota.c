@@ -24,13 +24,14 @@ int leOTA(OTAType_t type, const char *url, const char *sig)
             status = halUpdateScript((void *)&info, &ginScriptCfg);
             if(!status && ginScriptCfg.data.size > 0) {
                 ginScriptCfg.csum = crc8((const uint8_t *)&(ginScriptCfg.data), sizeof(ginScriptCfg.data));
-                status = lelinkStorageWriteScriptCfg(&ginScriptCfg);
+                status = lelinkStorageWriteScriptCfg(&ginScriptCfg, 0);
             } else {
                 status = -1;
             }
             break;
         case OTA_TYPE_IA_SCRIPT:
-            status = -1;
+            // TODO: ia-where
+            status = lelinkStorageWriteScriptCfg(&ginScriptCfg, 1);
             break;
         default:
             status = -1;

@@ -97,3 +97,7 @@ int halGetMac(uint8_t *mac, int len) {
     mac[5] = 0xFF;
     return 0;
 }
+
+int halUpdateImage(int type, const char *url, const char *sig) {
+    return 0;
+}

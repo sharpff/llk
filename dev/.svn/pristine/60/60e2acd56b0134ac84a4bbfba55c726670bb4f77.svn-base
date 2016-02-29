@@ -194,17 +194,15 @@ int lelinkStorageReadAuthCfg(AuthCfg *authCfg) {
 
 int lelinkStorageWriteScriptCfg(const void *scriptCfg, int type) {
     int ret = 0;
-    E_FLASH_TYPE ft = !type ? E_FLASH_TYPE_SCRIPT : E_FLASH_TYPE_SCRIPT2;
 
-    ret = storageWrite(ft, scriptCfg, sizeof(ScriptCfg));
+    ret = storageWrite(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg));
 
     return ret;
 }
 int lelinkStorageReadScriptCfg(void *scriptCfg, int type){
     int ret = 0;
-    E_FLASH_TYPE ft = !type ? E_FLASH_TYPE_SCRIPT : E_FLASH_TYPE_SCRIPT2;
 
-    ret = storageRead(ft, scriptCfg, sizeof(ScriptCfg));
+    ret = storageRead(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg));
 
     return ret;
 }

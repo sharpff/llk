@@ -33,33 +33,74 @@ function LOGTBL(tblObj)
 end
 
 --[[ MUST
-	1. json <-> bin
-	2. json <-> json
+	0. UART json <-> bin
+	1. PIPE/IPC json <-> json
 ]]
-function getCvtType()
-	local whatType = 1
-	-- baud - dataBits parity(None:0, Odd:1, Even:2) stopBits
-	local baud = '"9600-8N1"'
-	local str = string.format('{"whatType":%d,"baud":%s}', whatType, baud)
-
+function s1GetVer()
+	-- body
+	local str = '1.0'
 	return string.len(str), str
 end
 
 --[[ MUST
-	查询设备状态。
-
-	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
-	返回的状态由固件来缓存。
-	指令必须为完整的指令，可以直接对电控板操作的。
-	在用户定义产品时填充。
-
-	标准接口，该方法由云端自动生成。
+	whatCvtType:
+	0. UART json <-> bin
+	1. PIPE/IPC json <-> json
 ]]
-function getQueries()
+function s1GetCvtType()
+
+	local whatCvtType = 0
+	-- delay time (ms) for the interval during write & read. 
+	local delay = 5
+	--[[
+		E.g."9600-8N1"
+		FORMAT [baud(9600, ...) - dataBits(8, 9, ...) parity(None:0, Odd:1, Even:2) stopBits(1, 2)]
+		refer to func(halIO.c)
+		void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
+	]] 
+	local baud = '"9600-8N1"'
+	local str = string.format('{"whatCvtType":%d,"baud":%s}', whatCvtType, baud)
+
+	return string.len(str), str, delay
+end
+
+--[[ MUST
+	查询设备状态。
+	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
+]]
+function s1GetQueries()
 	local query = string.char( 0xbb, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 )
 	local queryCountLen = string.char( 0x09, 0x00 )
 
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
+end
+
+--[[ MUST
+	WIFI 重置命令判别
+]]
+function s1GetValidKind(data)
+	local reset = string.char( 0x12, 0x34, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0x22 )
+	-- print (data, #data)
+
+	--[[ MUST
+		wifi reset cmd
+	]]
+	if reset == data then
+		-- print '1'
+		return 1
+	end
+
+	--[[ MUST
+		valid LOW LEVEL status cmd
+	]]
+	if 9 == #data then
+		-- print '2'
+		return 2
+	end
+
+	-- print '0'
+	-- invalid kind
+	return 0
 end
 
 -- 杜亚窗帘电机
@@ -73,7 +114,7 @@ end
 --[[ MUST
 ]]
 -- {"ctrl":{"action":1}}
-function cvtStd2Pri(json)
+function s1CvtStd2Pri(json)
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]
 	local cmdTbl = { 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 }
@@ -100,13 +141,14 @@ function cvtStd2Pri(json)
 end
 
 --[[ MUST
+	return value: return 0, 0, if the input param 'bin' is not valid
 ]]
-function cvtPri2Std(bin)
+function s1CvtPri2Std(bin)
 	local dataTbl = {}
 	local str = '{"percentage":%d}'
 	dataTbl = stringToTable(bin)
 	-- for i = 1, #bin
-	-- 	print (bin[i])
+	-- 		 (bin[i])
 	-- end
 	LOGTBL(dataTbl)
 
