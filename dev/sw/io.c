@@ -1,6 +1,7 @@
 #include "leconfig.h"
 #include "io.h"
 #include "sengine.h"
+#include "ota.h"
 
 // #define SECTOR_SIZE ginMinSize // 0x800 // 2KB
 // #define BLOCK_SIZE 0x8000 // 32KB
@@ -117,7 +118,7 @@ void lelinkStorageDeinit(void) {
     memset(ginRegion, 0, sizeof(ginRegion));
 }
 
-static int storageWrite(E_FLASH_TYPE type, const void *data, int size) {
+static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) {
     int ret;
     void *hdl;
     FlashRegion fr;
@@ -132,7 +133,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size) {
         return -2;
     }
 
-    ret = halFlashErase(hdl, fr.addr, fr.size);
+    ret = halFlashErase(hdl, fr.addr + (idx*fr.size), fr.size);
     if (0 > ret) {
         return -3;
     }
@@ -149,7 +150,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size) {
     return 0; 
 }
 
-static int storageRead(E_FLASH_TYPE type, void *data, int size) {
+static int storageRead(E_FLASH_TYPE type, void *data, int size, int idx) {
     int ret = 0;
     void *hdl;
     FlashRegion fr;
@@ -164,7 +165,7 @@ static int storageRead(E_FLASH_TYPE type, void *data, int size) {
         return -2;
     }
 
-    ret = halFlashRead(hdl, data, size, fr.addr);
+    ret = halFlashRead(hdl, data, size, fr.addr + (idx*fr.size));
     if (0 > ret) {
         return -3;
     }
@@ -179,7 +180,7 @@ static int storageRead(E_FLASH_TYPE type, void *data, int size) {
 int lelinkStorageWriteAuthCfg(const AuthCfg *authCfg) {
     int ret = 0;
 
-    ret = storageWrite(E_FLASH_TYPE_AUTH, authCfg, sizeof(AuthCfg));
+    ret = storageWrite(E_FLASH_TYPE_AUTH, authCfg, sizeof(AuthCfg), 0);
 
     return ret;
 }
@@ -187,24 +188,46 @@ int lelinkStorageWriteAuthCfg(const AuthCfg *authCfg) {
 int lelinkStorageReadAuthCfg(AuthCfg *authCfg) {
     int ret = 0;
 
-    ret = storageRead(E_FLASH_TYPE_AUTH, authCfg, sizeof(AuthCfg));
+    ret = storageRead(E_FLASH_TYPE_AUTH, authCfg, sizeof(AuthCfg), 0);
 
     return ret;
 }
 
-int lelinkStorageWriteScriptCfg(const void *scriptCfg, int type) {
-    int ret = 0;
-    E_FLASH_TYPE ft = !type ? E_FLASH_TYPE_SCRIPT : E_FLASH_TYPE_SCRIPT2;
+int lelinkStorageWriteScriptCfg(const void *scriptCfg, int type, int idx) {
+    int ret = 0, i = 0, tmpNum = 0;
+    ret = storageWrite(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg), idx);
 
-    ret = storageWrite(ft, scriptCfg, sizeof(ScriptCfg));
+    if (0 < ret && OTA_TYPE_IA_SCRIPT == type) {
+        PrivateCfg privCfg;
+        ret = lelinkStorageReadPrivateCfg(&privCfg);
+        if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+            LELOGW("lelinkStorageWriteScriptCfg csum failed\r\n");
+            return -1;
+        }
+
+        privCfg.data.iaCfg.arrIA[idx] = 1;
+        for (i = 0; i < MAX_IA; i++) {
+            if (privCfg.data.iaCfg.arrIA[i]) {
+                tmpNum++;
+            }
+        }
+        privCfg.data.iaCfg.num = tmpNum;
+        lelinkStorageWritePrivateCfg(&privCfg);
+    }
 
     return ret;
 }
-int lelinkStorageReadScriptCfg(void *scriptCfg, int type){
+int lelinkStorageReadScriptCfg(void *scriptCfg, int type, int idx){
     int ret = 0;
-    E_FLASH_TYPE ft = !type ? E_FLASH_TYPE_SCRIPT : E_FLASH_TYPE_SCRIPT2;
 
-    ret = storageRead(ft, scriptCfg, sizeof(ScriptCfg));
+    if (OTA_TYPE_FW_SCRIPT == type) {
+        ret = storageRead(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg), idx);
+    } else if (OTA_TYPE_IA_SCRIPT == type) {
+        ret = storageRead(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg), idx);
+    } else {
+        LELOGW("lelinkStorageReadScriptCfg not supported type[%d]\r\n", type);
+        return -1;
+    }
 
     return ret;
 }
@@ -214,7 +237,7 @@ int lelinkStorageReadScriptCfg(void *scriptCfg, int type){
 int lelinkStorageWritePrivateCfg(const PrivateCfg *privateCfg) {
     int ret = 0;
 
-    ret = storageWrite(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg));
+    ret = storageWrite(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg), 0);
 
     return ret;
 }
@@ -222,7 +245,7 @@ int lelinkStorageWritePrivateCfg(const PrivateCfg *privateCfg) {
 int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     int ret = 0;
 
-    ret = storageRead(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg));
+    ret = storageRead(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg), 0);
 
     return ret;
 }

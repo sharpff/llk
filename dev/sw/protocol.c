@@ -52,6 +52,11 @@ static void cbDiscoverRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const u
 static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 
+static int cbDiscoverStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbDiscoverStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbDiscoverStatusChangedRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbDiscoverStatusChangedLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
+
 static int cbCtrlCmdLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCtrlCmdRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
@@ -88,12 +93,17 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
 static void cbCloudReportRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
-static int cbCloudReportOTADoLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
-static void cbCloudReportOTADoRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
-static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
-static void cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *nw, int nwLenOut);
+// static int cbCloudReportOTADoLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+// static void cbCloudReportOTADoRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbCloudMsgCtrlC2RDoOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
+
+static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
-static void cbCloudIndStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *nw, int nwLenOut);
+static int cbCloudIndStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 
 static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHeaderInfo *cmdInfo);
 static int isNeedDelCB(CACHE_NODE_TYPE *currNode);
@@ -125,6 +135,8 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_HELLO_RSP, LELINK_SUBCMD_HELLO_RSP, cbHelloRemoteRsp, cbHelloLocalRsp },
     { LELINK_CMD_DISCOVER_REQ, LELINK_SUBCMD_DISCOVER_REQ, cbDiscoverLocalReq, cbDiscoverRemoteReq },
     { LELINK_CMD_DISCOVER_RSP, LELINK_SUBCMD_DISCOVER_RSP, cbDiscoverRemoteRsp, cbDiscoverLocalRsp },
+    { LELINK_CMD_DISCOVER_REQ, LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ, cbDiscoverStatusChangedLocalReq, cbDiscoverStatusChangedRemoteReq },
+    { LELINK_CMD_DISCOVER_RSP, LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_RSP, cbDiscoverStatusChangedRemoteRsp, cbDiscoverStatusChangedLocalRsp },
     { LELINK_CMD_CTRL_REQ, LELINK_SUBCMD_CTRL_CMD_REQ, cbCtrlCmdLocalReq, cbCtrlCmdRemoteReq },
     { LELINK_CMD_CTRL_RSP, LELINK_SUBCMD_CTRL_CMD_RSP, cbCtrlCmdRemoteRsp, cbCtrlCmdLocalRsp },
     { LELINK_CMD_CTRL_REQ, LELINK_SUBCMD_CTRL_GET_STATUS_REQ, cbCtrlGetStatusLocalReq, cbCtrlGetStatusRemoteReq },
@@ -137,18 +149,28 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_HEARTBEAT_RSP, LELINK_SUBCMD_CLOUD_HEARTBEAT_RSP, cbCloudHeartBeatRemoteRsp, NULL },
     { LELINK_CMD_CLOUD_HEARTBEAT_REQ, LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ, cbCloudStatusChangedLocalReq, NULL },
     { LELINK_CMD_CLOUD_HEARTBEAT_RSP, LELINK_SUBCMD_CLOUD_STATUS_CHANGED_RSP, cbCloudStatusChangedRemoteRsp, NULL },
+    // remote ctrl
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ, cbCloudMsgCtrlC2RLocalReq, NULL },
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_RSP, cbCloudMsgCtrlC2RRemoteRsp, NULL },
     { LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_REQ, NULL, cbCloudMsgCtrlR2TRemoteReq },
     { LELINK_CMD_CLOUD_MSG_CTRL_R2T_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_RSP, NULL, cbCloudMsgCtrlR2TLocalRsp },
+    // 
     { LELINK_CMD_CLOUD_REPORT_REQ, LELINK_SUBCMD_CLOUD_REPORT_REQ, cbCloudReportLocalReq, NULL },
     { LELINK_CMD_CLOUD_REPORT_RSP, LELINK_SUBCMD_CLOUD_REPORT_RSP, cbCloudReportRemoteRsp, NULL },
+    // query ota
     { LELINK_CMD_CLOUD_REPORT_REQ, LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ, cbCloudReportOTAQueryLocalReq, NULL },
     { LELINK_CMD_CLOUD_REPORT_RSP, LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP, cbCloudReportOTAQueryRemoteRsp, NULL },
-    { LELINK_CMD_CLOUD_REPORT_REQ, LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_REQ, cbCloudReportOTADoLocalReq, NULL },
-    { LELINK_CMD_CLOUD_REPORT_RSP, LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_RSP, cbCloudReportOTADoRemoteRsp, NULL },
+    // { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_REQ, cbCloudReportOTADoLocalReq, NULL },
+    // { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_RSP, cbCloudReportOTADoRemoteRsp, NULL },
+    // cloud push ota
     { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_OTA_REQ, NULL, cbCloudIndOTARemoteReq },
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_OTA_RSP, NULL, cbCloudIndOTALocalRsp},
+    // do ota
+    { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ, cbCloudMsgCtrlC2RDoOTALocalReq, NULL },
+    { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_RSP, cbCloudMsgCtrlC2RDoOTARemoteRsp, NULL },
+    { LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_DO_OTA_REQ, NULL, cbCloudMsgCtrlR2TDoOTARemoteReq },
+    { LELINK_CMD_CLOUD_MSG_CTRL_R2T_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_DO_OTA_RSP, NULL, cbCloudMsgCtrlR2TDoOTALocalRsp },
+
     { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_STATUS_REQ, NULL, cbCloudIndStatusRemoteReq },
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_STATUS_RSP, NULL, cbCloudIndStatusLocalRsp},
 
@@ -288,7 +310,7 @@ void testJson(void) {
     int port = 0;
     char json[] = "{\"dir\":0,\"IP\":\"1.2.3.4\",\"port\":8888}";
     // char json1[] = "{\"dir\":1,\"IP\":\"1.2.3.4\",\"port\":8888}";
-    char status[256] = {0};
+    char status[256] = {"{}"};
     char out[512] = {"{}"};
     // char ip[MAX_IPLEN] = {0};
     // uint16_t port = 0;
@@ -303,9 +325,14 @@ void testJson(void) {
     getTerminalTokenStr(token + 1, sizeof(token) - 1);
     token[sizeof(token) - 2] = '"';
     getTerminalStatus(status, 256);
+
     genCompositeJson(out, sizeof(out), 2, 
         "now", status, 
         "token", token);
+    LELOG("%s\r\n", out);
+
+    strcpy(status, "{\"status\":{\"action\":1},\"utcH\":339,\"utcL\":136006835}");
+    genS2Json(status, sizeof(status), out, sizeof(out));
     LELOG("%s\r\n", out);
 
 }
@@ -387,13 +414,15 @@ void testSengine() {
     #include "sengine.h"
     int ret = 0, i = 0;
     const char json[256] = {"{\"ctrl\":{\"pwr\":1,\"action\":2}}"};
+    // const char json2[256] = {"{\"status\":{\"pwr\":1,\"action\":1},\"utcH\":339,\"utcL\":136006835,\"uuid\":\"10000100011000510005FFFFFFFFFFFF\"}"};
+    const char json2[256] = {"{\"status\":{\"pwr\":1,\"action\":1},\"uuid\":\"10000100011000510005FFFFFFFFFFFF\"}"};
     uint8_t buf[256] = {0};
     ret = sengineInit();
     if (0 != ret) {
         LELOGE("sengineInit ret[%d]\r\n", ret);
         return;
     }
-    // ret = lelinkStorageReadScriptCfg(&ginScriptCfg, 0);
+    // ret = lelinkStorageReadScriptCfg(&ginScriptCfg);
     // if (ginScriptCfg.csum != crc8((uint8_t *)&(ginScriptCfg.data), sizeof(ginScriptCfg.data))) {
     //     LELOG("ScriptCfg read from flash failed\r\n");
     //     // return;
@@ -417,6 +446,9 @@ void testSengine() {
     ret = sengineCall((const char *)ginScriptCfg.data.script, ginScriptCfg.data.size, 
         "s1CvtPri2Std", buf, 4, (uint8_t *)json, sizeof(json));
     LELOG("testSengine cvtPri2Std[%d] [%s]\r\n", ret, json);
+
+
+    senginePollingRules((char *)json2, strlen(json2));
 }
 #endif
 
@@ -442,7 +474,6 @@ int lelinkInit() {
         goto failed;
     }
 
-#ifndef __ANDROID__
     ret = sengineInit();
     if (0 != ret) {
         LELOGE("sengineInit ret[%d]\r\n", ret);
@@ -454,7 +485,7 @@ int lelinkInit() {
         LELOGE("ioInit ioHdl[%p]\r\n", ioHdl);
         goto failed;
     }
-#endif
+
 
     // this case should be dev
     // if (NULL == auth) 
@@ -522,12 +553,10 @@ failed:
 }
 
 void lelinkDeinit() {
-#ifndef __ANDROID__
     halDeLockInit();
     halDeAESInit();
     halFlashDeinit();
     // ioDeInit(IO_TYPE_UART);
-#endif
 }
 
 int lelinkDoPollingQ2A(void *ctx) {
@@ -1173,24 +1202,57 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-	char rspDiscover[1024] = "{";
+    char rspDiscover[MAX_BUF] = {0};
     LELOG("cbDiscoverLocalRsp -s\r\n");
     // gen status
-	ret = getTerminalStatus(rspDiscover + strlen(rspDiscover), sizeof(rspDiscover) - strlen(rspDiscover));
-
-    strcpy(&rspDiscover[strlen(rspDiscover)], ",\"uuid\":\"");
-    getTerminalUUID((uint8_t *)rspDiscover + strlen(rspDiscover), MAX_UUID);
-    
-    strcpy(&rspDiscover[strlen(rspDiscover)], "\",\"ip\":\"");
-    halGetSelfAddr(rspDiscover + strlen(rspDiscover), sizeof(rspDiscover) - strlen(rspDiscover), NULL);
-    
-    strcpy(&rspDiscover[strlen(rspDiscover)], "\",\"ver\":\"");
-    getVer(rspDiscover + strlen(rspDiscover), sizeof(rspDiscover) - strlen(rspDiscover));
-    
-    strcpy(&rspDiscover[strlen(rspDiscover)], "\"}");
+    ret = getTerminalStatus(rspDiscover, sizeof(rspDiscover));
+    if (0 >= ret) {
+        ret = 0;
+    }
 
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rspDiscover, strlen(rspDiscover), dataOut, dataLen);
     LELOG("cbDiscoverLocalRsp -e\r\n");
+    return ret;
+}
+
+static int cbDiscoverStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    char status[MAX_BUF] = {0};
+    // CommonCtx *pCtx = COMM_CTX(ctx);
+    LELOG("cbDiscoverStatusChangedLocalReq -s\r\n");
+
+    ret = getTerminalStatus(status, sizeof(status));
+    if (0 >= ret) {
+        ret = 0;
+    }
+
+
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
+    
+    LELOG("cbDiscoverStatusChangedLocalReq [%d] -e\r\n", ret);
+    return ret;
+}
+
+static void cbDiscoverStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    LELOG("cbDiscoverStatusChangedRemoteRsp -s\r\n");
+    // LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    LELOG("cbDiscoverStatusChangedRemoteRsp -e\r\n");
+}
+
+static int cbDiscoverStatusChangedRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    int ret = 1;
+    // CommonCtx *pCtx = COMM_CTX(ctx);
+    LELOG("cbDiscoverStatusChangedRemoteReq -s\r\n");
+    LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    senginePollingRules((char *)dataIn, dataLen);
+    LELOG("cbDiscoverStatusChangedRemoteReq -e\r\n");
+    return ret;
+}
+
+static int cbDiscoverStatusChangedLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbDiscoverStatusChangedLocalRsp -e\r\n");
     return ret;
 }
 
@@ -1241,7 +1303,7 @@ static void cbCtrlCmdRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
 }
 static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
-    // uint8_t data[1024] = {0};
+    // uint8_t data[MAX_BUF] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteReq -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, dataIn);
@@ -1258,10 +1320,9 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
 static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0, encType = -1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char rspCtrlCmd[1024] = "{";
+    char rspCtrlCmd[MAX_BUF] = {0};
     LELOG("cbCtrlCmdLocalRsp -s\r\n");
-	ret = getTerminalStatus(rspCtrlCmd + strlen(rspCtrlCmd), sizeof(rspCtrlCmd) - strlen(rspCtrlCmd));
-	strcat(rspCtrlCmd, "}");
+    ret = getTerminalStatus(rspCtrlCmd, sizeof(rspCtrlCmd));
     encType = (2 == ginStateCloudAuthed) ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspCtrlCmd, strlen(rspCtrlCmd), dataOut, dataLen);
     LELOG("cbCtrlCmdLocalRsp -e\r\n");
@@ -1282,7 +1343,7 @@ static int cbCtrlGetStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, con
 static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char status[1024] = {0};
+    char status[MAX_BUF] = {0};
     LELOG("cbCtrlGetStatusLocalRsp -s\r\n");
 
     ret = getTerminalStatus(status, sizeof(status));
@@ -1396,8 +1457,7 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     int ret = 0;
     char token[2*AES_LEN + 1] = {0};
     // char account[128] = {0};
-    char status[256] = {0};
-    char out[1024] = {"{}"};
+    char status[MAX_BUF] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
     // CmdHeaderInfo cmdInfo = {0};
     LELOG("cbCloudHeartBeatLocalReq -s\r\n");
@@ -1411,7 +1471,7 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     // getTerminalTokenStr(token + 1, sizeof(token) - 1);
     // token[sizeof(token) - 2] = '"';
     getTerminalTokenStr(token, sizeof(token));
-    getTerminalStatus(status, sizeof(status));
+    ret = getTerminalStatus(status, sizeof(status));
     // #ifdef TEST_SDK
     // ret = halCBLocalReq(ctx, cmdInfo, account, sizeof(account));
     // #endif
@@ -1431,10 +1491,10 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     // } else {
     //     sprintf(out, "{\"now\":{%s},\"token\":\"%s\"}", status, token);
     // }
-    sprintf(out, "{%s,\"token\":\"%s\"}", status, token);
-    LELOG("%s\r\n", out);
+    sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    LELOG("%s\r\n", status);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)out, strlen(out), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     
     LELOG("cbCloudHeartBeatLocalReq [%d] -e\r\n", ret);
     return ret;
@@ -1444,6 +1504,7 @@ static void cbCloudHeartBeatRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCloudHeartBeatRemoteRsp -s\r\n");
+    LELOG("Now version: %s-%s\r\n", __DATE__, __TIME__);
 	halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudHeartBeatRemoteRsp -e\r\n");
 }
@@ -1451,22 +1512,18 @@ static void cbCloudHeartBeatRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
 
 static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    char token[2*AES_LEN + 1] = {0};
+    // char token[2*AES_LEN + 1] = {0};
     // char account[128] = {0};
-    char status[256] = {0};
-    char out[1024] = {"{}"};
+    char status[MAX_BUF] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
     // CmdHeaderInfo cmdInfo = {0};
     LELOG("cbCloudStatusChangedLocalReq -s\r\n");
 
 
-    getTerminalTokenStr(token, sizeof(token));
-    getTerminalStatus(status, sizeof(status));
+    // getTerminalTokenStr(token, sizeof(token));
+    ret = getTerminalStatus(status, sizeof(status));
 
-    sprintf(out, "{%s,\"token\":\"%s\"}", status, token);
-    LELOG("%s\r\n", out);
-
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)out, strlen(out), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
     LELOG("cbCloudStatusChangedLocalReq [%d] -e\r\n", ret);
     return ret;
@@ -1479,8 +1536,6 @@ static void cbCloudStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInf
     halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudStatusChangedRemoteRsp -e\r\n");
 }
-
-
 
 
 static int cbCloudMsgCtrlC2RLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
@@ -1530,12 +1585,11 @@ static void cbCloudMsgCtrlC2RRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, 
 
 
 static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    uint8_t data[1024] = {0};
+    // uint8_t data[MAX_BUF] = {0};
     LELOG("cbCloudMsgCtrlR2TRemoteReq -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, dataIn);
     // setCurrentR2T
     setTerminalStatus((const char *)dataIn, dataLen);
-	getTerminalStatus((char *)data, sizeof(data));
     LELOG("cbCloudMsgCtrlR2TRemoteReq -e\r\n");
     return halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
 }
@@ -1543,15 +1597,11 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
 static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    char out[1024] = {0};
-    char status[256] = {0};
+    char status[MAX_BUF] = {0};
     LELOG("cbCloudMsgCtrlR2TLocalRsp -s\r\n");
-    ret = halCBLocalRsp(ctx, cmdInfo, data, len, status, sizeof(status));
-    if (!ret) {
-        ret = getTerminalStatus(status, sizeof(status));
-        ret = snprintf(out, sizeof(out), "{%s}", status);
-    }
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)out, ret, dataOut, dataLen);
+    // ret = halCBLocalRsp(ctx, cmdInfo, data, len, status, sizeof(status));
+    ret = getTerminalStatus(status, sizeof(status));
+	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TLocalRsp -e\r\n");
     return ret;
 }
@@ -1560,17 +1610,17 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);  
     // CmdHeaderInfo tmpCmdInfo;
-    char uuid[64] = {0};
-    char report[128] = {0};
+    char query[128] = {0};
+    // char report[128] = {0};
     LELOG("cbCloudReportLocalReq -s\r\n");
 
     // memcpy(&tmpCmdInfo, cmdInfo, sizeof(CmdHeaderInfo));
-    // getUUIDFromJson(uuid, sizeof(getUUIDFromJson), tmpCmdInfo.uuid);
+    // getqueryFromJson(query, sizeof(getqueryFromJson), tmpCmdInfo.query);
 
 
-    ret = halCBLocalReq(ctx, cmdInfo, uuid, sizeof(uuid));
-    sprintf(report, "{\"uuid\":\"%s\"}", uuid);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)report, strlen(report), dataOut, dataLen);
+    ret = halCBLocalReq(ctx, cmdInfo, query, sizeof(query));
+    // sprintf(report, "{\"query\":\"%s\"}", query);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
 
     LELOG("cbCloudReportLocalReq -e\r\n");
     return ret;
@@ -1590,19 +1640,19 @@ static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo
     // CmdHeaderInfo tmpCmdInfo;
     char query[128] = {0};
     // char uuidAndType[2*MAX_UUID] = {0};
-    char ver[32] = {0};
-    char fmt[32] = "{\"ver\":\"%s\"}";
-    int verPos = 0;
+    // char ver[32] = {0};
+    // char fmt[32] = "{\"ver\":\"%s\"}";
+    // int verPos = 0;
     LELOG("cbCloudReportOTAQueryLocalReq -s\r\n");
 
     ret = halCBLocalReq(ctx, cmdInfo, query, strlen(query));
     // getTerminaluuidAndType((uint8_t *)uuidAndType, MAX_UUID);
-    getVer(ver, sizeof(ver));
-    if (strlen(query) > 0) {
-        verPos = strlen(query) - 1;
-        fmt[0] = ',';
-    }
-    sprintf(query + verPos, fmt, ver);
+    // getVer(ver, sizeof(ver));
+    // if (strlen(query) > 0) {
+    //     verPos = strlen(query) - 1;
+    //     fmt[0] = ',';
+    // }
+    // sprintf(query + verPos, fmt, ver);
     LELOG("%s\r\n", query);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
 
@@ -1613,58 +1663,66 @@ static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo
 static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     LELOG("cbCloudReportOTAQueryRemoteRsp -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, (char *)dataIn);
-    // halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudReportOTAQueryRemoteRsp -e\r\n");
     return;
 }
 
-static int cbCloudReportOTADoLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
+static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    // CommonCtx *pCtx = COMM_CTX(ctx);  
-    // CmdHeaderInfo tmpCmdInfo;
-    // char uuid[MAX_UUID + 1] = {0};
-    char query[128] = {0};
-    LELOG("cbCloudReportOTADoLocalReq -s\r\n");
+    char rmtCtrl[256] = {0};
+    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -s\r\n");
 
-    // memcpy(&tmpCmdInfo, cmdInfo, sizeof(CmdHeaderInfo));
-    // getUUIDFromJson(uuid, sizeof(getUUIDFromJson), tmpCmdInfo.uuid);
-    ret = halCBLocalReq(ctx, cmdInfo, query, sizeof(query));
+    ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl, sizeof(rmtCtrl));
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret, dataOut, dataLen);
 
-    // getTerminalUUID((uint8_t *)uuid, MAX_UUID);
-    // sprintf(query, "{\"uuid\":\"%s\"}", uuid);
-
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
-
-    LELOG("cbCloudReportOTADoLocalReq -e\r\n");
+    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -e\r\n");
     return ret;
 }
 
-static void cbCloudReportOTADoRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbCloudReportOTADoRemoteRsp -s\r\n");
+static void cbCloudMsgCtrlC2RDoOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, (char *)dataIn);
-    // halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudReportOTADoRemoteRsp -e\r\n");
+    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -e\r\n");
     return;
 }
 
-static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len) {
+static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    // uint8_t data[MAX_BUF] = {0};
+    LELOG("cbCloudMsgCtrlR2TDoOTARemoteReq -s\r\n");
+    LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    // TODO: OTA
+    leOTA(OTA_TYPE_FW, "http://115.182.63.167/fei/le_demo.bin", NULL);
+    LELOG("cbCloudMsgCtrlR2TDoOTARemoteReq -e\r\n");
+    return halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
+}
+
+static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp -e\r\n");
+    return ret;
+}
+
+static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     // int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);  
     // CmdHeaderInfo tmpCmdInfo;
     // char uuid[64] = {0};
     // char query[128] = {0};
     LELOG("cbCloudIndOTARemoteReq -s\r\n");
-    leOTA(OTA_TYPE_FW, "http://115.182.63.167/fei/le_demo.bin", NULL);
     LELOG("cbCloudIndOTARemoteReq -e\r\n");
     return 1;
 }
 
-static void cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *nw, int nwLenOut) {
+static int cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
     LELOG("cbCloudIndOTALocalRsp -s\r\n");
-    LELOG("[%s][%d]\r\n", data, len);
     // halCBLocalRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudIndOTALocalRsp -e\r\n");
-    return;
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbCloudIndOTALocalRsp [%d] -e\r\n", ret);
+    return ret;
 }
 
 static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len) {
@@ -1674,17 +1732,25 @@ static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, co
     // char uuid[64] = {0};
     // char query[128] = {0};
     LELOG("cbCloudIndStatusRemoteReq -s\r\n");
-
+    LELOG("[%d][%s]\r\n", len, data);
+    senginePollingRules((char *)data, len);
     LELOG("cbCloudIndStatusRemoteReq -e\r\n");
     return 1;
 }
 
-static void cbCloudIndStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *nw, int nwLenOut) {
+static int cbCloudIndStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+    int ret;
     LELOG("cbCloudIndStatusLocalRsp -s\r\n");
-    LELOG("[%s][%d]\r\n", data, len);
     // halCBLocalRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudIndStatusLocalRsp -e\r\n");
-    return;
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbCloudIndStatusLocalRsp [%d] -e\r\n", ret);
+
+    //char rspHello[] = "{ \"msg\":\"i know u got it.\" }";
+    // CommonCtx *pCtx = COMM_CTX(ctx);
+    // LELOG("cbHelloLocalRsp -s\r\n");
+    // LELOG("cbHelloLocalRsp -e\r\n");
+
+    return ret;
 }
 
 CmdRecord *getCmdRecord(uint32_t cmdId, uint32_t subCmdId) {

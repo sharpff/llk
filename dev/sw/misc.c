@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "misc.h"
 #include "jsonv2.h"
 #include "jsgen.h"
@@ -12,6 +13,8 @@
 #define JSON_NAME_UTC "utc"
 #define JSON_NAME_WHATTYPE "whatCvtType"
 #define JSON_NAME_BAUD "baud"
+#define JSON_NAME_STATUS "status"
+#define JSON_NAME_UUID "uuid"
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
@@ -131,6 +134,15 @@ int getJsonUTC(char *json, int jsonLen) {
     return sprintf(json, "{\"utc\":%lld}", utc);
 }
 
+int getJsonUTC32(char *json, int jsonLen) {
+    int64_t utc = 0;
+    uint32_t utcH = 0, utcL = 0;
+    getTerminalUTC(&utc);
+    utcH = (uint32_t)(utc >> 32);
+    utcL = (uint32_t)utc;
+    return sprintf(json, "{\"utcH\":%d,\"utcL\":%d}", utcH, utcL);
+}
+
 int getWhatCvtType(const char *json, int jsonLen) {
     int ret = -1, whatCvtType = 0;
     jsontok_t jsonToken[NUM_TOKENS];
@@ -169,6 +181,63 @@ int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *st
     return 0;
 }
 
+int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
+    char *start, *end;
+    char *tokenStart = "{", *tokenEnd = "}";
+    int len = 0;
+    start = (char *)strstr(json, key);
+    if (NULL == start) {
+        return -1;
+    }
+
+    start = (char *)strstr(start, tokenStart);
+    if (NULL == start) {
+        return -2;
+    }
+
+    end = (char *)strstr(start + 1, tokenEnd);
+    if (NULL == end) {
+        return -3;
+    }
+
+    len = end - start + 1;
+    if (objLen < len) {
+        return -4;
+    }
+
+    // start[len] = 0;
+    strncpy(obj, start, len);
+    return len;
+}
+
+int genS2Json(const char *status, int statusLen, char *result, int resultLen) {
+    int ret = 0, tmpLen;
+    char utc[64] = {0};
+    // char nowStatus[1024] = {0};
+    // char *pResult = result;
+    const char *key = "\"status\"";
+    // jsontok_t jsonToken[NUM_TOKENS];
+    // jobj_t jobj;
+
+    ret = getJsonUTC32(utc, sizeof(utc));
+    if (0 >= ret) {
+        return ret;
+    }
+
+    tmpLen = sprintf(result, "{%s:", key);
+    ret = getJsonObject(status, statusLen, key, result + tmpLen, resultLen - tmpLen);
+    if (0 >= ret) {
+        return ret;
+    }
+    tmpLen += ret;
+
+    utc[0] = ',';
+    ret = sprintf(result + tmpLen, "%s", utc);
+    tmpLen += ret;
+
+    return tmpLen;
+}
+
 // TODO: timer start for heart beat, hal need to support
 void startHeartBeat(void) {
 
@@ -176,6 +245,22 @@ void startHeartBeat(void) {
 
 
 
-// int getUUIDFromJson(char *json, int jsonLen, char uuid[MAX_UUID]) {
-//     return 0;
-// }
+int getUUIDFromJson(const char *json, int jsonLen, char *uuid, int uuidLen) {
+    int ret = 0;
+    // char strBaud[96] = {0};
+    jsontok_t jsonToken[NUM_TOKENS];
+    jobj_t jobj;
+
+    LELOG("getUUIDFromJson [%s]\r\n", json);
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if (WM_SUCCESS != ret) {
+        return -1;
+    }
+
+    if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_UUID, uuid, uuidLen)) {
+        return -2;
+    }
+
+    return strlen(uuid);
+}

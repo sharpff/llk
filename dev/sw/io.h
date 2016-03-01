@@ -12,7 +12,8 @@ extern "C"
 
 #define MAX_STR_LEN 36
 #define MAX_REMOTE 64
-#define MAX_IA 8
+#define MAX_IA 4
+#define MAX_BUF (1024+256)
 
 typedef enum {
     IO_TYPE_UART,
@@ -120,8 +121,8 @@ int lelinkStorageReadAuthCfg(AuthCfg *authCfg);
 /*
  * type: 0-fw script, 1-ia script
  */
-int lelinkStorageWriteScriptCfg(const void *scriptCfg, int type);
-int lelinkStorageReadScriptCfg(void* scriptCfg, int type);
+int lelinkStorageWriteScriptCfg(const void *scriptCfg, int type, int idx);
+int lelinkStorageReadScriptCfg(void* scriptCfg, int type, int idx);
 
 void lelinkStorageDeinit(void);
 

@@ -119,7 +119,7 @@ def doSth():
 			expectSize = int(param[i + 1][2:], 16)
 			doPackFileByFile(fileDst, fileSrc, expectSize, 255)
 			i += 2
-	elif whatType == '--genS1':
+	elif whatType == '--genS1' or whatType == '--genS2':
 		if os.path.exists(fileDst):
 			os.remove(fileDst)
 

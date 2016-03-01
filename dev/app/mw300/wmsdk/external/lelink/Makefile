@@ -78,7 +78,6 @@ SOURCE := ${PROTOCOL_DIR}/airconfig.c \
 		${PROTOCOL_DIR}/data.c \
 		${PROTOCOL_DIR}/misc.c \
 		${PROTOCOL_DIR}/network.c \
-		${PROTOCOL_DIR}/ota.c \
 		${PROTOCOL_DIR}/pack.c \
 		${PROTOCOL_DIR}/protocol.c \
 		${PROTOCOL_DIR}/state.c \
@@ -86,6 +85,7 @@ SOURCE := ${PROTOCOL_DIR}/airconfig.c \
 		${PROTOCOL_DIR}/io.c \
 		${PROTOCOL_DIR}/convertor.c \
 		${PROTOCOL_DIR}/sengine.c \
+		${PROTOCOL_DIR}/ota.c \
 		${PROTOCOL_DIR}/jsmn/jswrap.c \
 		${PROTOCOL_DIR}/jsmn/jsmn.c \
 		${PROTOCOL_DIR}/jsmn/jsgen.c \

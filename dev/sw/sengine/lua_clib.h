@@ -8,5 +8,6 @@ int bitand(lua_State *L);
 int csum(lua_State *L);
 int bitxor(lua_State *L);
 int bitnor(lua_State *L);
+// int s2apiStoreCurrStatus(lua_State *L);
 
 #endif

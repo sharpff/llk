@@ -20,18 +20,24 @@ int leOTA(OTAType_t type, const char *url, const char *sig)
             status = halUpdateFirmware(&info);
             break;
         case OTA_TYPE_FW_SCRIPT:
-            memset(&ginScriptCfg, 0, sizeof(ginScriptCfg));
-            status = halUpdateScript((void *)&info, &ginScriptCfg);
-            if(!status && ginScriptCfg.data.size > 0) {
-                ginScriptCfg.csum = crc8((const uint8_t *)&(ginScriptCfg.data), sizeof(ginScriptCfg.data));
-                status = lelinkStorageWriteScriptCfg(&ginScriptCfg, 0);
+            memset(ginScriptCfg, 0, sizeof(ScriptCfg));
+            status = halUpdateScript((void *)&info, ginScriptCfg);
+            if(!status && ginScriptCfg->data.size > 0) {
+                ginScriptCfg->csum = crc8((const uint8_t *)&(ginScriptCfg->data), sizeof(ginScriptCfg->data));
+                status = lelinkStorageWriteScriptCfg(ginScriptCfg, OTA_TYPE_FW_SCRIPT, 0);
             } else {
                 status = -1;
             }
             break;
         case OTA_TYPE_IA_SCRIPT:
-            // TODO: ia-where
-            status = lelinkStorageWriteScriptCfg(&ginScriptCfg, 1);
+            memset(ginScriptCfg2, 0, sizeof(ScriptCfg));
+            status = halUpdateScript((void *)&info, ginScriptCfg2);
+            if(!status && ginScriptCfg2->data.size > 0) {
+                ginScriptCfg2->csum = crc8((const uint8_t *)&(ginScriptCfg2->data), sizeof(ginScriptCfg2->data));
+                status = lelinkStorageWriteScriptCfg(ginScriptCfg2, OTA_TYPE_IA_SCRIPT, 0);
+            } else {
+                status = -1;
+            }
             break;
         default:
             status = -1;

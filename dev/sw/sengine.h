@@ -23,13 +23,16 @@ extern "C"
 /*
  * ia script
  */
-#define S2_GET_RULEINFO "s2GetRuleInfo"
 #define S2_IS_VALID "s2IsValid"
 #define S2_IS_VALID_EXT "s2IsValidExt"
+#define S2_GET_SELFNAME "s2GetSelfName"
 #define S2_GET_RULETYPE "s2GetRuleType"
 #define S2_GET_BERESERVED "s2GetBeingReservedInfo"
 #define S2_GET_ISOK "s2IsConditionOK"
 #define S2_GET_BECMD "s2GetSelfCtrlCmd"
+#define MAX_IA_BUF 64
+#define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
+#define MAX_RULE_NAME 64
 
 
 /*
@@ -53,7 +56,8 @@ typedef struct {
     uint16_t arrQueriesCounts[MAX_QUERY_COUNTS];
 }Queries;
 
-extern ScriptCfg ginScriptCfg;
+extern ScriptCfg *ginScriptCfg;
+extern ScriptCfg *ginScriptCfg2;
 
 int sengineInit(void);
 int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen);
@@ -61,6 +65,8 @@ int sengineGetStatus(char *json, int jsonLen);
 int sengineSetStatus(char *json, int jsonLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
 int senginePollingSlave(void);
+int senginePollingRules(const char *json, int jsonLen);
+
 
 #ifdef __cplusplus
 }

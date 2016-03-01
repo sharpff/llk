@@ -4,6 +4,7 @@
 #include "protocol.h"
 
 extern uint8_t ginBeCtrlToken[];
+static char ginOTAUrl[128] = {0};
 
 // static uint8_t ginUUID[32];
 
@@ -44,6 +45,11 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
             if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == cmdInfo->subCmdId) {
                 ret = len < strlen(cmdCtrl) ? len : strlen(cmdCtrl);
                 memcpy(data, cmdCtrl, ret);
+            } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ == cmdInfo->subCmdId) {
+                APPLOG("get ota url 1 [%d][%s]\r\n", strlen(ginOTAUrl), ginOTAUrl);
+                memcpy(data, ginOTAUrl, len > strlen(ginOTAUrl) ? strlen(ginOTAUrl) : len);
+                APPLOG("get ota url 2 [%d][%s]\r\n", strlen(data), data);
+                ret = strlen(data);
             }
         }break;
         case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
@@ -56,17 +62,27 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
         }break;
         case LELINK_CMD_CLOUD_REPORT_REQ: {
             if (LELINK_SUBCMD_CLOUD_REPORT_REQ == cmdInfo->subCmdId || 
-                LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ == cmdInfo->subCmdId ||
-                LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_REQ == cmdInfo->subCmdId) {
+                LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ == cmdInfo->subCmdId) {
+                // char uuid[64] = {0};
+                // char ver[] = {"\"1-0.9.9-1-1.0\""};
+                // strcpy(uuid, UUID_BEING_CTRL);
+                // // ret = len < strlen(uuid) ? len : strlen(uuid);
+                // ret = sprintf(data, "{\"uuid\":\"%s\",\"type\":%d,\"ver\":%s}", uuid, type, ver);
+                // // memcpy(data, uuid, ret);
+                // APPLOG("data [%d][%s]\r\n", ret, data);
+                // memset(ginOTAUrl, 0, sizeof(ginOTAUrl));
+                // memcpy(ginOTAUrl, data, len > sizeof(ginOTAUrl) ? sizeof(ginOTAUrl) : len);
                 int type = 2;
                 char uuid[64] = {0};
+                char ver[] = {"\"1-0.9.9-1-1.0\""};
                 strcpy(uuid, UUID_BEING_CTRL);
                 // ret = len < strlen(uuid) ? len : strlen(uuid);
-                sprintf(data, "{\"uuid\":\"%s\",\"type\":%d}", uuid, type);
+                ret = sprintf(data, "{\"uuid\":\"%s\",\"type\":%d,\"ver\":%s}", uuid, type, ver);
                 // memcpy(data, uuid, ret);
-                APPLOG("data [%s]\r\n", data);
+                APPLOG("ota query data [%d][%s]\r\n", ret, data);
             }
         }break;
+
     }
     APPLOG("halCBLocalReq [%d] -e\r\n", ret);
     return ret;
@@ -121,13 +137,20 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
 
                 hexStr2bytes(tokenStr, ginBeCtrlToken, AES_LEN);
 
+            } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP) {
+                memset(ginOTAUrl, 0, sizeof(ginOTAUrl));
+                memcpy(ginOTAUrl, payloadBody, len > sizeof(ginOTAUrl) ? sizeof(ginOTAUrl) : len);                
+                APPLOG("set ota url [%d][%s]\r\n", strlen(ginOTAUrl), ginOTAUrl);
             }
+
         }break;
         case LELINK_CMD_DISCOVER_RSP: {
             if (LELINK_SUBCMD_DISCOVER_RSP == cmdInfo->subCmdId) {
                 APPLOG("halCBRemoteRsp LELINK_SUBCMD_DISCOVER_RSP [%s]\r\n", payloadBody);
             }
         }break;
+
+
     }
 }
 
@@ -141,7 +164,7 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
  * cmdInfo is retmote
  */
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
-    int ret = 0;
+    int ret = 1;
     APPLOG("halCBRemoteReq -s\r\n");
     // APPLOG("halCBRemoteReq status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \r\n\
     //     passThru[%d] uuid[%s]\r\n", 
@@ -162,7 +185,8 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
             }
         }break;
         case LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ: {
-            if (LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_REQ == cmdInfo->subCmdId) {
+            if (LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_REQ == cmdInfo->subCmdId || 
+                LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_DO_OTA_REQ == cmdInfo->subCmdId) {
                 // if u have got the RemoteReq, set ret as 1
                 // cmdInfo->uuid
                 ret = 1;

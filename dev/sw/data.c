@@ -7,7 +7,7 @@
 #include "network.h"
 #include "io.h"
 #ifndef SW_VERSION
-#define SW_VERSION "1.X.X"
+#define SW_VERSION "0.9.9"
 #else
 #include "version.h" // Auto generate by SVN
 #endif
@@ -52,7 +52,7 @@ static uint16_t ginRemotePort;
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
 
 void setTerminalUTC(uint64_t *utc) {
-    ginRemoteUTC = *utc;
+    ginRemoteUTC = *utc/1000;
 }
 
 void getTerminalUTC(int64_t *utc) {
@@ -265,40 +265,67 @@ int setTerminalStatus(const char *status, int len) {
 }
 
 int getTerminalStatus(char *status, int len) {
-    int ret = 0;
+    int ret = 0, tmpLen = 0;
     const char suffixCloud[16] = ",\"cloud\":%d";
 
     LELOG("call getTerminalStatus start \r\n");
-    strcpy(status, "\"status\":");
-
+    strcpy(status, "{\"status\":");
+    tmpLen = strlen(status);
     // script status
 #ifndef __ANDROID__
-    ret = sengineGetStatus(status + strlen(status), len - strlen(status));
+    ret = sengineGetStatus(status + tmpLen, len - tmpLen);
 #else
     ret = 0;
 #endif
+    // status in cache
     if (0 >= ret) {
         LELOGW("getTerminalStatus sengineGetStatus ret [%d]\r\n", ret);
-//        ret = cacheGetTerminalStatus(status, len);
-        if (0 >= ret) {
-            strcpy(status, "\"status\":");
-            strcpy(status + strlen(status), "{}");
-            LELOGW("getTerminalStatus make status [%s]\r\n", status);
-//            return strlen(status);
-            ret = strlen(status);
+        ret = cacheGetTerminalStatus(status, len);
+        if (0 < ret) {
+            LELOG("getTerminalStatus cacheGetTerminalStatus ret[%d] [%s]\r\n", ret, status);
+            return ret;
         }
+
+        strcpy(status + tmpLen, "{}");
+        tmpLen = strlen(status);
+    } else {
+        tmpLen += ret;
     }
 
     // suffix cloud
-    if (len <= (ret + sizeof(suffixCloud) + strlen(status))) {
-        LELOGW("getTerminalStatus 'len' is too small for total [%d]\r\n", len);
+    if (len <= (sizeof(suffixCloud) + tmpLen)) {
+        LELOGE("getTerminalStatus 'len' is too small for total [%d]\r\n", len);
         return 0;
     }
-    sprintf(status + strlen(status), suffixCloud, ginStateCloudAuthed);
+    sprintf(status + tmpLen, suffixCloud, ginStateCloudAuthed);
+    tmpLen = strlen(status);
+    // status[tmpLen] = '}';
+    // tmpLen += 1;
 
-    cacheSetTerminalStatus(status, strlen(status));
-    LELOG("what status [%s]\r\n", status);
-    return strlen(status);
+    //
+    strcpy(status + tmpLen, ",\"uuid\":\""); tmpLen = strlen(status);
+    getTerminalUUID((uint8_t *)status + tmpLen, MAX_UUID); tmpLen = strlen(status);
+    
+    strcpy(status + tmpLen, "\",\"ip\":\""); tmpLen = strlen(status);
+    halGetSelfAddr(status + tmpLen, len - tmpLen, NULL); tmpLen = strlen(status);
+
+    strcpy(status + tmpLen, "\",\"ver\":\""); tmpLen = strlen(status);
+    getVer(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
+
+    status[tmpLen] = '"'; 
+    tmpLen += 1;
+    status[tmpLen] = '}'; 
+    tmpLen += 1;
+    //
+
+    cacheSetTerminalStatus(status, tmpLen);
+    LELOG("what status [%d][%s]\r\n", tmpLen, status);
+    return tmpLen;
+}
+
+int getTerminalStatusExt(char *status, int len) {
+    // {"status":{},"cloud":2,"uuid":"","ip":"","ver":""}
+    return 0;
 }
 
 void cacheSetTerminalStatus(const char *status, int len) {

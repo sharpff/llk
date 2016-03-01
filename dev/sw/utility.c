@@ -18,7 +18,8 @@ uint8_t crc8(const uint8_t *ptr, uint16_t len) {
 }
 
 int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen) {
-	const char tab[] = "0123456789abcdef";
+    // const char tab[] = "0123456789abcdef";
+	const char tab[] = "0123456789ABCDEF";
 	int i = 0;
 
 	memset(dst, 0, dstLen);
