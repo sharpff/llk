@@ -1,2 +1,0 @@
-.\packfile.exe --pack .\profile.bin .\0x1c2000.bin 0x1000 .\0x1c3000.bin 0x5000 .\0x1c8000.bin 0x1000
-pause

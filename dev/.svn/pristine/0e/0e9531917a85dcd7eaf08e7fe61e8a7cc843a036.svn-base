@@ -1,1 +1,0 @@
-javac /home/lf/Documents/dev/ws/LinuxGDB/dev/app/android/AndroidTest/com/letv/lelive/*.java
