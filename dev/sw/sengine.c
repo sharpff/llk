@@ -56,10 +56,9 @@ static IO lf_s1GetQueries_input(lua_State *L, const uint8_t *input, int inputLen
     return io;
 }
 static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
-    // int i = 0;
-    int size = 0, i, j;
+    int size = 0;// i, j;
     uint8_t *tmp = 0;
-    uint16_t currLen = 0, appendLen = 0;
+    // uint16_t currLen = 0, appendLen = 0;
     Queries *queries = (Queries *)output;
 
     if (NULL == queries || sizeof(Queries) > outputLen) {
@@ -84,6 +83,7 @@ static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
         size = 0;
     }
 
+    /*
     for (i = 0; i < queries->queriesCountsLen; i += 2) {
         LEPRINTF("[SENGINE]_s1GetQueries_[%d]_cmd: ", i/2);
         memcpy(&currLen, &queries->arrQueriesCounts[i], 2);
@@ -93,6 +93,7 @@ static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
         appendLen += currLen;
         LEPRINTF("\r\n");
     }
+    */
     return sizeof(Queries);
 }
 
@@ -132,7 +133,7 @@ static IO lf_s1GetValidKind_input(lua_State *L, const uint8_t *input, int inputL
 static int lf_s1GetValidKind(lua_State *L, uint8_t *output, int outputLen) {
     // int i = 0;
     *((int *)output) = lua_tointeger(L, -1);
-    LEPRINTF("[SENGINE] s1GetValidKind: [%d]\r\n", *((int *)output));
+    // LEPRINTF("[SENGINE] s1GetValidKind: [%d]\r\n", *((int *)output));
     return sizeof(int);
 }
 
@@ -193,7 +194,7 @@ static int lf_s1CvtPri2Std(lua_State *L, uint8_t *output, int outputLen) {
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        LEPRINTF("[SENGINE] s1CvtPri2Std: [%d][%s]\r\n", size, output);
+        // LEPRINTF("[SENGINE] s1CvtPri2Std: [%d][%s]\r\n", size, output);
     } else {
         size = 0;
     }
@@ -567,49 +568,6 @@ int sengineSetStatus(char *json, int jsonLen) {
     return ret;
 }
 
-int sengineGetStatus(char *json, int jsonLen) {
-    Queries queries;
-    uint8_t bin[128] = {0};
-    // static uint8_t bin[1024*9] = {0};
-    int ret = 0, i = 0;
-    uint16_t currLen = 0, appendLen = 0;
-
-
-    // 0. getQueries from script
-    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
-            NULL, 0, (uint8_t *)&queries, sizeof(queries));
-    if (ret <= 0) {
-        LELOGW("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]\r\n", ret);
-        return ret;
-    }
-
-    // 1. write & read uart
-    for (i = 0; i < queries.queriesCountsLen; i += 2) {
-        memcpy(&currLen, &queries.arrQueriesCounts[i], 2);
-        ret = ioWrite(IO_TYPE_UART, *((void **)ioGetHdl(IO_TYPE_UART)), &(queries.arrQueries[appendLen]), currLen);
-        if (ret <= 0) {
-            LELOGW("sengineGetStatus ioWrite [%d]\r\n", ret);
-            return ret;
-        }
-        delayms(ginDelayMS);
-        ret = ioRead(IO_TYPE_UART, *((void **)ioGetHdl(IO_TYPE_UART)), bin, sizeof(bin));
-        if (ret <= 0) {
-            LELOGW("sengineGetStatus ioRead [%d]\r\n", ret);
-            return ret;
-        }
-        appendLen += currLen;
-    }
-
-    // 2. engine parsing pri2std
-    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-        bin, ret, (uint8_t *)json, jsonLen);
-    if (ret <= 0) {
-        LELOGW("sengineGetStatus sengineCall("S1_PRI2STD") [%d]\r\n", ret);
-    }
-
-    return ret;
-}
-
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     int ret = 0;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_CVTTYPE,
@@ -621,23 +579,63 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     return ret;
 }
 
+int sengineQuerySlave(void) 
+{
+    Queries queries;
+    int ret = 0, i = 0;
+    uint16_t currLen = 0, appendLen = 0;
+
+    // 0. getQueries from script
+    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
+            NULL, 0, (uint8_t *)&queries, sizeof(queries));
+    if (ret <= 0) {
+        LELOGE("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]\r\n", ret);
+        return ret;
+    }
+    for (i = 0; i < queries.queriesCountsLen; i += 2, appendLen += currLen) {
+        memcpy(&currLen, &queries.arrQueriesCounts[i], 2);
+        ret = ioWrite(IO_TYPE_UART, *((void **)ioGetHdl(IO_TYPE_UART)), &(queries.arrQueries[appendLen]), currLen);
+        if (ret <= 0) {
+            LELOGE("sengineGetStatus ioWrite [%d]\r\n", ret);
+            return ret;
+        }
+    }
+    return 0;
+}
+
 int senginePollingSlave(void) {
-    int ret = 0;
-    int whatKind = 0;
+    char status[256];
     uint8_t bin[128] = {0};
+    int whatKind = 0, ret = 0, size;
+
     ret = ioRead(IO_TYPE_UART, *((void **)ioGetHdl(IO_TYPE_UART)), bin, sizeof(bin));
     if (ret <= 0) {
-        return 0;
+        LELOGW("sengineGetStatus ioRead [%d]\r\n", ret);
+        return ret;
     }
-
+    size = ret;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
-            bin, ret, (uint8_t *)&whatKind, sizeof(whatKind));
-    // LELOG("senginePollingSlave sengineCall(whatKind) [%d][%d]\r\n", ret, whatKind);
+            bin, size, (uint8_t *)&whatKind, sizeof(whatKind));
     if (ret <= 0) {
-        return 0;
+        return -1;
     }
-
-	// TODO: cache or status checking
+    switch (whatKind) {
+        case 1: // wifi reset
+            LELOG("Please reset wifi\r\n");
+            break;
+        case 2: // status
+            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
+                    bin, size, (uint8_t *)status, sizeof(status));
+            if (ret <= 0) {
+                LELOGW("sengineGetStatus sengineCall("S1_PRI2STD") [%d]\r\n", ret);
+            }
+            cacheSetTerminalStatus(status, ret);
+            LELOG("Cache status:%s\r\n", status);
+            break;
+        default:
+            LELOGE("Unknow whatKind = %d\r\n", whatKind);
+            return -1;
+    }
 
     return whatKind;
 }
@@ -912,11 +910,7 @@ int senginePollingRules(const char *json, int jsonLen) {
 
         }
     }
-
     LELOG("senginePollingRules [%d]-e \r\n", isFound);
-
-
-
 
     return 0;
 }

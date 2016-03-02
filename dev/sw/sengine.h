@@ -64,6 +64,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
 int sengineGetStatus(char *json, int jsonLen);
 int sengineSetStatus(char *json, int jsonLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
+int sengineQuerySlave(void);
 int senginePollingSlave(void);
 int senginePollingRules(const char *json, int jsonLen);
 

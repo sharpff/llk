@@ -257,52 +257,29 @@ int getVer(char fwVer[32], int size) {
 }
 
 int setTerminalStatus(const char *status, int len) {
-#ifndef __ANDROID__
     return sengineSetStatus((char *)status, len);
-#else
-    return 0;
-#endif
 }
 
 int getTerminalStatus(char *status, int len) {
     int ret = 0, tmpLen = 0;
-    const char suffixCloud[16] = ",\"cloud\":%d";
 
-    LELOG("call getTerminalStatus start \r\n");
+    //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
+
+    LELOG("call getTerminalStatus status \r\n");
+
     strcpy(status, "{\"status\":");
     tmpLen = strlen(status);
-    // script status
-#ifndef __ANDROID__
-    ret = sengineGetStatus(status + tmpLen, len - tmpLen);
-#else
-    ret = 0;
-#endif
-    // status in cache
-    if (0 >= ret) {
-        LELOGW("getTerminalStatus sengineGetStatus ret [%d]\r\n", ret);
-        ret = cacheGetTerminalStatus(status, len);
-        if (0 < ret) {
-            LELOG("getTerminalStatus cacheGetTerminalStatus ret[%d] [%s]\r\n", ret, status);
-            return ret;
-        }
 
+    ret = cacheGetTerminalStatus(status + tmpLen, len - strlen(status));
+    if(ret <= 0) {
+        LELOGE("Can't get cache status\r\n");
         strcpy(status + tmpLen, "{}");
-        tmpLen = strlen(status);
-    } else {
-        tmpLen += ret;
     }
-
-    // suffix cloud
-    if (len <= (sizeof(suffixCloud) + tmpLen)) {
-        LELOGE("getTerminalStatus 'len' is too small for total [%d]\r\n", len);
-        return 0;
-    }
-    sprintf(status + tmpLen, suffixCloud, ginStateCloudAuthed);
     tmpLen = strlen(status);
-    // status[tmpLen] = '}';
-    // tmpLen += 1;
 
-    //
+    sprintf(status + tmpLen, ",\"cloud\":%d", ginStateCloudAuthed);
+    tmpLen = strlen(status);
+
     strcpy(status + tmpLen, ",\"uuid\":\""); tmpLen = strlen(status);
     getTerminalUUID((uint8_t *)status + tmpLen, MAX_UUID); tmpLen = strlen(status);
     
@@ -318,14 +295,8 @@ int getTerminalStatus(char *status, int len) {
     tmpLen += 1;
     //
 
-    cacheSetTerminalStatus(status, tmpLen);
     LELOG("what status [%d][%s]\r\n", tmpLen, status);
     return tmpLen;
-}
-
-int getTerminalStatusExt(char *status, int len) {
-    // {"status":{},"cloud":2,"uuid":"","ip":"","ver":""}
-    return 0;
 }
 
 void cacheSetTerminalStatus(const char *status, int len) {

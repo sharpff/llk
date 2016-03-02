@@ -79,8 +79,7 @@ end
 	WIFI 重置命令判别
 ]]
 function s1GetValidKind(data)
-    local reset = string.char( 0xA5, 0xA5, 0x5A, 0x5A, 0x98, 0xC1, 0xE8, 0x03, 0x00, 0x00, 0x00, 0x00 )
-	-- print (data, #data)
+    local reset = string.char( 0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00 )
 
 	--[[ MUST
 		wifi reset cmd
@@ -93,7 +92,7 @@ function s1GetValidKind(data)
 	--[[ MUST
 		valid LOW LEVEL status cmd
 	]]
-	if 9 == #data then
+	if 14 == #data then
 		-- print '2'
 		return 2
 	end
@@ -147,7 +146,7 @@ function s1CvtPri2Std(bin)
     local str = '{"idx1":%d,"idx2":%d,"idx3":%d,"idx4":%d}'
     -- print (#bin)
     dataTbl = stringToTable(bin)
-    LOGTBL(dataTbl)
+    -- LOGTBL(dataTbl)
 
     if dataTbl[1] == 0xa5 and dataTbl[2] == 0xa5 and dataTbl[3] == 0x5a and dataTbl[4] == 0x5a then
         str = string.format(str, (dataTbl[13] >> 0) & 0x1, (dataTbl[13] >> 1) & 0x1, (dataTbl[13] >> 2) & 0x1, (dataTbl[13] >> 3) & 0x1)

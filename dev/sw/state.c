@@ -109,15 +109,13 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
         }
     }
     ginMSDelay = msDelay;
+    sengineQuerySlave();
     if (0 < msDelay) {
         delayms(msDelay);
     }
+    senginePollingSlave();
     lelinkDoPollingQ2A(ginCtxQ2A);
     lelinkDoPollingR2R(ginCtxR2R);
-#ifndef __ANDROID__
-    //senginePollingSlave();
-
-#endif
     return changeState(ret, &ginStateCntx, i);
 }
 
