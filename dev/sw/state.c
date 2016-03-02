@@ -14,7 +14,7 @@
     if (0 < ((ot * ginMSDelay) / ms)) {
 
 #define TIMEOUT_END ot = 0;}}
-void resetConfigData(void);
+int resetConfigData(void);
 
 
 typedef struct {
@@ -326,10 +326,17 @@ static int stateProcCloudAuthed(StateContext *cntx) {
     return ginStateCloudAuthed;
 }
 
-void resetConfigData(void) {
+int resetConfigData(void) {
     PrivateCfg cfg;
-    lelinkStorageReadPrivateCfg(&cfg);
-    cfg.data.nwCfg.configStatus = 0;
-    ginConfigStatus = 0;
-    lelinkStorageWritePrivateCfg(&cfg);
+    int ret = 0;
+    ret = lelinkStorageReadPrivateCfg(&cfg);
+    if (0 <= ret) {
+        cfg.data.nwCfg.configStatus = 0;
+        ginConfigStatus = 0;
+        ret = lelinkStorageWritePrivateCfg(&cfg);
+    }
+    return ret; 
+}
+int lelinkNwPostCmdExt(const void *node) {
+    return lelinkNwPostCmd(ginCtxR2R, node);
 }

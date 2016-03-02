@@ -1,3 +1,6 @@
+--[[ 
+	THIS IS FW SCRIPT
+  ]]
 --[[ INTERNAL
 	Table to string
   ]]
@@ -79,14 +82,23 @@ end
 	WIFI 重置命令判别
 ]]
 function s1GetValidKind(data)
-	local reset = string.char( 0x12, 0x34, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0x22 )
+	local reset = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00)
+
 	-- print (data, #data)
 
 	--[[ MUST
 		wifi reset cmd
 	]]
-	if reset == data then
-		-- print '1'
+	--print ('start\r\n')
+	--tmpTbl = stringToTable(data)
+	--LOGTBL(tmpTbl)
+	--tmpTbl = stringToTable(reset)
+	--LOGTBL(tmpTbl)
+	--print (string.find(data, reset))
+	--print ('\r\n')
+	
+	if nil ~= string.find(data, reset) then
+		--print '1'
 		return 1
 	end
 
@@ -150,7 +162,7 @@ function s1CvtPri2Std(bin)
 	-- for i = 1, #bin
 	-- 		 (bin[i])
 	-- end
-	LOGTBL(dataTbl)
+	-- LOGTBL(dataTbl)
 
 	str = string.format(str, 100 - dataTbl[3])
 	-- str = string.format(str, #dataTbl)

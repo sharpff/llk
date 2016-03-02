@@ -855,8 +855,13 @@ end:
     wmprintf("-h display this message\r\n");
 }
 
+void le_reboot(int argc, char **argv) {
+    app_reboot(REASON_USER_REBOOT);
+}
+
 static struct cli_command le_utils[] = { 
     {"lo", "letv ota", le_ota},
+    {"reboot", "letv reboot", le_reboot}
 };
 
 int le_utils_cli_init(void)                                                                                                                                            

@@ -6,6 +6,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 #include "ota.h"
+#include "protocol.h"
 // #include <stdio.h>
 // #include <stdlib.h>
 // #include <string.h>
@@ -13,6 +14,7 @@
 // #define MAX_STATUS 64
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
+extern int8_t ginStateCloudAuthed;
 
 
 typedef struct
@@ -43,6 +45,7 @@ typedef struct {
 typedef struct {
     IACfg cfg;
     IA_CACHE_INT cache[MAX_IA];
+    // char buf[1024*10];
 }IA_CACHE;
 
 ScriptCfg *ginScriptCfg;
@@ -302,7 +305,7 @@ static IO lf_s2IsConditionOK_input(lua_State *L, const uint8_t *input, int input
     } else {
         lua_pushlstring(L, (char *)input, firstLen);
     }
-    LEPRINTF("[SENGINE] lf_s2IsConditionOK_input: firstLen[%d][%d]\r\n", firstLen, inputLen);
+    LEPRINTF("[SENGINE] lf_s2IsConditionOK_input: firstLen[%d/%d]\r\n[%s]\r\n", firstLen, inputLen, input);
     firstLen += 1;
     secondLen = strlen((char *)input + firstLen);
     if (0 == secondLen) {
@@ -310,7 +313,7 @@ static IO lf_s2IsConditionOK_input(lua_State *L, const uint8_t *input, int input
     } else {
         lua_pushlstring(L, (char *)input + firstLen, secondLen);
     }
-    LEPRINTF("[SENGINE] lf_s2IsConditionOK_input: secondLen[%d][%d]\r\n", secondLen, inputLen);
+    LEPRINTF("[SENGINE] lf_s2IsConditionOK_input: secondLen[%d/%d]\r\n[%s]\r\n", secondLen, inputLen, input + firstLen);
     IO io = { 2, 1 };
     return io;
 }
@@ -328,16 +331,16 @@ static IO lf_s2GetSelfCtrlCmd_input(lua_State *L, const uint8_t *input, int inpu
 static int lf_s2GetSelfCtrlCmd(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     int sLen = lua_tointeger(L, -2);
-    int size = MIN(sLen, outputLen);
+    int size = MIN(sLen + 1, outputLen);
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
-        memcpy(output, tmp, size);
-        LEPRINTF("[SENGINE] s2GetSelfCtrlCmd: [%d][%s]\r\n", size, output);
+        memcpy(output, tmp, sLen); output[sLen] = 0;
+        LEPRINTF("[SENGINE] s2GetSelfCtrlCmd: [%d][%s]\r\n", sLen, output);
     } else {
-        size = 0;
+        sLen = 0;
     }
 
-    return size;
+    return sLen;
 }
 static FUNC_LIST func_list[] = {
     { S1_GET_CVTTYPE, { lf_s1GetCvtType_input, lf_s1GetCvtType } },
@@ -604,33 +607,52 @@ int sengineQuerySlave(void)
 }
 
 int senginePollingSlave(void) {
-    char status[256];
+    char status[MAX_BUF];
     uint8_t bin[128] = {0};
     int whatKind = 0, ret = 0, size;
 
     ret = ioRead(IO_TYPE_UART, *((void **)ioGetHdl(IO_TYPE_UART)), bin, sizeof(bin));
     if (ret <= 0) {
-        LELOGW("sengineGetStatus ioRead [%d]\r\n", ret);
+        LELOGW("senginePollingSlave ioRead [%d]\r\n", ret);
         return ret;
     }
     size = ret;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
             bin, size, (uint8_t *)&whatKind, sizeof(whatKind));
     if (ret <= 0) {
+        LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]\r\n", ret);
         return -1;
     }
     switch (whatKind) {
-        case 1: // wifi reset
-            LELOG("Please reset wifi\r\n");
-            break;
-        case 2: // status
-            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-                    bin, size, (uint8_t *)status, sizeof(status));
-            if (ret <= 0) {
-                LELOGW("sengineGetStatus sengineCall("S1_PRI2STD") [%d]\r\n", ret);
+        case 1: {
+                extern int resetConfigData(void);
+                ret = resetConfigData();
+                LELOG("resetConfigData [%d]\r\n", ret);
+                if (0 <= ret) {
+                    halReboot();
+                }
             }
-            cacheSetTerminalStatus(status, ret);
-            LELOG("Cache status:%s\r\n", status);
+            break;
+        case 2: {
+                extern int lelinkNwPostCmdExt(const void *node);
+                ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
+                        bin, size, (uint8_t *)status, sizeof(status));
+                if (ret <= 0) {
+                    LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]\r\n", ret);
+                } else if (cacheIsChanged(status, ret)) {
+                    NodeData node = {0};
+                    if (2 == ginStateCloudAuthed) {
+                        node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
+                        node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
+                    } else {
+                        node.cmdId = LELINK_CMD_DISCOVER_REQ;
+                        node.subCmdId = LELINK_SUBCMD_DISCOVER_REQ;                        
+                    }
+                    lelinkNwPostCmdExt(&node);
+                    cacheSetTerminalStatus(status, ret);
+                    LELOG("Cache status:%s\r\n", status);
+                }
+            }
             break;
         default:
             LELOGE("Unknow whatKind = %d\r\n", whatKind);
@@ -744,14 +766,14 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
         * check if it is a corresponding info(uuid)
         */
         memset(buf, 0, sizeof(buf));
-        LELOG("idx[%d] [%s] <=> [%s]\r\n", i, uuid, cacheInt->beingReservedUUID[i]);
+        LELOG("FOR idx[%d] [%s] <=> [%s]\r\n", i, uuid, cacheInt->beingReservedUUID[i]);
         // 1st param
         if (0 == memcmp(uuid, cacheInt->beingReservedUUID[i], MAX_UUID)) {
             LELOG("1st param[%d][%s]\r\n", strlen(json), json);
             strcpy(buf, json);
             isFound = 1;
         } else {
-            LELOG("has no 1st param\r\n");
+            LELOG("1st no param\r\n");
             strcpy(buf, "{}");
         }
 
@@ -761,22 +783,23 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
 
         // 2nd param
         if (0 < strlen(cacheInt->beingReservedStatus[i])) {
-            LELOG("cp beingReservedStatus [%d][%s]\r\n", MIN(strlen(cacheInt->beingReservedStatus[i]), MAX_BUF), cacheInt->beingReservedStatus[i]);
+            LELOG("2nd beingReservedStatus [%d][%s]\r\n", MIN(strlen(cacheInt->beingReservedStatus[i]), MAX_BUF), cacheInt->beingReservedStatus[i]);
             memcpy(buf + strlen(buf) + 1, cacheInt->beingReservedStatus[i], MIN(strlen(cacheInt->beingReservedStatus[i]), MAX_BUF));
         } else {
+            LELOG("2nd no param\r\n");
             strcpy(buf + strlen(buf) + 1, "{}");
         }
         ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_ISOK,
             (uint8_t *)buf, sizeof(buf), (uint8_t *)&is, sizeof(is));
         if (0 > ret) {
-            LELOGW("senginePollingRules 1 sengineCall("S2_GET_ISOK") [%d]\r\n", ret);
+            LELOGW("senginePollingRules sengineCall("S2_GET_ISOK") [%d]\r\n", ret);
             continue;
         }
         if (!is) {
-            LELOGW("senginePollingRules condition not ok -e2 \r\n");
+            LELOGW("senginePollingRules condition NO OK -e2 \r\n");
             continue;
         }
-        LELOG("senginePollingRules sengineCall("S2_GET_ISOK") ok [%d]\r\n", is);
+        LELOG("senginePollingRules sengineCall("S2_GET_ISOK") ok ? [%d]\r\n", is);
 
         /*
          * 4.
@@ -788,11 +811,10 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
             LELOGW("senginePollingRules sengineCall("S2_GET_BECMD") [%d]\r\n", ret);
             continue;
         }
-        LELOG("senginePollingRules sengineCall("S2_GET_BECMD") ctrl [%d][%s]\r\n", ret, buf);
 
         // 5. do ctrl
         ret = sengineSetStatus((char *)buf, ret);
-        LELOG("senginePollingRules sengineSetStatus [%d]\r\n", ret);      
+        LELOG("senginePollingRules sengineSetStatus DONE [%d]\r\n", ret);      
     }
 
     LELOG("senginePollingRules condition -e \r\n");

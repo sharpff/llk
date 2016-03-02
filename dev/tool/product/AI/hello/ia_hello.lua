@@ -1,4 +1,6 @@
-
+--[[ 
+	THIS IS IA SCRIPT
+  ]]
 --[[
 	rule template
 	please fill the template during CUSTOMIZATION START/END
@@ -92,8 +94,8 @@ function s2IsConditionOK(statusForReserved, statusPrivious)
 	-- to decode the json, and do judgement
 	local tb = {}
 	local tbOld = {}
-	print(string.format("[LUA] statusForReserved [%d][%s] \r\n", string.len(statusForReserved), statusForReserved))
-	print(string.format("[LUA] statusPrivious [%d][%s] \r\n", string.len(statusPrivious), statusPrivious))
+	-- print(string.format("[LUA] statusForReserved [%d][%s] \r\n", string.len(statusForReserved), statusForReserved))
+	-- print(string.format("[LUA] statusPrivious [%d][%s] \r\n", string.len(statusPrivious), statusPrivious))
 	if not (nil == statusForReserved) then
 		tb = cjson.decode(statusForReserved)
 	end
@@ -149,7 +151,7 @@ function s2IsConditionOK(statusForReserved, statusPrivious)
 	-- end
 	-- CUSTOMIZATION END
 
-	print(string.format("[LUA] 0 s2apiStoreCurrStatus [%d][%s][%s] ok[%d]\r\n", toStoreStatus, uuid, statusForReserved, ok))
+	-- print(string.format("[LUA] 0 s2apiStoreCurrStatus [%d][%s][%s] ok[%d]\r\n", toStoreStatus, uuid, statusForReserved, ok))
 	if ((toStoreStatus == 1) and 
 		not (nil == uuid) and 
 		not (nil == statusForReserved)) then 
@@ -158,9 +160,9 @@ function s2IsConditionOK(statusForReserved, statusPrivious)
 		-- statusForReserved = cjson.encode(tb)
 		local l, n = s2GetSelfName()
 
-		print(string.format("[LUA] 1 s2apiStoreCurrStatus [%d][%s] \r\n", l, n))
-		print(string.format("[LUA] 2 s2apiStoreCurrStatus [%d][%s] \r\n", string.len(uuid), uuid))
-		print(string.format("[LUA] 3 s2apiStoreCurrStatus [%d][%s] \r\n", string.len(statusForReserved), statusForReserved))
+		-- print(string.format("[LUA] 1 s2apiStoreCurrStatus [%d][%s] \r\n", l, n))
+		-- print(string.format("[LUA] 2 s2apiStoreCurrStatus [%d][%s] \r\n", string.len(uuid), uuid))
+		-- print(string.format("[LUA] 3 s2apiStoreCurrStatus [%d][%s] \r\n", string.len(statusForReserved), statusForReserved))
 		s2apiStoreCurrStatus(l, n, string.len(uuid), uuid, string.len(statusForReserved), statusForReserved)
 		-- print(string.format("[LUA CALL] s2apiStoreCurrStatus -s\r\n"))
 		-- local tblInfo = s2GetRuleInfo()
@@ -187,7 +189,7 @@ end
 function s2GetSelfName()
 	local name = ''
 	-- CUSTOMIZATION START
-	name = 'hello'
+	name = 'helloTest2'
 	-- CUSTOMIZATION END
 	return string.len(name), name
 end
@@ -205,7 +207,7 @@ function s2GetSelfCtrlCmd()
 	local selfCtrl = ''
 	
 	-- CUSTOMIZATION START
-	selfCtrl = '{"ctrl":{"action":3}}'
+	selfCtrl = '{"ctrl":{"action":5}}'
 	-- CUSTOMIZATION END
 	return string.len(selfCtrl), selfCtrl
 end

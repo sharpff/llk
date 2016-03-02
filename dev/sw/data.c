@@ -272,7 +272,7 @@ int getTerminalStatus(char *status, int len) {
 
     ret = cacheGetTerminalStatus(status + tmpLen, len - strlen(status));
     if(ret <= 0) {
-        LELOGE("Can't get cache status\r\n");
+        LELOGW("Can't get cache status\r\n");
         strcpy(status + tmpLen, "{}");
     }
     tmpLen = strlen(status);
@@ -318,6 +318,17 @@ int cacheGetTerminalStatus(char *status, int len) {
     memcpy(status, ginCachedStatus, cachedStatusLen);
     status[cachedStatusLen] = 0;
     return cachedStatusLen;
+}
+
+int cacheIsChanged(const char *status, int len) {
+    // int ret1, ret2, ret3;
+    // ret1 = strlen(ginCachedStatus);
+    // ret2 = (ret1 != len);
+    // ret3 = (0 != memcmp(ginCachedStatus, status, len));
+    // LELOG("cacheIsChanged [%d][%d][%d]\r\n", ret1, ret2, ret3);
+    // return ret2 || ret3;
+    // LELOG("cacheIsChanged [%d][%d] cmp[%d]\r\n", strlen(ginCachedStatus), len, (0 != memcmp(ginCachedStatus, status, len)));
+    return (strlen(ginCachedStatus) != len) || (0 != memcmp(ginCachedStatus, status, len));
 }
 
 /* TODO: Debug only */
