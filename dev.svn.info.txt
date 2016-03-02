@@ -1,0 +1,13 @@
+Path: .
+Working Copy Root Path: /home/fei/workspace/myGit/le-dev/dev
+URL: http://svn.letv.cn/solutions/tech/dev
+Relative URL: ^/tech/dev
+Repository Root: http://svn.letv.cn/solutions
+Repository UUID: 46ee92d5-445f-48a7-8500-e67eb4a94df2
+Revision: 3110
+Node Kind: directory
+Schedule: normal
+Last Changed Author: feiguoyou
+Last Changed Rev: 3110
+Last Changed Date: 2016-03-01 20:24:01 +0800 (二, 01  3月 2016)
+

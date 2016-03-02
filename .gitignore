@@ -1,10 +1,11 @@
 *.d
+*.bin
+*.class
 dev/hal/jni/obj
 dev/hal/jni/libs
-dev/app/*.bin
 dev/app/linux/Debug/
 dev/sw/version.h
 dev/lib/lelink/Debug/
 dev/lib/sengine/Debug/
-dev/.svn/pristine/
+dev/.svn/
 /*~
