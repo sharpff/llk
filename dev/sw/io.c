@@ -195,10 +195,15 @@ int lelinkStorageReadAuthCfg(AuthCfg *authCfg) {
 
 int lelinkStorageWriteScriptCfg(const void *scriptCfg, int type, int idx) {
     int ret = 0, i = 0, tmpNum = 0;
-    ret = storageWrite(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg), idx);
 
-    if (0 < ret && OTA_TYPE_IA_SCRIPT == type) {
+    if (OTA_TYPE_FW_SCRIPT == type) {
+        ret = storageWrite(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg), idx);
+    } else if (OTA_TYPE_IA_SCRIPT == type) {
         PrivateCfg privCfg;
+        // write fw script
+        ret = storageWrite(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg), idx);
+
+        // update private
         ret = lelinkStorageReadPrivateCfg(&privCfg);
         if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
             LELOGW("lelinkStorageWriteScriptCfg csum failed\r\n");

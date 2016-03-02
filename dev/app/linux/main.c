@@ -5,6 +5,7 @@
 #include "leconfig.h"
 #include "protocol.h"
 #include "io.h"
+#include "ota.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
 
@@ -953,7 +954,7 @@ int preGenStableInfo2Flash(void) {
             APPLOG("AuthCfg OK\n");
         }
 
-        ret = lelinkStorageReadScriptCfg(ginScriptCfg, 0, 0);
+        ret = lelinkStorageReadScriptCfg(ginScriptCfg, OTA_TYPE_FW_SCRIPT, 0);
         if (ginScriptCfg->csum != crc8(&(ginScriptCfg->data), sizeof(ginScriptCfg->data))) {
             APPLOG("ScriptCfg not matched\n");
         } else {
