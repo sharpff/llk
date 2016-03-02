@@ -84,7 +84,14 @@ function s1GetValidKind(data)
 	--[[ MUST
 		wifi reset cmd
 	]]
-	if reset == data then
+    --print ('start\r\n')
+    --tmpTbl = stringToTable(data)
+    --LOGTBL(tmpTbl)
+    --tmpTbl = stringToTable(reset)
+    --LOGTBL(tmpTbl)
+    --print (string.find(data, reset))
+    --print ('\r\n')
+	if nil ~= string.find(data, reset) then
 		-- print '1'
 		return 1
 	end

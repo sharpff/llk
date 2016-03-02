@@ -22,4 +22,5 @@ unsigned int halGetUTC(void) {
 
 int halReboot(void) {
     app_reboot(REASON_USER_REBOOT);
+    return 0;
 }
