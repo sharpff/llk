@@ -115,7 +115,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     lelinkDoPollingQ2A(ginCtxQ2A);
     lelinkDoPollingR2R(ginCtxR2R);
 #ifndef __ANDROID__
-    senginePollingSlave();
+    //senginePollingSlave();
 
 #endif
     return changeState(ret, &ginStateCntx, i);
@@ -281,7 +281,7 @@ static int stateProcCloudLinked(StateContext *cntx) {
 // #include <partition.h>
 static int stateProcCloudAuthed(StateContext *cntx) {
     // int ret = 0;
-    LELOG("stateProcCloudAuthed [%d]\r\n", ginStateCloudAuthed);
+    // LELOG("stateProcCloudAuthed [%d]\r\n", ginStateCloudAuthed);
     // ret = halDoCloudAuthed(NULL, 0);
     if (0 == ginConfigStatus) {
         return -1;

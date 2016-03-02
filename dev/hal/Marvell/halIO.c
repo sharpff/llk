@@ -49,14 +49,14 @@ int halUartClose(void *dev) {
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     int ret = 0;
     ret = uart_drv_read((mdev_t *)dev, buf, len);
-    APPLOG("uart_drv_read [%d]\r\n", ret);
+    // APPLOG("uart_drv_read [%d]\r\n", ret);
     return ret;
 }
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
     int ret = 0;
     ret = uart_drv_write((mdev_t *)dev, buf, len);
-    APPLOG("uart_drv_write [%d] \r\n", ret);
+    // APPLOG("uart_drv_write [%d] \r\n", ret);
     return ret;
 }
 
