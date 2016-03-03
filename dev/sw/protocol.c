@@ -135,6 +135,7 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_HELLO_RSP, LELINK_SUBCMD_HELLO_RSP, cbHelloRemoteRsp, cbHelloLocalRsp },
     { LELINK_CMD_DISCOVER_REQ, LELINK_SUBCMD_DISCOVER_REQ, cbDiscoverLocalReq, cbDiscoverRemoteReq },
     { LELINK_CMD_DISCOVER_RSP, LELINK_SUBCMD_DISCOVER_RSP, cbDiscoverRemoteRsp, cbDiscoverLocalRsp },
+    // STATUS CHAGNED req from node (LOCAL)
     { LELINK_CMD_DISCOVER_REQ, LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ, cbDiscoverStatusChangedLocalReq, cbDiscoverStatusChangedRemoteReq },
     { LELINK_CMD_DISCOVER_RSP, LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_RSP, cbDiscoverStatusChangedRemoteRsp, cbDiscoverStatusChangedLocalRsp },
     { LELINK_CMD_CTRL_REQ, LELINK_SUBCMD_CTRL_CMD_REQ, cbCtrlCmdLocalReq, cbCtrlCmdRemoteReq },
@@ -147,6 +148,7 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_AUTH_RSP, LELINK_SUBCMD_CLOUD_AUTH_RSP, cbCloudAuthRemoteRsp, NULL },
     { LELINK_CMD_CLOUD_HEARTBEAT_REQ, LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ, cbCloudHeartBeatLocalReq, NULL },
     { LELINK_CMD_CLOUD_HEARTBEAT_RSP, LELINK_SUBCMD_CLOUD_HEARTBEAT_RSP, cbCloudHeartBeatRemoteRsp, NULL },
+    // STATUS CHAGNED req from node (REMOTE)
     { LELINK_CMD_CLOUD_HEARTBEAT_REQ, LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ, cbCloudStatusChangedLocalReq, NULL },
     { LELINK_CMD_CLOUD_HEARTBEAT_RSP, LELINK_SUBCMD_CLOUD_STATUS_CHANGED_RSP, cbCloudStatusChangedRemoteRsp, NULL },
     // remote ctrl
@@ -170,7 +172,7 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_RSP, cbCloudMsgCtrlC2RDoOTARemoteRsp, NULL },
     { LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_DO_OTA_REQ, NULL, cbCloudMsgCtrlR2TDoOTARemoteReq },
     { LELINK_CMD_CLOUD_MSG_CTRL_R2T_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_DO_OTA_RSP, NULL, cbCloudMsgCtrlR2TDoOTALocalRsp },
-
+    // STATUS CHAGNED ind from cloud
     { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_STATUS_REQ, NULL, cbCloudIndStatusRemoteReq },
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_STATUS_RSP, NULL, cbCloudIndStatusLocalRsp},
 
@@ -1218,16 +1220,18 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
 static int cbDiscoverStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     char status[MAX_BUF] = {0};
-    // CommonCtx *pCtx = COMM_CTX(ctx);
+    char token[2*AES_LEN + 1] = {0};
     LELOG("cbDiscoverStatusChangedLocalReq -s\r\n");
 
+    getTerminalTokenStr(token, sizeof(token));
     ret = getTerminalStatus(status, sizeof(status));
-    if (0 >= ret) {
-        ret = 0;
-    }
+    if (0 < ret) {
+        getTerminalTokenStr(token, sizeof(token));
+        ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    } 
+    LELOG("appended token [%s]\r\n", status);
 
-
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     
     LELOG("cbDiscoverStatusChangedLocalReq [%d] -e\r\n", ret);
     return ret;
@@ -1491,8 +1495,8 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     // } else {
     //     sprintf(out, "{\"now\":{%s},\"token\":\"%s\"}", status, token);
     // }
-    sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    LELOG("%s\r\n", status);
+    ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    LELOG("appended token [%s]\r\n", status);
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     
@@ -1515,15 +1519,20 @@ static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo,
     // char token[2*AES_LEN + 1] = {0};
     // char account[128] = {0};
     char status[MAX_BUF] = {0};
+    char token[2*AES_LEN + 1] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
     // CmdHeaderInfo cmdInfo = {0};
     LELOG("cbCloudStatusChangedLocalReq -s\r\n");
 
-
-    // getTerminalTokenStr(token, sizeof(token));
+    getTerminalTokenStr(token, sizeof(token));
     ret = getTerminalStatus(status, sizeof(status));
+    if (0 < ret) {
+        getTerminalTokenStr(token, sizeof(token));
+        sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    } 
+    LELOG("appended token [%s]\r\n", status);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     
     LELOG("cbCloudStatusChangedLocalReq [%d] -e\r\n", ret);
     return ret;
@@ -1533,7 +1542,7 @@ static void cbCloudStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInf
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCloudStatusChangedRemoteRsp -s\r\n");
-    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    // halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudStatusChangedRemoteRsp -e\r\n");
 }
 
@@ -1765,7 +1774,7 @@ CmdRecord *getCmdRecord(uint32_t cmdId, uint32_t subCmdId) {
             return &tblCmdType[i];
         }
     }
-    LELOGE("getCmdRecord NULL\r\n");
+    LELOGW("getCmdRecord NULL\r\n");
     return NULL;
 }
 

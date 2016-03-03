@@ -265,7 +265,7 @@ int getTerminalStatus(char *status, int len) {
 
     //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
 
-    LELOG("call getTerminalStatus status \r\n");
+    LELOG("getTerminalStatus -s\r\n");
 
     strcpy(status, "{\"status\":");
     tmpLen = strlen(status);
@@ -295,7 +295,7 @@ int getTerminalStatus(char *status, int len) {
     tmpLen += 1;
     //
 
-    LELOG("what status [%d][%s]\r\n", tmpLen, status);
+    LELOG("getTerminalStatus [%d][%s] -e\r\n", tmpLen, status);
     return tmpLen;
 }
 

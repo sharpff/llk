@@ -243,15 +243,13 @@ void startHeartBeat(void) {
 
 }
 
-
-
 int getUUIDFromJson(const char *json, int jsonLen, char *uuid, int uuidLen) {
     int ret = 0;
     // char strBaud[96] = {0};
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
 
-    LELOG("getUUIDFromJson [%s]\r\n", json);
+    LELOG("getUUIDFromJson [%d][%s]\r\n", jsonLen, json);
 
     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
     if (WM_SUCCESS != ret) {
