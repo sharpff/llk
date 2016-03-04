@@ -96,7 +96,8 @@ static int changeState(int direction, StateContext *cntx, int idx) {
 
 
 int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
-    int i = 0, ret = 0;
+    int i = 0, ret = 0, len = 0;
+    char status[MAX_BUF] = {0};
     if (NULL == r2r || NULL == q2a) {
         return -100;
     }
@@ -114,6 +115,10 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
         delayms(msDelay);
     }
     senginePollingSlave();
+    len = getTerminalStatus(status, sizeof(status));
+    if (0 < len) {
+        senginePollingRules(status, len);
+    }
     lelinkDoPollingQ2A(ginCtxQ2A);
     lelinkDoPollingR2R(ginCtxR2R);
     return changeState(ret, &ginStateCntx, i);

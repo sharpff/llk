@@ -151,7 +151,7 @@ function s2IsConditionOK(statusForReserved, statusPrivious)
 	-- end
 	-- CUSTOMIZATION END
 
-	-- print(string.format("[LUA] 0 s2apiStoreCurrStatus [%d][%s][%s] ok[%d]\r\n", toStoreStatus, uuid, statusForReserved, ok))
+	-- print(string.format("[LUA] s2IsConditionOK [%d][%s][%s] ok[%d]\r\n", toStoreStatus, uuid, statusForReserved, ok))
 	if ((toStoreStatus == 1) and 
 		not (nil == uuid) and 
 		not (nil == statusForReserved)) then 

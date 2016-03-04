@@ -765,7 +765,7 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
         return 0;
     }
     cacheInt->beingReservedNum = count;
-    LELOG("sengineS2RuleHandler sengineS2GetBeingReservedInfo[%d]\r\n", count);
+    LELOG("sengineS2RuleHandler reserved NUM[%d]\r\n", count);
     for (i = 0; i < count; i++) {
         int isFound = 0;
         /*
@@ -776,11 +776,11 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
         LELOG("FOR idx[%d] [%s] <=> [%s]\r\n", i, uuid, cacheInt->beingReservedUUID[i]);
         // 1st param
         if (0 == memcmp(uuid, cacheInt->beingReservedUUID[i], MAX_UUID)) {
-            LELOG("1st param[%d][%s]\r\n", strlen(json), json);
-            strcpy(buf, json);
+            LELOG("1st PARAM [%d][%s]\r\n", jsonLen, json);
+            memcpy(buf, json, jsonLen);
             isFound = 1;
         } else {
-            LELOG("1st no param\r\n");
+            LELOG("1st no PARAM\r\n");
             strcpy(buf, "{}");
         }
 
@@ -790,23 +790,23 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
 
         // 2nd param
         if (0 < strlen(cacheInt->beingReservedStatus[i])) {
-            LELOG("2nd beingReservedStatus [%d][%s]\r\n", MIN(strlen(cacheInt->beingReservedStatus[i]), MAX_BUF), cacheInt->beingReservedStatus[i]);
+            LELOG("2nd PARAM [%d][%s]\r\n", MIN(strlen(cacheInt->beingReservedStatus[i]), MAX_BUF), cacheInt->beingReservedStatus[i]);
             memcpy(buf + strlen(buf) + 1, cacheInt->beingReservedStatus[i], MIN(strlen(cacheInt->beingReservedStatus[i]), MAX_BUF));
         } else {
-            LELOG("2nd no param\r\n");
+            LELOG("2nd no PARAM\r\n");
             strcpy(buf + strlen(buf) + 1, "{}");
         }
         ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_ISOK,
             (uint8_t *)buf, sizeof(buf), (uint8_t *)&is, sizeof(is));
         if (0 > ret) {
-            LELOGW("senginePollingRules sengineCall("S2_GET_ISOK") [%d]\r\n", ret);
+            LELOGW("sengineS2RuleHandler sengineCall("S2_GET_ISOK") [%d]\r\n", ret);
             continue;
         }
         if (!is) {
-            LELOGW("senginePollingRules condition NO OK -e2 \r\n");
+            LELOGE("sengineS2RuleHandler condition NOT OK\r\n");
             continue;
         }
-        LELOG("senginePollingRules sengineCall("S2_GET_ISOK") ok ? [%d]\r\n", is);
+        LELOG("sengineS2RuleHandler sengineCall("S2_GET_ISOK") ok ? [%d]\r\n", is);
 
         /*
          * 4.
@@ -815,16 +815,16 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
         ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BECMD,
             NULL, 0, (uint8_t *)&buf, sizeof(buf));
         if (0 > ret) {
-            LELOGW("senginePollingRules sengineCall("S2_GET_BECMD") [%d]\r\n", ret);
+            LELOGW("sengineS2RuleHandler sengineCall("S2_GET_BECMD") [%d]\r\n", ret);
             continue;
         }
 
         // 5. do ctrl
         ret = sengineSetStatus((char *)buf, ret);
-        LELOG("senginePollingRules sengineSetStatus DONE [%d]\r\n", ret);      
+        LELOG("sengineS2RuleHandler sengineSetStatus DONE [%d]\r\n", ret);      
     }
 
-    LELOG("senginePollingRules condition -e \r\n");
+    LELOG("sengineS2RuleHandler condition -e \r\n");
 
     // /*
     //  * 1. get corrsponding rules to do sth. 
