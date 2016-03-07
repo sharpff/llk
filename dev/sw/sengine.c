@@ -429,8 +429,9 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     lua_register(L, "s2apiStoreCurrStatus", s2apiStoreCurrStatus);
     // lua_register(L, "csum", csum);
 
-    if (script == NULL)
+    if (script == NULL || scriptSize <= 0) {
         return -1;
+    }
 
     luaL_openlibs(L);
     if (luaL_loadbuffer(L, script, scriptSize, "lelink") || lua_pcall(L, 0, 0, 0))
