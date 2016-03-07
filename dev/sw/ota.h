@@ -20,7 +20,7 @@ typedef struct _updateInfo {
 // hal
 int halHttpOpen(OTAInfo_t *info, const char *url);
 int halUpdateFirmware(OTAInfo_t *info);
-int halUpdateScript(OTAInfo_t *info, ScriptCfg *scriptCfg);
+int halUpdateScript(OTAInfo_t *info, char *buf, int size);
 void halHttpClose(OTAInfo_t *info);
 
 // sw

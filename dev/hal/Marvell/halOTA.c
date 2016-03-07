@@ -54,30 +54,26 @@ int halUpdateFirmware(OTAInfo_t *info)
     return update_firmware(httpFetchData, (void *)info, info->imgLen, p);
 }
 
-int halUpdateScript(OTAInfo_t *info, ScriptCfg *scriptCfg)
+int halUpdateScript(OTAInfo_t *info, char *buf, int size)
 {
-    int ret = 0, aSize = 256, nSize = 0;
+    int ret = 0, nGet = 0;
 
-    if(info == NULL || scriptCfg == NULL) {
+    if(info == NULL || buf == NULL) {
         APPLOGE("Update script paremeter error!\r\n");
         return -1;
     }
-    if(info->imgLen > MAX_SCRIPT_SIZE) {
+    if(info->imgLen > size) {
         APPLOGE("Script too large!\r\n");
         return -1;
     }
-    APPLOG("Clear script...\r\n");
-    scriptCfg->data.size = 0;
-    while((ret = httpFetchData(info, &scriptCfg->data.script[nSize], aSize)) > 0) {
-        nSize += ret;
+    while((ret = httpFetchData(info, &buf[nGet], 256)) > 0) {
+        nGet += ret;
     }
-    if(nSize != info->imgLen) {
-        APPLOGE("Get script data wrong, need %d bytes, but now %d bytes\r\n", info->imgLen, nSize);
+    if(nGet != info->imgLen) {
+        APPLOGE("Get script data wrong, need %d bytes, but now %d bytes\r\n", info->imgLen, nGet);
         return -1;
     }
-    scriptCfg->data.size = nSize;
-    APPLOG("Update script successed\r\n");
-    return 0;
+    return nGet;
 }
 
 static size_t httpFetchData(void *priv, void *buf, size_t max_len)

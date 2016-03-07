@@ -21,9 +21,9 @@ int leOTA(OTAType_t type, const char *url, const char *sig)
             break;
         case OTA_TYPE_FW_SCRIPT:
             memset(ginScriptCfg, 0, sizeof(ScriptCfg));
-            status = halUpdateScript((void *)&info, ginScriptCfg);
-            if(!status && ginScriptCfg->data.size > 0) {
-                // ginScriptCfg->csum = crc8((const uint8_t *)&(ginScriptCfg->data), sizeof(ginScriptCfg->data));
+            ret = halUpdateScript(&info, (char *)ginScriptCfg->data.script, MAX_SCRIPT_SIZE);
+            if(ret == info.imgLen) {
+                ginScriptCfg->data.size = ret;
                 status = lelinkStorageWriteScriptCfg(ginScriptCfg, OTA_TYPE_FW_SCRIPT, 0);
             } else {
                 status = -1;
@@ -31,9 +31,9 @@ int leOTA(OTAType_t type, const char *url, const char *sig)
             break;
         case OTA_TYPE_IA_SCRIPT:
             memset(ginScriptCfg2, 0, sizeof(ScriptCfg));
-            status = halUpdateScript((void *)&info, ginScriptCfg2);
-            if(!status && ginScriptCfg2->data.size > 0) {
-                // ginScriptCfg2->csum = crc8((const uint8_t *)&(ginScriptCfg2->data), sizeof(ginScriptCfg2->data));
+            ret = halUpdateScript(&info, (char *)ginScriptCfg2->data.script, MAX_SCRIPT_SIZE);
+            if(ret == info.imgLen) {
+                ginScriptCfg2->data.size = ret;
                 status = lelinkStorageWriteScriptCfg(ginScriptCfg2, OTA_TYPE_IA_SCRIPT, 0);
             } else {
                 status = -1;
@@ -47,7 +47,7 @@ int leOTA(OTAType_t type, const char *url, const char *sig)
     if(status) {
         LELOGE("Update error! status = %d\r\n", status);
     } else {
-        LELOG("Update image successed!\r\n");
+        LELOG("Update successed!\r\n");
     }
 skip_update:
     halHttpClose(&info);
