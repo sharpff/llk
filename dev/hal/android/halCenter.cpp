@@ -53,7 +53,8 @@ int initTask(char *json)
 	strncpy(auth.remote, "10.204.28.134", MAX_REMOTE);
 	// server port
 	auth.port = 5546;
-	lelinkInit(&auth);
+	//lelinkInit(&auth);
+	lelinkInit();
 	gNativeContext.ctxR2R = lelinkNwNew(auth.remote, auth.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {

@@ -5,6 +5,9 @@ int halLockInit(void *ptr, const char *file, int line) {
 	return 0;
 }
 
+void halDeLockInit(void) {
+}
+
 int halLock(void *ptr, const char *file, int line) {
     return pthread_mutex_lock(&ginMutex);
 }
@@ -22,3 +25,8 @@ unsigned int halGetUTC(void)
 {
     return 1234;
 }
+
+int halReboot(void) {
+    return -1;
+}
+

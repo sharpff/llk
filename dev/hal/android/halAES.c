@@ -538,6 +538,10 @@ static int lelink_enc2_crypt_cbc( lelinkEnc2Context *ctx,
 int halAESInit(void) {
     return 0;
 }
+
+void halDeAESInit(void) {
+}
+
 //AES crypt
 int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *len, uint32_t maxLen, int isPKCS5, int type)
 {

@@ -89,7 +89,7 @@
 
     
 
-#elif defined (LINUX)
+#elif defined (LINUX) || defined(__ANDROID__)
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>

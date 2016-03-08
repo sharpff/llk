@@ -346,7 +346,6 @@ void **ioGetHdl() {
     char json[256] = {0};
     int ret = 0;
     static int whatCvtType = -1;
-#ifndef __ANDROID__
     if (-1 == whatCvtType) {
         ret = sengineGetTerminalProfileCvtType(json, sizeof(json));
         if (0 >= ret) {
@@ -358,7 +357,6 @@ void **ioGetHdl() {
             return NULL;
         }
     }
-#endif
     switch (whatCvtType) {
         case IO_TYPE_UART: {
             if (NULL == ioHdl) {
