@@ -456,7 +456,9 @@ void testSengine() {
 
 int lelinkInit() {
     int ret = 0;
+    AuthCfg authCfg;
     void **ioHdl = NULL;
+    uint8_t mac[6] = {0};
 
     ret = halLockInit();
     if (0 != ret) {
@@ -479,56 +481,32 @@ int lelinkInit() {
     ret = sengineInit();
     if (0 != ret) {
         LELOGE("sengineInit ret[%d]\r\n", ret);
-        goto failed;
+        // goto failed;
     }
 
     ioHdl = (void **)ioGetHdl();
     if (NULL == ioHdl) {
         LELOGE("ioInit ioHdl[%p]\r\n", ioHdl);
+        // goto failed;
+    }
+    ret = lelinkStorageReadAuthCfg(&authCfg);
+    if (0 > ret) {
         goto failed;
     }
-
-
-    // this case should be dev
-    // if (NULL == auth) 
-    {
-        // load from flash
-        uint8_t mac[6] = {0};
-        AuthCfg authCfg;
-        // int ret;
-        ret = lelinkStorageReadAuthCfg(&authCfg);
-        if (0 > ret) {
-            goto failed;
-        }
-        if (authCfg.csum != crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data))) {
-            ret = -100;
-            goto failed;
-        }
-        setTerminalPublicKey(authCfg.data.pubkey, authCfg.data.pubkeyLen);
-        setTerminalSignature(authCfg.data.signature, authCfg.data.signatureLen);        
-        setOriRemoteServer(authCfg.data.remote, strlen(authCfg.data.remote), authCfg.data.port);
-        // test only
-        getOriRemoteServer(authCfg.data.remote, MAX_REMOTE, &(authCfg.data.port));
-        if (0 == halGetMac(mac, sizeof(mac))) {
-            char macStr[13] = {0};
-            bytes2hexStr(mac, sizeof(mac), (uint8_t*)macStr, sizeof(macStr));
-            memcpy(authCfg.data.uuid + 20, macStr, 12);
-        }
-        setTerminalUUID(authCfg.data.uuid, MAX_UUID);
-    } 
-    // else {
-    //     uint8_t mac[6] = {0};
-    //     if (0 == halGetMac(mac, sizeof(mac))) {
-    //         char macStr[13] = {0};
-    //         bytes2hexStr(mac, sizeof(mac), (uint8_t*)macStr, sizeof(macStr));
-    //         memcpy(((AuthData *)(auth))->uuid + 20, macStr, 12);
-    //     }
-    //     setTerminalUUID(((AuthData *)(auth))->uuid, MAX_UUID);
-    //     setTerminalPublicKey(((AuthData *)(auth))->pubkey, ((AuthData *)(auth))->pubkeyLen);
-    //     setTerminalSignature(((AuthData *)(auth))->signature, ((AuthData *)(auth))->signatureLen);        
-    // }
-
-
+    if (authCfg.csum != crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data))) {
+        ret = -100;
+        goto failed;
+    }
+    setTerminalPublicKey(authCfg.data.pubkey, authCfg.data.pubkeyLen);
+    setTerminalSignature(authCfg.data.signature, authCfg.data.signatureLen);        
+    setOriRemoteServer(authCfg.data.remote, strlen(authCfg.data.remote), authCfg.data.port);
+    getOriRemoteServer(authCfg.data.remote, MAX_REMOTE, &(authCfg.data.port));
+    if (0 == halGetMac(mac, sizeof(mac))) {
+        char macStr[13] = {0};
+        bytes2hexStr(mac, sizeof(mac), (uint8_t*)macStr, sizeof(macStr));
+        memcpy(authCfg.data.uuid + 20, macStr, 12);
+    }
+    setTerminalUUID(authCfg.data.uuid, MAX_UUID);
 #ifdef TEST_MD5
     testMD5();
 #endif

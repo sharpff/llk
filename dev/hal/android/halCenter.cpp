@@ -6,7 +6,8 @@
  */
 
 #include <pthread.h>
-#include "io.h"
+#include "version.h"
+#include "json.h"
 #include "state.h"
 #include "base64.h"
 #include "utility.h"
@@ -17,8 +18,8 @@
 #include "airconfig_ctrl.h"
 
 nativeContext_t gNativeContext = {
-		"lelink v0.5 " __DATE__ " " __TIME__,
-		true
+    SW_VERSION __DATE__ " " __TIME__,
+    true
 };
 
 static void *netTaskFun(void *data);
@@ -28,34 +29,42 @@ int initTask(char *json)
 {
 	int ret;
 	pthread_t id;
-	std::string s;
-	Json::Value value;
-	Json::Reader reader;
-	AuthData auth;
+    AuthCfg *authCfg = &gNativeContext.authCfg;
 
-	s = std::string(static_cast<char *>(json));
-	if (!reader.parse(s, value)) {
-		LELOGE("airConfig parse error!\n");
-		return -1;
-	}
-//	LOGI("info:\n%s", json);
-	// public key
-	s = base64_decode(value[FJK_PUBLIC_KEY].asString());
-	auth.pubkeyLen = s.length();
-	memcpy(auth.pubkey, s.c_str(), s.length());
-	// signature
-	s = base64_decode(value[FJK_SIGNATURE].asString());
-	auth.signatureLen = s.length();
-	memcpy(auth.signature, s.c_str(), s.length());
-	// uuid
-	strncpy((char *) auth.uuid, value[PJK_UUID].asCString(), MAX_UUID);
-	// server addr
-	strncpy(auth.remote, "10.204.28.134", MAX_REMOTE);
-	// server port
-	auth.port = 5546;
-	//lelinkInit(&auth);
+    { // 初始得到 public_key, signatrue, uuid. server_addr, server_port
+        std::string s;
+        Json::Value value;
+        Json::Reader reader;
+
+        s = std::string(static_cast<char *>(json));
+        if (!reader.parse(s, value)) {
+            LELOGE("Failed to parse json!\n");
+            return -1;
+        }
+        //	LOGI("info:\n%s", json);
+        // public key
+        s = base64_decode(value[FJK_PUBLIC_KEY].asString());
+        authCfg->data.pubkeyLen = s.length();
+        memcpy(authCfg->data.pubkey, s.c_str(), s.length());
+        // signature
+        s = base64_decode(value[FJK_SIGNATURE].asString());
+        authCfg->data.signatureLen = s.length();
+        memcpy(authCfg->data.signature, s.c_str(), s.length());
+        // uuid
+        strncpy((char *) authCfg->data.uuid, value[PJK_UUID].asCString(), MAX_UUID);
+        // server addr
+        strncpy(authCfg->data.remote, "10.204.28.134", MAX_REMOTE);
+        // server port
+        authCfg->data.port = 5546;
+        authCfg->csum = crc8((uint8_t *)(&authCfg->data), sizeof(authCfg->data));
+    }
+    if((ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000))) {
+        LELOGE("Fialed to lelinkStorageInit\n");
+        return -1;
+    }
 	lelinkInit();
-	gNativeContext.ctxR2R = lelinkNwNew(auth.remote, auth.port, PORT_ONLY_FOR_VM, 0);
+	//lelinkInit(&gNativeContext.auth);
+	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
 		return ret;
@@ -130,7 +139,9 @@ static void *netTaskFun(void *data)
 	LOGI("LeLink Task run...\n");
 	while (gNativeContext.runTask)
 	{
-        lelinkPollingState(200, gNativeContext.ctxR2R, gNativeContext.ctxQ2A);
+        // lelinkPollingState(200, gNativeContext.ctxR2R, gNativeContext.ctxQ2A);
+        lelinkDoPollingQ2A(gNativeContext.ctxQ2A);
+        lelinkDoPollingR2R(gNativeContext.ctxR2R);
 	}
     lelinkNwDelete(gNativeContext.ctxQ2A);
     lelinkNwDelete(gNativeContext.ctxR2R);
@@ -222,3 +233,10 @@ int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, 
 	THREAD_DETACH(gNativeContext.jvm);
 	return ret;
 }
+
+// because of llex.c:224
+extern "C" char android_getlocaledecpoint()
+{
+    return '.';
+}
+

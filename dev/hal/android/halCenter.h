@@ -9,7 +9,7 @@
 #define HALCENTER_H_
 
 #include <android/log.h>
-#include "json.h"
+#include "io.h"
 #include "leconfig.h"
 #include "protocol.h"
 #include "jnitls.h"
@@ -17,12 +17,13 @@
 
 typedef struct _nativeContext {
 	const char *version;
-	bool runTask;
+	int runTask;
 	void *ctxR2R;
 	void *ctxQ2A;
 	JavaVM *jvm;
 	jobject obj;
 	jmethodID onMessage;
+    AuthCfg authCfg;
 } nativeContext_t;
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0,

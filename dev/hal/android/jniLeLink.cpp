@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include "json.h"
 #include "halCenter.h"
 #include "jniLeLink.h"
 

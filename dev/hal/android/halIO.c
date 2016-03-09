@@ -1,5 +1,6 @@
-#include "halHeader.h"
 #include <errno.h>
+#include "halHeader.h"
+#include "halCenter.h"
 
 void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
     return (void *)0xffffffff;
@@ -17,7 +18,6 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
     return len;
 }
 
-
 int halFlashInit(void)
 {
     return 0;
@@ -28,10 +28,6 @@ int halFlashDeinit(void)
     return 0;
 }
 
-
-static int ginMinSize = 0x1000; // 4k
-#define GET_PAGE_SIZE(l) \
-    ((((l - 1) / ginMinSize) + 1)*ginMinSize)
 void *halFlashOpen(void)
 {
     return (void *)0xffffffff;
@@ -41,16 +37,30 @@ int halFlashClose(void *dev)
 {
     return 0;
 }
+
 int halFlashErase(void *dev, uint32_t startAddr, uint32_t size){
     return 0;
 }
 
 int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
-    return 0;
+    int ret = 0;
+
+    return ret;
 }
 
 int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
-    return 0;
+    int ret = 0;
+
+    switch (startAddr) {
+        case 0x1C2000:
+            ret = sizeof(gNativeContext.authCfg);
+            memcpy((char *)data, &gNativeContext.authCfg, ret);
+            APPLOGE("halFlashRead AuthCfg\r\n");
+            break;
+        default:
+            break;
+    }
+    return ret;
 }
 
 int halGetMac(uint8_t *mac, int len)
