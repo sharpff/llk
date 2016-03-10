@@ -11,7 +11,7 @@ int halUartClose(void *dev) {
 }
 
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
-    return len;
+    return 0;
 }
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
@@ -55,6 +55,10 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
         case 0x1C2000:
             ret = sizeof(gNativeContext.authCfg);
             memcpy((char *)data, &gNativeContext.authCfg, ret);
+            break;
+        case 0x1C8000:
+            ret = sizeof(gNativeContext.privateCfg);
+            memcpy((char *)data, &gNativeContext.privateCfg, ret);
             break;
         default:
             break;

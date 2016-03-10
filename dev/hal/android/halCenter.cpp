@@ -58,6 +58,11 @@ int initTask(char *json)
         authCfg->data.port = 5546;
         authCfg->csum = crc8((uint8_t *)(&authCfg->data), sizeof(authCfg->data));
     }
+    { // PrivateCfg 
+        PrivateCfg *privateCfg = &gNativeContext.privateCfg;
+        privateCfg->data.nwCfg.configStatus = 2;
+        privateCfg->csum = crc8((uint8_t *)(&privateCfg->data), sizeof(privateCfg->data));
+    }
     if((ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000))) {
         LELOGE("Fialed to lelinkStorageInit\n");
         return -1;
@@ -139,9 +144,9 @@ static void *netTaskFun(void *data)
 	LOGI("LeLink Task run...\n");
 	while (gNativeContext.runTask)
 	{
-        // lelinkPollingState(200, gNativeContext.ctxR2R, gNativeContext.ctxQ2A);
-        lelinkDoPollingQ2A(gNativeContext.ctxQ2A);
-        lelinkDoPollingR2R(gNativeContext.ctxR2R);
+        lelinkPollingState(200, gNativeContext.ctxR2R, gNativeContext.ctxQ2A);
+        //lelinkDoPollingQ2A(gNativeContext.ctxQ2A);
+        //lelinkDoPollingR2R(gNativeContext.ctxR2R);
 	}
     lelinkNwDelete(gNativeContext.ctxQ2A);
     lelinkNwDelete(gNativeContext.ctxR2R);

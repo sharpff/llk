@@ -608,11 +608,17 @@ int sengineQuerySlave(void)
 }
 
 int senginePollingSlave(void) {
+    void **ioHdl = NULL;
     char status[MAX_BUF];
     uint8_t bin[128] = {0};
     int whatKind = 0, ret = 0, size;
 
-    ret = ioRead(IO_TYPE_UART, *((void **)ioGetHdl(IO_TYPE_UART)), bin, sizeof(bin));
+    ioHdl = (void **)ioGetHdl(IO_TYPE_UART);
+    if(ioHdl == NULL) {
+        LELOGW("senginePollingSlave ioGetHdl\r\n");
+        return -1;
+    }
+    ret = ioRead(IO_TYPE_UART, *(ioHdl), bin, sizeof(bin));
     if (ret <= 0) {
         LELOGW("senginePollingSlave ioRead [%d]\r\n", ret);
         return ret;

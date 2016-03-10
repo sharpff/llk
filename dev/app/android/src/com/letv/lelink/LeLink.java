@@ -547,7 +547,7 @@ public class LeLink {
 
 	private LeLink(String info) {
 		mPtr = init(info);
-		mThread.start();
+//		mThread.start();
 	}
 
 	private static final int MSG_TYPE_LOCALREQUEST = 1;
