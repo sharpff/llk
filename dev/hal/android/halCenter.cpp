@@ -18,7 +18,7 @@
 #include "airconfig_ctrl.h"
 
 nativeContext_t gNativeContext = {
-    SW_VERSION __DATE__ " " __TIME__,
+    SW_VERSION " " __DATE__ " " __TIME__,
     true
 };
 

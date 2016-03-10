@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
 				mJsonCmd = new JSONObject();
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
-				mJsonCmd.put(LeCmd.K.UUID, "10000100101000710007123456abcdef");
+				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -126,14 +126,14 @@ public class MainActivity extends Activity {
 			 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态。
 			 * 如果该设备已经连接云，则必须传入token(由getState广域网获得)
 			 */
-			String ctrlStr = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 0, 0);
+			String ctrlStr = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 1, 1, 0);
 			Log.e(TAG, "Control device test...\n" + ctrlStr);
 			try {
 				mJsonCmd = new JSONObject();
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
-				mJsonCmd.put(LeCmd.K.UUID, "10000100101000710007123456abcdef");
-				mJsonCmd.put(LeCmd.K.TOKEN, "dfad9fe665e85f67ba1d79ebf1be9c8c");
+				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
+				mJsonCmd.put(LeCmd.K.TOKEN, "B33D2BB7ED33D7B15222864D9F2B6FB6");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}

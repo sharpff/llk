@@ -55,7 +55,6 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
         case 0x1C2000:
             ret = sizeof(gNativeContext.authCfg);
             memcpy((char *)data, &gNativeContext.authCfg, ret);
-            APPLOGE("halFlashRead AuthCfg\r\n");
             break;
         default:
             break;

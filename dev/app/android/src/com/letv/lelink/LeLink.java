@@ -271,7 +271,10 @@ public class LeLink {
 				}
 				mWaitGetUuid = cmdJson.has(LeCmd.K.UUID) ? cmdJson.getString(LeCmd.K.UUID) : null;
 				if (cmdJson.has(LeCmd.K.UUID)) {
+					JSONObject dataJson = new JSONObject();
 					dataStr = cmdJson.getString(LeCmd.K.UUID);
+					dataJson.put(LeCmd.K.UUID, dataStr);
+					dataStr = dataJson.toString();
 				}
 			} catch (JSONException e) {
 				LOGE("Json error");

@@ -6,10 +6,9 @@
 #include "sengine.h"
 #include "network.h"
 #include "io.h"
+#include "version.h" // Auto generate by SVN
 #ifndef SW_VERSION
 #define SW_VERSION "0.9.9"
-#else
-#include "version.h" // Auto generate by SVN
 #endif
 
 
