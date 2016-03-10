@@ -1226,7 +1226,9 @@ static int cbDiscoverStatusChangedRemoteReq(void *ctx, const CmdHeaderInfo* cmdI
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbDiscoverStatusChangedRemoteReq -s\r\n");
     LELOG("[%d][%s]\r\n", dataLen, dataIn);
+#ifndef __ANDROID__
     senginePollingRules((char *)dataIn, dataLen);
+#endif
     LELOG("cbDiscoverStatusChangedRemoteReq -e\r\n");
     return ret;
 }
@@ -1720,7 +1722,9 @@ static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, co
     // char query[128] = {0};
     LELOG("cbCloudIndStatusRemoteReq -s\r\n");
     LELOG("[%d][%s]\r\n", len, data);
+#ifndef __ANDROID__
     senginePollingRules((char *)data, len);
+#endif
     LELOG("cbCloudIndStatusRemoteReq -e\r\n");
     return 1;
 }
