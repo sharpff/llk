@@ -43,7 +43,7 @@ class Param(object):
         parser.add_option("--passwd", type="string",
                       action="store", dest="passwd", default=self.passwd,
                       help="wifi password")
-        parser.add_option("--outfile", type="string",
+        parser.add_option("-o", "--outfile", type="string",
                       action="store", dest="of", default=self.of,
                       help="output file name. Defaut to %s" % self.of)
         options, args = parser.parse_args()
@@ -159,19 +159,22 @@ class ScriptCfg(object):
     def pack(self):
         self.content = ""
         self.content += struct.pack("<I", len(self.script))
-        self.content += struct.pack("<%ds" % self.MAX_SIZE, self.script)
+        self.content += struct.pack("<%ds" % len(self.script), self.script)
+        self.content += packPad(self.PACK_PAD, self.MAX_SIZE - len(self.script))
         self.content += struct.pack("<B", strCrc(self.content))
         self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
 
 class PrivateInfo(object):
     def __init__(self):
+       self.PACK_PAD = '\xFF'
+       self.PACK_SIZE = (1024 * 4)
        self.ssid = '' 
        self.passwd = ''
        self.config = 0
        self.content = ''
        self.DEV_CFG_SIZE = 39
        self.NET_CFG_SIZE = 100
-       self.IA_CFG_SIZE = 20
+       self.IA_CFG_SIZE = 20 #276
        self.MAX_STR_LEN = 36
     def set(self, ssid, passwd):
        self.ssid = ssid
@@ -179,17 +182,22 @@ class PrivateInfo(object):
        self.config = 1
     def pack(self):
        self.content = ''
-       self.content += packPad('\0', self.DEV_CFG_SIZE)
+       self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE)
        self.content += struct.pack("<I", self.config)
-       self.content += struct.pack("<%ds" % self.MAX_STR_LEN, self.ssid)
-       self.content += struct.pack("<%ds" % self.MAX_STR_LEN, self.passwd)
-       self.content += packPad('\0', (self.DEV_CFG_SIZE + self.NET_CFG_SIZE + self.IA_CFG_SIZE - len(self.content)))
+
+       self.content += struct.pack("<%ds" % (len(self.ssid) + 1), self.ssid)
+       self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.ssid) - 1)
+       self.content += struct.pack("<%ds" % (len(self.passwd) + 1), self.passwd)
+       self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.passwd) - 1)
+
+       self.content += packPad(self.PACK_PAD, (self.DEV_CFG_SIZE + self.NET_CFG_SIZE + self.IA_CFG_SIZE - len(self.content)))
        self.content += struct.pack("<B", strCrc(self.content))
+       self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
 
 if __name__ == '__main__':
     content = ''
     param = Param()
-    param.print_param() 
+    print("\nBegin generate %s ..." % param.of)
     # packfile
     for k, v in param.packs.items():
         content += packByFile(k, v)
