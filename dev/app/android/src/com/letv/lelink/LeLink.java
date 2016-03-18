@@ -128,30 +128,43 @@ public class LeLink {
 	 * 		-1 - error; 0 - success; 1 - timeout
 	 */
 	public int airConfig(String jsonStr) {
-		int startTime, timeout;
+		int startTime, timeout, tryTimes = 1;
+		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_MULTICAST;
 		JSONObject sendJson = null;
 
 		if (jsonStr == null) {
 			LOGE("airConfig, string null");
 			return -1;
 		}
+		mIsGetDevHello = false;
 		startTime = (int) (System.currentTimeMillis() / 1000);
 		try {
 			sendJson = new JSONObject(jsonStr);
 			sendJson.getString(LeCmd.K.SSID);
 			sendJson.getString(LeCmd.K.PASSWD);
 			sendJson.put(LeCmd.K.DELAY, DEFAULT_AIRCONFIG_DELAY); // ms
-			sendJson.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
 			timeout = sendJson.getInt(LeCmd.K.TIMEOUT);
 			timeout = timeout < DEFAULT_TIMEOUT ? DEFAULT_TIMEOUT : timeout;
+			while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
+				String logStr = String.format("AirConfig type = %d tryTimes = %d", airConfigType, tryTimes);
+				LOGI(logStr);
+				sendJson.put(LeCmd.K.TYPE, airConfigType);
+				airConfig(mPtr, sendJson.toString());
+				if (tryTimes++ > 5) {
+					tryTimes = 1;
+					airConfigType = (airConfigType == LeCmd.V.AIR_CONFIG_TYPE_BROADCAST) ? LeCmd.V.AIR_CONFIG_TYPE_MULTICAST
+							: LeCmd.V.AIR_CONFIG_TYPE_BROADCAST;
+					try {
+						Thread.sleep(5000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
 		} catch (JSONException e) {
 			LOGE("Parameter json error");
 			e.printStackTrace();
 			return -1;
-		}
-		mIsGetDevHello = false;
-		while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
-			airConfig(mPtr, sendJson.toString());
 		}
 		return mIsGetDevHello ? 0 : 1;
 	}
@@ -402,7 +415,7 @@ public class LeLink {
 			return ret;
 		}
 		sendCmdJson = new JSONObject();
-		LOGI("type " + type + ", onMessage: " + jsonStr);
+//		LOGI("type " + type + ", onMessage: " + jsonStr);
 		switch (type) {
 		case MSG_TYPE_LOCALREQUEST:
 		case MSG_TYPE_LOCALRESPOND:
@@ -433,7 +446,7 @@ public class LeLink {
 		case MSG_TYPE_REMOTERESPOND:
 			try {
 				dataStr = new String(buf, "UTF-8");
-				LOGI("Json:\n" + dataStr);
+//				LOGI("Json:\n" + dataStr);
 				if (cmd == LeCmd.CTRL_RSP || cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP) {
 					mWaitCtrlBackData = dataStr;
 					synchronized (mCtrlLock) {
