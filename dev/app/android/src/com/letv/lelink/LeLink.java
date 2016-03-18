@@ -1,5 +1,7 @@
 package com.letv.lelink;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +12,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.Context;
+import android.util.Base64;
 import android.util.Log;
 
 /** 
@@ -64,24 +68,27 @@ public class LeLink {
 	 * 设置SDK需要的基本信息, 在调用{@link #getInstance()}后不能再更改。<br>
 	 * 只有正确的设置了该信息，才能正确使用其它功能.<br>
 	 * 
-	 * @param jsonStr
-	 * 		String public_key, String signature, String uuid
+	 * @param context
+	 * 		Application context
+	 * 		Must have file: assets/lelink/auth.cfg
 	 * 
 	 * @return
 	 * 		true success; false failed
 	 */
-	public static boolean setInfo(String jsonStr) {
-		JSONObject sendJson = null;
+	public static boolean setContent(Context context) {
+		if(context == null){
+			LOGE("Context null");
+			return false;
+		}
 		try {
-			sendJson = new JSONObject(jsonStr);
-			sendJson.getString(LeCmd.K.PUBLIC_KEY); 
-			sendJson.getString(LeCmd.K.SIGNATURE);
-			sendJson.getString(LeCmd.K.UUID);
-		} catch (JSONException e) {
+			byte buffer[] = new byte[1024 * 10];
+			InputStream in = context.getAssets().open("lelink/auth.cfg");
+			int rd = in.read(buffer);
+			mInitInfo = Base64.encodeToString(buffer, 0, rd, Base64.NO_WRAP);
+		} catch (IOException e) {
 			e.printStackTrace();
 			return false;
 		}
-		mInitInfo = jsonStr;
 		return true;
 	}
 	
@@ -522,19 +529,19 @@ public class LeLink {
 		}
 	});
 
-	private void LOGD(String msg) {
+	private static void LOGD(String msg) {
 		logout(Log.DEBUG, msg);
 	}
 
-	private void LOGI(String msg) {
+	private static void LOGI(String msg) {
 		logout(Log.INFO, msg);
 	}
 
-	private void LOGE(String msg) {
+	private static void LOGE(String msg) {
 		logout(Log.ERROR, msg);
 	}
 
-	private void logout(int priority, String msg) {
+	private static void logout(int priority, String msg) {
 		Log.println(priority, TAG, msg);
 	}
 

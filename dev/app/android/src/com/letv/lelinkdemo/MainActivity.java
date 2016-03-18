@@ -3,47 +3,25 @@ package com.letv.lelinkdemo;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.letv.lelinkdemo.R;
-import com.letv.lelink.LeCmd;
-import com.letv.lelink.LeLink;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+
+import com.letv.lelink.LeCmd;
+import com.letv.lelink.LeLink;
 
 public class MainActivity extends Activity {
 	private static final String TAG = "LeLinkDemo";
 	private LeLink mLeLink = null;
 	private JSONObject mJsonCmd = null;
-	private static final String PUBLIC_KEY = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDxqkuVDvetJDbq1JgBr93VBYKJZdnZbMFS7gWoNjX1BUTxjBRY+2ek2k/V08lTj9ejlCsnn927lE4iOBzrHY66xIktxsyw6btmGcqQ/doDX6y89mHcbq8e2oFE+eJ/vuqI426g+waaYxPrCtsuN+G+4PUEnZnOZP/PFAGMj3pywIDAQAB";
-	private static final String SIGNALTURE = "vUckaTiTQsBuvtKHS1UgNMarBopvFTZolNGXbnkwqD2GX9d7c6dSQOHOr8niTFYPWkhl2/3DQWouRWfMXt55QYKvSpToiQA7EZqcnNR7/T1hfa0RKU8lzuRV3RWD7CVApmTJ5ZIHQMd8GL1kDjj8zPNdgAZKr9Dpnpyz0yfBzaM=";
-	private static final String UUID = "f1b312fd6f7b427f8306";
-//	private static final String PUBLIC_KEY = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCf2eu1g68UFbocZLROH90/3rGWpnJkOkRWSO4C3QUjMJ00b4nJDqbTwwkr9w1sLIJd5VsQ0UHwl80+62E6PcUV1ST9KgLfPyvqNbhN3NmpqPOS5wCZGsFp8zGkS9NYdtc3KmClF2K5OlSTaxg7EgdYwytRa1IxZdRNc1MJiKgEtwIDAQAB";
-//	private static final String SIGNALTURE = "Zuv23oJM/86hFqwwXv2uMkc60p5OwWyxYMTOHyIu+ShG3IkmWKXNCNNFYG9Vkc3ApgWul0WpFQaYT99lYhbUK8GS6h1jyqiPbj7eCHhZcbVNsaQA+Umw/S3+Fj7HhBBJ/2MwwIi4GgfT65BYW96yT9p0WDhmWEyOnmGtb3rEHBo=";
-//	private static final String UUID = "6914eae8a5714537a395";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		/*
-		 * SDK版本信息查看
-		 */
 		Log.i(TAG, LeLink.getSdkInfo());
-
-		JSONObject json = new JSONObject();
-		try {
-			json.put(LeCmd.K.PUBLIC_KEY, PUBLIC_KEY);
-			json.put(LeCmd.K.SIGNATURE, SIGNALTURE);
-			json.put(LeCmd.K.UUID, UUID);
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		LeLink.setInfo(json.toString());
-		
+		LeLink.setContent(getApplicationContext());
 		mLeLink = LeLink.getInstance();
 		mTestThread.start();
 	}
@@ -133,7 +111,7 @@ public class MainActivity extends Activity {
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
-				mJsonCmd.put(LeCmd.K.TOKEN, "B33D2BB7ED33D7B15222864D9F2B6FB6");
+				mJsonCmd.put(LeCmd.K.TOKEN, "FF8199AC80F1566539E37AD9236C9EE2");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -145,23 +123,4 @@ public class MainActivity extends Activity {
 			}
 		}
 	});
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
-	}
 }

@@ -25,38 +25,16 @@ nativeContext_t gNativeContext = {
 static void *netTaskFun(void *data);
 static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo);
 
-int initTask(char *json)
+int initTask(char *str)
 {
 	int ret;
 	pthread_t id;
     AuthCfg *authCfg = &gNativeContext.authCfg;
 
-    { // 初始得到 public_key, signatrue, uuid. server_addr, server_port
+    { // AuthCfg, 初始得到 public_key, signatrue, uuid. server_addr, server_port
         std::string s;
-        Json::Value value;
-        Json::Reader reader;
-
-        s = std::string(static_cast<char *>(json));
-        if (!reader.parse(s, value)) {
-            LELOGE("Failed to parse json!\n");
-            return -1;
-        }
-        //	LOGI("info:\n%s", json);
-        // public key
-        s = base64_decode(value[FJK_PUBLIC_KEY].asString());
-        authCfg->data.pubkeyLen = s.length();
-        memcpy(authCfg->data.pubkey, s.c_str(), s.length());
-        // signature
-        s = base64_decode(value[FJK_SIGNATURE].asString());
-        authCfg->data.signatureLen = s.length();
-        memcpy(authCfg->data.signature, s.c_str(), s.length());
-        // uuid
-        strncpy((char *) authCfg->data.uuid, value[PJK_UUID].asCString(), MAX_UUID);
-        // server addr
-        strncpy(authCfg->data.remote, "10.204.28.134", MAX_REMOTE);
-        // server port
-        authCfg->data.port = 5546;
-        authCfg->csum = crc8((uint8_t *)(&authCfg->data), sizeof(authCfg->data));
+        s = base64_decode(str);
+        memcpy(authCfg, s.c_str(), s.length());
     }
     { // PrivateCfg 
         PrivateCfg *privateCfg = &gNativeContext.privateCfg;
@@ -68,7 +46,6 @@ int initTask(char *json)
         return -1;
     }
 	lelinkInit();
-	//lelinkInit(&gNativeContext.auth);
 	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {

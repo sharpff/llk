@@ -197,7 +197,7 @@ class PrivateInfo(object):
 if __name__ == '__main__':
     content = ''
     param = Param()
-    print("\nBegin generate %s ..." % param.of)
+    print("Begin generate %s" % param.of)
     # packfile
     for k, v in param.packs.items():
         content += packByFile(k, v)

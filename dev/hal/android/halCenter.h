@@ -51,7 +51,7 @@ typedef struct _nativeContext {
 
 extern nativeContext_t gNativeContext;
 
-int initTask(char *json);
+int initTask(char *str);
 void airConfig(void *ptr, char *json);
 void cmdSend(void *ptr, char *json);
 
