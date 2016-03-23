@@ -13,6 +13,7 @@ $MAIN_PATH/lelinkTool.py \
     -o ./0x1c3000.bin
 
 $MAIN_PATH/lelinkTool.py \
+    --genpriv \
     --ssid Xiaomi_A7DD \
     --passwd 987654321 \
     -o ./0x1c8000.bin

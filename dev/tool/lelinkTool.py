@@ -15,6 +15,7 @@ class Param(object):
         self.base64_pk = ""
         self.base64_sig = ""
         self.fws = ""
+        self.genpriv = False
         self.ssid = ""
         self.passwd = ""
         self.of = "out.bin"
@@ -37,6 +38,9 @@ class Param(object):
         parser.add_option("-t", "--script", type="string",
                       action="store", dest="fws", default=self.fws,
                       help="firware script file path")
+        parser.add_option("--genpriv",
+                      action="store_true", dest="genpriv", default=self.genpriv,
+                      help="Generate private info")
         parser.add_option("--ssid", type="string",
                       action="store", dest="ssid", default=self.ssid,
                       help="wifi ssid")
@@ -54,6 +58,7 @@ class Param(object):
         self.base64_pk = options.base64_pk
         self.base64_sig = options.base64_sig
         self.fws = options.fws;
+        self.genpriv = options.genpriv;
         self.ssid = options.ssid;
         self.passwd = options.passwd;
         self.of = options.of;
@@ -223,7 +228,7 @@ if __name__ == '__main__':
         print("firware script: %d, " % len(s.content)),
         print("Total: %d" % len(content))
     # private info
-    if len(param.ssid) > 0:
+    if param.genpriv:
         pricfg = PrivateInfo()
         pricfg.set(param.ssid, param.passwd)
         pricfg.pack()
