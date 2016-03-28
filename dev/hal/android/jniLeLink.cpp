@@ -42,10 +42,13 @@ JNIEXPORT void JNICALL Java_com_letv_lelink_LeLink_airConfig(JNIEnv *env, jobjec
 	free(str);
 }
 
-JNIEXPORT void JNICALL Java_com_letv_lelink_LeLink_send(JNIEnv *env, jobject jobj, jlong ptr, jstring jstr)
+JNIEXPORT jint JNICALL Java_com_letv_lelink_LeLink_send(JNIEnv *env, jobject jobj, jlong ptr, jstring jstr)
 {
+    jint ret = -1;
 	char *str = js2c(env, jstr);
-	cmdSend((void *) ptr, str);
+
+	ret = cmdSend((void *) ptr, str);
 	free(str);
+    return ret;
 }
 

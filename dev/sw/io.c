@@ -3,6 +3,27 @@
 #include "sengine.h"
 #include "ota.h"
 
+#ifndef LOG_IO
+#ifdef LELOG
+#undef LELOG
+#define LELOG(...)
+#endif
+
+#ifdef LELOG
+#undef LELOGW
+#define LELOGW(...)
+#endif
+
+// #ifdef LELOG
+// #undef LELOGE
+// #define LELOGE(...)
+// #endif
+
+#ifdef LEPRINTF
+#undef LEPRINTF
+#define LEPRINTF(...)
+#endif
+#endif
 // #define SECTOR_SIZE ginMinSize // 0x800 // 2KB
 // #define BLOCK_SIZE 0x8000 // 32KB
 

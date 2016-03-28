@@ -133,7 +133,6 @@ typedef unsigned int uint32_t;
 #define LE_ANDROID_LOG_DEBUG    1
 #define LE_ANDROID_LOG_WARN     1
 
-#define TAG_LOG "LELIVE"
 #define LELOG(__fmt__, ...)  do {if (LE_ANDROID_LOG_DEBUG) {__android_log_print(ANDROID_LOG_DEBUG, TAG_LOG, "[D]: %s, %s, %d\r\n" __fmt__ "\r\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);}}while(0)
 #define LELOGW(__fmt__, ...)  do {if (LE_ANDROID_LOG_WARN) {__android_log_print(ANDROID_LOG_WARN, TAG_LOG, "[W]: %s, %s, %d\r\n" __fmt__ "\r\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);}}while(0)
 #define LELOGE(__fmt__, ...)  do {if (LE_ANDROID_LOG_ERROR)  {__android_log_print(ANDROID_LOG_ERROR, TAG_LOG, "[E]: %s, %s, %d\r\n" __fmt__ "\r\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);}}while(0)
@@ -206,6 +205,7 @@ typedef unsigned int uint32_t;
 
 
 // #define LOG_SENGINE
+// #define LOG_IO
 #define LOG_PROTOCOL
 #define LOG_STATE
 // #define LOG_PACK

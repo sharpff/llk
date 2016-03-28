@@ -42,9 +42,9 @@ JNIEXPORT void JNICALL Java_com_letv_lelink_LeLink_airConfig
 /*
  * Class:     com_letv_lelink_LeLink
  * Method:    send
- * Signature: (JLjava/lang/String;)V
+ * Signature: (JLjava/lang/String;)I
  */
-JNIEXPORT void JNICALL Java_com_letv_lelink_LeLink_send
+JNIEXPORT jint JNICALL Java_com_letv_lelink_LeLink_send
   (JNIEnv *, jobject, jlong, jstring);
 
 #ifdef __cplusplus

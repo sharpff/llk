@@ -485,7 +485,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     lua_register(L, "s2apiGetLatestStatus", s2apiGetLatestStatus);
     // lua_register(L, "csum", csum);
     
-    if (script == NULL)
+    if (script == NULL || scriptSize <= 0)
         return -1;
 
     luaL_openlibs(L);
@@ -656,19 +656,19 @@ int s2apiGetLatestStatus(lua_State *L) {
 int sengineSetStatus(char *json, int jsonLen) {
     int ret = 0, ioType = 0;
     uint8_t bin[512] = {0};
-    void *hdl = NULL;
+    void **hdl = NULL;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
         (uint8_t *)json, jsonLen, bin, sizeof(bin));
     if (ret <= 0) {
         LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]", ret);
         return ret;
     }
-    hdl = *((void **)ioGetHdl(&ioType));
-    if (NULL == hdl) {
+    hdl = ioGetHdl(&ioType);
+    if (NULL == hdl || *hdl == NULL) {
         LELOGE("sengineGetStatus ioGetHdl NULL");
         return -1;
     }
-    ret = ioWrite(ioType, hdl, bin, ret);
+    ret = ioWrite(ioType, *hdl, bin, ret);
     if (ret <= 0) {
         LELOGW("sengineSetStatus ioWrite [%d]", ret);
         return ret;
@@ -693,23 +693,23 @@ int sengineQuerySlave(void)
     Queries queries;
     int ret = 0, i = 0, ioType = 0;
     uint16_t currLen = 0, appendLen = 0;
-    void *hdl = NULL;
+    void **hdl = NULL;
 
     // 0. getQueries from script
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
             NULL, 0, (uint8_t *)&queries, sizeof(queries));
     if (ret <= 0) {
-        LELOGE("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]", ret);
+        LELOGW("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]", ret);
         return ret;
     }
-    hdl = *((void **)ioGetHdl(&ioType));
-    if (NULL == hdl) {
+    hdl = ioGetHdl(&ioType);
+    if (NULL == hdl || *hdl == NULL) {
         LELOGE("sengineGetStatus ioGetHdl NULL");
         return -1;
     }
     for (i = 0; i < queries.queriesCountsLen; i += 2, appendLen += currLen) {
         memcpy(&currLen, &queries.arrQueriesCounts[i], 2);
-        ret = ioWrite(ioType, hdl, &(queries.arrQueries[appendLen]), currLen);
+        ret = ioWrite(ioType, *hdl, &(queries.arrQueries[appendLen]), currLen);
         if (ret <= 0) {
             LELOGW("sengineGetStatus ioWrite [%d]", ret);
             return ret;
@@ -722,14 +722,14 @@ int senginePollingSlave(void) {
     char status[MAX_BUF];
     uint8_t bin[128] = {0};
     int whatKind = 0, ret = 0, size, ioType = 0;
-    void *hdl = NULL;
+    void **hdl = NULL;
 
-    hdl = *((void **)ioGetHdl(&ioType));
-    if (NULL == hdl) {
-        LELOGE("senginePollingSlave ioGetHdl NULL");
+    hdl = ioGetHdl(&ioType);
+    if (NULL == hdl || *hdl == NULL) {
+        LELOGW("senginePollingSlave ioGetHdl NULL");
         return -1;
     }
-    ret = ioRead(ioType, hdl, bin, sizeof(bin));
+    ret = ioRead(ioType, *hdl, bin, sizeof(bin));
     if (ret <= 0) {
         LELOGW("senginePollingSlave ioRead [%d]", ret);
         return ret;

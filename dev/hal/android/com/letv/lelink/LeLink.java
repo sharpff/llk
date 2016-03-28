@@ -54,7 +54,7 @@ public class LeLink {
 	 *
 	 * @hide
 	 */
-	private native void send(long ptr, String jsonStr);
+	private native int send(long ptr, String jsonStr);
 
 	static {
 		System.loadLibrary("lelink");

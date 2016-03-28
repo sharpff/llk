@@ -9,6 +9,7 @@
 #define HALCENTER_H_
 
 #include <android/log.h>
+#include "halHeader.h"
 #include "io.h"
 #include "leconfig.h"
 #include "protocol.h"
@@ -28,8 +29,6 @@ typedef struct _nativeContext {
 } nativeContext_t;
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0,
-#define MYLOG_TAG "LELINK"
-#define LOGI(fmt,arg...) __android_log_print(ANDROID_LOG_INFO, MYLOG_TAG, fmt, ##arg)
 
 /* function's json key */
 #define FJK_TYPE		"type"
@@ -53,7 +52,7 @@ extern nativeContext_t gNativeContext;
 
 int initTask(char *str);
 void airConfig(void *ptr, char *json);
-void cmdSend(void *ptr, char *json);
+int cmdSend(void *ptr, char *json);
 
 #ifdef __cplusplus
 extern "C" {

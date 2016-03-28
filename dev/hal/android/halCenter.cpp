@@ -76,7 +76,7 @@ void airConfig(void *ptr, char *json)
 
 	snprintf(parambuf, sizeof(parambuf), "SSID=%s,PASSWD=%s,AES=%s,TYPE=%d,DELAY=%d",
 			ssid, passwd, aes, type, delay);
-	LOGI("airConfig: %s\n", parambuf);
+	APPLOG("airConfig: %s", parambuf);
 	void *context = airconfig_new(parambuf);
 //	void *context = airconfig_new("SSID=TP-LINK_JJFA1,PASSWD=987654321,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10");
 
@@ -84,7 +84,7 @@ void airConfig(void *ptr, char *json)
 	airconfig_delete(context);
 }
 
-void cmdSend(void *ptr, char *json)
+int cmdSend(void *ptr, char *json)
 {
 	std::string s;
 	Json::Value value;
@@ -94,7 +94,7 @@ void cmdSend(void *ptr, char *json)
 	s = std::string(static_cast<char *>(json));
 	if (!reader.parse(s, value)) {
 		LELOGE("cmdSend parse error!\n");
-		return;
+		return -1;
 	}
 	node.timeoutRef = value[FJK_TIMEOUT].asInt();
 	node.cmdId = value[PJK_CMD].asInt();
@@ -108,17 +108,17 @@ void cmdSend(void *ptr, char *json)
 		strncpy((char *) node.uuid, value[PJK_UUID].asCString(), MAX_UUID);
 	}
 	if (!value[PJK_TOKEN].isNull()) {
-		LOGI("token:[%s]\r\n", value[PJK_TOKEN].asCString());
+		APPLOG("token:[%s]n", value[PJK_TOKEN].asCString());
 		hexStr2bytes(value[PJK_TOKEN].asCString(), node.token, AES_LEN);
 	}
-	LOGI("send: %s.%d %d.%d-%d, timeout: %d\n",
+	APPLOG("send: %s.%d %d.%d-%d, timeout: %d",
 			node.ndIP[0] ? node.ndIP : "default", node.ndPort, node.cmdId, node.subCmdId, node.seqId, node.timeoutRef);
-	lelinkNwPostCmd(gNativeContext.ctxR2R, &node);
+	return lelinkNwPostCmd(gNativeContext.ctxR2R, &node);
 }
 
 static void *netTaskFun(void *data)
 {
-	LOGI("LeLink Task run...\n");
+	APPLOG("LeLink Task run...");
 	while (gNativeContext.runTask)
 	{
         lelinkPollingState(200, gNativeContext.ctxR2R, gNativeContext.ctxQ2A);
