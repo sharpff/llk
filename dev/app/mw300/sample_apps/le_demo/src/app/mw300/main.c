@@ -55,8 +55,6 @@
 #include <lelink/sw/state.h>
 #include <lelink/sw/io.h>
 #include <lelink/sw/ota.h>
-// test only
-#include <lelink/sw/misc.h>
 
 
 // #define DEBUG_AIRCONFIG

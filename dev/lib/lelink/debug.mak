@@ -5,11 +5,13 @@
 BINARYDIR := Debug
 
 #Toolchain
-CC := gcc
-CXX := g++
+#MYXPATH:=/root/feng/qca9531/OpenWrt-Toolchain-ar71xx-for-mips_r2-gcc-4.6-linaro_uClibc-0.9.33.2/toolchain-mips_r2_gcc-4.6-linaro_uClibc-0.9.33.2/bin/
+#MYXPREFIX:=mips-openwrt-linux-
+CC := $(MYXPATH)$(MYXPREFIX)gcc
+CXX := $(MYXPATH)$(MYXPREFIX)g++
 LD := $(CXX)
-AR := ar
-OBJCOPY := objcopy
+AR := $(MYXPATH)$(MYXPREFIX)ar
+OBJCOPY := $(MYXPATH)$(MYXPREFIX)objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG LINUX __LE_SDK__

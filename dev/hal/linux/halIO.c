@@ -89,11 +89,11 @@ int halGetMac(uint8_t *mac, int len) {
         return -1;
     }
 
-    mac[0] = 0xFF;
-    mac[1] = 0xFF;
-    mac[2] = 0xFF;
-    mac[3] = 0xFF;
-    mac[4] = 0xFF;
-    mac[5] = 0xFF;
+    mac[0] = 0xEE;
+    mac[1] = 0xEE;
+    mac[2] = 0xEE;
+    mac[3] = 0xEE;
+    mac[4] = 0xEE;
+    mac[5] = 0xEE;
     return 0;
 }

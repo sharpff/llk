@@ -51,7 +51,7 @@ public class MainActivity extends Activity {
 //			Log.e(TAG, "Wifi config test...");
 //			try {
 //				mJsonCmd = new JSONObject();
-//				mJsonCmd.put(LeCmd.K.TIMEOUT, 60);
+//				mJsonCmd.put(LeCmd.K.TIMEOUT, 60 * 5);
 //				mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_A7DD");
 //				mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
 //			} catch (JSONException e) {
@@ -104,14 +104,14 @@ public class MainActivity extends Activity {
 			 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态。
 			 * 如果该设备已经连接云，则必须传入token(由getState广域网获得)
 			 */
-			String ctrlStr = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 1, 1, 0);
+			String ctrlStr = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 1, 0, 0);
 			Log.e(TAG, "Control device test...\n" + ctrlStr);
 			try {
 				mJsonCmd = new JSONObject();
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
-				mJsonCmd.put(LeCmd.K.TOKEN, "FF8199AC80F1566539E37AD9236C9EE2");
+				mJsonCmd.put(LeCmd.K.TOKEN, "0D70EA4EA6B7A632F375D9F14A5FC363");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
