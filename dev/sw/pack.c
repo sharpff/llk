@@ -5,6 +5,28 @@
 #include "data.h"
 #include "utility.h"
 
+#ifndef LOG_PACK
+#ifdef LELOG
+#undef LELOG
+#define LELOG(...)
+#endif
+
+#ifdef LELOG
+#undef LELOGW
+#define LELOGW(...)
+#endif
+
+#ifdef LELOG
+#undef LELOGE
+#define LELOGE(...)
+#endif
+
+#ifdef LEPRINTF
+#undef LEPRINTF
+#define LEPRINTF(...)
+#endif
+#endif
+
 // #define NO_CRYPTO
 typedef int (*FP_FIND_TOKEN)(const CommonCtx *ctx, const void *what, uint8_t *token, int len);
 int doUnpack(void *ctx,
@@ -29,13 +51,13 @@ int doUnpack(void *ctx,
     memset(tmpBuf, 0, sizeof(tmpBuf));
     if (nwLen + sizeof(CommonHeader) + sizeof(CmdHeader) + sizeof(PayloadHeader) > 
         UDP_MTU) {
-        LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] \r\n", LELINK_ERR_BUFFER_SPACE_ERR);
+        LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] ", LELINK_ERR_BUFFER_SPACE_ERR);
         return LELINK_ERR_BUFFER_SPACE_ERR;
     }
 
     commonHeader = (CommonHeader *)(nw);
     if (MAGIC_CODE != commonHeader->magic) {
-        LELOGW("LELINK_ERR_MAGIC_ERR mismatch \r\n");
+        LELOGW("LELINK_ERR_MAGIC_ERR mismatch ");
         return LELINK_ERR_MAGIC_ERR;
     }
     memcpy(tmpBuf, commonHeader, sizeof(CommonHeader));
@@ -45,7 +67,7 @@ int doUnpack(void *ctx,
     // 1st check sum
     cmdHeader = (CmdHeader *)(nw + sizeof(CommonHeader));
     if (commonHeader->encsum != crc8((const uint8_t *)cmdHeader, nwLen - sizeof(CommonHeader))) {
-        LELOGW("LELINK_ERR_CHECKSUM_1ST_ERR mismatch \r\n");
+        LELOGW("LELINK_ERR_CHECKSUM_1ST_ERR mismatch ");
         return LELINK_ERR_CHECKSUM_1ST_ERR;
     }
     memcpy(tmpBuf + sizeof(CommonHeader), cmdHeader, nwLen - sizeof(CommonHeader));
@@ -57,7 +79,7 @@ int doUnpack(void *ctx,
             PACK_GET_PAYLOAD_HEADER(payloadHeader, tmpBuf, sizeof(CmdHeader));
             if (cmdHeader->encsum != crc8((const uint8_t *)payloadHeader, payloadLen)) {
             // if (cmdHeader->encsum != crc8((const uint8_t *)payloadHeader, sizeof(PayloadHeader) + payloadHeader->len)) {
-                LELOGW("LELINK_ERR_CHECKSUM_2ND_ERR [%d] \r\n", LELINK_ERR_CHECKSUM_2ND_ERR);
+                LELOGW("LELINK_ERR_CHECKSUM_2ND_ERR [%d] ", LELINK_ERR_CHECKSUM_2ND_ERR);
                 return LELINK_ERR_CHECKSUM_2ND_ERR;
             }
         }break;
@@ -83,7 +105,7 @@ int doUnpack(void *ctx,
                 if (funcFindToken && cmdInfo->ndIP[0]) { // it must be local & RemoteRsp
                     if (!((FP_FIND_TOKEN)(funcFindToken))(ctx, (const void *)cmdInfo->ndIP, key, AES_LEN)) {
                         // TODO: it maybe timeout.
-                        LELOGW("LELINK_ERR_BAD_TOKEN_ERR [%d] \r\n", LELINK_ERR_BAD_TOKEN_ERR);
+                        LELOGW("LELINK_ERR_BAD_TOKEN_ERR [%d] ", LELINK_ERR_BAD_TOKEN_ERR);
                         return LELINK_ERR_BAD_TOKEN_ERR;
                     }
                 } else {
@@ -94,7 +116,7 @@ int doUnpack(void *ctx,
                 int i = 0;
                 LEPRINTF("unpack encType [%d] :", commonHeader->encType);
                 for (i = 0; i < AES_LEN; i++) {
-                    LEPRINTF("%02x", key[i]);
+                    LEPRINTF("%02X", key[i]);
                 }
                 LEPRINTF("\r\n");
             }
@@ -105,7 +127,7 @@ int doUnpack(void *ctx,
                 sizeof(tmpBuf) - sizeof(CommonHeader),
                 0);
             if (0 > ret) {
-                LELOGW("LELINK_ERR_DEC1_ERR [%d] \r\n", LELINK_ERR_DEC1_ERR);
+                LELOGW("LELINK_ERR_DEC1_ERR [%d] ", LELINK_ERR_DEC1_ERR);
                 return LELINK_ERR_DEC1_ERR;
             }
             // cmdHeader = (CmdHeader *)(tmpBuf + sizeof(CommonHeader));
@@ -116,7 +138,7 @@ int doUnpack(void *ctx,
 
             if (cmdHeader->encsum != crc8((const uint8_t *)payloadHeader, payloadLen)) {
             // if (cmdHeader->encsum != crc8((const uint8_t *)payloadHeader, sizeof(PayloadHeader) + payloadHeader->len)) {
-                LELOGW("LELINK_ERR_CHECKSUM_2ND_ERR [%d] \r\n", LELINK_ERR_CHECKSUM_2ND_ERR);
+                LELOGW("LELINK_ERR_CHECKSUM_2ND_ERR [%d] ", LELINK_ERR_CHECKSUM_2ND_ERR);
                 return LELINK_ERR_CHECKSUM_2ND_ERR;
             }
         }break;
@@ -143,17 +165,17 @@ int doUnpack(void *ctx,
                 encLenPayload,
                 0);
             if (0 > ret) {
-                LELOGW("LELINK_ERR_DEC1_ERR [%d] \r\n", LELINK_ERR_DEC1_ERR);
+                LELOGW("LELINK_ERR_DEC1_ERR [%d] ", LELINK_ERR_DEC1_ERR);
                 return LELINK_ERR_DEC1_ERR;
             }
             if (rawLenCmdHeader != sizeof(CmdHeader)) {
-                LELOGW("LELINK_ERR_ENCINFO_ERR [%d] \r\n", LELINK_ERR_ENCINFO_ERR);
+                LELOGW("LELINK_ERR_ENCINFO_ERR [%d] ", LELINK_ERR_ENCINFO_ERR);
                 return LELINK_ERR_ENCINFO_ERR;
             }
             cmdHeader = (CmdHeader *)(tmpBuf + sizeof(CommonHeader));
             if (cmdHeader->encsum != crc8((const uint8_t *)tmpBuf + sizeof(CommonHeader) + encLenCmdHeader, encLenPayload)) {
             // if (cmdHeader->encsum != crc8((const uint8_t *)payloadHeader, sizeof(PayloadHeader) + payloadHeader->len)) {
-                LELOGW("LELINK_ERR_CHECKSUM_2ND_ERR [%d] \r\n", LELINK_ERR_CHECKSUM_2ND_ERR);
+                LELOGW("LELINK_ERR_CHECKSUM_2ND_ERR [%d] ", LELINK_ERR_CHECKSUM_2ND_ERR);
                 return LELINK_ERR_CHECKSUM_2ND_ERR;
             }
 
@@ -176,7 +198,7 @@ int doUnpack(void *ctx,
                 int m = 0;
                 LEPRINTF("AESKEY: ");
                 for (m = 0; m < AES_LEN; m++) {
-                    LEPRINTF("%02x", key[m]);
+                    LEPRINTF("%02X", key[m]);
                 }
                 LEPRINTF("\r\n");
             }
@@ -187,7 +209,7 @@ int doUnpack(void *ctx,
                 sizeof(tmpBuf) - sizeof(CommonHeader) - ENC_SIZE(AES_LEN, sizeof(CmdHeader) + 1),
                 0);
             if (0 > ret) {
-                LELOGW("LELINK_ERR_DEC2_ERR [%d] \r\n", LELINK_ERR_DEC2_ERR);
+                LELOGW("LELINK_ERR_DEC2_ERR [%d] ", LELINK_ERR_DEC2_ERR);
                 return LELINK_ERR_DEC2_ERR;
             }
 
@@ -196,7 +218,7 @@ int doUnpack(void *ctx,
             payloadLen = encLenPayload;
         }break;
     default:
-        LELOGW("LELINK_ERR_ENCTYPE_ERR [%d] \r\n", commonHeader->encType);
+        LELOGW("LELINK_ERR_ENCTYPE_ERR [%d] ", commonHeader->encType);
         return LELINK_ERR_ENCTYPE_ERR;
         break;
     }
@@ -224,7 +246,7 @@ int doUnpack(void *ctx,
     {
     char tmpUUID[MAX_UUID + 1] = {0};      
     memcpy(tmpUUID, cmdInfo->uuid, MAX_UUID);  
-    LELOG("nwUnpack[%d] status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \r\n", 
+    LELOG("nwUnpack[%d] status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] ", 
         payloadHeader->len, 
         cmdInfo->status, 
         cmdInfo->cmdId, 
@@ -232,7 +254,7 @@ int doUnpack(void *ctx,
         cmdInfo->seqId, 
         cmdInfo->randID); 
     
-    LELOG("passThru[%d] reserved[%d] UUID[%s] \r\n", 
+    LELOG("passThru[%d] reserved[%d] UUID[%s] ", 
         cmdInfo->passThru, 
         cmdInfo->reserved, 
         tmpUUID);
@@ -283,7 +305,7 @@ int doPack(void *ctx,
     {
     char tmpUUID[MAX_UUID + 1] = {0};      
     memcpy(tmpUUID, cmdInfo->uuid, MAX_UUID);  
-    LELOG("doPack[%d] status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \r\n", 
+    LELOG("doPack[%d] status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] ", 
         pbLen, 
         cmdInfo->status, 
         cmdInfo->cmdId, 
@@ -291,7 +313,7 @@ int doPack(void *ctx,
         cmdInfo->seqId, 
         cmdInfo->randID); 
     
-    LELOG("passThru[%d] reserved[%d] UUID[%s] \r\n", 
+    LELOG("passThru[%d] reserved[%d] UUID[%s] ", 
         cmdInfo->passThru, 
         cmdInfo->reserved, 
         tmpUUID);
@@ -301,7 +323,7 @@ int doPack(void *ctx,
     switch (encType) {
         case ENC_TYPE_STRATEGY_0: {
             if (nwLen < sizeof(CommonHeader) + sizeof(CmdHeader) + sizeof(PayloadHeader) + pbLen) {
-                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] \r\n", LELINK_ERR_BUFFER_SPACE_ERR);
+                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] ", LELINK_ERR_BUFFER_SPACE_ERR);
                 return LELINK_ERR_BUFFER_SPACE_ERR;
             }
             // payload
@@ -335,7 +357,7 @@ int doPack(void *ctx,
             uint8_t key[AES_LEN] = { 0 };
             rawSize1 = encSize1 = sizeof(CmdHeader) + sizeof(PayloadHeader) + pbLen;
             if (nwLen < sizeof(CommonHeader) + ENC_SIZE(AES_LEN, rawSize1 + 1)) {
-                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] \r\n", LELINK_ERR_BUFFER_SPACE_ERR);
+                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] ", LELINK_ERR_BUFFER_SPACE_ERR);
                 return LELINK_ERR_BUFFER_SPACE_ERR;
             }
             memset(beingEncBuf, 0, sizeof(beingEncBuf));
@@ -369,7 +391,7 @@ int doPack(void *ctx,
                 sizeof(beingEncBuf),
                 1);
             if (0 > ret) {
-                LELOGW("LELINK_ERR_DEC1_ERR [%d] \r\n", LELINK_ERR_DEC1_ERR);
+                LELOGW("LELINK_ERR_DEC1_ERR [%d] ", LELINK_ERR_DEC1_ERR);
                 return LELINK_ERR_DEC1_ERR;
             }
             memcpy(cmdHeader, beingEncBuf, encSize1);
@@ -382,7 +404,7 @@ int doPack(void *ctx,
                 int i = 0;
                 LEPRINTF("pack encType [%d] :", commonHeader->encType);
                 for (i = 0; i < AES_LEN; i++) {
-                    LEPRINTF("%02x", key[i]);
+                    LEPRINTF("%02X", key[i]);
                 }
                 LEPRINTF("\r\n");
             }
@@ -392,7 +414,7 @@ int doPack(void *ctx,
         case ENC_TYPE_STRATEGY_14: {
             encSize1 = RSA_LEN*ENC_PIECES(RSA_RAW_LEN, sizeof(CmdHeader) + sizeof(PayloadHeader) + pbLen);
             if (nwLen < sizeof(CommonHeader) + encSize1) {
-                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] \r\n", LELINK_ERR_BUFFER_SPACE_ERR);
+                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] ", LELINK_ERR_BUFFER_SPACE_ERR);
                 return LELINK_ERR_BUFFER_SPACE_ERR;
             }
             memset(beingEncBuf, 0, sizeof(beingEncBuf));
@@ -420,11 +442,11 @@ int doPack(void *ctx,
                     pubkeyLen = getTerminalPublicKey(pubkey, sizeof(pubkey));           
                 }
                 if (0 > pubkeyLen) {
-                    LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] \r\n", LELINK_ERR_BUFFER_SPACE_ERR);
+                    LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] ", LELINK_ERR_BUFFER_SPACE_ERR);
                     return LELINK_ERR_BUFFER_SPACE_ERR;
                 }
                 if (encSize1 != rsaEncrypt(pubkey, pubkeyLen, beingEncBuf, beingEncLen, cmdHeader, nwLen - sizeof(CommonHeader))) {
-                    LELOGW("LELINK_ERR_ENC4_ERR [%d] \r\n", LELINK_ERR_ENC4_ERR);
+                    LELOGW("LELINK_ERR_ENC4_ERR [%d] ", LELINK_ERR_ENC4_ERR);
                     return LELINK_ERR_ENC4_ERR;
                 }
             }
@@ -440,7 +462,7 @@ int doPack(void *ctx,
             //     int ret;
             //     uint8_t buf[256] = {0};
             //     ret = rsaDecrypt((const uint8_t *)prikey, sizeof(prikey), (const uint8_t *)cmdHeader, encSize1, buf, sizeof(buf));
-            //     LELOG("TEST ret[%d]\r\n", ret);
+            //     LELOG("TEST ret[%d]", ret);
             // }
 
         }break;
@@ -450,7 +472,7 @@ int doPack(void *ctx,
             rawSize1 = encSize1 = sizeof(CmdHeader);
             rawSize2 = encSize2 = sizeof(PayloadHeader) + pbLen;
             if (nwLen < sizeof(CommonHeader) + ENC_SIZE(AES_LEN, rawSize1 + 1) + ENC_SIZE(AES_LEN, rawSize2 + 1)) {
-                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] \r\n", LELINK_ERR_BUFFER_SPACE_ERR);
+                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] ", LELINK_ERR_BUFFER_SPACE_ERR);
                 return LELINK_ERR_BUFFER_SPACE_ERR;
             }
             memset(beingEncBuf, 0, sizeof(beingEncBuf));
@@ -475,7 +497,7 @@ int doPack(void *ctx,
                 int m = 0;
                 LEPRINTF("AESKEY: ");
                 for (m = 0; m < AES_LEN; m++) {
-                    LEPRINTF("%02x", key[m]);
+                    LEPRINTF("%02X", key[m]);
                 }
                 LEPRINTF("\r\n");
             }
@@ -487,7 +509,7 @@ int doPack(void *ctx,
                 ENC_SIZE(AES_LEN, rawSize2 + 1),
                 1);
             if (0 > ret) {
-                LELOGW("LELINK_ERR_ENC2_ERR [%d] \r\n", LELINK_ERR_ENC2_ERR);
+                LELOGW("LELINK_ERR_ENC2_ERR [%d] ", LELINK_ERR_ENC2_ERR);
                 return LELINK_ERR_ENC2_ERR;
             }
             memcpy(payloadHeader, &beingEncBuf[ENC_SIZE(AES_LEN, rawSize1 + 1)], encSize2);
@@ -509,7 +531,7 @@ int doPack(void *ctx,
                 ENC_SIZE(AES_LEN, rawSize1 + 1),
                 1);
             if (0 > ret) {
-                LELOGW("LELINK_ERR_ENC1_ERR [%d] \r\n", LELINK_ERR_ENC1_ERR);
+                LELOGW("LELINK_ERR_ENC1_ERR [%d] ", LELINK_ERR_ENC1_ERR);
                 return LELINK_ERR_ENC1_ERR;
             }
             memcpy(cmdHeader, beingEncBuf, encSize1);

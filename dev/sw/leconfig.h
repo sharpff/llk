@@ -13,9 +13,7 @@ extern "C"
 #include "halHeader.h"
 #endif /* __LE_SDK__ */
 
-        
-// helper function
-// TODO: make sure the exactly macro for android & linux
+
 #if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
 #define memset hal_memset
 #define memcpy hal_memcpy
@@ -27,6 +25,10 @@ extern "C"
 #define strtol hal_strtol
 #define strstr hal_strstr
 #define sprintf hal_sprintf
+#define snprintf hal_snprintf
+#define vsnprintf hal_vsnprintf
+#define strcoll hal_strcoll
+#define abort hal_abort
 #endif
 
 #if defined (WIN32)
@@ -38,6 +40,8 @@ extern "C"
 // osal
 #define MUTEX_LOCK halLock(NULL, __FILE__, __LINE__)
 #define MUTEX_UNLOCK halUnlock(NULL, __FILE__, __LINE__)
+#define lelinkCalloc halCalloc
+#define lelinkFree halFree
 
 
 

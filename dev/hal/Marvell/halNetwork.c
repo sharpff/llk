@@ -133,7 +133,7 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
 //     ifc.ifc_buf = (caddr_t)buf;
 //     if ((tmpSock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
 //     {
-//         APPLOGE("socket ERR\r\n");
+//         APPLOGE("socket ERR");
 //         return 0;
 //     }
 

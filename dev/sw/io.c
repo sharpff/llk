@@ -5,7 +5,6 @@
 
 // #define SECTOR_SIZE ginMinSize // 0x800 // 2KB
 // #define BLOCK_SIZE 0x8000 // 32KB
-#define GET_PAGE_SIZE(currSize, SecSize) ((SecSize)*(((currSize)-1)/(SecSize) + 1)) // min erase size
 
 
 // // 0x1c2000
@@ -61,7 +60,7 @@ static uint32_t getSize(E_FLASH_TYPE type, uint32_t minSize) {
     return ret;
 }
 
-static int getRegion(E_FLASH_TYPE type, FlashRegion *region) {
+int getRegion(E_FLASH_TYPE type, FlashRegion *region) {
     if (!ginTotalSize || !ginMinSize) {
         return -1;
     }
@@ -86,6 +85,7 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     int i = 0;
     uint32_t tmpTotal = 0, tmpSize = 0;
     // uint32_t tmpStartAddr = startAddr;
+    LELOG("lelinkStorageInit -s\r\n");
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
         tmpTotal += getSize(i, minSize);
     }
@@ -101,10 +101,10 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
         ginRegion[i].type = i;
         ginRegion[i].size = getSize(i, minSize);
-        // LELOG("[%d] [%d]\r\n", i, ginRegion[i].size);
+        // LELOG("[%d] [%d]", i, ginRegion[i].size);
         ginRegion[i].addr = ginStartAddr + tmpSize;
         tmpSize += ginRegion[i].size;
-        LELOG("idx[%d] addr[0x%x] size[0x%x]\r\n", i, ginRegion[i].addr, ginRegion[i].size);
+        LELOG("idx[%d] addr[0x%x] size[0x%x]", i, ginRegion[i].addr, ginRegion[i].size);
     }
 
     return 0;
@@ -116,6 +116,10 @@ void lelinkStorageDeinit(void) {
     ginTotalSize = 0;
     ginMinSize = 0;
     memset(ginRegion, 0, sizeof(ginRegion));
+}
+
+int getFlashMinSize() {
+    return ginMinSize;
 }
 
 static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) {
@@ -137,15 +141,15 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) 
     if (0 > ret) {
         return -3;
     }
-    // LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]\r\n", hdl, fr.addr, fr.size);
+    // LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
 
     *((uint8_t *)data + (size - 1)) = crc8(data, size - 1);
-    ret = halFlashWrite(hdl, data, size, fr.addr);
+    ret = halFlashWrite(hdl, data, size, fr.addr + (idx*fr.size));
     if (0 > ret) {
         return -4;
     }
     
-    // LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]\r\n", hdl, fr.addr, fr.size);
+    // LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
     halFlashClose(hdl);
     return 0; 
 }
@@ -170,7 +174,7 @@ static int storageRead(E_FLASH_TYPE type, void *data, int size, int idx) {
         return -3;
     }
 
-    // LELOG("flashReadPrivateCfg [0x%x] [0x%x][0x%x]\r\n", hdl, STORAGE_SIZE_PRIVATE_CFG, fr.addr);
+    // LELOG("flashReadPrivateCfg [0x%x] [0x%x][0x%x]", hdl, STORAGE_SIZE_PRIVATE_CFG, fr.addr);
     halFlashClose(hdl);
 
     return 0;
@@ -193,48 +197,128 @@ int lelinkStorageReadAuthCfg(AuthCfg *authCfg) {
     return ret;
 }
 
-int lelinkStorageWriteScriptCfg(const void *scriptCfg, int type, int idx) {
-    int ret = 0, i = 0, tmpNum = 0;
+int lelinkStorageWriteScriptCfg(const void *scriptCfg, int flashType, int idx) {
+    int ret = 0;
+    // char strSelfRuleName[MAX_RULE_NAME] = {0};
+    // ScriptCfg *tmpScriptCfg = (ScriptCfg *)scriptCfg;
 
-    if (OTA_TYPE_FW_SCRIPT == type) {
-        ret = storageWrite(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg), idx);
-    } else if (OTA_TYPE_IA_SCRIPT == type) {
-        PrivateCfg privCfg;
-        // write fw script
-        ret = storageWrite(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg), idx);
+    ret = storageWrite(flashType, scriptCfg, sizeof(ScriptCfg), idx);
 
-        // update private
-        ret = lelinkStorageReadPrivateCfg(&privCfg);
-        if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
-            LELOGW("lelinkStorageWriteScriptCfg csum failed\r\n");
-            return -1;
-        }
 
-        privCfg.data.iaCfg.arrIA[idx] = 1;
-        for (i = 0; i < MAX_IA; i++) {
-            if (privCfg.data.iaCfg.arrIA[i]) {
-                tmpNum++;
-            }
-        }
-        privCfg.data.iaCfg.num = tmpNum;
-        lelinkStorageWritePrivateCfg(&privCfg);
-    }
+    // if (E_FLASH_TYPE_SCRIPT == flashType) {
+    //     ret = storageWrite(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg), idx);
+    // } else if (E_FLASH_TYPE_SCRIPT2 == flashType) {
+    //     PrivateCfg privCfg;
+    //     // write fw script
+    //     ret = storageWrite(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg), idx);
+
+    //     // update private
+    //     ret = lelinkStorageReadPrivateCfg(&privCfg);
+    //     if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    //         LELOGW("lelinkStorageReadPrivateCfg csum failed");
+    //         return -1;
+    //     }
+
+    //     ret = sengineCall((const char *)tmpScriptCfg->data.script, tmpScriptCfg->data.size, S2_GET_SELFNAME,
+    //         NULL, 0, (uint8_t *)&strSelfRuleName, sizeof(strSelfRuleName));
+    //     if (0 > ret) {
+    //         LELOGW("senginePollingRules sengineCall("S2_GET_SELFNAME") [%d]", ret);
+    //         return -2;
+    //     }
+
+
+    //     privCfg.data.iaCfg.arrIA[idx] = 1;
+    //     memcpy(&(privCfg.data.iaCfg.arrIAName[idx]), strSelfRuleName, ret);
+    //     for (i = 0; i < MAX_IA; i++) {
+    //         if (0 < privCfg.data.iaCfg.arrIA[i]) {
+    //             tmpNum++;
+    //         }
+    //     }
+    //     privCfg.data.iaCfg.num = tmpNum;
+    //     lelinkStorageWritePrivateCfg(&privCfg);
+    // }
 
     return ret;
 }
-int lelinkStorageReadScriptCfg(void *scriptCfg, int type, int idx){
+int lelinkStorageReadScriptCfg(void *scriptCfg, int flashType, int idx){
     int ret = 0;
 
-    if (OTA_TYPE_FW_SCRIPT == type) {
+    if (E_FLASH_TYPE_SCRIPT == flashType) {
         ret = storageRead(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg), idx);
-    } else if (OTA_TYPE_IA_SCRIPT == type) {
+    } else if (E_FLASH_TYPE_SCRIPT2 == flashType) {
         ret = storageRead(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg), idx);
     } else {
-        LELOGW("lelinkStorageReadScriptCfg not supported type[%d]\r\n", type);
+        LELOGW("lelinkStorageReadScriptCfg not supported flashType[%d]", flashType);
         return -1;
     }
 
     return ret;
+}
+
+int lelinkStorageWriteScriptCfg2(const ScriptCfg *scriptCfg) {
+    int i = 0, ret = 0, lenSelfRuleName = 0, whereToPut = -1, isNew = 0;
+    PrivateCfg privCfg;
+    char strSelfRuleName[MAX_RULE_NAME] = {0};
+    LELOG("lelinkStorageWriteScriptCfg2 -s ");
+
+    lenSelfRuleName = sengineCall((const char *)scriptCfg->data.script, scriptCfg->data.size, S2_GET_SELFNAME,
+        NULL, 0, (uint8_t *)&strSelfRuleName, sizeof(strSelfRuleName));
+    if (0 > lenSelfRuleName) {
+        LELOGW("lelinkStorageWriteScriptCfg2 sengineCall("S2_GET_SELFNAME") [%d]", lenSelfRuleName);
+        return -1;
+    }
+
+    ret = lelinkStorageReadPrivateCfg(&privCfg);
+    if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+        LELOGW("lelinkStorageWriteScriptCfg2 csum FAILED");
+        return -2;
+    }
+
+    for (i = MAX_IA - 1; i > -1; i--) {
+        if (0 < privCfg.data.iaCfg.arrIA[i]) {
+            if (0 == memcmp(strSelfRuleName, privCfg.data.iaCfg.arrIAName[i], lenSelfRuleName)) {
+                whereToPut = i;
+                isNew = 0;
+                break;
+            }
+        } else {
+            whereToPut = i;
+            isNew = 1;
+        }
+    }
+
+    if (-1 == i && !isNew) {
+        LELOGW("lelinkStorageWriteScriptCfg2 IA(s) are FULL");
+        return -3;
+    }
+
+    // comming a new ia item
+    if (isNew) {
+        privCfg.data.iaCfg.arrIA[whereToPut] = 1;
+        if (0 > privCfg.data.iaCfg.num)
+            privCfg.data.iaCfg.num = 1;
+        else
+            privCfg.data.iaCfg.num++;
+    }
+    memcpy(privCfg.data.iaCfg.arrIAName[whereToPut], strSelfRuleName, lenSelfRuleName);
+    ret = lelinkStorageWritePrivateCfg(&privCfg);
+    if (0 > ret) {
+        LELOGW("lelinkStorageWriteScriptCfg2 lelinkStorageWritePrivateCfg FAILED [%d]", ret);
+        return -4;
+    }
+
+    ret = lelinkStorageWriteScriptCfg(scriptCfg, E_FLASH_TYPE_SCRIPT2, whereToPut);
+    if (0 > ret) {
+        if (isNew) {
+            privCfg.data.iaCfg.arrIA[whereToPut] = -1;
+            privCfg.data.iaCfg.num--;
+            lelinkStorageWritePrivateCfg(&privCfg);
+        }
+        LELOGW("lelinkStorageWriteScriptCfg2 lelinkStorageWriteScriptCfg FAILED [%d]", ret);
+        return -5;
+    }
+    LELOG("lelinkStorageWriteScriptCfg2 isNew[%d] where[%d/%d]-e ", isNew, whereToPut, privCfg.data.iaCfg.num);
+    return 0;
 }
 
 // static uint8_t ginIsPrivateCfgChanged = 1;
@@ -255,6 +339,9 @@ int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     return ret;
 }
 
+
+
+
 // int flashWritePrivateCfg(const PrivateCfg *privateCfg) {
 //     int ret = 0;
 //     uint8_t buf[GET_SIZE(sizeof(PrivateCfg))] = {0};
@@ -267,14 +354,14 @@ int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
 //     if (0 > ret) {
 //         return -2;
 //     }
-//     LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]\r\n", hdl, STORAGE_ADDR_PRIVATE_CFG, STORAGE_SIZE_PRIVATE_CFG);
+//     LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, STORAGE_ADDR_PRIVATE_CFG, STORAGE_SIZE_PRIVATE_CFG);
 
 //     memcpy(buf, privateCfg, sizeof(PrivateCfg));
 //     ret = halFlashWrite(hdl, buf, sizeof(buf), STORAGE_ADDR_PRIVATE_CFG);
 //     if (0 > ret) {
 //         return -3;
 //     }
-//     LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]\r\n", hdl, STORAGE_ADDR_PRIVATE_CFG, STORAGE_SIZE_PRIVATE_CFG);
+//     LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]", hdl, STORAGE_ADDR_PRIVATE_CFG, STORAGE_SIZE_PRIVATE_CFG);
 //     halFlashClose(hdl);
 //     return 0;
 // }
@@ -292,7 +379,7 @@ int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
 //         return -2;
 //     }
 //     memcpy(privateCfg, buf, sizeof(PrivateCfg));
-//     LELOG("flashReadPrivateCfg [0x%x] [0x%x][0x%x]\r\n", hdl, STORAGE_SIZE_PRIVATE_CFG, STORAGE_ADDR_PRIVATE_CFG);
+//     LELOG("flashReadPrivateCfg [0x%x] [0x%x][0x%x]", hdl, STORAGE_SIZE_PRIVATE_CFG, STORAGE_ADDR_PRIVATE_CFG);
 //     halFlashClose(hdl);
 
 //     return 0;
@@ -314,7 +401,7 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             char parity = 0;
             ret = getUartInfo(json, jsonLen, &baud, &dataBits, &stopBits, &parity, &flowCtrl);
             if (0 > ret) {
-                LELOGW("ioInit getUartInfo ret[%d]\r\n", ret);
+                LELOGW("ioInit getUartInfo ret[%d]", ret);
                 return NULL;
             }
             if(parity == 'N') // None
@@ -325,7 +412,21 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
                 PARITY = 2;
             ioHdl = (void *)halUartOpen(baud, dataBits, stopBits, PARITY, flowCtrl);
             if (NULL == ioHdl) {
-                LELOGW("ioInit halUartInit ioHdl[%p]\r\n", ioHdl);
+                LELOGW("ioInit halUartInit halUartOpen[%p]", ioHdl);
+                return NULL;
+            }
+            return ioHdl;
+        }break;
+        case IO_TYPE_GPIO: {
+            int gpioId = 0, isInput = 0, initVal = 0;
+            ret = getGPIOInfo(json, jsonLen, &gpioId, &isInput, &initVal);
+            if (0 > ret) {
+                LELOGW("ioInit getGPIOInfo ret[%d]", ret);
+                return NULL;
+            }
+            ioHdl = (void *)halGPIOInit(gpioId, isInput, initVal);
+            if (NULL == ioHdl) {
+                LELOGW("ioInit halUartInit halGPIOInit[%p]", ioHdl);
                 return NULL;
             }
             return ioHdl;
@@ -341,7 +442,7 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
     return NULL;
 }
 
-void **ioGetHdl() {
+void **ioGetHdl(int *ioType) {
     static void *ioHdl = NULL;
     char json[256] = {0};
     int ret = 0;
@@ -349,7 +450,7 @@ void **ioGetHdl() {
     if (-1 == whatCvtType) {
         ret = sengineGetTerminalProfileCvtType(json, sizeof(json));
         if (0 >= ret) {
-            LELOGW("ioGetHdl sengineGetTerminalProfileCvtType ret[%d]\r\n", ret);
+            LELOGW("ioGetHdl sengineGetTerminalProfileCvtType ret[%d]", ret);
             return NULL;
         }
         whatCvtType = getWhatCvtType(json, ret);
@@ -357,9 +458,20 @@ void **ioGetHdl() {
             return NULL;
         }
     }
+    ioType ? *(ioType) = whatCvtType : 0;
+    // LELOG("ioGetHdl IO_TYPE_GPIO ioInit 0 [%d]\r\n", whatCvtType);
     switch (whatCvtType) {
         case IO_TYPE_UART: {
             if (NULL == ioHdl) {
+                LELOG("ioGetHdl IO_TYPE_UART ioInit [%d]", whatCvtType);
+                ioHdl = ioInit(whatCvtType, json, ret);
+            }
+            return &ioHdl;
+        }break;
+        case IO_TYPE_GPIO: {
+            // LELOG("ioGetHdl IO_TYPE_GPIO ioInit 1 [%d]\r\n", whatCvtType);
+            if (NULL == ioHdl) {
+                LELOG("ioGetHdl IO_TYPE_GPIO ioInit 2 [%d]", whatCvtType);
                 ioHdl = ioInit(whatCvtType, json, ret);
             }
             return &ioHdl;
@@ -410,9 +522,15 @@ void ioDeinit(int ioType, void *hdl) {
     switch (ioType) {
         case IO_TYPE_UART: {
             void **hdlUart = NULL; 
-            hdlUart = ioGetHdl(ioType);
+            hdlUart = ioGetHdl(NULL);
             halUartClose(hdl);
             *hdlUart = NULL;
+        }break;
+        case IO_TYPE_GPIO: {
+            void **hdlGPIO = NULL; 
+            hdlGPIO = ioGetHdl(NULL);
+            halGPIOClose(hdl);
+            *hdlGPIO = NULL;
         }break;
         case IO_TYPE_PIPE: {
 

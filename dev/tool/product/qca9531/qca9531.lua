@@ -81,7 +81,6 @@ end
 function s1GetValidKind(data)
 	local reset = string.char( 0x12, 0x34, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0x22 )
 	-- print (data, #data)
-
 	--[[ MUST
 		wifi reset cmd
 	]]
@@ -150,7 +149,7 @@ function s1CvtPri2Std(bin)
 	-- for i = 1, #bin
 	-- 		 (bin[i])
 	-- end
-	LOGTBL(dataTbl)
+	-- LOGTBL(dataTbl)
 
 	str = string.format(str, 100 - dataTbl[3])
 	-- str = string.format(str, #dataTbl)

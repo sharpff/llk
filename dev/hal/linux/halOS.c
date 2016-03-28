@@ -26,3 +26,20 @@ unsigned int halGetUTC(void)
 {
     return 1234;
 }
+
+void *halCalloc(int n, size_t size) {
+    void *ptr = malloc(n*size);
+    if (ptr) {
+        memset(ptr, 0x00, n*size);
+    }
+    return ptr;
+}
+
+void halFree(void *ptr) {
+    if (ptr)
+        free(ptr);
+}
+
+int halReboot() {
+    return 0;
+}

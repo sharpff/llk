@@ -1,14 +1,24 @@
 #ifndef _OTA_H_
 #define _OTA_H_
-
+#ifdef __cplusplus
+extern "C"
+{
+    
+#endif
 #include "leconfig.h"
-#include "sengine.h"
+
+#define MAX_PROFILE_SIZE (1024*16)
 
 typedef enum {
-    OTA_TYPE_FW,
-    OTA_TYPE_FW_SCRIPT,
-    OTA_TYPE_IA_SCRIPT,
-    OTA_TYPE_MAX,
+    OTA_TYPE_NONE = 0,
+    OTA_TYPE_RESERVED_PF,
+    OTA_TYPE_FW, // 2
+    OTA_TYPE_RESERVED_PROTOCOL,
+    OTA_TYPE_FW_SCRIPT, // 4
+    OTA_TYPE_IA_SCRIPT, // 5
+    OTA_TYPE_AUTH, // 6
+    OTA_TYPE_PRIVATE, // 7
+    OTA_TYPE_MAX
 } OTAType_t;
 
 typedef struct _updateInfo {
@@ -19,11 +29,13 @@ typedef struct _updateInfo {
 
 // hal
 int halHttpOpen(OTAInfo_t *info, const char *url);
-int halUpdateFirmware(OTAInfo_t *info);
-int halUpdateScript(OTAInfo_t *info, char *buf, int size);
 void halHttpClose(OTAInfo_t *info);
 
 // sw
-int leOTA(OTAType_t type, const char *url, const char *sig);
+int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* end of include guard: _OTA_H_ */

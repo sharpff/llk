@@ -23,7 +23,7 @@ error:
 	$(error Invalid configuration, please check your inputs)
 endif
 
-SOURCEFILES := ../../hal/linux/halAES.c ../../hal/linux/halAirConfig.c ../../hal/linux/halCallback.c ../../hal/linux/halConvertor.c ../../hal/linux/halIO.c ../../hal/linux/halMD5.c ../../hal/linux/halNetwork.c ../../hal/linux/halOS.c ../../hal/linux/halRSA.c main.c
+SOURCEFILES := ../../hal/linux/halAES.c ../../hal/linux/halAirConfig.c ../../hal/linux/halCallback.c ../../hal/linux/halConvertor.c ../../hal/linux/halIO.c ../../hal/linux/halMD5.c ../../hal/linux/halNetwork.c ../../hal/linux/halOS.c ../../hal/linux/halOTA.c ../../hal/linux/halRSA.c main.c
 EXTERNAL_LIBS := 
 EXTERNAL_LIBS_COPIED := $(foreach lib, $(EXTERNAL_LIBS),$(BINARYDIR)/$(notdir $(lib)))
 
@@ -194,6 +194,10 @@ $(BINARYDIR)/halNetwork.o : ../../hal/linux/halNetwork.c $(all_make_files) |$(BI
 
 
 $(BINARYDIR)/halOS.o : ../../hal/linux/halOS.c $(all_make_files) |$(BINARYDIR)
+	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
+
+$(BINARYDIR)/halOTA.o : ../../hal/linux/halOTA.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 

@@ -7,6 +7,29 @@
 #include "lualib.h"
 #include "ota.h"
 #include "protocol.h"
+
+#ifndef LOG_SENGINE
+#ifdef LELOG
+#undef LELOG
+#define LELOG(...)
+#endif
+
+#ifdef LELOG
+#undef LELOGW
+#define LELOGW(...)
+#endif
+
+// #ifdef LELOG
+// #undef LELOGE
+// #define LELOGE(...)
+// #endif
+
+#ifdef LEPRINTF
+#undef LEPRINTF
+#define LEPRINTF(...)
+#endif
+#endif
+
 // #include <stdio.h>
 // #include <stdlib.h>
 // #include <string.h>
@@ -116,7 +139,7 @@ static int lf_s1GetCvtType(lua_State *L, uint8_t *output, int outputLen) {
         size = 0;
     }
     ginDelayMS = lua_tointeger(L, -1);
-    LELOG("[SENGINE] s1GetCvtType: [%d][%s] ginDelayMS[%d]\r\n", size, output, ginDelayMS);
+    LELOG("[SENGINE] s1GetCvtType: [%d][%s] ginDelayMS[%d]", size, output, ginDelayMS);
     if (200 < ginDelayMS) {
         ginDelayMS = 200;
     }
@@ -136,7 +159,7 @@ static IO lf_s1GetValidKind_input(lua_State *L, const uint8_t *input, int inputL
 static int lf_s1GetValidKind(lua_State *L, uint8_t *output, int outputLen) {
     // int i = 0;
     *((int *)output) = lua_tointeger(L, -1);
-    // LEPRINTF("[SENGINE] s1GetValidKind: [%d]\r\n", *((int *)output));
+    // LEPRINTF("[SENGINE] s1GetValidKind: [%d]", *((int *)output));
     return sizeof(int);
 }
 
@@ -147,13 +170,13 @@ static IO lf_s1GetVer_input(lua_State *L, const uint8_t *input, int inputLen) {
 }
 static int lf_s1GetVer(lua_State *L, uint8_t *output, int outputLen) {
     // int i = 0;
-    // LEPRINTF("[SENGINE] s1GetValidKind: [%d]\r\n", *((int *)output));
+    // LEPRINTF("[SENGINE] s1GetValidKind: [%d]", *((int *)output));
     int sLen = lua_tointeger(L, -2);
     int size = MIN(sLen, outputLen);
     const uint8_t *tmp = (const uint8_t *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        LEPRINTF("[SENGINE] s1GetVer: [%d][%s]\r\n", size, output);
+        LEPRINTF("[SENGINE] s1GetVer: [%d][%s]", size, output);
     } else {
         size = 0;
     }
@@ -197,7 +220,7 @@ static int lf_s1CvtPri2Std(lua_State *L, uint8_t *output, int outputLen) {
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        // LEPRINTF("[SENGINE] s1CvtPri2Std: [%d][%s]\r\n", size, output);
+        // LEPRINTF("[SENGINE] s1CvtPri2Std: [%d][%s]", size, output);
     } else {
         size = 0;
     }
@@ -213,7 +236,7 @@ static IO lf_s2IsValid_input(lua_State *L, const uint8_t *input, int inputLen) {
 static int lf_s2IsValid(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     *((int *)output) = lua_tointeger(L, -1);
-    LEPRINTF("[SENGINE] s2IsValid: [%d]\r\n", *((int *)output));
+    LEPRINTF("[SENGINE] s2IsValid: [%d]", *((int *)output));
     return sizeof(int);
 }
 
@@ -228,7 +251,7 @@ static int lf_s2IsValid(lua_State *L, uint8_t *output, int outputLen) {
 // static int lf_s2IsValidExt(lua_State *L, uint8_t *output, int outputLen) {
 //     /* cmd */
 //     *((int *)output) = lua_tointeger(L, -1);
-//     LEPRINTF("[SENGINE] s2IsValidExt: [%d]\r\n", *((int *)output));
+//     LEPRINTF("[SENGINE] s2IsValidExt: [%d]", *((int *)output));
 //     return sizeof(int);
 // }
 
@@ -243,7 +266,7 @@ static int lf_s2GetSelfName(lua_State *L, uint8_t *output, int outputLen) {
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        LEPRINTF("[SENGINE] lf_s2GetSelfName: [%d][%s]\r\n", size, output);
+        LEPRINTF("[SENGINE] lf_s2GetSelfName: [%d][%s]", size, output);
     } else {
         size = 0;
     }
@@ -259,39 +282,40 @@ static int lf_s2GetRuleType(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     *((int *)output) = lua_tointeger(L, -2);
     *(((int *)output + 1)) = lua_tointeger(L, -1);
-    LEPRINTF("[SENGINE] s2GetRuleType: repeat[%d] isAnd[%d]\r\n", *((int *)output), *(((int *)output + 1)));
+    LEPRINTF("[SENGINE] s2GetRuleType: repeat[%d] isAnd[%d]", *((int *)output), *(((int *)output + 1)));
 
     return 2*sizeof(int);
 }
 
 static IO lf_s2GetBeingReservedInfo_input(lua_State *L, const uint8_t *input, int inputLen) {
-    IO io = { 0, 3 };
+    IO io = { 0, 1 };
     return io;
 }
 
 static int lf_s2GetBeingReservedInfo(lua_State *L, uint8_t *output, int outputLen) {
-    /* cmd */
-    int num = 0, tmpLen = 0, sLen = 0, size = 0;
+    ///* cmd */
+    int num = 0, idx = 0, tmpLen = sizeof(int);
     char *tmp = NULL;
-    num = lua_tointeger(L, -3);
-    if (0 >= num) {
-        return 0;
+    // int ret = 0;
+  
+    idx = lua_gettop(L);
+    lua_pushnil(L);
+
+    while (lua_next(L, idx) != 0) {
+        int n = 0;
+        tmp = (char *)lua_tostring(L, -1);
+        if (tmp) {
+            n = strlen(tmp);
+            memcpy(output + tmpLen, tmp, n);
+            LEPRINTF("[SENGINE] s2GetBeingReservedInfo: [%d][%s]", n, output + tmpLen);
+            tmpLen += n;
+            // output[tmpLen] = 0;
+            // tmpLen += 1;
+        }
+        lua_pop(L, 1);
+        num++;
     }
-
     *((int *)output) = num;
-    tmpLen = sizeof(int);
-
-    sLen = lua_tointeger(L, -2);
-    size = MIN(sLen, outputLen - tmpLen);
-    tmp = (char *)lua_tostring(L, -1);
-    if (tmp && 0 < size) {
-        memcpy(output + tmpLen, tmp, size);
-        tmpLen += size;
-        LEPRINTF("[SENGINE] s2GetBeingReservedInfo: [%d][%s]\r\n", size, output);
-    } else {
-        size = 0;
-    }        
-
     return tmpLen;
 }
 
@@ -305,7 +329,7 @@ static IO lf_s2IsConditionOK_input(lua_State *L, const uint8_t *input, int input
     } else {
         lua_pushlstring(L, (char *)input, firstLen);
     }
-    LEPRINTF("[SENGINE] lf_s2IsConditionOK_input: firstLen[%d/%d]\r\n[%s]\r\n", firstLen, inputLen, input);
+    LEPRINTF("[SENGINE] lf_s2IsConditionOK_input: firstLen[%d/%d][%s]", firstLen, inputLen, input);
     firstLen += 1;
     secondLen = strlen((char *)input + firstLen);
     if (0 == secondLen) {
@@ -313,16 +337,47 @@ static IO lf_s2IsConditionOK_input(lua_State *L, const uint8_t *input, int input
     } else {
         lua_pushlstring(L, (char *)input + firstLen, secondLen);
     }
-    LEPRINTF("[SENGINE] lf_s2IsConditionOK_input: secondLen[%d/%d]\r\n[%s]\r\n", secondLen, inputLen, input + firstLen);
+    LEPRINTF("[SENGINE] lf_s2IsConditionOK_input: secondLen[%d/%d][%s]", secondLen, inputLen, input + firstLen);
     IO io = { 2, 1 };
     return io;
 }
 static int lf_s2IsConditionOK(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     *((int *)output) = lua_tointeger(L, -1);
-    LEPRINTF("[SENGINE] s2IsConditionOK: [%d]\r\n", *((int *)output));
+    LEPRINTF("[SENGINE] s2IsConditionOK: [%d]", *((int *)output));
     return sizeof(int);
 }
+
+static IO lf_s2IsConditionOKExt_input(lua_State *L, const uint8_t *input, int inputLen) {
+    IO io = { 2, 1 };
+    int selfLen = 0;
+    int rmtLen = 0;
+
+    selfLen = strlen(input);
+    if (0 == selfLen) {
+        // lua_pushlstring(L, NULL, 0);
+    }
+    else {
+        lua_pushlstring(L, (char *)input, selfLen);
+    }
+
+
+    rmtLen = strlen(input + selfLen + 1);
+    if (0 == rmtLen) {
+        // lua_pushlstring(L, NULL, 0);
+    }
+    else {
+        lua_pushlstring(L, (char *)input + selfLen + 1, rmtLen);
+    }
+    return io;
+}
+static int lf_s2IsConditionOKExt(lua_State *L, uint8_t *output, int outputLen) {
+    /* cmd */
+    *((int *)output) = lua_tointeger(L, -1);
+    LEPRINTF("[SENGINE] s2IsConditionOK: [%d]", *((int *)output));
+    return sizeof(int);
+}
+
 
 static IO lf_s2GetSelfCtrlCmd_input(lua_State *L, const uint8_t *input, int inputLen) {
     IO io = { 0, 2 };
@@ -335,7 +390,7 @@ static int lf_s2GetSelfCtrlCmd(lua_State *L, uint8_t *output, int outputLen) {
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, sLen); output[sLen] = 0;
-        LEPRINTF("[SENGINE] s2GetSelfCtrlCmd: [%d][%s]\r\n", sLen, output);
+        LEPRINTF("[SENGINE] s2GetSelfCtrlCmd: [%d][%s]", sLen, output);
     } else {
         sLen = 0;
     }
@@ -355,6 +410,7 @@ static FUNC_LIST func_list[] = {
     { S2_GET_RULETYPE, { lf_s2GetRuleType_input, lf_s2GetRuleType } },
     { S2_GET_BERESERVED, { lf_s2GetBeingReservedInfo_input, lf_s2GetBeingReservedInfo } },
     { S2_GET_ISOK, { lf_s2IsConditionOK_input, lf_s2IsConditionOK } },
+    { S2_GET_ISOK_EXT, { lf_s2IsConditionOKExt_input, lf_s2IsConditionOKExt } },
     { S2_GET_BECMD, { lf_s2GetSelfCtrlCmd_input, lf_s2GetSelfCtrlCmd } },
     { NULL, { 0, 0 } }
 };
@@ -381,25 +437,23 @@ int sengineInit(void) {
     int ret = 0;
     // #define STATIC_MEMORY_FOR_SCRIPT
     #ifndef STATIC_MEMORY_FOR_SCRIPT
-    ginScriptCfg = (ScriptCfg *)malloc(sizeof(ScriptCfg));
-    memset(ginScriptCfg, 0, sizeof(ScriptCfg));
-    ginScriptCfg2 = (ScriptCfg *)malloc(sizeof(ScriptCfg));
-    memset(ginScriptCfg2, 0, sizeof(ScriptCfg));
+    ginScriptCfg = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
+    ginScriptCfg2 = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
     #else
     static ScriptCfg inScriptCfg;
     static ScriptCfg inScriptCfg2;
     ginScriptCfg = &inScriptCfg;
     ginScriptCfg2 = &inScriptCfg2;
     #endif
-    ret = lelinkStorageReadScriptCfg(ginScriptCfg, OTA_TYPE_FW_SCRIPT, 0);
+    ret = lelinkStorageReadScriptCfg(ginScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
     
     if (0 > ret) {
-        LELOG("lelinkStorageReadScriptCfg 1 read from flash failed\r\n");
+        LELOG("lelinkStorageReadScriptCfg 1 read from flash FAILED");
         return -1;
     }
 
     if (ginScriptCfg->csum != crc8((uint8_t *)&(ginScriptCfg->data), sizeof(ginScriptCfg->data))) {
-        LELOG("ginScriptCfg crc8 failed\r\n");
+        LELOG("ginScriptCfg crc8 FAILED");
         return -2;
     }
 
@@ -413,7 +467,8 @@ int sengineInit(void) {
 // int bitnor(lua_State *L);
 // int bitand(lua_State *L);
 // int csum(lua_State *L);
-int s2apiStoreCurrStatus(lua_State *L);
+int s2apiSetCurrStatus(lua_State *L);
+int s2apiGetLatestStatus(lua_State *L);
 
 int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen)
 {
@@ -426,19 +481,19 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     // lua_register(L, "bitor", bitor);
     // lua_register(L, "bitxor", bitxor);
     // lua_register(L, "bitnor", bitnor);
-    lua_register(L, "s2apiStoreCurrStatus", s2apiStoreCurrStatus);
+    lua_register(L, "s2apiSetCurrStatus", s2apiSetCurrStatus);
+    lua_register(L, "s2apiGetLatestStatus", s2apiGetLatestStatus);
     // lua_register(L, "csum", csum);
-
-    if (script == NULL || scriptSize <= 0) {
+    
+    if (script == NULL)
         return -1;
-    }
 
     luaL_openlibs(L);
     if (luaL_loadbuffer(L, script, scriptSize, "lelink") || lua_pcall(L, 0, 0, 0))
     {
         lua_pop(L, 1);
         ret = -1;
-        LELOG("[lua engine] lua code syntax error\r\n");
+        LELOGE("[lua engine] lua code syntax error");
     }
     else
     {
@@ -458,7 +513,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
         if (lua_pcall(L, io_ret.param, io_ret.ret, 0))
         {
             const char *err = lua_tostring(L, -1);
-            LELOG("[lua engine] lua error: %s\r\n", err);
+            LELOGE("[lua engine] lua error: %s", err);
             lua_pop(L, 1);
             ret = -3;
         }
@@ -473,13 +528,13 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
         }
     }
 
-    //wmprintf("[config]: config[0x%x] \r\nlua[0x%x] \r\ntimer[0x%x] \r\n", SYS_CONFIG_OFFSET, LUA_STORE_ADDRESS, JOYLINK_TIMER_MEM_ADDR);
+    //wmprintf("[config]: config[0x%x] lua[0x%x] timer[0x%x] ", SYS_CONFIG_OFFSET, LUA_STORE_ADDRESS, JOYLINK_TIMER_MEM_ADDR);
 
     lua_close(L);
     return ret;
 }
 
-int s2apiStoreCurrStatus(lua_State *L) {
+int s2apiSetCurrStatus(lua_State *L) {
     int ret = 0;
     int m, n = 0;
     // char strsum[3] = { 0 };
@@ -489,50 +544,50 @@ int s2apiStoreCurrStatus(lua_State *L) {
     int lenSelfName = 0, lenUUID = 0, lenReservedStatus = 0;
 
     // get self name
-    LELOG("s2apiStoreCurrStatus -s\r\n");
+    LELOG("s2apiSetCurrStatus -s");
     lenSelfName = lua_tointeger(L, 1);
     if (0 >= lenSelfName) {
-        LELOGE("s2apiStoreCurrStatus -e1\r\n");
-        return -1;
+        LELOGE("s2apiSetCurrStatus -e1");
+        return 0;
     }
     strSelfName = (char *)lua_tostring(L, 2);
     if (NULL == strSelfName) {
         // lua_pushstring(L, strsum);
-        LELOGE("s2apiStoreCurrStatus -e2\r\n");
-        return -2;
+        LELOGE("s2apiSetCurrStatus -e2");
+        return 0;
     }
 
     // get uuid 
     lenUUID = lua_tointeger(L, 3);
     if (0 >= lenUUID) {
-        LELOGE("s2apiStoreCurrStatus -e3\r\n");
-        return -3;
+        LELOGE("s2apiSetCurrStatus -e3");
+        return 0;
     }
     strUUID = (char *)lua_tostring(L, 4);
     if (NULL == strUUID) {
         // lua_pushstring(L, strsum);
-        LELOGE("s2apiStoreCurrStatus -e4\r\n");
-        return -4;
+        LELOGE("s2apiSetCurrStatus -e4");
+        return 0;
     }
 
     // get the current status
     lenReservedStatus = lua_tointeger(L, 5);
     if (0 >= lenReservedStatus) {
-        LELOGE("s2apiStoreCurrStatus -e3\r\n");
-        return -5;
+        LELOGE("s2apiSetCurrStatus -e3");
+        return 0;
     }
     strReservedStatus = (char *)lua_tostring(L, 6);
     if (NULL == strReservedStatus) {
         // lua_pushstring(L, strsum);
-        LELOGE("s2apiStoreCurrStatus -e4\r\n");
-        return -6;
+        LELOGE("s2apiSetCurrStatus -e4");
+        return 0;
     }
 
     for (m = 0; m < MAX_IA && 0 == ret; m++) {
-        // LELOG("[%d] [%s] <=> [%s]\r\n", m, ginIACache.cache[m].ruleName, strSelfName); 
+        // LELOG("[%d] [%s] <=> [%s]", m, ginIACache.cache[m].ruleName, strSelfName); 
         if (0 == strcmp(ginIACache.cache[m].ruleName, strSelfName)) {
             for (n = 0; n < MAX_RSV_NUM; n++) {
-                // LELOG("[%d] [%s] <=> [%s]\r\n", n, ginIACache.cache[m].beingReservedUUID[n], strUUID); 
+                // LELOG("[%d] [%s] <=> [%s]", n, ginIACache.cache[m].beingReservedUUID[n], strUUID); 
                 if (0 == memcmp(ginIACache.cache[m].beingReservedUUID[n], strUUID, MAX_UUID)) {
                     memcpy(ginIACache.cache[m].beingReservedStatus[n], strReservedStatus, MIN(lenReservedStatus, MAX_BUF));
                     ginIACache.cache[m].beingReservedStatus[n][MIN(lenReservedStatus, MAX_BUF-1)] = 0;
@@ -542,30 +597,80 @@ int s2apiStoreCurrStatus(lua_State *L) {
             }            
         }
     }
-    LELOG("s2apiStoreCurrStatus[%d] IDX[%d][%d]\r\n", ret, ret ? m - 1 : m, n); 
-    LELOG("[%d][%s]\r\n [%d][%s]\r\n [%d][%s]\r\n", 
+    LELOG("s2apiSetCurrStatus[%d] IDX[%d][%d]", ret, ret ? m - 1 : m, n); 
+    LELOG("[%d][%s] [%d][%s] [%d][%s]", 
         lenSelfName, strSelfName, lenUUID, strUUID, lenReservedStatus, strReservedStatus); 
 
-    // LELOG("s2apiStoreCurrStatus IDX[%d][%d] [%d][%s], [%d][%s]\r\n", 
+    // LELOG("s2apiSetCurrStatus IDX[%d][%d] [%d][%s], [%d][%s]", 
     //     i, j, lenUUID, str1, len2, strReservedStatus);
-    LELOG("s2apiStoreCurrStatus -e\r\n");
-    return ret;
+    LELOG("s2apiSetCurrStatus -e");
+    return 0;
 
 }
 
+int s2apiGetLatestStatus(lua_State *L) {
+    int i = 0, m, n, ret = 0;
+    char *strSelfName = NULL;
+    int lenSelfName = 0;
+
+    // get self name
+    LELOG("s2apiGetLatestStatus -s");
+    lenSelfName = lua_tointeger(L, 1);
+    if (0 >= lenSelfName) {
+        LELOGE("s2apiGetLatestStatus -e1");
+        return 0;
+    }
+    strSelfName = (char *)lua_tostring(L, 2);
+    if (NULL == strSelfName) {
+        // lua_pushstring(L, strsum);
+        LELOGE("s2apiGetLatestStatus -e2");
+        return 0;
+    }
+
+    for (m = 0; m < MAX_IA && 0 == ret; m++) {
+        // LELOG("[%d] [%s] <=> [%s]", m, ginIACache.cache[m].ruleName, strSelfName); 
+        if (0 == strcmp(ginIACache.cache[m].ruleName, strSelfName)) {
+            int hasNewTbl = 0;
+            for (n = 0; n < MAX_RSV_NUM; n++) {
+                // LELOG("[%d] [%s] <=> [%s]", n, ginIACache.cache[m].beingReservedUUID[n], strUUID); 
+                if (ginIACache.cache[m].beingReservedUUID[n][0] && ginIACache.cache[m].beingReservedStatus[n][0]) {
+                    /* create table. */
+                    if (!hasNewTbl) {
+                        lua_newtable(L);
+                        hasNewTbl = 1;
+                        ret = 1;
+                    }
+                    lua_pushnumber(L, i + 1);    //key  
+                    lua_pushstring(L, ginIACache.cache[m].beingReservedStatus[n]);  //value  
+                    lua_settable(L, -3);       //push key,value  
+                	i++;
+				}
+            }
+            break;
+        }
+    }
+
+    return ret;
+}
+
 int sengineSetStatus(char *json, int jsonLen) {
-    int ret = 0;
+    int ret = 0, ioType = 0;
     uint8_t bin[512] = {0};
+    void *hdl = NULL;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
         (uint8_t *)json, jsonLen, bin, sizeof(bin));
     if (ret <= 0) {
-        LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]\r\n", ret);
+        LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]", ret);
         return ret;
     }
-
-    ret = ioWrite(IO_TYPE_UART, *((void **)ioGetHdl(IO_TYPE_UART)), bin, ret);
+    hdl = *((void **)ioGetHdl(&ioType));
+    if (NULL == hdl) {
+        LELOGE("sengineGetStatus ioGetHdl NULL");
+        return -1;
+    }
+    ret = ioWrite(ioType, hdl, bin, ret);
     if (ret <= 0) {
-        LELOGW("sengineSetStatus ioWrite [%d]\r\n", ret);
+        LELOGW("sengineSetStatus ioWrite [%d]", ret);
         return ret;
     }
 
@@ -577,7 +682,7 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_CVTTYPE,
             NULL, 0, (uint8_t *)json, jsonLen);
     if (ret <= 0) {
-        LELOGW("sengineGetStatus sengineCall("S1_GET_CVTTYPE") [%d]\r\n", ret);
+        LELOGW("sengineGetStatus sengineCall("S1_GET_CVTTYPE") [%d]", ret);
         return ret;
     }
     return ret;
@@ -586,21 +691,27 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
 int sengineQuerySlave(void) 
 {
     Queries queries;
-    int ret = 0, i = 0;
+    int ret = 0, i = 0, ioType = 0;
     uint16_t currLen = 0, appendLen = 0;
+    void *hdl = NULL;
 
     // 0. getQueries from script
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
             NULL, 0, (uint8_t *)&queries, sizeof(queries));
     if (ret <= 0) {
-        LELOGE("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]\r\n", ret);
+        LELOGE("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]", ret);
         return ret;
+    }
+    hdl = *((void **)ioGetHdl(&ioType));
+    if (NULL == hdl) {
+        LELOGE("sengineGetStatus ioGetHdl NULL");
+        return -1;
     }
     for (i = 0; i < queries.queriesCountsLen; i += 2, appendLen += currLen) {
         memcpy(&currLen, &queries.arrQueriesCounts[i], 2);
-        ret = ioWrite(IO_TYPE_UART, *((void **)ioGetHdl(IO_TYPE_UART)), &(queries.arrQueries[appendLen]), currLen);
+        ret = ioWrite(ioType, hdl, &(queries.arrQueries[appendLen]), currLen);
         if (ret <= 0) {
-            LELOGE("sengineGetStatus ioWrite [%d]\r\n", ret);
+            LELOGW("sengineGetStatus ioWrite [%d]", ret);
             return ret;
         }
     }
@@ -608,33 +719,33 @@ int sengineQuerySlave(void)
 }
 
 int senginePollingSlave(void) {
-    void **ioHdl = NULL;
     char status[MAX_BUF];
     uint8_t bin[128] = {0};
-    int whatKind = 0, ret = 0, size;
+    int whatKind = 0, ret = 0, size, ioType = 0;
+    void *hdl = NULL;
 
-    ioHdl = (void **)ioGetHdl(IO_TYPE_UART);
-    if(ioHdl == NULL) {
-        LELOGW("senginePollingSlave ioGetHdl\r\n");
+    hdl = *((void **)ioGetHdl(&ioType));
+    if (NULL == hdl) {
+        LELOGE("senginePollingSlave ioGetHdl NULL");
         return -1;
     }
-    ret = ioRead(IO_TYPE_UART, *(ioHdl), bin, sizeof(bin));
+    ret = ioRead(ioType, hdl, bin, sizeof(bin));
     if (ret <= 0) {
-        LELOGW("senginePollingSlave ioRead [%d]\r\n", ret);
+        LELOGW("senginePollingSlave ioRead [%d]", ret);
         return ret;
     }
     size = ret;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
             bin, size, (uint8_t *)&whatKind, sizeof(whatKind));
     if (ret <= 0) {
-        LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]\r\n", ret);
+        LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
         return -1;
     }
     switch (whatKind) {
         case 1: {
                 extern int resetConfigData(void);
                 ret = resetConfigData();
-                LELOG("resetConfigData [%d]\r\n", ret);
+                LELOG("resetConfigData [%d]", ret);
                 if (0 <= ret) {
                     halReboot();
                 }
@@ -642,11 +753,12 @@ int senginePollingSlave(void) {
             break;
         case 2: {
                 extern int lelinkNwPostCmdExt(const void *node);
-                ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
+                int len = 0;
+                len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                         bin, size, (uint8_t *)status, sizeof(status));
-                if (ret <= 0) {
-                    LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]\r\n", ret);
-                } else if (cacheIsChanged(status, ret)) {
+                if (len <= 0) {
+                    LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
+                } else if (cacheIsChanged(status, len)) {
                     NodeData node = {0};
                     if (2 == ginStateCloudAuthed) {
                         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
@@ -654,7 +766,7 @@ int senginePollingSlave(void) {
                     } else {
                         char br[MAX_IPLEN] = {0};
                         node.cmdId = LELINK_CMD_DISCOVER_REQ;
-                        node.subCmdId = LELINK_SUBCMD_DISCOVER_REQ;        
+                        node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;        
                         ret = halGetBroadCastAddr(br, sizeof(br));
                         if (0 >= ret) {
                             strcpy(br, "255.255.255.255");
@@ -663,19 +775,18 @@ int senginePollingSlave(void) {
                         node.ndPort = NW_SELF_PORT;
                     }
                     lelinkNwPostCmdExt(&node);
-                    cacheSetTerminalStatus(status, ret);
-                    LELOG("Cache status:%s\r\n", status);
+                    cacheSetTerminalStatus(status, len);
+                    LELOG("Cache status:%s", status);
                 }
             }
             break;
         default:
-            LELOGE("Unknow whatKind = %d\r\n", whatKind);
-            return -1;
+            LELOGW("Unknow whatKind = %d", whatKind);
+            return -3;
     }
 
     return whatKind;
 }
-
 /*
  * 0. 
  * check if it is valid
@@ -699,56 +810,41 @@ int sengineS2GetBeingReservedInfo(const ScriptCfg *scriptCfg2, uint8_t strBeingR
     ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BERESERVED,
         NULL, 0, tmpBeingReserved, sizeof(tmpBeingReserved));
     if (0 > ret) {
-        LELOGW("sengineS2GetBeingReservedInfo sengineCall("S2_GET_BERESERVED") [%d]\r\n", ret);
+        LELOGW("sengineS2GetBeingReservedInfo sengineCall("S2_GET_BERESERVED") [%d]", ret);
         return -2;
     }
 
     count = MIN(*((int *)tmpBeingReserved), MAX_RSV_NUM);
-    LELOGW("sengineS2GetBeingReservedInfo count[%d]\r\n", count);
+    LELOGW("sengineS2GetBeingReservedInfo count[%d]", count);
 
     // point to the list of being reserved uuidList
     tmp = (char *)tmpBeingReserved + sizeof(int);
     for (i = 0; i < count; i++) {
         memcpy(strBeingReserved[i], tmp, MAX_UUID);
         tmp += MAX_UUID;
-        LELOGW("strBeingReserved[%d][%s]\r\n", MAX_UUID, strBeingReserved[i]);
+        LELOGW("strBeingReserved[%d][%s]", MAX_UUID, strBeingReserved[i]);
     }
 
     return count;
 }
 
 int sengineS2RuleHandler(const ScriptCfg *scriptCfg2, 
-    const char *uuid, int len, 
-    const char *json, int jsonLen,
+    const char *localJson, int localJsonLen, 
+    const char *rmtJson, int rmtJsonLen,
     IA_CACHE_INT *cacheInt) {
 
-    int ret = 0, isRepeat = 0, isAND = 0, is = 0, i, count = 0;
+    int ret = 0, i, count = 0, isRepeat = 0, is = 0;
     uint8_t buf[MAX_BUF * 2] = {0};
+    // char strUUID[64] = {0};
     // char validList[MAX_IA][MAX_UUID + 1] = {0};
     if (NULL == scriptCfg2) {
         return -1;
     }
-
-    /*
-     * 0. 
-     * check if the rule is valid
-     */
-    ret = genS2Json(json, jsonLen, buf, sizeof(buf));
-    if (0 >= ret) {
-        LELOGW("sengineS2RuleHandler genS2Json [%d]\r\n", ret);
-        return -2;
-    }
-    ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_IS_VALID,
-        (uint8_t *)json, jsonLen, (uint8_t *)&is, sizeof(is));
-    if (0 > ret) {
-        LELOGW("sengineS2RuleHandler sengineCall("S2_IS_VALID") [%d]\r\n", ret);
-        return -3;
-    }
-    if (!is) {
-        LELOG("sengineS2RuleHandler invalid -e1 \r\n");
-        return 0;
-    }
-
+    // ret = getUUIDFromJson(rmtJson, rmtJsonLen, strUUID, sizeof(strUUID));
+    // if (0 >= ret) {
+    //     LELOGW("senginePollingRules getUUIDFromJson[%d]", ret);
+    //     return -2;
+    // }
     /*
      * 1.
      * check if it is a repeat rule
@@ -756,13 +852,12 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
     ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_RULETYPE,
         NULL, 0, (uint8_t *)buf, sizeof(buf));
     if (0 > ret) {
-        LELOGW("sengineS2RuleHandler sengineCall("S2_GET_RULETYPE") [%d]\r\n", ret);
+        LELOGW("sengineS2RuleHandler sengineCall("S2_GET_RULETYPE") [%d]", ret);
         return -4;
     }
     isRepeat = *((int *)buf);
-    isAND = *((int *)buf + 1);
-    LELOG("sengineS2RuleHandler sengineCall("S2_GET_RULETYPE") [%d][%d]\r\n", isRepeat, isAND);
-
+    // isAND = *((int *)buf + 1);
+    LELOG("sengineS2RuleHandler sengineCall("S2_GET_RULETYPE") [%d]", isRepeat);
     /*
      * 2. 
      * check all the reserved targets in a rule
@@ -772,48 +867,56 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
         return 0;
     }
     cacheInt->beingReservedNum = count;
-    LELOG("sengineS2RuleHandler reserved NUM[%d]\r\n", count);
-    for (i = 0; i < count; i++) {
-        int isFound = 0;
+    LELOG("sengineS2RuleHandler reserved NUM[%d]", count);
+    for (i = 0; i < 1; i++)
+    {
+        int hasNewComming = 0, tmpStrLen = 0;
         /*
         * 3. 
         * check if it is a corresponding info(uuid)
         */
         memset(buf, 0, sizeof(buf));
-        LELOG("FOR idx[%d] [%s] <=> [%s]\r\n", i, uuid, cacheInt->beingReservedUUID[i]);
+        // LELOG("FOR idx[%d] [%s] <=> [%s]", i, strUUID, cacheInt->beingReservedUUID[i]);
         // 1st param
-        if (0 == memcmp(uuid, cacheInt->beingReservedUUID[i], MAX_UUID)) {
-            LELOG("1st PARAM [%d][%s]\r\n", jsonLen, json);
-            memcpy(buf, json, jsonLen);
-            isFound = 1;
+        if (localJson && 0 <= localJsonLen) {
+            LELOG("1st PARAM [%d][%s]", localJsonLen, localJson);
+            memcpy(buf, localJson, localJsonLen);
+            tmpStrLen = strlen(buf);
+            buf[tmpStrLen] = 0;
         } else {
-            LELOG("1st no PARAM\r\n");
+            LELOG("1st no PARAM");
             strcpy(buf, "{}");
-        }
-
-        if (!isFound && !isRepeat) {
-            continue;
+            tmpStrLen = strlen(buf);
+            buf[tmpStrLen] = 0;
         }
 
         // 2nd param
-        if (0 < strlen(cacheInt->beingReservedStatus[i])) {
-            LELOG("2nd PARAM [%d][%s]\r\n", MIN(strlen(cacheInt->beingReservedStatus[i]), MAX_BUF), cacheInt->beingReservedStatus[i]);
-            memcpy(buf + strlen(buf) + 1, cacheInt->beingReservedStatus[i], MIN(strlen(cacheInt->beingReservedStatus[i]), MAX_BUF));
+        if (rmtJson && 0 <= rmtJsonLen) {
+            LELOG("2nd PARAM [%d][%s]", rmtJsonLen, rmtJson);
+            memcpy(buf + tmpStrLen + 1, rmtJson, rmtJsonLen);
+            tmpStrLen += rmtJsonLen + 1;
+            hasNewComming = 1;
         } else {
-            LELOG("2nd no PARAM\r\n");
-            strcpy(buf + strlen(buf) + 1, "{}");
+            LELOG("2nd no PARAM");
+            strcpy(buf + tmpStrLen + 1, "{}");
+            tmpStrLen += (2 + 1);
         }
-        ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_ISOK,
-            (uint8_t *)buf, sizeof(buf), (uint8_t *)&is, sizeof(is));
+
+        if (!hasNewComming && !isRepeat) {
+            continue;
+        }
+
+        ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_ISOK_EXT,
+            (uint8_t *)buf, tmpStrLen, (uint8_t *)&is, sizeof(is));
         if (0 > ret) {
-            LELOGW("sengineS2RuleHandler sengineCall("S2_GET_ISOK") [%d]\r\n", ret);
+            LELOGW("sengineS2RuleHandler sengineCall("S2_GET_ISOK_EXT") [%d]", ret);
             continue;
         }
         if (!is) {
-            LELOGE("sengineS2RuleHandler condition NOT OK\r\n");
+            LELOGW("sengineS2RuleHandler condition NOT OK");
             continue;
         }
-        LELOG("sengineS2RuleHandler sengineCall("S2_GET_ISOK") ok ? [%d]\r\n", is);
+        LELOG("sengineS2RuleHandler sengineCall("S2_GET_ISOK_EXT") ok ? [%d]", is);
 
         /*
          * 4.
@@ -822,131 +925,111 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
         ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BECMD,
             NULL, 0, (uint8_t *)&buf, sizeof(buf));
         if (0 > ret) {
-            LELOGW("sengineS2RuleHandler sengineCall("S2_GET_BECMD") [%d]\r\n", ret);
+            LELOGW("sengineS2RuleHandler sengineCall("S2_GET_BECMD") [%d]", ret);
             continue;
         }
 
         // 5. do ctrl
         ret = sengineSetStatus((char *)buf, ret);
-        LELOG("sengineS2RuleHandler sengineSetStatus DONE [%d]\r\n", ret);      
+        LELOG("sengineS2RuleHandler sengineSetStatus DONE [%d]", ret);      
     }
 
-    LELOG("sengineS2RuleHandler condition -e \r\n");
+    LELOG("sengineS2RuleHandler condition -e ");
 
-    // /*
-    //  * 1. get corrsponding rules to do sth. 
-    //  * gen an AND list, an OR list
-    //  * make lite cache for every script2
-    //  */
-    // LELOG("JSON [%d][%s]\r\n", jsonLen, json);
-    // ret = sengineFindRule(json, jsonLen);
-    // if (0 >= ret) {
-    //     LELOGW("findTheRule [%d]\r\n", ret);
-    //     return -3;
-    // }
-
-    // ret = genS2Json(json, jsonLen, result, sizeof(result));
-    // if (0 >= ret) {
-    //     LELOGW("sengineS2RuleHandler genS2Json [%d]\r\n", ret);
-    //     return -4;
-    // }
-    // resultLen = ret;
-
-    // // 2. check if the rule has been expired
-    // ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_IS_VALID,
-    //     (uint8_t *)result, ret, (uint8_t *)&is, sizeof(is));
-    // if (0 > ret) {
-    //     LELOGW("sengineS2RuleHandler sengineCall("S2_IS_VALID") [%d]\r\n", ret);
-    //     return -5;
-    // }
-    // if (!is) {
-    //     LELOG("sengineS2RuleHandler invalid -e1 \r\n");
-    //     return 0;
-    // }
-    // LELOG("sengineS2RuleHandler sengineCall("S2_IS_VALID") valid [%d]\r\n", is);
-
-    /*
-     * 0. 
-     * check if it is valid
-     * check if it is a repeat rule
-     * check if it is a corresponding info(uuid)
-     */ 
-    // ret = sengineFindRule(json, jsonLen);
-    // if (0 >= ret) {
-    //     LELOGW("findTheRule [%d]\r\n", ret);
-    //     return -3;
-    // }
-
-
-    /*
-     * 1.
-     * check if condition is ok
-     */
     return 0;
 }
 
 
-int senginePollingRules(const char *json, int jsonLen) {
-    int ret, i = 0, isFound = 0;
+int senginePollingRules(const char *jsonRmt, int jsonLen) {
+    int ret, i = 0, is = 0;
     // int64_t utc = 0;
     // uint32_t utcH = 0, utcL = 0;
     // char jsonUTC[64] = {0};
     // char result[MAX_BUF] = {0};
     char strSelfRuleName[MAX_RULE_NAME] = {0};
+    char tmpRmtJson[MAX_BUF] = {0};
+    int tmpRmtJsonLen = 0;
+    char tmpLocalJson[MAX_BUF] = {0};
+    int tmpLocalJsonLen = 0;
 
     PrivateCfg privCfg;
     // char strBeingReserved[64] = {0};
-    char strUUID[64] = {0};
 
-    LELOG("senginePollingRules -s \r\n");
+    LELOG("senginePollingRules -s ");
     ret = lelinkStorageReadPrivateCfg(&privCfg);
     if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
-        LELOGW("senginePollingRules csum failed\r\n");
+        LELOGW("senginePollingRules lelinkStorageReadPrivateCfg csum FAILED");
         return -1;
     }
-    // LELOG("sengineFindRule [%d][%d]\r\n", privCfg.data.iaCfg.num);
+    // LELOG("sengineFindRule [%d][%d]", privCfg.data.iaCfg.num);
 
-    if (0 >= privCfg.data.iaCfg.num) {
-        LELOGW("senginePollingRules rules num[%d]\r\n", privCfg.data.iaCfg.num);
+    if (0 >= privCfg.data.iaCfg.num || MAX_IA < privCfg.data.iaCfg.num) {
+        LELOGW("senginePollingRules rules num[%d]", privCfg.data.iaCfg.num);
         return 0;
     }
-    LELOG("senginePollingRules rules num[%d] \r\n", privCfg.data.iaCfg.num);
+    LELOGW("senginePollingRules rules num[%d] ", privCfg.data.iaCfg.num);
 
-    ret = getUUIDFromJson(json, jsonLen, strUUID, sizeof(strUUID));
-    if (0 >= ret) {
-        LELOGW("senginePollingRules getUUIDFromJson[%d]\r\n", ret);
-        return -2;
+    // remote json
+    if (jsonRmt && 0 < jsonLen) {
+        // gen s2 json format
+        tmpRmtJsonLen = genS2Json(jsonRmt, jsonLen, jsonRmt, jsonLen, tmpRmtJson, sizeof(tmpRmtJson));
+        if (0 >= tmpRmtJsonLen) {
+            LELOGW("senginePollingRules genS2Json [%d]", ret);
+            return -2;
+        }
+    } else {
+        tmpRmtJsonLen = 0;
+    }
+
+    // local json
+    tmpLocalJsonLen = getTerminalStatusS2(tmpLocalJson, sizeof(tmpLocalJson));
+    if (0 >= tmpLocalJsonLen) {
+        LELOGW("senginePollingRules getTerminalStatusS2 [%d]", ret);
+        return -3;
     }
 
     // for every single rule
     for (i = 0; i < privCfg.data.iaCfg.num; i++) {
         if (0 < privCfg.data.iaCfg.arrIA[i]) {
             memset(ginScriptCfg2, 0, sizeof(ScriptCfg));
-            ret = lelinkStorageReadScriptCfg(ginScriptCfg2, OTA_TYPE_IA_SCRIPT, i);
+            ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, i);
             if (0 > ret) {
-                LELOGW("senginePollingRules failed arrIA idx[%d]\r\n", i);
+                LELOGW("senginePollingRules FAILED arrIA idx[%d]", i);
                 continue;
             }
             if (ginScriptCfg2->csum != crc8((uint8_t *)&(ginScriptCfg2->data), sizeof(ginScriptCfg2->data))) {
-                LELOGW("senginePollingRules failed crc8 idx[%d]\r\n", i);
+                LELOGW("senginePollingRules FAILED crc8 idx[%d]", i);
                 continue;
             }
 
-            // set the rule's name
+            // set the rule's name to cache
             ret = sengineCall((const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_GET_SELFNAME,
                 NULL, 0, (uint8_t *)&strSelfRuleName, sizeof(strSelfRuleName));
             if (0 > ret) {
-                LELOGW("senginePollingRules sengineCall("S2_GET_SELFNAME") [%d]\r\n", ret);
+                LELOGW("senginePollingRules sengineCall("S2_GET_SELFNAME") [%d]", ret);
                 continue;
             }
             memcpy(ginIACache.cache[i].ruleName, strSelfRuleName, MIN(ret, MAX_RULE_NAME));
             ginIACache.cache[i].ruleName[MIN(ret, MAX_RULE_NAME-1)] = 0;
 
-            sengineS2RuleHandler(ginScriptCfg2, strUUID, strlen(strUUID), json, jsonLen, &(ginIACache.cache[i]));
+            // check if the rule is valid
+            ret = sengineCall((const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_IS_VALID,
+                (uint8_t *)tmpLocalJson, tmpLocalJsonLen, (uint8_t *)&is, sizeof(is));
+            if (0 > ret) {
+                LELOGW("senginePollingRules sengineCall("S2_IS_VALID") [%d]", ret);
+                continue;
+            }
+            if (!is) {
+                LELOG("senginePollingRules invalid rule ");
+                continue;
+            }
+
+            sengineS2RuleHandler(ginScriptCfg2, tmpLocalJson, tmpLocalJsonLen, 
+                tmpRmtJsonLen > 0 ? tmpRmtJson : NULL, tmpRmtJsonLen, &(ginIACache.cache[i]));
 
         }
     }
-    LELOG("senginePollingRules [%d]-e \r\n", isFound);
+    LELOG("senginePollingRules -e ");
 
     return 0;
 }

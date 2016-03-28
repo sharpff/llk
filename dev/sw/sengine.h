@@ -6,7 +6,9 @@ extern "C"
 {
 #endif
 
-#define MAX_SCRIPT_SIZE (1024*16)
+#include "ota.h"
+
+#define MAX_SCRIPT_SIZE MAX_PROFILE_SIZE
 #define MAX_QUERY_COUNTS 16
 #define MAX_ALL_QUERYS 128
 
@@ -29,10 +31,10 @@ extern "C"
 #define S2_GET_RULETYPE "s2GetRuleType"
 #define S2_GET_BERESERVED "s2GetBeingReservedInfo"
 #define S2_GET_ISOK "s2IsConditionOK"
+#define S2_GET_ISOK_EXT "s2IsConditionOKExt"
 #define S2_GET_BECMD "s2GetSelfCtrlCmd"
 #define MAX_IA_BUF 64
 #define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
-#define MAX_RULE_NAME 64
 
 
 /*
@@ -66,7 +68,7 @@ int sengineSetStatus(char *json, int jsonLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
 int sengineQuerySlave(void);
 int senginePollingSlave(void);
-int senginePollingRules(const char *json, int jsonLen);
+int senginePollingRules(const char *jsonRmt, int jsonLen);
 
 
 #ifdef __cplusplus

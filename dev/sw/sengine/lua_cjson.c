@@ -641,7 +641,7 @@ static void json_append_number(lua_State *l, json_config_t *cfg,
 	// LES_LOG("json_append_number [%d] [%f] then -> ", (int)num, (LUA_NUMBER)num);
     sprintf(strbuf_empty_ptr(json), LUA_NUMBER_FMT, (LUA_NUMBER)num);
     // LES_LOG(strbuf_empty_ptr(json));
-    // LES_LOG("\r\n");
+    // LES_LOG("");
 #endif
 	len = strlen(strbuf_empty_ptr(json));
 #else
@@ -1042,7 +1042,7 @@ static void json_next_number_token(json_parse_t *json, json_token_t *token)
 {
     char *endptr;
 
-    // LES_LOG("json_next_number_token -S \r\n");
+    // LES_LOG("json_next_number_token -S ");
     token->type = T_NUMBER;
     token->value.number = fpconv_strtod(json->ptr, &endptr);
     if (json->ptr == endptr)
@@ -1050,7 +1050,7 @@ static void json_next_number_token(json_parse_t *json, json_token_t *token)
     else
         json->ptr = endptr;     /* Skip the processed number */
 
-    // LES_LOG("json_next_number_token -E\r\n");
+    // LES_LOG("json_next_number_token -E");
     return;
 }
 
@@ -1235,7 +1235,7 @@ static void json_parse_array_context(lua_State *l, json_parse_t *json)
     json_token_t token;
     int i;
     
-    // LES_LOG("json_parse_array_context -S\r\n");
+    // LES_LOG("json_parse_array_context -S");
 
     /* 2 slots required:
      * .., table, value */
@@ -1252,7 +1252,7 @@ static void json_parse_array_context(lua_State *l, json_parse_t *json)
     }
 
     for (i = 1; ; i++) {
-        // LES_LOG("call json_process_value\r\n");
+        // LES_LOG("call json_process_value");
         json_process_value(l, json, &token);
         lua_rawseti(l, -2, i);            /* arr[i] = value */
 
@@ -1269,14 +1269,14 @@ static void json_parse_array_context(lua_State *l, json_parse_t *json)
         json_next_token(json, &token);
     }
     
-    // LES_LOG("json_parse_array_context -E\r\n");
+    // LES_LOG("json_parse_array_context -E");
 }
 
 /* Handle the "value" context */
 static void json_process_value(lua_State *l, json_parse_t *json,
                                json_token_t *token)
 {
-    // LES_LOG("json_process_value type [%d] [0x%p] -S\r\n", token->type, &(token->type));
+    // LES_LOG("json_process_value type [%d] [0x%p] -S", token->type, &(token->type));
 
     switch (token->type) {
     case T_STRING:
@@ -1289,7 +1289,7 @@ static void json_process_value(lua_State *l, json_parse_t *json,
         lua_pushnumber(l, (lua_Number)token->value.number);
 #else
         // int *p = (int *)token;
-        // LES_LOG("aaaaa sizeof(json_token_t) is [%d] sizeof(double) is [%d]\r\n", sizeof(json_token_t), sizeof(double));
+        // LES_LOG("aaaaa sizeof(json_token_t) is [%d] sizeof(double) is [%d]", sizeof(json_token_t), sizeof(double));
         // LES_LOG("json_process_value head addr[0x%x][0x%x] [%d][%d] [0x%x] [0x%x] [%d] [%d], [%.7g]",
             // p, &p[0], p[0], p[1], p[2], p[3], p[4], p[5], (lua_Number)token->value.number);
         lua_pushinteger(l, token->value.number);
@@ -1314,7 +1314,7 @@ static void json_process_value(lua_State *l, json_parse_t *json,
     default:
         json_throw_parse_error(l, json, "value", token);
     }
-    // LES_LOG("json_process_value -E\r\n");
+    // LES_LOG("json_process_value -E");
 }
 
 static int json_decode(lua_State *l)
@@ -1322,7 +1322,7 @@ static int json_decode(lua_State *l)
     json_parse_t json;
     json_token_t token;
     size_t json_len;
-    // LES_LOG("json_decode -S\r\n");
+    // LES_LOG("json_decode -S");
 
     luaL_argcheck(l, lua_gettop(l) == 1, 1, "expected 1 argument");
 
@@ -1355,7 +1355,7 @@ static int json_decode(lua_State *l)
 
     strbuf_free(json.tmp);
 
-    // LES_LOG("json_decode -E\r\n");
+    // LES_LOG("json_decode -E");
     return 1;
 }
 

@@ -68,14 +68,14 @@
 #define strcoll hal_strcoll
 #define abort hal_abort
 
-#define lelog(_mod_name_, _fmt_, ...) \
+#define leslog(_mod_name_, _fmt_, ...) \
     wmprintf("[%s] "_fmt_"\r\n", _mod_name_, ##__VA_ARGS__)
 #define LES_LOG(...) \
-    lelog("LE", ##__VA_ARGS__)
+    leslog("LE", ##__VA_ARGS__)
 #define LES_LOGW(...) \
-    lelog("LE [W]", ##__VA_ARGS__)
+    leslog("LE [W]", ##__VA_ARGS__)
 #define LES_LOGE(...) \
-    lelog("LE [E]", ##__VA_ARGS__)
+    leslog("LE [E]", ##__VA_ARGS__)
 #define LES_PRINTF(...) \
     wmprintf(__VA_ARGS__)
 

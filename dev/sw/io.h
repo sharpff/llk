@@ -13,10 +13,13 @@ extern "C"
 #define MAX_STR_LEN 36
 #define MAX_REMOTE 64
 #define MAX_IA 4
+#define MAX_RULE_NAME 64
 #define MAX_BUF (1024+256)
+#define GET_PAGE_SIZE(currSize, SecSize) ((SecSize)*(((currSize)-1)/(SecSize) + 1)) // min erase size
 
 typedef enum {
     IO_TYPE_UART,
+    IO_TYPE_GPIO,
     IO_TYPE_PIPE,
     IO_TYPE_SOCKET,
 }IO_TYPE;
@@ -57,6 +60,7 @@ typedef struct
 {
     int num;
     int arrIA[MAX_IA];
+    char arrIAName[MAX_IA][MAX_RULE_NAME];
 }ALIGNED IACfg;
 
 typedef struct
@@ -121,8 +125,8 @@ int lelinkStorageReadAuthCfg(AuthCfg *authCfg);
 /*
  * type: 0-fw script, 1-ia script
  */
-int lelinkStorageWriteScriptCfg(const void *scriptCfg, int type, int idx);
-int lelinkStorageReadScriptCfg(void* scriptCfg, int type, int idx);
+int lelinkStorageWriteScriptCfg(const void *scriptCfg, int flashType, int idx);
+int lelinkStorageReadScriptCfg(void* scriptCfg, int flashType, int idx);
 
 void lelinkStorageDeinit(void);
 
@@ -133,7 +137,7 @@ void lelinkStorageDeinit(void);
  * . socket
  */
 void *ioInit(int ioType, const char *json, int jsonLen);
-void **ioGetHdl();
+void **ioGetHdl(int *ioType);
 int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen);
 void ioDeinit(int ioType, void *hdl);

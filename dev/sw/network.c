@@ -104,12 +104,12 @@ void *lelinkNwNew(const char *remoteIP, int remotePort, int selfPort, void *ctx)
         }
     }
     ctx_p->sock = sock;
-    LELOG("socket [%d]\r\n", sock);
+    LELOG("socket [%d]", sock);
     
-    // wmprintf("nwNew token[%s]\r\n", stProfile.token);
-    // wmprintf("nwNew did[%s]\r\n", stProfile.did);
-    // wmprintf("nwNew payloadKey[%s]\r\n", stProfile.payloadKey);
-    // wmprintf("nwNew payloadIv[%s]\r\n", stProfile.payloadIv);
+    // wmprintf("nwNew token[%s]", stProfile.token);
+    // wmprintf("nwNew did[%s]", stProfile.did);
+    // wmprintf("nwNew payloadKey[%s]", stProfile.payloadKey);
+    // wmprintf("nwNew payloadIv[%s]", stProfile.payloadIv);
 
     // strncpy(ctx_p->jlDevInfo.devid, stProfile.did, 32);
     // strncpy(ctx_p->jlDevInfo.payloadIv, "f9fa28f96135dd7e3200c36354317f14", 32);
@@ -142,7 +142,7 @@ int nwUDPSendto(void *ctx, const char *ip, int port, const uint8_t *buf, int len
     CommonCtx *info = (CommonCtx *)ctx;
 
     ret = halNwUDPSendto(info->sock, ip, port, buf, len);
-    LELOG("socket[%d] nwUDPSendto [%s:%d][%d]\r\n", info->sock, ip, port, ret);
+    LELOG("socket[%d] nwUDPSendto [%s:%d][%d]", info->sock, ip, port, ret);
 
     return ret;
 }
@@ -162,7 +162,7 @@ int nwUDPRecvfrom(void *ctx, uint8_t *buf, int len, char *ip, int lenIP, uint16_
         }
     }   
     if (ret >= 0) {
-        LELOG("nwUDPRecvfrom [%s:%d][%d]\r\n", ip, *port, ret);
+        LELOG("nwUDPRecvfrom [%s:%d][%d]", ip, *port, ret);
     }
     return ret;
 }

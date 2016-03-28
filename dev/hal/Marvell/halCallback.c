@@ -13,7 +13,7 @@
  */
 int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len) {
     int ret = 0;
-    APPLOG("halCBLocalReq -S\r\n");
+    APPLOG("halCBLocalReq -S");
     char cmdCtrl[64] = "{\"ctrl\":{\"pwr\":1,\"action\":1}}";
     // char *reqCtrlStd = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
     //                    "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
@@ -51,11 +51,11 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
         //         strcpy(uuid, UUID_BEING_CTRL);
         //         ret = len < strlen(uuid) ? len : strlen(uuid);
         //         memcpy(data, uuid, ret);
-        //         APPLOG("data [%s]\r\n", data);
+        //         APPLOG("data [%s]", data);
         //     }
         // }break;
     }
-    APPLOG("halCBLocalReq [%d] -e\r\n", ret);
+    APPLOG("halCBLocalReq [%d] -e", ret);
     return ret;
 }
 
@@ -66,7 +66,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
  */
 void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
     char tmpUUID[MAX_UUID + 1] = {0};
-    APPLOG("halCBRemoteRsp -s\r\n");
+    // APPLOG("halCBRemoteRsp -s");
     memcpy(tmpUUID, cmdInfo->uuid, MAX_UUID);
 
     switch (cmdInfo->cmdId) {
@@ -89,8 +89,10 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
  */
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
     int ret = 0;
-    APPLOG("halCBRemoteReq -s\r\n");
-    APPLOG("halCBRemoteReq len[%d][%s]\r\n", len, payloadBody);
+    char buf[512] = {0};
+    APPLOG("halCBRemoteReq -s");
+    memcpy(buf, payloadBody, sizeof(buf) > len ? len : sizeof(buf) - 1);
+    APPLOG("halCBRemoteReq len[%d/%d][%s]", len, sizeof(buf), buf);
 
     switch (cmdInfo->cmdId) {
         case LELINK_CMD_HELLO_REQ: {
@@ -122,7 +124,7 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
  */
 int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, char *nw, int nwLenOut) {
     int ret = 0;
-    APPLOG("halCBLocalRsp -s\r\n");
+    APPLOG("halCBLocalRsp -s");
     switch (cmdInfo->cmdId) {
         case LELINK_CMD_HELLO_RSP: {
             if (LELINK_SUBCMD_HELLO_RSP == cmdInfo->subCmdId) {
@@ -139,6 +141,6 @@ int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, 
         }break;
 
     }
-    APPLOG("halCBLocalRsp [%d] -e\r\n", ret);
+    APPLOG("halCBLocalRsp [%d] -e", ret);
     return ret;
 }

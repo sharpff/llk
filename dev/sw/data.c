@@ -46,16 +46,32 @@ static uint8_t ginUUID[MAX_UUID];
 static char ginCachedStatus[UDP_MTU];
 static char ginRemoteIP[MAX_REMOTE];
 static uint16_t ginRemotePort;
-
+static uint32_t ginBaseSecs;
+extern PrivateCfg ginPrivateCfg;
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
 
+int setLock() {
+    int ret = 0;
+    ginPrivateCfg.data.devCfg.locked = 1;
+    ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+    return 0 <= ret ? 1 : 0;
+}
+
+int getlock() {
+    return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
+}
+
 void setTerminalUTC(uint64_t *utc) {
     ginRemoteUTC = *utc/1000;
+    ginBaseSecs = halGetTimeStamp();
 }
 
 void getTerminalUTC(int64_t *utc) {
-    *utc = ginRemoteUTC;
+    if (0 < ginRemoteUTC) {
+        *utc = ginRemoteUTC + (halGetTimeStamp() - ginBaseSecs);
+        // ginBaseSecs = halGetTimeStamp();
+    }
 }
 
 // AES
@@ -264,14 +280,14 @@ int getTerminalStatus(char *status, int len) {
 
     //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
 
-    LELOG("getTerminalStatus -s\r\n");
+    // LELOG("getTerminalStatus -s");
 
     strcpy(status, "{\"status\":");
     tmpLen = strlen(status);
 
     ret = cacheGetTerminalStatus(status + tmpLen, len - strlen(status));
     if(ret <= 0) {
-        LELOGW("Can't get cache status\r\n");
+        // LELOGW("Can't get cache status");
         strcpy(status + tmpLen, "{}");
     }
     tmpLen = strlen(status);
@@ -288,14 +304,25 @@ int getTerminalStatus(char *status, int len) {
     strcpy(status + tmpLen, "\",\"ver\":\""); tmpLen = strlen(status);
     getVer(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
 
-    status[tmpLen] = '"'; 
-    tmpLen += 1;
+    sprintf(status + tmpLen, "\",\"lock\":%d", getlock());
+    tmpLen = strlen(status);
+
+    // status[tmpLen] = '"'; 
+    // tmpLen += 1;
     status[tmpLen] = '}'; 
     tmpLen += 1;
     //
 
-    LELOG("getTerminalStatus [%d][%s] -e\r\n", tmpLen, status);
+    // LELOG("getTerminalStatus [%d][%s] -e", tmpLen, status);
     return tmpLen;
+}
+
+int getTerminalStatusS2(char *statusS2, int len) {
+    char s[MAX_BUF] = {0};
+    int ret = getTerminalStatus(s, sizeof(s));
+    // TODO: utc update
+    ret = genS2Json(s, ret, NULL, 0, statusS2, len);
+    return ret;
 }
 
 void cacheSetTerminalStatus(const char *status, int len) {
@@ -324,9 +351,9 @@ int cacheIsChanged(const char *status, int len) {
     // ret1 = strlen(ginCachedStatus);
     // ret2 = (ret1 != len);
     // ret3 = (0 != memcmp(ginCachedStatus, status, len));
-    // LELOG("cacheIsChanged [%d][%d][%d]\r\n", ret1, ret2, ret3);
+    // LELOG("cacheIsChanged [%d][%d][%d]", ret1, ret2, ret3);
     // return ret2 || ret3;
-    // LELOG("cacheIsChanged [%d][%d] cmp[%d]\r\n", strlen(ginCachedStatus), len, (0 != memcmp(ginCachedStatus, status, len)));
+    // LELOG("cacheIsChanged [%d][%d] cmp[%d]", strlen(ginCachedStatus), len, (0 != memcmp(ginCachedStatus, status, len)));
     return (strlen(ginCachedStatus) != len) || (0 != memcmp(ginCachedStatus, status, len));
 }
 

@@ -179,12 +179,13 @@ class PrivateInfo(object):
        self.content = ''
        self.DEV_CFG_SIZE = 39
        self.NET_CFG_SIZE = 100
-       self.IA_CFG_SIZE = 20 #276
+       self.IA_CFG_SIZE = 276
        self.MAX_STR_LEN = 36
     def set(self, ssid, passwd):
-       self.ssid = ssid
-       self.passwd = passwd
-       self.config = 1
+        self.ssid = ssid
+        self.passwd = passwd
+        if len(self.ssid) > 0:
+            self.config = 1
     def pack(self):
        self.content = ''
        self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE)

@@ -9,6 +9,29 @@
 #include "utility.h"
 #include "airconfig_ctrl.h"
 
+#ifndef LOG_PROTOCOL
+#ifdef LELOG
+#undef LELOG
+#define LELOG(...)
+#endif
+
+#ifdef LELOG
+#undef LELOGW
+#define LELOGW(...)
+#endif
+
+#ifdef LELOG
+#undef LELOGE
+#define LELOGE(...)
+#endif
+
+#ifdef LEPRINTF
+#undef LEPRINTF
+#define LEPRINTF(...)
+#endif
+#endif
+
+
 typedef struct
 {
     int cmdId;
@@ -104,6 +127,8 @@ static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
 static int cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
 static int cbCloudIndStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
+static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
+static int cbCloudIndMsgLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 
 static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHeaderInfo *cmdInfo);
 static int isNeedDelCB(CACHE_NODE_TYPE *currNode);
@@ -176,6 +201,9 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_STATUS_REQ, NULL, cbCloudIndStatusRemoteReq },
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_STATUS_RSP, NULL, cbCloudIndStatusLocalRsp},
 
+    { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_MSG_REQ, NULL, cbCloudIndMsgRemoteReq },
+    { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_MSG_RSP, NULL, cbCloudIndMsgLocalRsp},
+
 
     { 0, 0, 0, 0 }
 };
@@ -203,7 +231,7 @@ void testAES(void) {
     uint8_t iv[AES_LEN] = { 0 };
     uint8_t key[AES_LEN] = { 0 };
     
-    LELOG("lelinkAES encrypting encLen[%d]\r\n", encLen);
+    LELOG("lelinkAES encrypting encLen[%d]", encLen);
     memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
     memcpy(key, (void *)getPreSharedToken(), AES_LEN);
     ret = aes(iv, 
@@ -213,11 +241,11 @@ void testAES(void) {
         sizeof(buf),
         1);
 
-    LELOG("lelinkAES encrypted [%d] encLen[%d]\r\n", ret, encLen);
+    LELOG("lelinkAES encrypted [%d] encLen[%d]", ret, encLen);
     
     memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
     //memcpy(key, getPreSharedToken(), AES_LEN);
-    LELOG("lelinkAES decrypting decLen[%d]\r\n", decLen);
+    LELOG("lelinkAES decrypting decLen[%d]", decLen);
     ret = aes(iv, 
         key, 
         buf,
@@ -226,7 +254,7 @@ void testAES(void) {
         0);
     buf[decLen] = '\0';
     
-    LELOG("lelinkAES decrypted [%d][%s] decLen[%d]\r\n", ret, buf, decLen);
+    LELOG("lelinkAES decrypted [%d][%s] decLen[%d]", ret, buf, decLen);
 }
 #endif
 
@@ -256,50 +284,50 @@ void testRSA(void) {
     uint8_t pubkey[MAX_RSA_PUBKEY] = {0};
     int pubkeyLen = 0;
     // ret = rsaEncrypt((const uint8_t *)ginStrPubkeyPem, ginStrPubkeyPemLen, (const uint8_t *)raw, sizeof(raw), encBuf, sizeof(encBuf));
-    // LELOG("rsaEncrypted pem len[%d]\r\n", ret);
+    // LELOG("rsaEncrypted pem len[%d]", ret);
 
     // ret = rsaDecrypt((const uint8_t *)ginStrPrikeyPem, ginStrPrikeyPemLen, (const uint8_t *)encBuf, ret, raw, sizeof(raw));
-    // LELOG("rsaDecrypted pem [%d] => [%s]\r\n", ret, raw);
-    // LELOG("raw is [%s]\r\n", raw);
+    // LELOG("rsaDecrypted pem [%d] => [%s]", ret, raw);
+    // LELOG("raw is [%s]", raw);
 
-    // // LELOG("pem prikey[%d], pubkey[%d]\r\n", ginStrPrikeyPemLen, ginStrPubkeyPemLen);
+    // // LELOG("pem prikey[%d], pubkey[%d]", ginStrPrikeyPemLen, ginStrPubkeyPemLen);
 
     // ret = rsaEncrypt((const uint8_t *)ginPubkeyGlobalDer, ginPubkeyGlobalDerLen, (const uint8_t *)raw, sizeof(raw), encBuf, sizeof(encBuf));
-    // LELOG("rsaEncrypted global len[%d]\r\n", ret);
+    // LELOG("rsaEncrypted global len[%d]", ret);
 
     // ret = rsaDecrypt((const uint8_t *)ginPrikeyGlobalDer, ginPrikeyGlobalDerLen, (const uint8_t *)encBuf, ret, raw, sizeof(raw));
-    // LELOG("rsaDecrypted global [%d] => [%s]\r\n", ret, raw);
-    // LELOG("raw is [%s]\r\n", raw);
+    // LELOG("rsaDecrypted global [%d] => [%s]", ret, raw);
+    // LELOG("raw is [%s]", raw);
 
     ret = rsaEncrypt((const uint8_t *)ginPubkeyDevKindDer, ginPubkeyDevKindDerLen, (const uint8_t *)raw, sizeof(raw), encBuf, sizeof(encBuf));
-    LELOG("rsaEncrypted devkind len[%d]\r\n", ret);
+    LELOG("rsaEncrypted devkind len[%d]", ret);
     
     memset(raw, 0, sizeof(raw));
     ret = rsaDecrypt((const uint8_t *)ginPrikeyDevKindDer, ginPrikeyDevKindDerLen, (const uint8_t *)encBuf, ret, raw, sizeof(raw));
-    LELOG("rsaDecrypted devkind [%d] => [%s]\r\n", ret, raw);
-    LELOG("raw is [%s]\r\n", raw);
-    LELOG("der prikey[%d], pubkey[%d]\r\n", ginPrikeyGlobalDerLen, ginPubkeyGlobalDerLen);
+    LELOG("rsaDecrypted devkind [%d] => [%s]", ret, raw);
+    LELOG("raw is [%s]", raw);
+    LELOG("der prikey[%d], pubkey[%d]", ginPrikeyGlobalDerLen, ginPubkeyGlobalDerLen);
 
     // verify 1
     // if( ( f = fopen( filename, "rb" ) ) == NULL )
     // {
-    //     LELOG("fopen failed\r\n");
+    //     LELOG("fopen failed");
     //     return;
     // }
     // ret = fread( signature, 1, sizeof(signature), f );
     // fclose( f );
     // // ret = getTerminalSignature(signature, sizeof(signature));
-    // LELOG("signatrue [%d]\r\n", ret);
+    // LELOG("signatrue [%d]", ret);
     // ret = rsaVerify((const uint8_t *)pubkeyTestVerify, sizeof(pubkeyTestVerify), 
     //     rawTest, strlen(rawTest), signature, ret);
-    // LELOG("rsaVerify [%d]\r\n", ret);
+    // LELOG("rsaVerify [%d]", ret);
 
     // verify 2
     pubkeyLen = getTerminalPublicKey(pubkey, sizeof(pubkey));
     ret = getTerminalSignature(signature, sizeof(signature));
-    LELOG("signatrue [%d]\r\n", ret);
+    LELOG("signatrue [%d]", ret);
     ret = rsaVerify(pubkey, pubkeyLen, beVerified, strlen(beVerified), signature, ret);
-    LELOG("rsaVerify [%d]\r\n", ret);
+    LELOG("rsaVerify [%d]", ret);
 
 }
 #endif
@@ -318,10 +346,10 @@ void testJson(void) {
     // uint16_t port = 0;
     char token[2 + 2*AES_LEN + 1] = {0};
     int ret = isNeedToRedirect(json, strlen(json), ip, &port);
-    LELOG("isNeedToRedirect[%d] [%s:%d]\r\n", ret, ip, port);
+    LELOG("isNeedToRedirect[%d] [%s:%d]", ret, ip, port);
 
     ret = syncUTC(utc, strlen(utc));
-    LELOG("syncUTC[%d]\r\n", ret);
+    LELOG("syncUTC[%d]", ret);
 
     token[0] = '"';
     getTerminalTokenStr(token + 1, sizeof(token) - 1);
@@ -331,11 +359,11 @@ void testJson(void) {
     genCompositeJson(out, sizeof(out), 2, 
         "now", status, 
         "token", token);
-    LELOG("%s\r\n", out);
+    LELOG("%s", out);
 
-    strcpy(status, "{\"status\":{\"action\":1},\"utcH\":339,\"utcL\":136006835}");
+    strcpy(status, "{\"status\":{\"action\":1},\"utc\":1457403654}");
     genS2Json(status, sizeof(status), out, sizeof(out));
-    LELOG("%s\r\n", out);
+    LELOG("%s", out);
 
 }
 #endif
@@ -350,7 +378,7 @@ void testMD5() {
     
     LELOG("md5: ");
     for (i = 0; i < MD5_LEN; i++) {
-        LEPRINTF("%02x", out[i]);
+        LEPRINTF("%02X", out[i]);
     }
     LEPRINTF("\r\n");
     
@@ -367,17 +395,17 @@ void testFlash() {
         int ret = 0, count = 2;
         // uint32_t addr = 0x6000, pageSize = 0x1000;
         uint32_t addr = 0x1C2000, pageSize = 256 - 1;
-        LELOG("open [0x%x]\r\n", fl_dev);
+        LELOG("open [0x%x]", fl_dev);
         while (count--) {
             fl_dev = (mdev_t *)flash_drv_open(0);
             ret = flash_drv_erase(fl_dev, addr, pageSize);
-            LELOG("erase [0x%x][%d]\r\n", fl_dev, ret);
+            LELOG("erase [0x%x][%d]", fl_dev, ret);
             sprintf(buf, "making %d", count);
             ret = flash_drv_write(fl_dev, buf + pageSize, strlen(buf), addr);
-            LELOG("write [%d][%s]\r\n", ret, buf);
+            LELOG("write [%d][%s]", ret, buf);
 
             ret = flash_drv_read(fl_dev, buf + pageSize, strlen(buf)+1, addr);
-            LELOG("read [%d][%s]\r\n", ret, buf);
+            LELOG("read [%d][%s]", ret, buf);
             flash_drv_close(fl_dev);
 
             delayms(2000);
@@ -387,10 +415,10 @@ void testFlash() {
     {
         PrivateCfg cfg;
         memset(&cfg, 0, sizeof(PrivateCfg));
-        LELOG("sizeof(PrivateCfg) is [%d]\r\n", sizeof(PrivateCfg));
+        LELOG("sizeof(PrivateCfg) is [%d]", sizeof(PrivateCfg));
 
         lelinkStorageReadPrivateCfg(&cfg);
-        LELOG("read 1 ssid[%s], psk[%s], configStatus[%d]\r\n", 
+        LELOG("read 1 ssid[%s], psk[%s], configStatus[%d]", 
             cfg.data.nwCfg.config.ssid,
             cfg.data.nwCfg.config.psk, 
             cfg.data.nwCfg.configStatus);
@@ -403,7 +431,7 @@ void testFlash() {
         lelinkStorageWritePrivateCfg(&cfg);
 
         lelinkStorageReadPrivateCfg(&cfg);
-        LELOG("read 2 ssid[%s], psk[%s], configStatus[%d]\r\n", 
+        LELOG("read 2 ssid[%s], psk[%s], configStatus[%d]", 
             cfg.data.nwCfg.config.ssid,
             cfg.data.nwCfg.config.psk, 
             cfg.data.nwCfg.configStatus);
@@ -419,24 +447,25 @@ void testSengine() {
     // const char json2[256] = {"{\"status\":{\"pwr\":1,\"action\":1},\"utcH\":339,\"utcL\":136006835,\"uuid\":\"10000100011000510005FFFFFFFFFFFF\"}"};
     const char json2[256] = {"{\"status\":{\"pwr\":1,\"action\":1},\"uuid\":\"10000100011000510005FFFFFFFFFFFF\"}"};
     uint8_t buf[256] = {0};
+    ScriptCfg *tmpScriptCfg = NULL;
     ret = sengineInit();
     if (0 != ret) {
-        LELOGE("sengineInit ret[%d]\r\n", ret);
+        LELOGE("sengineInit ret[%d]", ret);
         return;
     }
     // ret = lelinkStorageReadScriptCfg(&ginScriptCfg);
     // if (ginScriptCfg.csum != crc8((uint8_t *)&(ginScriptCfg.data), sizeof(ginScriptCfg.data))) {
-    //     LELOG("ScriptCfg read from flash failed\r\n");
+    //     LELOG("ScriptCfg read from flash failed");
     //     // return;
     // }
 
-    ret = sengineCall((const char *)ginScriptCfg.data.script, ginScriptCfg.data.size, 
+    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, 
         "s1CvtStd2Pri", (const uint8_t *)json, strlen(json), buf, sizeof(buf));
-    LELOG("testSengine sengineCall => cvtStd2Pri [%d]\r\n", ret);
+    LELOG("testSengine sengineCall => cvtStd2Pri [%d]", ret);
     if (0 < ret) {
         LEPRINTF("result bin: ");
         for (i = 0; i < ret; i++) {
-            LEPRINTF("%02x", buf[i]);
+            LEPRINTF("%02X", buf[i]);
         }
     }
     LEPRINTF("\r\n");
@@ -445,12 +474,17 @@ void testSengine() {
     buf[1] = 0x32;
     buf[2] = 0xab;
     buf[3] = 0xef;
-    ret = sengineCall((const char *)ginScriptCfg.data.script, ginScriptCfg.data.size, 
+    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, 
         "s1CvtPri2Std", buf, 4, (uint8_t *)json, sizeof(json));
-    LELOG("testSengine cvtPri2Std[%d] [%s]\r\n", ret, json);
+    LELOG("testSengine cvtPri2Std[%d] [%s]", ret, json);
 
+    tmpScriptCfg = (void *)halCalloc(1, sizeof(ScriptCfg));
+    ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
+    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
+    // ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
 
     senginePollingRules((char *)json2, strlen(json2));
+    halFree(tmpScriptCfg);
 }
 #endif
 
@@ -462,19 +496,19 @@ int lelinkInit() {
 
     ret = halLockInit();
     if (0 != ret) {
-        LELOGE("halLockInit ret[%d]\r\n", ret);
+        LELOGE("halLockInit ret[%d]", ret);
         goto failed;
     }
 
     ret = halAESInit();
     if (0 != ret) {
-        LELOGE("halAESInit ret[%d]\r\n", ret);
+        LELOGE("halAESInit ret[%d]", ret);
         goto failed;
     }
 
     ret = halFlashInit();
     if (0 != ret) {
-        LELOGE("halFlashInit ret[%d]\r\n", ret);
+        LELOGE("halFlashInit ret[%d]", ret);
         goto failed;
     }
 
@@ -484,7 +518,7 @@ int lelinkInit() {
         // goto failed;
     }
 
-    ioHdl = (void **)ioGetHdl();
+    ioHdl = (void **)ioGetHdl(NULL);
     if (NULL == ioHdl) {
         LELOGE("ioInit ioHdl[%p]\r\n", ioHdl);
         // goto failed;
@@ -558,7 +592,7 @@ int lelinkDoPollingQ2A(void *ctx) {
     MUTEX_UNLOCK;
 /*
     if (pCtx->cacheCmd.currsize)
-        LELOG("lelinkDoPollingQ2A cache[%d/%d]\r\n", pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
+        LELOG("lelinkDoPollingQ2A cache[%d/%d]", pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
 */
     memset(ipTmp, 0, sizeof(ipTmp));
     memset(pCtx->nwBuf, 0, sizeof(pCtx->nwBuf));
@@ -587,13 +621,13 @@ int lelinkDoPollingQ2A(void *ctx) {
     // ret = nwUDPRecvfrom(pCtx, pCtx->nwBuf, UDP_MTU, ipTmp, MAX_IPLEN, &portTmp);
     // if (ret <= 0)
     // {
-    //     //LELOG("lelinkDoPollingQ2A nwUDPRecvfrom [%d] QA cache[%d/%d]\r\n", ret, pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
+    //     //LELOG("lelinkDoPollingQ2A nwUDPRecvfrom [%d] QA cache[%d/%d]", ret, pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
     //     return;
     // }
 
     // if (0 > (ret = doUnpack(pCtx, pCtx->nwBuf, ret, pCtx->protocolBuf, sizeof(pCtx->protocolBuf), &cmdInfo)))
     // {
-    //     LELOGW("lelinkDoPollingQ2A doUnpack [%d] [%s:%d]\r\n", ret, ipTmp, portTmp);
+    //     LELOGW("lelinkDoPollingQ2A doUnpack [%d] [%s:%d]", ret, ipTmp, portTmp);
     //     return;
     // }
 
@@ -603,12 +637,12 @@ int lelinkDoPollingQ2A(void *ctx) {
     // if (isCommingFromItself(pCtx, ipTmp, portTmp)) {
     //     return -3;
     // }
-    LELOG("lelinkDoPollingQ2A doUnpack [%d-%d]\r\n", cmdInfo.cmdId, cmdInfo.subCmdId);
+    LELOG("lelinkDoPollingQ2A doUnpack [%d-%d]", cmdInfo.cmdId, cmdInfo.subCmdId);
 
     /*
     if (0 == (cmdId & 0x1))
     {
-        LELOGW("lelinkDoPollingQ2A drop cmdId[%d] subCmdId[%d]\r\n", cmdId, subCmdId);
+        LELOGW("lelinkDoPollingQ2A drop cmdId[%d] subCmdId[%d]", cmdId, subCmdId);
         return;
     }*/
 
@@ -714,7 +748,7 @@ static int doQ2ARemoteReq(void *ctx,
     if (0 == (cmdInfo->cmdId & 0x1))
     {
         // no need to response
-        // LELOGE("R2R??? it should not be here\r\n");
+        // LELOGE("R2R??? it should not be here");
         // ct_p->procR2R ?
         //         ((CBRemoteRsp) ct_p->procR2R)(ctx, cmdInfo, protocolBuf, pbLen) :
         //         0;
@@ -734,7 +768,7 @@ static int doQ2ARemoteReq(void *ctx,
             ((CmdHeaderInfo *)cmdInfo)->subCmdId++;
             ret = ((CBLocalRsp) ct_p->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen, nwBufOut, nwBufLen); // do sth local rsp
             if (0 == ret) {
-                LELOGE("CBLocalRsp ret 0, it is impossible\r\n");
+                LELOGE("CBLocalRsp ret 0, it is impossible");
                 // ret = strlen(DEF_JSON);
                 // memcpy(nwBufOut, DEF_JSON, ret);
             }
@@ -766,7 +800,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     if (4 > node_p->timeoutRef) {
         node_p->timeoutRef = 4;
     }
-    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d]\r\n", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort);
+    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort);
 
     // if (node_p->ndPort) {
     //     memcpy(node.ndIP, ipTmp, MAX_IPLEN);
@@ -821,7 +855,7 @@ static int isFromRemote(const CommonCtx *ctx, const char *ip, uint16_t len, uint
 //     ret = halGetSelfAddr(myIP, MAX_IPLEN, &tmpPort);
 //     if (ret > 0) {
 //         if (0 == strncmp(ip, myIP, strlen(ip))) {
-//             LELOG("isCommingFromItself YES\r\n");
+//             LELOG("isCommingFromItself YES");
 //             return 1;
 //         }
 //     }
@@ -852,7 +886,7 @@ static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *t
     if (ret) {
         LELOG("BY UUID TOKEN GOT => ");
         for (i = 0; i < lenToken; i++) {
-            LEPRINTF("%02x", token[i]);
+            LEPRINTF("%02X", token[i]);
         }
         LEPRINTF("\r\n");
         return 1;
@@ -884,7 +918,7 @@ static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *toke
     if (ret) {
         LELOG("BY IP TOKEN GOT => ");
         for (i = 0; i < lenToken; i++) {
-            LEPRINTF("%02x", token[i]);
+            LEPRINTF("%02X", token[i]);
         }
         LEPRINTF("\r\n");
         return 1;
@@ -911,7 +945,7 @@ static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHead
     ret = nwUDPRecvfrom(pCtx, COMM_CTX(pCtx)->nwBuf, UDP_MTU, ipTmp, MAX_IPLEN, port);
     if (0 >= ret)
     {
-        // LELOG("lelinkDoPollingR2R nwUDPRecvfrom [%d] R2R queue[%d/%d] [%d-%d]\r\n", 
+        // LELOG("lelinkDoPollingR2R nwUDPRecvfrom [%d] R2R queue[%d/%d] [%d-%d]", 
         //     ret, COMM_CTX(pCtx)->cacheCmd.currsize, COMM_CTX(pCtx)->cacheCmd.maxsize,
         //     currNode->cmdId, currNode->subCmdId);
         return -4;
@@ -920,7 +954,7 @@ static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHead
     if (0 > (ret = doUnpack(pCtx, COMM_CTX(pCtx)->nwBuf, ret, COMM_CTX(pCtx)->protocolBuf,
         sizeof(COMM_CTX(pCtx)->protocolBuf), cmdInfo, NULL)))
     {
-        LELOGW("lelinkDoPolling doUnpack [%d]\r\n", ret);
+        LELOGW("lelinkDoPolling doUnpack [%d]", ret);
         return -5;
     }
 
@@ -976,7 +1010,7 @@ static int forEachNodeR2RPostSendCB(CACHE_NODE_TYPE *currNode, void *uData)
         len = nwUDPSendto(currNode->pCtx, ipTmp, portTmp, COMM_CTX(currNode->pCtx)->nwBuf, len);
         if (0 >= len)
         {
-            LELOGE("forEachNodeR2RPostSendCB nwUDPSendto [%d]\r\n", len);
+            LELOGE("forEachNodeR2RPostSendCB nwUDPSendto [%d]", len);
             return -2;
         }
 
@@ -1021,7 +1055,7 @@ static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData)
         ret = nwUDPSendto(currNode->pCtx, currNode->ndIP, currNode->ndPort, nwBuf, nwLen);
         if (0 >= ret)
         {
-            LELOGE("forEachNodeQ2ARspCB nwUDPSendto [%d]\r\n", ret);
+            LELOGE("forEachNodeQ2ARspCB nwUDPSendto [%d]", ret);
         }
         currNode->needReq = 0;
         return 0;
@@ -1036,14 +1070,16 @@ static int isNeedDelCB(CACHE_NODE_TYPE *currNode)
     // timeout
     if (currNode->timeoutRef && (halGetTimeStamp() - currNode->timeStamp) > currNode->timeoutRef)
     {
-        LELOG("isNeedDelCB timeoutRef[%d] cmd[%d][%d] left needRsp[%d] \r\n", 
+        LELOG("isNeedDelCB timeoutRef[%d] cmd[%d][%d] left needRsp[%d] ", 
             currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->needRsp);
 
         switch (currNode->cmdId) {
         case LELINK_CMD_CLOUD_HEARTBEAT_REQ:
             {
-                ginStateCloudLinked = 0;
-                ginStateCloudAuthed = -1;
+                if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ) {
+                    ginStateCloudLinked = 0;
+                    ginStateCloudAuthed = -1;                    
+                }
             }
             break;
         case LELINK_CMD_CLOUD_GET_TARGET_REQ:
@@ -1071,12 +1107,12 @@ static int doQ2AProcessing(CommonCtx *pCtx, int protocolBufLen, const CmdHeaderI
     if (ret > 0)
     {
         int nwLen = ret;
-        LELOG("lelinkDoPollingQ2A nwUDPSendto [%s:%d][%d]\r\n", ip, port, nwLen);
+        LELOG("lelinkDoPollingQ2A nwUDPSendto [%s:%d][%d]", ip, port, nwLen);
         // QA send imediately
         ret = nwUDPSendto(pCtx, ip, port, pCtx->nwBuf, nwLen);
         if (0 >= ret)
         {
-            LELOGW("lelinkDoPollingQ2A nwUDPSendto [%s:%d][%d]\r\n", ip, port, ret);
+            LELOGW("lelinkDoPollingQ2A nwUDPSendto [%s:%d][%d]", ip, port, ret);
         }
     }
     else if (0 == ret)
@@ -1109,27 +1145,28 @@ static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dat
     int ret = 0;
     char helloReq[32] = {"{\"msg\":\"hello\"}"};
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbHelloLocalReq -s\r\n");
+    LELOG("cbHelloLocalReq -s");
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)helloReq, strlen(helloReq), dataOut, dataLen);
-    LELOG("cbHelloLocalReq [%d] -e\r\n", ret);
+    LELOG("cbHelloLocalReq [%d] -e", ret);
     return ret;
 }
 
 static void cbHelloRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbHelloRemoteRsp -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
-    LELOG("cbHelloRemoteRsp -e\r\n");
+    LELOG("cbHelloRemoteRsp -s");
+    if (0 < dataLen) 
+        LELOG("[%d][%s]", dataLen, dataIn);
+    LELOG("cbHelloRemoteRsp -e");
 }
 
 /* for sdk, discover a new device */
 static int cbHelloRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbHelloRemoteReq -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
-    LELOG("cbHelloRemoteReq -e\r\n");
+    LELOG("cbHelloRemoteReq -s");
+    LELOG("[%d][%s]", dataLen, dataIn);
+    LELOG("cbHelloRemoteReq -e");
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
 	return ret;
 }
@@ -1138,9 +1175,9 @@ static int cbHelloLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_
     int ret = 0;
     //char rspHello[] = "{ \"msg\":\"i know u got it.\" }";
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbHelloLocalRsp -s\r\n");
+    LELOG("cbHelloLocalRsp -s");
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, data, ret, dataOut, dataLen);
-    LELOG("cbHelloLocalRsp -e\r\n");
+    LELOG("cbHelloLocalRsp -e");
     return ret;
 }
 
@@ -1149,7 +1186,7 @@ static int cbDiscoverLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
     int ret = 0;
     char reqDiscover[48] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbDiscoverLocalReq -s\r\n");
+    LELOG("cbDiscoverLocalReq -s");
 
     ret = getJsonUTC(reqDiscover, sizeof(reqDiscover));
     if (0 >= ret) {
@@ -1157,25 +1194,25 @@ static int cbDiscoverLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
     }
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)reqDiscover, ret, dataOut, dataLen);
     
-    LELOG("cbDiscoverLocalReq [%d] -e\r\n", ret);
+    LELOG("cbDiscoverLocalReq [%d] -e", ret);
     return ret;
 }
 
 static void cbDiscoverRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbDiscoverRemoteRsp -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    LELOG("cbDiscoverRemoteRsp -s");
+    // LELOG("[%d][%s]", dataLen, dataIn);
     halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbDiscoverRemoteRsp -e\r\n");
+    LELOG("cbDiscoverRemoteRsp -e");
 }
 
 static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbDiscoverRemoteReq -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
-    LELOG("cbDiscoverRemoteReq -e\r\n");
+    LELOG("cbDiscoverRemoteReq -s");
+    LELOG("[%d][%s]", dataLen, dataIn);
+    LELOG("cbDiscoverRemoteReq -e");
     return ret;
 }
 
@@ -1183,7 +1220,7 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char rspDiscover[MAX_BUF] = {0};
-    LELOG("cbDiscoverLocalRsp -s\r\n");
+    LELOG("cbDiscoverLocalRsp -s");
     // gen status
     ret = getTerminalStatus(rspDiscover, sizeof(rspDiscover));
     if (0 >= ret) {
@@ -1191,52 +1228,58 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     }
 
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rspDiscover, strlen(rspDiscover), dataOut, dataLen);
-    LELOG("cbDiscoverLocalRsp -e\r\n");
+    LELOG("cbDiscoverLocalRsp -e");
     return ret;
 }
 
 static int cbDiscoverStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     char status[MAX_BUF] = {0};
-    char token[2*AES_LEN + 1] = {0};
-    LELOG("cbDiscoverStatusChangedLocalReq -s\r\n");
+    // char token[2*AES_LEN + 1] = {0};
+    LELOG("cbDiscoverStatusChangedLocalReq -s");
 
-    getTerminalTokenStr(token, sizeof(token));
+    // getTerminalTokenStr(token, sizeof(token));
     ret = getTerminalStatus(status, sizeof(status));
-    if (0 < ret) {
-        getTerminalTokenStr(token, sizeof(token));
-        ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    if (0 > ret) {
+        ret = 0;
+        // getTerminalTokenStr(token, sizeof(token));
+        // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
     } 
-    LELOG("appended token [%s]\r\n", status);
-
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    LELOG("NO need token[%d][%s]", ret, status);
+    // test only
+    // static int mm = 0;
+    // if (!mm) {
+    //     strcpy(status, "{\"status\":{\"qca9531\":100,\"idx1\":1,\"idx2\":2,\"idx3\":1,\"idx4\":1},\"cloud\":0,\"uuid\":\"10000100101000010007F0B429000012\",\"ip\":\"192.168.3.109\",\"ver\":\"3-0.9.9-1-1.0\"}");
+    // } else {   
+    //     strcpy(status, "{\"status\":{\"qca9531\":100,\"idx1\":1,\"idx2\":1,\"idx3\":2,\"idx4\":1},\"cloud\":0,\"uuid\":\"10000100011000510005FFFFFFFFFFFF\",\"ip\":\"192.168.3.109\",\"ver\":\"3-0.9.9-1-1.0\"}");
+    // }
+    // mm += 1;
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
-    LELOG("cbDiscoverStatusChangedLocalReq [%d] -e\r\n", ret);
+    LELOG("cbDiscoverStatusChangedLocalReq [%d] -e", ret);
     return ret;
 }
 
 static void cbDiscoverStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbDiscoverStatusChangedRemoteRsp -s\r\n");
-    // LELOG("[%d][%s]\r\n", dataLen, dataIn);
-    LELOG("cbDiscoverStatusChangedRemoteRsp -e\r\n");
+    LELOG("cbDiscoverStatusChangedRemoteRsp -s");
+    // LELOG("[%d][%s]", dataLen, dataIn);
+    LELOG("cbDiscoverStatusChangedRemoteRsp -e");
 }
 
 static int cbDiscoverStatusChangedRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbDiscoverStatusChangedRemoteReq -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
-#ifndef __ANDROID__
+    LELOG("cbDiscoverStatusChangedRemoteReq -s");
+    LELOG("[%d][%s]", dataLen, dataIn);
     senginePollingRules((char *)dataIn, dataLen);
-#endif
-    LELOG("cbDiscoverStatusChangedRemoteReq -e\r\n");
+    LELOG("cbDiscoverStatusChangedRemoteReq -e");
     return ret;
 }
 
 static int cbDiscoverStatusChangedLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, NULL, 0, dataOut, dataLen);
-    LELOG("cbDiscoverStatusChangedLocalRsp -e\r\n");
+    LELOG("cbDiscoverStatusChangedLocalRsp -e");
     return ret;
 }
 
@@ -1245,20 +1288,20 @@ static int cbCtrlGetStatusLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint
     int ret = 0;
     // char reqCtrlGetStatus[128];
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCtrlGetStatusLocalReq -s\r\n");
+    LELOG("cbCtrlGetStatusLocalReq -s");
 
     // ret = halCBLocalReq(ctx, cmdInfo, reqCtrlGetStatus, sizeof(reqCtrlGetStatus));
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)NULL, 0, dataOut, dataLen);
     
-    LELOG("cbCtrlGetStatusLocalReq [%d] -e\r\n", ret);
+    LELOG("cbCtrlGetStatusLocalReq [%d] -e", ret);
     return ret;
 }
 static void cbCtrlGetStatusRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCtrlGetStatusRemoteRsp -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
-    LELOG("cbCtrlGetStatusRemoteRsp -e\r\n");
+    LELOG("cbCtrlGetStatusRemoteRsp -s");
+    LELOG("[%d][%s]", dataLen, dataIn);
+    LELOG("cbCtrlGetStatusRemoteRsp -e");
     return;
 }
 
@@ -1267,32 +1310,32 @@ static int cbCtrlCmdLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *d
     int ret = 0, encType = -1;
     char reqCtrlCmd[128];
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCtrlCmdLocalReq -s\r\n");
+    LELOG("cbCtrlCmdLocalReq -s");
 
     ret = halCBLocalReq(ctx, cmdInfo, reqCtrlCmd, sizeof(reqCtrlCmd));
     encType = cmdInfo->token[0] ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)reqCtrlCmd, ret, dataOut, dataLen);
     
-    LELOG("cbCtrlCmdLocalReq [%d] -e\r\n", ret);
+    LELOG("cbCtrlCmdLocalReq [%d] -e", ret);
     return ret;
 }
 static void cbCtrlCmdRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCtrlCmdRemoteRsp -s\r\n");
+    LELOG("cbCtrlCmdRemoteRsp -s");
     halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
-    LELOG("cbCtrlCmdRemoteRsp -e\r\n");
+    // LELOG("[%d][%s]", dataLen, dataIn);
+    LELOG("cbCtrlCmdRemoteRsp -e");
     return;
 }
 static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
     // uint8_t data[MAX_BUF] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCtrlCmdRemoteReq -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    LELOG("cbCtrlCmdRemoteReq -s");
+    LELOG("[%d][%s]", dataLen, dataIn);
     ret = setTerminalStatus((const char *)dataIn, dataLen);
-    LELOG("cbCtrlCmdRemoteReq [%d] -e\r\n", ret);
+    LELOG("cbCtrlCmdRemoteReq [%d] -e", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);
     // if (0 < ret) {
@@ -1305,35 +1348,35 @@ static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint
     int ret = 0, encType = -1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char rspCtrlCmd[MAX_BUF] = {0};
-    LELOG("cbCtrlCmdLocalRsp -s\r\n");
+    LELOG("cbCtrlCmdLocalRsp -s");
     ret = getTerminalStatus(rspCtrlCmd, sizeof(rspCtrlCmd));
     encType = (2 == ginStateCloudAuthed) ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspCtrlCmd, strlen(rspCtrlCmd), dataOut, dataLen);
-    LELOG("cbCtrlCmdLocalRsp -e\r\n");
+    LELOG("cbCtrlCmdLocalRsp -e");
     return ret;
 }
 
 static int cbCtrlGetStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCtrlGetStatusRemoteReq -s\r\n");
-    // LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    LELOG("cbCtrlGetStatusRemoteReq -s");
+    // LELOG("[%d][%s]", dataLen, dataIn);
     // test only
     // resetConfigData();
     
-    LELOG("cbCtrlGetStatusRemoteReq -e\r\n");
+    LELOG("cbCtrlGetStatusRemoteReq -e");
     return ret;
 }
 static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char status[MAX_BUF] = {0};
-    LELOG("cbCtrlGetStatusLocalRsp -s\r\n");
+    LELOG("cbCtrlGetStatusLocalRsp -s");
 
     ret = getTerminalStatus(status, sizeof(status));
     ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
     // ret = getTerminalStatus(binStatus, sizeof(binStatus));
-    LELOG("cbCtrlGetStatusLocalRsp -e\r\n");
+    LELOG("cbCtrlGetStatusLocalRsp -e");
     return ret;
 }
 
@@ -1343,7 +1386,7 @@ static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     int lenSignature = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     // CmdHeaderInfo cmdInfo = {0};
-    LELOG("cbCloudGetTargetLocalReq -s\r\n");
+    LELOG("cbCloudGetTargetLocalReq -s");
 
     // cmdInfo.status = 0;
     // cmdInfo.cmdId = LELINK_CMD_CLOUD_GET_TARGET_REQ;
@@ -1355,15 +1398,15 @@ static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     
     ginStateCloudLinked = ret > 0 ? 1 : 0;
 
-    LELOG("cbCloudGetTargetLocalReq [%d] -e\r\n", ret);
+    LELOG("cbCloudGetTargetLocalReq [%d] -e", ret);
     return ret;
 }
 
 static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCloudGetTargetRemoteRsp -s\r\n");
-    LELOG("total[%d] json[%s]\r\n", dataLen, dataIn + RSA_LEN);
+    LELOG("cbCloudGetTargetRemoteRsp -s");
+    LELOG("total[%d] json[%s]", dataLen, dataIn + RSA_LEN);
     char ip[MAX_IPLEN] = {0};
     uint16_t port = 0;
     uint8_t tPubkey[256] = {0};
@@ -1371,7 +1414,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     tPubkeyLen = getTerminalPublicKey(tPubkey, sizeof(tPubkey));
 
     if (0 != (ret = rsaVerify(tPubkey, tPubkeyLen, dataIn + RSA_LEN, dataLen - RSA_LEN, dataIn, RSA_LEN))) {
-        LELOGW("cbCloudGetTargetRemoteRsp rsaVerify Failed[%d]\r\n", ret);
+        LELOGW("cbCloudGetTargetRemoteRsp rsaVerify Failed[%d]", ret);
         ginStateCloudLinked = 0;
         return;
     }
@@ -1392,7 +1435,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     }
     ginStateCloudLinked = 2;
 
-    LELOG("cbCloudGetTargetRemoteRsp -e\r\n");
+    LELOG("cbCloudGetTargetRemoteRsp -e");
 }
 
 
@@ -1402,7 +1445,7 @@ static int cbCloudAuthLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t 
     int lenSignature = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     // CmdHeaderInfo cmdInfo = {0};
-    LELOG("cbCloudAuthLocalReq -s\r\n");
+    LELOG("cbCloudAuthLocalReq -s");
 
     // cmdInfo.status = 0;
     // cmdInfo.cmdId = LELINK_CMD_CLOUD_AUTH_REQ;
@@ -1414,15 +1457,15 @@ static int cbCloudAuthLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t 
     
     ginStateCloudAuthed = ret > 0 ? 1 : 0;
 
-    LELOG("cbCloudAuthLocalReq [%d] -e\r\n", ret);
+    LELOG("cbCloudAuthLocalReq [%d] -e", ret);
     return ret;
 }
 
 static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCloudAuthRemoteRsp -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    LELOG("cbCloudAuthRemoteRsp -s");
+    LELOG("[%d][%s]", dataLen, dataIn);
 
     // auth done
     if (0 > cmdInfo->status) {
@@ -1434,63 +1477,37 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
         halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
         ginStateCloudAuthed = 2;
     }
-    LELOG("cbCloudAuthRemoteRsp -e\r\n");
+    LELOG("cbCloudAuthRemoteRsp -e");
 }
 
 static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     char token[2*AES_LEN + 1] = {0};
-    // char account[128] = {0};
-    char status[MAX_BUF] = {0};
-    // CommonCtx *pCtx = COMM_CTX(ctx);
-    // CmdHeaderInfo cmdInfo = {0};
-    LELOG("cbCloudHeartBeatLocalReq -s\r\n");
 
-    // cmdInfo.status = 0;
-    // cmdInfo.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
-    // cmdInfo.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
-    // cmdInfo.seqId = 0;
-    
-    // token[0] = '"';
-    // getTerminalTokenStr(token + 1, sizeof(token) - 1);
-    // token[sizeof(token) - 2] = '"';
+    char status[MAX_BUF] = {0};
+
+    LELOG("cbCloudHeartBeatLocalReq -s");
+
     getTerminalTokenStr(token, sizeof(token));
     ret = getTerminalStatus(status, sizeof(status));
-    // #ifdef TEST_SDK
-    // ret = halCBLocalReq(ctx, cmdInfo, account, sizeof(account));
-    // #endif
-    // if (ret > 0) {
-    //     genCompositeJson(out, sizeof(out), 3, 
-    //         "now", status, 
-    //         "token", token, 
-    //         "account", account);
-    // } else {
-    //     genCompositeJson(out, sizeof(out), 2, 
-    //         "now", status, 
-    //         "token", token);
-    // }
 
-    // if (0 < ret) {
-    //     sprintf(out, "{\"now\":{%s},\"token\":\"%s\",\"account\":\"%s\"}", status, token, account);
-    // } else {
-    //     sprintf(out, "{\"now\":{%s},\"token\":\"%s\"}", status, token);
-    // }
     ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    LELOG("appended token [%s]\r\n", status);
+    LELOG("appended token [%s]", status);
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     
-    LELOG("cbCloudHeartBeatLocalReq [%d] -e\r\n", ret);
+    LELOG("cbCloudHeartBeatLocalReq [%d] -e", ret);
     return ret;
 }
 
 static void cbCloudHeartBeatRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCloudHeartBeatRemoteRsp -s\r\n");
-    LELOG("Now version: %s-%s\r\n", __DATE__, __TIME__);
+    LELOG("cbCloudHeartBeatRemoteRsp -s");
+    // LELOG("Now version: %s-%s", __DATE__, __TIME__);
+    // LELOG("[%d][%s]", dataLen, dataIn);
 	halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudHeartBeatRemoteRsp -e\r\n");
+    LELOG("cbCloudHeartBeatRemoteRsp -e");
 }
 
 
@@ -1499,56 +1516,59 @@ static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo,
     // char token[2*AES_LEN + 1] = {0};
     // char account[128] = {0};
     char status[MAX_BUF] = {0};
-    char token[2*AES_LEN + 1] = {0};
+    // char token[2*AES_LEN + 1] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
     // CmdHeaderInfo cmdInfo = {0};
-    LELOG("cbCloudStatusChangedLocalReq -s\r\n");
+    LELOG("cbCloudStatusChangedLocalReq -s");
 
-    getTerminalTokenStr(token, sizeof(token));
+    // getTerminalTokenStr(token, sizeof(token));
     ret = getTerminalStatus(status, sizeof(status));
-    if (0 < ret) {
-        getTerminalTokenStr(token, sizeof(token));
-        sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    } 
-    LELOG("appended token [%s]\r\n", status);
+    if (0 > ret) {
+        ret = 0;
+    }
+    // if (0 < ret) {
+    //     getTerminalTokenStr(token, sizeof(token));
+    //     sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    // } 
+    LELOG("No need token [%s]", status);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
-    LELOG("cbCloudStatusChangedLocalReq [%d] -e\r\n", ret);
+    LELOG("cbCloudStatusChangedLocalReq [%d] -e", ret);
     return ret;
 }
 
 static void cbCloudStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbCloudStatusChangedRemoteRsp -s\r\n");
+    LELOG("cbCloudStatusChangedRemoteRsp -s");
     // halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudStatusChangedRemoteRsp -e\r\n");
+    LELOG("cbCloudStatusChangedRemoteRsp -e");
 }
 
 
 static int cbCloudMsgCtrlC2RLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
-    int ret = 0;
+    int ret = 0, len = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);  
     // CmdHeaderInfo tmpCmdInfo;
     char rmtCtrl[256] = {0};
-    LELOG("cbCloudMsgCtrlC2RLocalReq -s\r\n");
+    LELOG("cbCloudMsgCtrlC2RLocalReq -s");
 
     // memcpy(&tmpCmdInfo, cmdInfo, sizeof(CmdHeaderInfo));
     // getUUIDFromJson(rmtCtrl, sizeof(getUUIDFromJson), tmpCmdInfo.uuid);
 
-    ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl, sizeof(rmtCtrl));
+    len = ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl, sizeof(rmtCtrl));
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret, dataOut, dataLen);
 
-    LELOG("cbCloudMsgCtrlC2RLocalReq -e\r\n");
+    LELOG("cbCloudMsgCtrlC2RLocalReq [%d][%s] -e", len, rmtCtrl);
     return ret;
 }
 
 static void cbCloudMsgCtrlC2RRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbCloudMsgCtrlC2RRemoteRsp -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, (char *)dataIn);
+    LELOG("cbCloudMsgCtrlC2RRemoteRsp -s");
+    LELOG("[%d][%s]", dataLen, (char *)dataIn);
     halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudMsgCtrlC2RRemoteRsp -e\r\n");
+    LELOG("cbCloudMsgCtrlC2RRemoteRsp -e");
     return;
 }
 
@@ -1575,23 +1595,25 @@ static void cbCloudMsgCtrlC2RRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, 
 
 static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     // uint8_t data[MAX_BUF] = {0};
-    LELOG("cbCloudMsgCtrlR2TRemoteReq -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
+    int ret = 0;
+    LELOG("cbCloudMsgCtrlR2TRemoteReq -s");
+    // LELOG("[%d][%s]", dataLen, dataIn);
     // setCurrentR2T
     setTerminalStatus((const char *)dataIn, dataLen);
-    LELOG("cbCloudMsgCtrlR2TRemoteReq -e\r\n");
-    return halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
+    ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
+    LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
+    return ret;
 }
 
 static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char status[MAX_BUF] = {0};
-    LELOG("cbCloudMsgCtrlR2TLocalRsp -s\r\n");
+    LELOG("cbCloudMsgCtrlR2TLocalRsp -s");
     // ret = halCBLocalRsp(ctx, cmdInfo, data, len, status, sizeof(status));
     ret = getTerminalStatus(status, sizeof(status));
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
-    LELOG("cbCloudMsgCtrlR2TLocalRsp -e\r\n");
+    LELOG("cbCloudMsgCtrlR2TLocalRsp -e");
     return ret;
 }
 
@@ -1601,7 +1623,7 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
     // CmdHeaderInfo tmpCmdInfo;
     char query[128] = {0};
     // char report[128] = {0};
-    LELOG("cbCloudReportLocalReq -s\r\n");
+    LELOG("cbCloudReportLocalReq -s");
 
     // memcpy(&tmpCmdInfo, cmdInfo, sizeof(CmdHeaderInfo));
     // getqueryFromJson(query, sizeof(getqueryFromJson), tmpCmdInfo.query);
@@ -1611,15 +1633,14 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
     // sprintf(report, "{\"query\":\"%s\"}", query);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
 
-    LELOG("cbCloudReportLocalReq -e\r\n");
+    LELOG("cbCloudReportLocalReq -e");
     return ret;
 }
-
 static void cbCloudReportRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbCloudReportRemoteRsp -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, (char *)dataIn);
+    LELOG("cbCloudReportRemoteRsp -s");
+    // LELOG("[%d][%s]", dataLen, (char *)dataIn);
     halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudReportRemoteRsp -e\r\n");
+    LELOG("cbCloudReportRemoteRsp -e");
     return;
 }
 
@@ -1632,9 +1653,9 @@ static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo
     // char ver[32] = {0};
     // char fmt[32] = "{\"ver\":\"%s\"}";
     // int verPos = 0;
-    LELOG("cbCloudReportOTAQueryLocalReq -s\r\n");
+    LELOG("cbCloudReportOTAQueryLocalReq -s");
 
-    ret = halCBLocalReq(ctx, cmdInfo, query, strlen(query));
+    ret = halCBLocalReq(ctx, cmdInfo, query, sizeof(query));
     // getTerminaluuidAndType((uint8_t *)uuidAndType, MAX_UUID);
     // getVer(ver, sizeof(ver));
     // if (strlen(query) > 0) {
@@ -1642,55 +1663,75 @@ static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo
     //     fmt[0] = ',';
     // }
     // sprintf(query + verPos, fmt, ver);
-    LELOG("%s\r\n", query);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
+    LELOG("[%d][%s]", ret, query);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, ret, dataOut, dataLen);
 
-    LELOG("cbCloudReportOTAQueryLocalReq -e\r\n");
+    LELOG("cbCloudReportOTAQueryLocalReq -e");
     return ret;
 }
-
 static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbCloudReportOTAQueryRemoteRsp -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, (char *)dataIn);
+    LELOG("cbCloudReportOTAQueryRemoteRsp -s");
+    LELOG("TOTOAL[%d] json[%d][%s]", dataLen, dataLen - RSA_LEN, (char *)dataIn + RSA_LEN);
     halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudReportOTAQueryRemoteRsp -e\r\n");
+    LELOG("cbCloudReportOTAQueryRemoteRsp -e");
     return;
 }
 
 static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     char rmtCtrl[256] = {0};
-    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -s\r\n");
+    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -s");
 
     ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl, sizeof(rmtCtrl));
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret, dataOut, dataLen);
 
-    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -e\r\n");
+    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -e");
     return ret;
 }
-
 static void cbCloudMsgCtrlC2RDoOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, (char *)dataIn);
+    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -s");
+    if (0 < dataLen) {
+        LELOG("[%d][%s]", dataLen, (char *)dataIn);
+    }
     halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -e\r\n");
+    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -e");
     return;
 }
-
 static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     // uint8_t data[MAX_BUF] = {0};
-    LELOG("cbCloudMsgCtrlR2TDoOTARemoteReq -s\r\n");
-    LELOG("[%d][%s]\r\n", dataLen, dataIn);
-    // TODO: OTA
-    leOTA(OTA_TYPE_FW, "http://115.182.63.167/fei/le_demo.bin", NULL);
-    LELOG("cbCloudMsgCtrlR2TDoOTARemoteReq -e\r\n");
-    return halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
-}
+    int type = 0;
+    char url[MAX_BUF] = {0};
+    uint8_t sig[RSA_LEN] = {0};
+    LELOG("cbCloudMsgCtrlR2TDoOTARemoteReq -s");
+    if (dataLen > RSA_LEN) {
+        memcpy(sig, dataIn, sizeof(sig));
+        type = getJsonOTAType(dataIn + RSA_LEN, dataLen - RSA_LEN, url, sizeof(url));
+        LELOG("TOTOAL[%d] type[%d] json[%d][%s]", dataLen, type, dataLen - RSA_LEN, (char *)dataIn + RSA_LEN);
+        switch (type) {
+            case OTA_TYPE_FW_SCRIPT:
+            case OTA_TYPE_IA_SCRIPT: {
+                leOTA(type, url, sig, RSA_LEN);
+            }break;
+            case OTA_TYPE_PRIVATE:
+            case OTA_TYPE_AUTH: 
+            case OTA_TYPE_FW:{
+                if (0 <= leOTA(type, url, NULL, 0)) {
+                    halReboot();
+                }
+            }break;
+            default:
+                break;
+        }
+    }
 
+    LELOG("cbCloudMsgCtrlR2TDoOTARemoteReq -e");
+    return 1;
+}
 static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
+    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp -s");
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
-    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp -e\r\n");
+    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp [%d] -e", ret);
     return ret;
 }
 
@@ -1700,17 +1741,17 @@ static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     // CmdHeaderInfo tmpCmdInfo;
     // char uuid[64] = {0};
     // char query[128] = {0};
-    LELOG("cbCloudIndOTARemoteReq -s\r\n");
-    LELOG("cbCloudIndOTARemoteReq -e\r\n");
+    LELOG("cbCloudIndOTARemoteReq -s");
+    LELOG("cbCloudIndOTARemoteReq -e");
     return 1;
 }
 
 static int cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    LELOG("cbCloudIndOTALocalRsp -s\r\n");
+    LELOG("cbCloudIndOTALocalRsp -s");
     // halCBLocalRsp(ctx, cmdInfo, dataIn, dataLen);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
-    LELOG("cbCloudIndOTALocalRsp [%d] -e\r\n", ret);
+    LELOG("cbCloudIndOTALocalRsp [%d] -e", ret);
     return ret;
 }
 
@@ -1720,26 +1761,48 @@ static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, co
     // CmdHeaderInfo tmpCmdInfo;
     // char uuid[64] = {0};
     // char query[128] = {0};
-    LELOG("cbCloudIndStatusRemoteReq -s\r\n");
-    LELOG("[%d][%s]\r\n", len, data);
-#ifndef __ANDROID__
+    LELOG("cbCloudIndStatusRemoteReq -s");
+    LELOG("[%d][%s]", len, data);
     senginePollingRules((char *)data, len);
-#endif
-    LELOG("cbCloudIndStatusRemoteReq -e\r\n");
+    LELOG("cbCloudIndStatusRemoteReq -e");
     return 1;
 }
 
 static int cbCloudIndStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret;
-    LELOG("cbCloudIndStatusLocalRsp -s\r\n");
+    LELOG("cbCloudIndStatusLocalRsp -s");
     // halCBLocalRsp(ctx, cmdInfo, dataIn, dataLen);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
-    LELOG("cbCloudIndStatusLocalRsp [%d] -e\r\n", ret);
+    LELOG("cbCloudIndStatusLocalRsp [%d] -e", ret);
 
     //char rspHello[] = "{ \"msg\":\"i know u got it.\" }";
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    // LELOG("cbHelloLocalRsp -s\r\n");
-    // LELOG("cbHelloLocalRsp -e\r\n");
+    // LELOG("cbHelloLocalRsp -s");
+    // LELOG("cbHelloLocalRsp -e");
+
+    return ret;
+}
+
+static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len) {
+    int ret = 0;
+    LELOG("cbCloudIndMsgRemoteReq -s");
+    // LELOG("[%d][%s]", len, data);
+    // senginePollingRules((char *)data, len);
+    ret = setLock();
+    LELOG("cbCloudIndMsgRemoteReq [%d] -e", ret);
+    return ret;
+}
+static int cbCloudIndMsgLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+    int ret;
+    LELOG("cbCloudIndMsgLocalRsp -s");
+    // halCBLocalRsp(ctx, cmdInfo, dataIn, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbCloudIndMsgLocalRsp [%d] -e", ret);
+
+    //char rspHello[] = "{ \"msg\":\"i know u got it.\" }";
+    // CommonCtx *pCtx = COMM_CTX(ctx);
+    // LELOG("cbHelloLocalRsp -s");
+    // LELOG("cbHelloLocalRsp -e");
 
     return ret;
 }
@@ -1752,11 +1815,11 @@ CmdRecord *getCmdRecord(uint32_t cmdId, uint32_t subCmdId) {
         if (tblCmdType[i].cmdId == cmdId && tblCmdType[i].subCmdId == subCmdId)
         {
             if (cmdId % 2)
-                LELOG("POST getCmdRecord cmdId[%d] subCmdId[%d]\r\n", cmdId, subCmdId);
+                LELOG("POST getCmdRecord cmdId[%d] subCmdId[%d]", cmdId, subCmdId);
             return &tblCmdType[i];
         }
     }
-    LELOGW("getCmdRecord NULL\r\n");
+    LELOGW("getCmdRecord NULL");
     return NULL;
 }
 

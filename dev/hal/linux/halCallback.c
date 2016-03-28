@@ -2,9 +2,10 @@
 
 #include "halHeader.h"
 #include "protocol.h"
+#include "ota.h"
 
 extern uint8_t ginBeCtrlToken[];
-static char ginOTAUrl[128] = {0};
+static uint8_t ginOTAUrl[RSA_LEN + 128] = {0};
 
 // static uint8_t ginUUID[32];
 
@@ -18,8 +19,24 @@ static char ginOTAUrl[128] = {0};
  */
 int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len) {
     int ret = 0;
-    APPLOG("halCBLocalReq -S\r\n");
-    char cmdCtrl[64] = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
+    APPLOG("halCBLocalReq -S");
+#if 0
+    const char *cmd1 = "{\"ctrl\":{\"pwr\":1,\"action\":1}}";
+    const char *cmd2 = "{\"ctrl\":{\"pwr\":1,\"action\":2}}";
+    const char *cmd3 = "{\"ctrl\":{\"pwr\":1,\"action\":3}}";
+    const char *cmd4 = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
+#else
+    const char *cmd1 = "{\"ctrl\":{\"pwr\":1,\"idx1\":1,\"idx2\":1,\"idx3\":1,\"idx4\":1}}";
+    const char *cmd2 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":0,\"idx3\":1,\"idx4\":1}}";
+    const char *cmd3 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":0,\"idx3\":0,\"idx4\":0}}";
+    const char *cmd4 = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
+#endif
+    char cmdCtrl[64] = {0};
+    static int a = 0;
+    // strcpy(cmdCtrl, cmd4);
+
+    // char cmdCtrl[64] = "{\"ctrl\":{\"idx2\":1,\"idx3\":1}}";
+    // char cmdCtrl[64] = "{\"ctrl\":{\"idx1\":1}}";
     // char *reqCtrlStd = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
     //                    "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
 
@@ -36,20 +53,68 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
         }break;
         case LELINK_CMD_CTRL_REQ: {
             if (LELINK_SUBCMD_CTRL_CMD_REQ == cmdInfo->subCmdId) {
+                if (a) {
+                    strcpy(cmdCtrl, cmd1);
+                } else {
+                    strcpy(cmdCtrl, cmd2);
+                }
                 ret = len < strlen(cmdCtrl) ? len : strlen(cmdCtrl);
                 memcpy(data, cmdCtrl, ret);
+                APPLOG("CTRL req[%d][%s]", ret, cmdCtrl);
             }
         }break;
         // remote ctrl
         case LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ: {
             if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == cmdInfo->subCmdId) {
+                if (a) {
+                    strcpy(cmdCtrl, cmd2);
+                } else {
+                    strcpy(cmdCtrl, cmd3);
+                }
                 ret = len < strlen(cmdCtrl) ? len : strlen(cmdCtrl);
                 memcpy(data, cmdCtrl, ret);
+                APPLOG("C2R req[%d][%s]", ret, cmdCtrl);
             } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ == cmdInfo->subCmdId) {
-                APPLOG("get ota url 1 [%d][%s]\r\n", strlen(ginOTAUrl), ginOTAUrl);
-                memcpy(data, ginOTAUrl, len > strlen(ginOTAUrl) ? strlen(ginOTAUrl) : len);
-                APPLOG("get ota url 2 [%d][%s]\r\n", strlen(data), data);
-                ret = strlen(data);
+                int type = 0, sizeOTA = 0;
+                sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
+                // test only for trig a OTA
+                if (RSA_LEN >= sizeOTA) {
+                    // type = OTA_TYPE_FW;
+                    // type = OTA_TYPE_FW_SCRIPT;
+                    // type = OTA_TYPE_IA_SCRIPT;
+                    // type = OTA_TYPE_AUTH;
+                    type = OTA_TYPE_PRIVATE;
+                    switch (type) {
+                        case OTA_TYPE_FW: {
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo.bin", type, 35);
+                        } break;
+                        case OTA_TYPE_FW_SCRIPT: {
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar.lua", type, 35);
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dingding.lua", type, 35);
+                        } break;
+                        case OTA_TYPE_IA_SCRIPT: {
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOn.lua", type, 35);
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOff.lua", type, 35);
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_withTime.lua", type, 35);
+                        } break;
+                        case OTA_TYPE_AUTH: {
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1c2000.bin", type, 35);
+                        } break;
+                        case OTA_TYPE_PRIVATE: {
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1c8000.bin", type, 35);
+                        } break;
+                        default: {
+                            APPLOG("unknown type");
+                        } break;
+                    }
+                    sizeOTA += strlen(ginOTAUrl + RSA_LEN);
+                }
+                // test only END
+                memcpy(data, ginOTAUrl, len > sizeOTA ? sizeOTA : len);
+                
+                APPLOG("LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ [%d][%s]", sizeOTA, ginOTAUrl + RSA_LEN);
+                ret = sizeOTA;
             }
         }break;
         case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
@@ -61,30 +126,28 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
             }
         }break;
         case LELINK_CMD_CLOUD_REPORT_REQ: {
-            if (LELINK_SUBCMD_CLOUD_REPORT_REQ == cmdInfo->subCmdId || 
-                LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ == cmdInfo->subCmdId) {
-                // char uuid[64] = {0};
-                // char ver[] = {"\"1-0.9.9-1-1.0\""};
-                // strcpy(uuid, UUID_BEING_CTRL);
-                // // ret = len < strlen(uuid) ? len : strlen(uuid);
-                // ret = sprintf(data, "{\"uuid\":\"%s\",\"type\":%d,\"ver\":%s}", uuid, type, ver);
-                // // memcpy(data, uuid, ret);
-                // APPLOG("data [%d][%s]\r\n", ret, data);
-                // memset(ginOTAUrl, 0, sizeof(ginOTAUrl));
-                // memcpy(ginOTAUrl, data, len > sizeof(ginOTAUrl) ? sizeof(ginOTAUrl) : len);
-                int type = 2;
-                char uuid[64] = {0};
-                char ver[] = {"\"1-0.9.9-1-1.0\""};
+            char uuid[64] = {0};
+            // PF-FW-PROTOCOL-FWS
+            char ver[] = {"\"1-0.9.9-1-1.0\""};
+            if (LELINK_SUBCMD_CLOUD_REPORT_REQ == cmdInfo->subCmdId) {
                 strcpy(uuid, UUID_BEING_CTRL);
-                // ret = len < strlen(uuid) ? len : strlen(uuid);
+                ret = sprintf(data, "{\"uuid\":\"%s\"}", uuid);
+            } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ == cmdInfo->subCmdId) {
+                int type = OTA_TYPE_FW;
+                // int type = OTA_TYPE_FW_SCRIPT;
+                // int type = OTA_TYPE_IA_SCRIPT;
+                strcpy(uuid, UUID_BEING_OTA);
                 ret = sprintf(data, "{\"uuid\":\"%s\",\"type\":%d,\"ver\":%s}", uuid, type, ver);
                 // memcpy(data, uuid, ret);
-                APPLOG("ota query data [%d][%s]\r\n", ret, data);
+                APPLOG("OTA query data [%d][%s]", ret, data);
             }
         }break;
 
     }
-    APPLOG("halCBLocalReq [%d] -e\r\n", ret);
+    APPLOG("halCBLocalReq [%d] -e", ret);
+
+    a = ~a;
+
     return ret;
 }
 
@@ -95,10 +158,14 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
  */
 void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
     char tmpUUID[MAX_UUID + 1] = {0};
-    APPLOG("halCBRemoteRsp -s\r\n");
+    char tmpBuf[1500] = {0};
+    if (len > 0) {
+        memcpy(tmpBuf, payloadBody, len);
+    }
+    APPLOG("halCBRemoteRsp id[%d][%d] [%d][%s] -s", cmdInfo->cmdId, cmdInfo->subCmdId, len, tmpBuf);
     memcpy(tmpUUID, cmdInfo->uuid, MAX_UUID);
-    // APPLOG("halCBRemoteRsp status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \r\n\
-    //     passThru[%d] uuid[%s]\r\n", 
+    // APPLOG("halCBRemoteRsp status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \
+    //     passThru[%d] uuid[%s]", 
     //     cmdInfo->status, 
     //     cmdInfo->cmdId, 
     //     cmdInfo->subCmdId, 
@@ -106,7 +173,7 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
     //     cmdInfo->randID, 
     //     cmdInfo->passThru, 
     //     tmpUUID);
-    // APPLOG("halCBRemoteRsp len[%d][%s]\r\n", len, payloadBody);
+    // APPLOG("halCBRemoteRsp len[%d][%s]", len, payloadBody);
 
     switch (cmdInfo->cmdId) {
         // remote ctrl
@@ -120,13 +187,14 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
 #include "jsmn/jsgen.h"
                 int ret = -1;
                 int dir = 0;
+                char tmp[512] = {0};
                 jsontok_t jsonToken[256];
-                char tokenStr[AES_LEN*2 + 1];
-
+                char tokenStr[AES_LEN*2 + 1] = {0};
                 jobj_t jobj;
-                // char *str = "{\"cloud\":\"1\",\"status\":{\"level\":\"3\",\"mark\":\"2\",\"pwr\":\"1\"},\"token\":\"1113a3e617b7f0e63df0e82879765e97\",\"uuid\":\"10000100011000510005123456abcdef\"}";
+                memcpy(tmp, payloadBody, len < sizeof(tmp) ? len : sizeof(tmp) - 1);
 
-                ret = json_init(&jobj, jsonToken, 256, (char *)payloadBody, len);
+                // char *str = "{\"cloud\":\"1\",\"status\":{\"level\":\"3\",\"mark\":\"2\",\"pwr\":\"1\"},\"token\":\"1113a3e617b7f0e63df0e82879765e97\",\"uuid\":\"10000100011000510005123456abcdef\"}";
+                ret = json_init(&jobj, jsonToken, sizeof(jsonToken), (char *)payloadBody, len);
                 if (WM_SUCCESS != ret) {
                     return;
                 }
@@ -136,17 +204,19 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
                 }
 
                 hexStr2bytes(tokenStr, ginBeCtrlToken, AES_LEN);
-
-            } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP) {
+                // APPLOG("report rsp[%d][%s]", len, tmp);
+            } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP == cmdInfo->subCmdId) {
                 memset(ginOTAUrl, 0, sizeof(ginOTAUrl));
                 memcpy(ginOTAUrl, payloadBody, len > sizeof(ginOTAUrl) ? sizeof(ginOTAUrl) : len);                
-                APPLOG("set ota url [%d][%s]\r\n", strlen(ginOTAUrl), ginOTAUrl);
+                APPLOG("set ota url [%d][%s]", RSA_LEN + strlen(ginOTAUrl + RSA_LEN), ginOTAUrl + RSA_LEN);
             }
 
         }break;
         case LELINK_CMD_DISCOVER_RSP: {
             if (LELINK_SUBCMD_DISCOVER_RSP == cmdInfo->subCmdId) {
-                APPLOG("halCBRemoteRsp LELINK_SUBCMD_DISCOVER_RSP [%s]\r\n", payloadBody);
+                // APPLOG("halCBRemoteRsp LELINK_SUBCMD_DISCOVER_RSP [%s]", payloadBody);
+            } else if (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_RSP == cmdInfo->subCmdId) {
+                // APPLOG("halCBRemoteRsp LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_RSP [%s]", payloadBody);
             }
         }break;
 
@@ -165,9 +235,9 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
  */
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
     int ret = 1;
-    APPLOG("halCBRemoteReq -s\r\n");
-    // APPLOG("halCBRemoteReq status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \r\n\
-    //     passThru[%d] uuid[%s]\r\n", 
+    APPLOG("halCBRemoteReq -s");
+    // APPLOG("halCBRemoteReq status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \
+    //     passThru[%d] uuid[%s]", 
     //     cmdInfo->status, 
     //     cmdInfo->cmdId, 
     //     cmdInfo->subCmdId, 
@@ -175,7 +245,7 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
     //     cmdInfo->randID, 
     //     cmdInfo->passThru, 
     //     cmdInfo->uuid);
-    APPLOG("halCBRemoteReq len[%d][%s]\r\n", len, payloadBody);
+    APPLOG("halCBRemoteReq len[%d][%s]", len, payloadBody);
 
     switch (cmdInfo->cmdId) {
         case LELINK_CMD_HELLO_REQ: {
@@ -208,7 +278,7 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
  */
 int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, char *nw, int nwLenOut) {
     int ret = 0;
-    APPLOG("halCBLocalRsp -s\r\n");
+    APPLOG("halCBLocalRsp -s");
     switch (cmdInfo->cmdId) {
         case LELINK_CMD_HELLO_RSP: {
             if (LELINK_SUBCMD_HELLO_RSP == cmdInfo->subCmdId) {
@@ -225,6 +295,6 @@ int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, 
         }break;
 
     }
-    APPLOG("halCBLocalRsp [%d] -e\r\n", ret);
+    APPLOG("halCBLocalRsp [%d] -e", ret);
     return ret;
 }

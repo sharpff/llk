@@ -20,6 +20,18 @@ unsigned int halGetUTC(void) {
     return 1234;
 }
 
+void *halCalloc(int n, size_t size) {
+    void *ptr = pvPortMalloc(n*size);
+    if (ptr)
+        memset(ptr, 0x00, n*size);
+    return ptr;
+}
+
+void halFree(void *ptr) {
+    if (ptr)
+        vPortFree(ptr);
+}
+
 int halReboot(void) {
     app_reboot(REASON_USER_REBOOT);
     return 0;

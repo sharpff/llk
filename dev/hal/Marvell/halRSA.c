@@ -154,25 +154,25 @@ int halRsaEncrypt(const uint8_t *pubkey, int pubkeyLen, const uint8_t* input, in
     word32 idx = 0, ret;
     RNG    rng;
 
-    APPLOG("rsaDecrypt start\r\n");
+    APPLOG("rsaDecrypt start");
 
     InitRsaKey(&key, 0);
     
     ret = RsaPublicKeyDecode(pubkey, &idx, &key, pubkeyLen);
     if (ret != 0) {
-        APPLOGE("rsaDecrypt RsaPublicKeyDecode %d\r\n", ret);
+        APPLOGE("rsaDecrypt RsaPublicKeyDecode %d", ret);
         return -1;
     }
     
     ret = InitRng(&rng);
     if (ret != 0) {
-        APPLOGE("RSA Random number generator error: %d\r\n", ret);
+        APPLOGE("RSA Random number generator error: %d", ret);
         return -2;
     }
     ret = RsaPublicEncrypt(input, inputLen, out, outLen, &key, &rng);
     if (0 > ret)
     {
-        APPLOGE("rsaDecrypt RsaPublicDecrypt failed[%d]\r\n", ret);
+        APPLOGE("rsaDecrypt RsaPublicDecrypt failed[%d]", ret);
         return -3;
     }
     FreeRsaKey(&key);
@@ -186,20 +186,20 @@ int halRsaDecrypt(const uint8_t *prikey, int prikeyLen, const uint8_t* input, in
     RsaKey key;
     word32 idx = 0;
     
-    APPLOG("rsaDecrypt start\r\n");
+    APPLOG("rsaDecrypt start");
 
     InitRsaKey(&key, 0);
     
     ret = RsaPrivateKeyDecode(prikey, &idx, &key, prikeyLen);
     if (ret != 0) {
-        APPLOGE("rsaDecrypt RsaPrivateKeyDecode %d\r\n", ret);
+        APPLOGE("rsaDecrypt RsaPrivateKeyDecode %d", ret);
         return -1;
     }
     
     ret = RsaPrivateDecrypt(input, inputLen, out, outLen, &key);
     if (0 > ret)
     {
-        APPLOGE("rsaDecrypt RsaPrivateDecrypt failed[%d]\r\n", ret);
+        APPLOGE("rsaDecrypt RsaPrivateDecrypt failed[%d]", ret);
         return -2;
     }
     FreeRsaKey(&key);
@@ -219,23 +219,23 @@ int halRsaVerify(const uint8_t* pubkey, int pubkeyLen,
     
     memset(hashDecrypt, 0, sizeof(hashDecrypt));
     InitRsaKey(&key, 0);
-    APPLOG("rsaVerify start\r\n");
+    APPLOG("rsaVerify start");
     //hex2bin(pubkey, pubkey, sizeof(pubkey));
     ret = RsaPublicKeyDecode(pubkey, &idx, &key, pubkeyLen);
     if (ret < 0) {
-        APPLOGE("RsaPublicKeyDecode : %d\r\n", ret);
+        APPLOGE("RsaPublicKeyDecode : %d", ret);
         return -1;
     }
     ret = RsaSSL_Verify(sig, sigLen, hashDecrypt, size, &key);
     
     if (memcmp(raw, hashDecrypt, size) || ret < 0) {
         FreeRsaKey(&key);
-        APPLOGE("RSA Verify error : %d\r\n", ret);
+        APPLOGE("RSA Verify error : %d", ret);
         return -2;
     }
 
     FreeRsaKey(&key);
-    APPLOG("rsaVerify OK\r\n");
+    APPLOG("rsaVerify OK");
 
     return ret;
 }

@@ -30,7 +30,7 @@ CC=$(CROSS_COMPILE)-gcc
 AR=$(CROSS_COMPILE)-ar
 
 CFLAGS=-mthumb -g -Os -ffunction-sections -ffreestanding -MMD -Wall \
-	-fno-strict-aliasing -mcpu=$(ARCH-y) -fdata-sections -fno-common -Wno-implicit-function-declaration
+	-fno-strict-aliasing -mcpu=$(ARCH-y) -fdata-sections -fno-common -Wno-implicit-function-declaration -Wno-comment
 
 CFLAGS += -I$(CURDIR) -I$(CURDIR)/incl
 

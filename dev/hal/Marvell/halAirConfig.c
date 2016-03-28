@@ -17,12 +17,12 @@ int halDoConfig(void *ptr, int ptrLen) {
         app_sta_stop();
     }
 	ret = airconfig_start(NULL, NULL, 0);
-    APPLOG("halDoConfig in hal [%d]\r\n", ret);
+    APPLOG("halDoConfig in hal [%d]", ret);
 	return ret;
 }
 
 int halDoConfiguring(void *ptr, int ptrLen) {
-    APPLOG("halDoConfiguring in hal [%d]\r\n", gin_airconfig_sniffer_got);
+    APPLOG("halDoConfiguring in hal [%d]", gin_airconfig_sniffer_got);
 	return gin_airconfig_sniffer_got;
 }
 
@@ -37,7 +37,7 @@ int halDoApConnect(void *ptr, int ptrLen) {
         inner_set_ap_info(&passport);
     }
     ret = app_sta_start_by_network(&gin_sta_net);
-    APPLOG("halDoApConnect in hal[%d]\r\n", ret);
+    APPLOG("halDoApConnect in hal[%d]", ret);
     if (WM_SUCCESS == ret) {
     	ret = 1;
     }
@@ -48,7 +48,7 @@ int halDoApConnect(void *ptr, int ptrLen) {
 }
 
 int halDoApConnecting(void *ptr, int ptrLen) {
-    APPLOG("halDoApConnecting in hal[%d]\r\n", gin_airconfig_ap_connected);
+    APPLOG("halDoApConnecting in hal[%d]", gin_airconfig_ap_connected);
     return gin_airconfig_ap_connected;
 }
 

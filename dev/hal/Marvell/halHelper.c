@@ -71,10 +71,7 @@ inline int hal_vsnprintf(char *buffer, size_t n, const char *format, va_list ap)
 }
 
 inline int hal_strcoll(const char *l, const char *r) {
-    // TODO:
-    // zero are equal
-    // greater than 0, l > r
-    return 0;
+    return (strlen(l) - strlen(r)); 
 }
 
 inline void hal_abort() {
@@ -89,44 +86,43 @@ inline double floor(double x) {
     return (double)(x < 0.f ? (((int)x) - 1) : ((int)x));
 }
 inline void _exit(int status) {
-    APPLOG("_exit\r\n");
-    while (1);
+    APPLOGE("_exit");
 }
 typedef int FILEHANDLE;
 inline int _close(FILEHANDLE fh) {
-    APPLOG("_close\r\n");
+    APPLOGE("_close");
     return 0;
 }
 inline int _write(FILEHANDLE fh, const unsigned char *buf, unsigned len, int mode) {
-    APPLOG("_write\r\n");
+    APPLOGE("_write");
     return 0;
 }
 inline int _read(FILEHANDLE fh, unsigned char*buf, unsigned len, int mode) {
-    APPLOG("_read\r\n");
+    APPLOGE("_read");
     return 0;
 }
 inline int _lseek(FILEHANDLE fh, long pos) {
-    APPLOG("_lseek\r\n");
+    APPLOGE("_lseek");
     return 0;
 }
 inline long _fstat(FILEHANDLE fh) {
-    APPLOG("_fstat\r\n");
+    APPLOGE("_fstat");
     return 0;
 }
 inline int _isatty(FILEHANDLE fh) {
-    APPLOG("_isatty\r\n");
+    APPLOGE("_isatty");
     return 0;
 }
 inline int _kill(FILEHANDLE fh) {
-    APPLOG("_kill\r\n");
+    APPLOGE("_kill");
     return 0;
 }
 inline int _getpid(FILEHANDLE fh) {
-    APPLOG("_getpid\r\n");
+    APPLOGE("_getpid");
     return 0;
 }
 inline int _sbrk(void) {
-    APPLOG("_sbrk\r\n");
+    APPLOGE("_sbrk");
     return 0;
 }
 

@@ -191,17 +191,19 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 		$(CONDITIONS CHECK) may include the following cases
 	]]
 	-- 1. OR condition check 
-	-- if tblConditions[1] or tblConditions[2] then
-	-- 	ok = 1
-	-- end
+	if tblConditions[1] or tblConditions[2] then
+		ok = 1
+	end
 
-	-- 1. AND condition check 
+	-- -- 2. AND condition check 
 	-- if 1 == tblConditions[1] and 1 == tblConditionsOld[2] then
 	-- 	ok = 1
 	-- end
 	-- if 1 == tblConditions[2] and 1 == tblConditionsOld[1] then
 	-- 	ok = 1
 	-- end
+
+
 
 	-- CUSTOMIZATION END
 

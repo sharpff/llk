@@ -17,6 +17,19 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
     return len;
 }
 
+void *halGPIOInit(int gpioId, int isInput, int initVal) {
+    return NULL;
+}
+int halGPIOClose(void *dev) {
+    return 0;
+}
+int halGPIORead(void *dev, uint8_t *buf, uint32_t len) {
+    return 0;
+}
+int halGPIOWrite(void *dev, const uint8_t *buf, uint32_t len) {
+    return 0;
+}
+
 
 int halFlashInit(void)
 {
@@ -74,13 +87,13 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
     sprintf(fileName, "./0x%x.bin", startAddr);
     fd = open(fileName, O_RDONLY);
     if (0 >= fd) {
-        // printf("errno [%d]\r\n", errno);
-        APPLOG("READ FAILED [%d]\r\n", errno);
+        // printf("errno [%d]", errno);
+        // APPLOG("READ FAILED [%d]", errno);
         return fd;
     }
     ret = read(fd, data, len);
     close(fd);
-    APPLOG("READ OK [%s]\r\n", fileName);
+    // APPLOG("READ OK [%s]", fileName);
     return ret;
 }
 

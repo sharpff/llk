@@ -2,6 +2,28 @@
 #include "utility.h"
 #include "airconfig_ctrl.h"
 
+#ifndef LOG_AIRCONFIG_CTRL
+#ifdef LELOG
+#undef LELOG
+#define LELOG(...)
+#endif
+
+#ifdef LELOG
+#undef LELOGW
+#define LELOGW(...)
+#endif
+
+// #ifdef LELOG
+// #undef LELOGE
+// #define LELOGE(...)
+// #endif
+
+#ifdef LEPRINTF
+#undef LEPRINTF
+#define LEPRINTF(...)
+#endif
+#endif
+
 typedef struct {
     char ssid[32];
     char passwd[32];
@@ -43,7 +65,7 @@ static int inner_new_broadcast(airconfig_ctx_t *ctx) {
 
     ret = halGetBroadCastAddr(br, sizeof(br));
     if (0 >= ret) {
-        LELOGE("halGetBroadCastAddr error\r\n");
+        LELOGE("halGetBroadCastAddr error");
         return -1;
     }
 
@@ -82,26 +104,28 @@ static int inner_airconfig_sendto(const airconfig_ctx_t *ctx, int data) {
         //SO_SNDBUF, 
         //(char*)&optVal, 
         //&optLen);
-    //LELOG("SNDBUF [%d]\r\n", optVal);
+    //LELOG("SNDBUF [%d]", optVal);
     
     switch (select(ctx->sock + 1, 0, &wset, 0, &tv)) {
     case 0: { // timeout
-            LELOG("select timeout\r\n");
+            LELOG("select timeout");
         }break;
     case -1: { // error
-            LELOGE("select\r\n");
+            LELOGE("select");
         }break;
     default: {
             if (FD_ISSET(ctx->sock, &wset)) {
                 ret = sendto(ctx->sock, (const char *)&data, data, 0, (struct sockaddr*)&(ctx->address), sizeof(ctx->address));
                 if (0 > ret) {
-                    LELOGE("sendto [%d] errno[%d]\r\n", ret, errno);
+                    LELOGE("sendto [%d] errno[%d]", ret, errno);
                 } else {
                     //char *ip = inet_ntop(ctx->address.sin_addr);
                     char ip[16] = { 0 };
                     uint16_t port = ntohs(ctx->address.sin_port);
                     inet_ntop(AF_INET, (void *)&ctx->address.sin_addr, ip, sizeof(ip));
-	                LELOG("sendto [%s:%d] [%d][0x%02x] [0x%02x]\r\n", ip, port, ret, ret, ret-gin_base);
+                    USED(ip);
+                    USED(port);
+	                LELOG("sendto [%s:%d] [%d][0x%02x] [0x%02x]", ip, port, ret, ret, ret-gin_base);
                 }
             }
         }break;
@@ -266,19 +290,19 @@ void *airconfig_new(const char *param) {
             return NULL;
         }
     }
-    
-    LELOG("sscanf ret[%d]\r\n", ret);
-    LELOG("sscanf SSID[%s]\r\n", gin_airconfig_ctx.ssid);
-    LELOG("sscanf PASSWD[%s]\r\n", gin_airconfig_ctx.passwd);
-    LELOG("sscanf AES[%s]\r\n", str_aes);
-    LELOG("sscanf TYPE[%d]\r\n", type);
-    LELOG("sscanf DELAY[%d]\r\n", gin_airconfig_ctx.delay);
+    USED(ret);
+    LELOG("sscanf ret[%d]", ret);
+    LELOG("sscanf SSID[%s]", gin_airconfig_ctx.ssid);
+    LELOG("sscanf PASSWD[%s]", gin_airconfig_ctx.passwd);
+    LELOG("sscanf AES[%s]", str_aes);
+    LELOG("sscanf TYPE[%d]", type);
+    LELOG("sscanf DELAY[%d]", gin_airconfig_ctx.delay);
     
     switch (type) {
     case 1: {
             sock = inner_new_multicast(&gin_airconfig_ctx);
             if (0 > sock) {
-                LELOGE("inner_new_multicast failed [%d]\r\n", sock);
+                LELOGE("inner_new_multicast failed [%d]", sock);
                 return NULL;
             }
             gin_airconfig_ctx.sock = sock;
@@ -286,7 +310,7 @@ void *airconfig_new(const char *param) {
     case 2: {
             sock = inner_new_broadcast(&gin_airconfig_ctx);
             if (0 > sock) {
-                LELOGE("inner_new_broadcast failed [%d]\r\n", sock);
+                LELOGE("inner_new_broadcast failed [%d]", sock);
                 return NULL;
             }
             gin_airconfig_ctx.sock = sock;    
@@ -307,7 +331,7 @@ int airconfig_do_config(void *context) {
     //for (i = 0; i < AES_128; i++) {
         //LELOG("%02x", ctx->aes[i]);
     //}
-    //LELOG("\r\n");
+    //LELOG("");
     
     while (!inner_airconfig_do_config_sync(ctx))
         ;

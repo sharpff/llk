@@ -175,7 +175,7 @@ def doSth():
 				content += struct.pack('B', 255)
 			tmpSize2 -= 1
 		doPackFileByBuf(fileDst, content)
-	elif whatType == '--genS2':
+	elif whatType == '--genS3':
 		print "NO IMPLEMENT"
 	elif whatType == '--retrieve':
 		print whatType

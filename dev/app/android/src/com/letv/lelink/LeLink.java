@@ -208,8 +208,8 @@ public class LeLink {
 	 * 		null - timeout return; else - device array json string
 	 */
 	public synchronized String ctrl(String jsonStr, String dataJson) {
-		String uuid;
 		int timeout;
+		String uuid;
 		JSONObject cmdJson = null;
 
 		try {
@@ -235,7 +235,10 @@ public class LeLink {
 		}
 		mWaitCtrlUuid = uuid;
 		mWaitCtrlBackData = null;
-		send(cmdJson, dataJson);
+		if (!send(cmdJson, dataJson)) {
+			LOGE("ctrl send error");
+			return null;
+		}
 		synchronized (mCtrlLock) {
 			try {
 				mCtrlLock.wait(1000 * timeout);
@@ -302,7 +305,10 @@ public class LeLink {
 				return null;
 			}
 
-			send(cmdJson, dataStr);
+			if(!send(cmdJson, dataStr)){
+				LOGE("getState send error");
+				return null;
+			}
 			LOGI("Waiting get...");
 			synchronized (mGetLock) {
 				try {
@@ -333,7 +339,7 @@ public class LeLink {
 	 * 
 	 * @hide
 	 */
-	private synchronized void send(JSONObject cmdJson, String dataStr) {
+	private synchronized boolean send(JSONObject cmdJson, String dataStr) {
 		synchronized (mWaitSendCmds) {
 			String keyStr;
 			int min = mMinSeqId;
@@ -360,9 +366,9 @@ public class LeLink {
 		} catch (JSONException e) {
 			LOGE("Json error");
 			e.printStackTrace();
-			return;
+			return false;
 		}
-		send(mPtr, cmdJson.toString());
+		return (send(mPtr, cmdJson.toString()) > 0);
 	}
 
 	/**
@@ -490,58 +496,6 @@ public class LeLink {
 		return ret;
 	}
 
-	private Thread mThread = new Thread(new Runnable() {
-		@Override
-		public void run() {
-			long sleepMs = 1000;
-			JSONObject cmdJson = null;
-
-			while (true) {
-				cmdJson = new JSONObject();
-				try {
-					cmdJson.put(LeCmd.K.TIMEOUT, DEFAULT_TIMEOUT);
-					if (mState == ST_t.AUTH1) {
-						cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_GET_TARGET_REQ);
-						cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_GET_TARGET_REQ);
-						send(cmdJson, null); // 准备进入AUTH1
-						sleepMs = 3000;
-					} else if (mState == ST_t.AUTH2) {
-						cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_AUTH_REQ);
-						cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_AUTH_REQ);
-						send(cmdJson, null);
-						sleepMs = 3000;
-					} else if (mState == ST_t.HEART) {
-						if (mGetCloudHeartRspTime > 0
-								&& System.currentTimeMillis() - mGetCloudHeartRspTime > CLOUD_HEART_RESPOND_TIMEOUT) {
-							mCloudAddr = null;
-							mSendHeartTime = 0;
-							mState = ST_t.AUTH1;
-							mGetCloudHeartRspTime = 0;
-							LOGE("Timeout: cloud heart respond.");
-						} else if (mSendHeartTime <= 0 || System.currentTimeMillis() - mSendHeartTime > SEND_HEART_TIME) {
-							mSendHeartTime = System.currentTimeMillis();
-							cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_HEARTBEAT_REQ);
-							cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_HEARTBEAT_REQ);
-							send(cmdJson, null);
-							if (mGetCloudHeartRspTime == 0) {
-								mGetCloudHeartRspTime = System.currentTimeMillis();
-							}
-						}
-						sleepMs = 3000;
-					}
-				} catch (JSONException e) {
-					LOGE("Json error");
-					e.printStackTrace();
-				}
-				try {
-					Thread.sleep(sleepMs);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	});
-
 	private static void LOGD(String msg) {
 		logout(Log.DEBUG, msg);
 	}
@@ -567,7 +521,6 @@ public class LeLink {
 
 	private LeLink(String info) {
 		mPtr = init(info);
-//		mThread.start();
 	}
 
 	private static final int MSG_TYPE_LOCALREQUEST = 1;
@@ -616,9 +569,14 @@ public class LeLink {
 	 *
 	 * @hide
 	 */
-	private native void send(long ptr, String jsonStr);
+	private native int send(long ptr, String jsonStr);
 
 	static {
 		System.loadLibrary("lelink");
+//        try{
+//            System.loadLibrary("lelink"); 
+//        }catch(Throwable ex){
+//            ex.printStackTrace();
+//        }
 	}
 }

@@ -157,7 +157,7 @@ static os_thread_t thread_lelink;
 static os_timer_t timer_airconfig;
 static os_timer_t timer_timeout;
 static os_thread_stack_define(thread_stack_airconfig, 1024);
-static os_thread_stack_define(thread_stack_lelink, 2048*4);
+static os_thread_stack_define(thread_stack_lelink, 2048*5);
 static os_semaphore_t sem_airconfig;
 
 // static uint16_t g_airconfig_base = 0x0000;
@@ -483,7 +483,7 @@ static void thread_lelink_proc(os_thread_arg_t thandle) {
 
 
     while (1) {
-        lelinkPollingState(1000, ctx_r2r, ctx_q2a);
+        lelinkPollingState(100, ctx_r2r, ctx_q2a);
         // LELOG("thread_airconfig_proc pollingState ret [%d]", ret);
     }
 
@@ -812,8 +812,8 @@ void le_ota(int argc, char **argv)
     char fwVer[32] = {0};
     bool optflag = false, startflag = false;
     static int type = 0;
-    static const char *sig = NULL;
-    static char url[64] = "http://115.182.63.167/fei/le_demo.bin";
+    // static const char *sig = NULL;
+    static char url[64] = "http://115.182.63.167/feng/le_demo.bin";
 
     cli_optind = 1;
     while ((c = cli_getopt(argc, argv, "t:u:sp")) != -1) {
@@ -840,7 +840,7 @@ void le_ota(int argc, char **argv)
     }
     wmprintf("OTA INFO: Type %d, URL %s\r\n", type, url);
     if(startflag) {
-        leOTA(type, url, sig);
+        leOTA(type, url, NULL, 0);
     }
     return;
 end:
@@ -955,11 +955,13 @@ int main()
     // }
 
 #if 1
-	/* Start the application framework */
-	if (app_framework_start(common_event_handler) != WM_SUCCESS) {
-		dbg("Failed to start application framework");
-				appln_critical_error_handler((void *) -WM_FAIL);
-	}
+    /* Start the application framework */
+    if (app_framework_start(common_event_handler) != WM_SUCCESS) {
+        dbg("Failed to start application framework");
+                appln_critical_error_handler((void *) -WM_FAIL);
+    }
 #endif
-	return 0;
+
+
+    return 0;
 }

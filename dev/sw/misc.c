@@ -13,8 +13,13 @@
 #define JSON_NAME_UTC "utc"
 #define JSON_NAME_WHATTYPE "whatCvtType"
 #define JSON_NAME_BAUD "baud"
+#define JSON_NAME_GPIO_ID "gpioId"
+#define JSON_NAME_GPIO_isInput "isInput"
+#define JSON_NAME_GPIO_initVal "initVal"
 #define JSON_NAME_STATUS "status"
 #define JSON_NAME_UUID "uuid"
+#define JSON_NAME_URL "url"
+#define JSON_NAME_TYPE "type"
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
@@ -119,7 +124,7 @@ int genCompositeJson(const char *json, int jsonLen, int count, ...) {
         ptrName = va_arg(ap, char *);
         ptrVal = va_arg(ap, char *);
         json_set_val_strobj(&jretobj, ptrName, ptrVal, strlen(ptrVal));
-        LELOG("[%s]->[%s]\r\n", ptrName, ptrVal);
+        LELOG("[%s]->[%s]", ptrName, ptrVal);
     }
     va_end(ap);
 
@@ -134,10 +139,26 @@ int getJsonUTC(char *json, int jsonLen) {
     return sprintf(json, "{\"utc\":%lld}", utc);
 }
 
-int getJsonUTC32(char *json, int jsonLen) {
+int getJsonUTC32(char *json, int jsonLen/*, const char *rmtJson, int rmtJsonLen*/) {
     int64_t utc = 0;
     uint32_t utcH = 0, utcL = 0;
-    getTerminalUTC(&utc);
+    // int ret = 0;
+    // jsontok_t jsonToken[NUM_TOKENS];
+    // jobj_t jobj;
+
+    // if (NULL == rmtJson || 0 >= rmtJsonLen) {
+        getTerminalUTC(&utc);
+    // } else {
+    //     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)rmtJson, rmtJsonLen);
+    //     if (WM_SUCCESS != ret) {
+    //         return -1;
+    //     }
+
+    //     if (WM_SUCCESS != json_get_val_int64(&jobj, JSON_NAME_UTC, &utc)) {
+    //         return -2;
+    //     }
+    // }
+
     utcH = (uint32_t)(utc >> 32);
     utcL = (uint32_t)utc;
     return sprintf(json, "{\"utcH\":%d,\"utcL\":%d}", utcH, utcL);
@@ -181,6 +202,31 @@ int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *st
     return 0;
 }
 
+int getGPIOInfo(const char *json, int jsonLen, int *gpioId, int *isInput, int *initVal) {
+    int ret = -1;
+    jsontok_t jsonToken[NUM_TOKENS];
+    jobj_t jobj;
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if (WM_SUCCESS != ret) {
+        return -1;
+    }
+
+    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_GPIO_ID, gpioId)) {
+        return -2;
+    }
+
+    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_GPIO_isInput, isInput)) {
+        return -3;
+    }
+
+    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_GPIO_initVal, initVal)) {
+        return -4;
+    }
+
+    return 0;
+}
+
 int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
     char *start, *end;
     char *tokenStart = "{", *tokenEnd = "}";
@@ -210,22 +256,23 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
     return len;
 }
 
-int genS2Json(const char *status, int statusLen, char *result, int resultLen) {
+int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen) {
     int ret = 0, tmpLen;
     char utc[64] = {0};
     // char nowStatus[1024] = {0};
     // char *pResult = result;
-    const char *key = "\"status\"";
+    const char *key1 = "\"status\"";
+    // const char *key2 = "\"uuid\"";
     // jsontok_t jsonToken[NUM_TOKENS];
     // jobj_t jobj;
 
-    ret = getJsonUTC32(utc, sizeof(utc));
+    ret = getJsonUTC32(utc, sizeof(utc)/*, rmtJson, rmtJsonLen*/);
     if (0 >= ret) {
         return ret;
     }
 
-    tmpLen = sprintf(result, "{%s:", key);
-    ret = getJsonObject(status, statusLen, key, result + tmpLen, resultLen - tmpLen);
+    tmpLen = sprintf(result, "{%s:", key1);
+    ret = getJsonObject(status, statusLen, key1, result + tmpLen, resultLen - tmpLen);
     if (0 >= ret) {
         return ret;
     }
@@ -235,6 +282,22 @@ int genS2Json(const char *status, int statusLen, char *result, int resultLen) {
     ret = sprintf(result + tmpLen, "%s", utc);
     tmpLen += ret;
 
+    strcpy(result + tmpLen - 1, ",\"uuid\":\""); tmpLen = strlen(result);
+    if (NULL == rmtJson || 0 >= rmtJsonLen) {
+        // uuid
+        getTerminalUUID((uint8_t *)result + tmpLen, MAX_UUID); tmpLen = strlen(result);
+ 
+    } else {
+        ret = getUUIDFromJson(rmtJson, rmtJsonLen, result + tmpLen, resultLen - tmpLen);
+        if (0 >= ret) {
+            return ret;
+        }
+        tmpLen += ret;
+    }
+    result[tmpLen] = '"'; 
+    tmpLen += 1;
+    result[tmpLen] = '}'; 
+    tmpLen += 1;       
     return tmpLen;
 }
 
@@ -248,17 +311,48 @@ int getUUIDFromJson(const char *json, int jsonLen, char *uuid, int uuidLen) {
     // char strBaud[96] = {0};
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
-
-    LELOG("getUUIDFromJson [%d][%s]\r\n", jsonLen, json);
-
-    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
-    if (WM_SUCCESS != ret) {
+    if (NULL == json || 0 >= jsonLen) {
         return -1;
     }
 
-    if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_UUID, uuid, uuidLen)) {
+    LELOG("getUUIDFromJson [%d][%s]", jsonLen, json);
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if (WM_SUCCESS != ret) {
         return -2;
     }
 
+    if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_UUID, uuid, uuidLen)) {
+        return -3;
+    }
+
     return strlen(uuid);
+}
+
+int getJsonOTAType(const char *json, int jsonLen, char *url, int urlLen) {
+    int ret = 0, type = -1;
+    // char strBaud[96] = {0};
+    jsontok_t jsonToken[NUM_TOKENS];
+    jobj_t jobj;
+    if (NULL == json || 0 >= jsonLen) {
+        return -1;
+    }
+
+    LELOG("getJsonOTAType [%d][%s]", jsonLen, json);
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if (WM_SUCCESS != ret) {
+        return -2;
+    }
+
+    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_TYPE, &type)) {
+        return -3;
+    }
+
+
+    if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_URL, url, urlLen)) {
+        return -4;
+    }
+
+    return type;
 }

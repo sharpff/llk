@@ -15,17 +15,22 @@
 #include <pthread.h>
 
 
+#define applog(_mod_name_, _fmt_, ...) \
+    { \
+        const char * p = strrchr(__FILE__, '/'); \
+        printf("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__); \
+    }
 
-#define APPLOG(_fmt_, ...)\
-    printf("LE "_fmt_, ##__VA_ARGS__)
+#define APPLOG(...) \
+    applog("LEAPP", ##__VA_ARGS__)
 
-#define APPLOGW(_fmt_, ...)\
-    printf("LE [W]"_fmt_, ##__VA_ARGS__)
-    
-#define APPLOGE(_fmt_, ...)\
-    printf("LE [E]"_fmt_, ##__VA_ARGS__)
+#define APPLOGW(...) \
+    applog("LEAPP[W]", ##__VA_ARGS__)
 
-#define APPPRINTF(...) \
+#define APPLOGE(...) \
+    applog("LEAPP[E]", ##__VA_ARGS__)
+
+#define LEPRINTF(...) \
     printf(__VA_ARGS__)
 
 #define delayMS(ms) \
@@ -33,16 +38,36 @@
 
 // test only
 #define SELF_IP "192.168.3.109"
-// #define UUID_BEING_CTRL "10000100091000610006ffffffffffff"
-#define UUID_BEING_CTRL "10000100101000010007f0b429000012"
+// #define SELF_IP "192.168.1.113"
 
-// #define LOCAL_TEST_IP "10.57.149.117"
-// #define LOCAL_TEST_IP "192.168.3.172"
-#define LOCAL_TEST_IP "192.168.1.102"
+// #define DOOYA
+#define HONYAR
+// #define DINGDING
+// #define MYLOCAL
+
+#ifdef DOOYA
+#define UUID_BEING_CTRL "10000100091000610006C80E77ABCD40" // dooya1
+#define LOCAL_TEST_IP "192.168.3.238" // dooya1
+#elif defined HONYAR
+#define UUID_BEING_CTRL "10000100101000010007C80E77ABCD50" // honyar1
+// #define LOCAL_TEST_IP "192.168.3.104" // hoyar1
+#define LOCAL_TEST_IP "192.168.1.114" // hoyar1
+#elif defined DINGDING
+#define UUID_BEING_CTRL "10000100111000810008C80E77ABCD60" // dingding1
+#define LOCAL_TEST_IP "192.168.3.120" // dingding1
+#elif defined MYLOCAL
+#define UUID_BEING_CTRL "10000100111000810008C80E77ABCDFF" // mylocal
+#define LOCAL_TEST_IP "192.168.3.129" // mylocal
+#else
+#pragma error "no matched"
+#endif
+
+#define UUID_BEING_OTA "10000100101000010007FFFFFFFFFFFF"
+
+
+    
 #define LOCAL_TEST_PORT 59673
 
-// #define REMOTE_IP "10.154.252.130"
-// #define REMOTE_IP "192.168.31.142"
 #define BIND_DEBUG
 
 

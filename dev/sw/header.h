@@ -20,16 +20,19 @@ extern "C"
 
 
 #define lelog(_mod_name_, _fmt_, ...) \
-    wmprintf("[%s] "_fmt_"\r\n", _mod_name_, ##__VA_ARGS__)
+    { \
+        const char * p = strrchr(__FILE__, '/'); \
+        wmprintf("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__); \
+    }
 
 #define LELOG(...) \
     lelog("LE", ##__VA_ARGS__)
 
 #define LELOGW(...) \
-    lelog("LE [W]", ##__VA_ARGS__)
+    lelog("LE[W]", ##__VA_ARGS__)
 
 #define LELOGE(...) \
-    lelog("LE [E]", ##__VA_ARGS__)
+    lelog("LE[E]", ##__VA_ARGS__)
 
 #define LEPRINTF(...) \
     wmprintf(__VA_ARGS__)
@@ -75,18 +78,24 @@ typedef short int16_t;
 typedef unsigned int uint32_t;
 #endif
 
-#define LELOG(_fmt_, ...)\
-    printf("LE "_fmt_, ##__VA_ARGS__)
+#define lelog(_mod_name_, _fmt_, ...) \
+    { \
+        const char * p = strrchr(__FILE__, '/'); \
+        printf("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__); \
+    }
 
-#define LELOGW(_fmt_, ...)\
-    printf("LE [W]"_fmt_, ##__VA_ARGS__)
-    
-#define LELOGE(_fmt_, ...)\
-    do {printf("LE [E]"_fmt_, ##__VA_ARGS__); while(1);} while (0)
+#define LELOG(...) \
+    lelog("LE", ##__VA_ARGS__)
+
+#define LELOGW(...) \
+    lelog("LE[W]", ##__VA_ARGS__)
+
+#define LELOGE(...) \
+    lelog("LE[E]", ##__VA_ARGS__)
 
 #define LEPRINTF(...) \
     printf(__VA_ARGS__)
-        
+
 #define delayms(ms) \
     usleep(ms*1000)
     
@@ -163,14 +172,20 @@ typedef short int16_t;
 typedef unsigned int uint32_t;
 #endif
 
-#define LELOG(_fmt_, ...)\
-    printf("LE "_fmt_, ##__VA_ARGS__)
+#define lelog(_mod_name_, _fmt_, ...) \
+    { \
+        const char * p = strrchr(__FILE__, '\\'); \
+        printf("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__); \
+    }
 
-#define LELOGW(_fmt_, ...)\
-    printf("LE [W]"_fmt_, ##__VA_ARGS__)
+#define LELOG(...) \
+    lelog("LE", ##__VA_ARGS__)
 
-#define LELOGE(_fmt_, ...)\
-    printf("LE [E]"_fmt_, ##__VA_ARGS__)
+#define LELOGW(...) \
+    lelog("LE[W]", ##__VA_ARGS__)
+
+#define LELOGE(...) \
+    lelog("LE[E]", ##__VA_ARGS__)
 
 #define LEPRINTF(...) \
     printf(__VA_ARGS__)
@@ -189,6 +204,12 @@ typedef unsigned int uint32_t;
 
 #endif
 
+
+// #define LOG_SENGINE
+#define LOG_PROTOCOL
+#define LOG_STATE
+// #define LOG_PACK
+// #define LOG_AIRCONFIG_CTRL
 
         
 

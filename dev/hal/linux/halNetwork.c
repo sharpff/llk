@@ -18,16 +18,16 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
                 port += 1;
                 local_addr.sin_port = htons(port);
                 if((ret = bind(*sock, (struct sockaddr *)&local_addr, sizeof(local_addr))) != 0) {
-                    APPLOGE("rebinding... udp port[%d] fail: %d.\r\n", port, ret);
+                    APPLOGW("rebinding... udp port[%d] fail: %d.", port, ret);
                 }
             }
             #else
-            APPLOGE("Bind udp port[%d] fail: %d.\r\n", port, ret);
+            APPLOGE("Bind udp port[%d] fail: %d.", port, ret);
             close(*sock);
             return -1;
             #endif
         }
-        APPLOG("bind: sock[%d] port[%d]\r\n", *sock, port);
+        APPLOG("bind: sock[%d] port[%d]", *sock, port);
     }
 
 	fcntl(*sock, F_SETFL, O_NONBLOCK, 1);
@@ -129,7 +129,7 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
 //     ifc.ifc_buf = (caddr_t)buf;
 //     if ((tmpSock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
 //     {
-//         APPLOGE("socket ERR\r\n");
+//         APPLOGE("socket ERR");
 //         return 0;
 //     }
 

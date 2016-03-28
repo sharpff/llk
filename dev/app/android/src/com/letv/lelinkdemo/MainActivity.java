@@ -111,7 +111,7 @@ public class MainActivity extends Activity {
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
-				mJsonCmd.put(LeCmd.K.TOKEN, "0D70EA4EA6B7A632F375D9F14A5FC363");
+				mJsonCmd.put(LeCmd.K.TOKEN, "A9B864558E3CC920DEEDD13A6B1DE4FF");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}

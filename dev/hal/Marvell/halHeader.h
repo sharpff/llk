@@ -45,5 +45,9 @@ inline char * hal_strcpy(char *dst, const char *src);
 inline long int hal_strtol(const char *str, char **c, int adecimal);
 inline char *hal_strstr(const char *haystack, const char *needle);
 inline int hal_sprintf(char *buf, const char *fmt, ...);
+inline int hal_snprintf(char *buf, size_t size, const char *fmt, ...);
+inline int hal_vsnprintf(char *buffer, size_t n, const char *format, va_list ap);
+inline int hal_strcoll(const char *l, const char *r);
+inline void hal_abort();
 
 #endif
