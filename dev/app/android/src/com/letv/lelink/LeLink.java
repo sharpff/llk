@@ -183,7 +183,7 @@ public class LeLink {
 		JSONObject cmdJson;
 		try {
 			cmdJson = new JSONObject();
-			cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_GET_TARGET_REQ);
+			cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.GET_STATE_CMD);
 			cmdJson.put(LeCmd.K.ADDR, LeCmd.V.BROADCAST_ADDR);
 			cmdJson.put(LeCmd.K.TIMEOUT, timeout);
 		} catch (JSONException e) {
@@ -194,69 +194,6 @@ public class LeLink {
 		return getState(cmdJson.toString(), null);
 	}
 
-	/**
-	 * 控制设备<br>
-	 * 
-	 * @param cmdStr
-	 * 		  详细参考下述说明
-	 * @param dataStr
-	 * 		  详细参考下述说明<br><br>
-	 * 
-	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
-	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
-	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br>
-	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.CTRL_DEV_CMD, 控制设备<br>
-	 *        	cmdStr:<br>
-	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备<br>
-	 *        		b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值<br>
-	 *          dataStr:<br>
-	 *          	a, 控制设备的Json字符串<br>
-	 * 			return
-	 * 				a, 出错返回null<br>
-	 * 				b, 设备列表的Json字符串<br>
-	 * 
-	 * @return
-	 * 		详细参考上述说明
-	 */
-	public synchronized String ctrl(String cmdStr, String dataStr) {
-		int timeout;
-		JSONObject cmdJson = null;
-
-		try {
-			cmdJson = new JSONObject(cmdStr);
-			if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.CTRL_DEV_CMD && cmdJson.has(LeCmd.K.ADDR)) {
-				cmdJson.put(LeCmd.K.CMD, LeCmd.CTRL_REQ);
-				cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_CMD_REQ);
-			} else {
-				cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_MSG_CTRL_C2R_REQ);
-			}
-			timeout = cmdJson.getInt(LeCmd.K.TIMEOUT);
-			timeout = timeout < 0 ? DEFAULT_TIMEOUT : timeout;
-			cmdJson.put(LeCmd.K.TIMEOUT, timeout);
-			mWaitCtrlUuid = cmdJson.getString(LeCmd.K.UUID);
-		} catch (JSONException e) {
-			LOGE("Json error");
-			e.printStackTrace();
-			return null;
-		}
-		mWaitCtrlBackData = null;
-		if (!send(cmdJson, dataStr)) {
-			LOGE("ctrl send error");
-			return null;
-		}
-		synchronized (mCtrlLock) {
-			try {
-				mCtrlLock.wait(1000 * timeout);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		if (mWaitCtrlBackData == null) {
-			LOGE("Control timeout");
-		}
-		return mWaitCtrlBackData;
-	}
-	
 	/**
 	 * 获得状态<br>
 	 * 
@@ -276,6 +213,17 @@ public class LeLink {
 	 * 			return<br>
 	 * 				a, 出错返回null<br>
 	 * 				b, 设备列表的Json字符串<br>
+	 *        2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_REPORT_OTA_QUERY_REQ, OTA查询<br>
+	 *        	cmdStr:<br>
+	 *        		不包括其它键值
+	 *          dataStr:<br>
+	 *          	a, LeCmd.K.UUID(String), 设备的UUID<br>
+	 *          	b, LeCmd.K.VERSION(String), 设备的当前版本号<br>
+	 *          	c, LeCmd.K.TYPE(int), 查询的类型(2-固件, 4-固件脚本, 5-联运脚本)<br>
+	 *          	d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联运脚本)的时候需要填充该值
+	 * 			return<br>
+	 * 				a, 出错返回null<br>
+	 * 				b, 查询信息列表的Json字符串, 键值有LeCmd.K.URL(String)<br>
 	 * 
 	 * @return
 	 * 		详细参考上述说明
@@ -283,6 +231,7 @@ public class LeLink {
 	public String getState(String cmdStr, String dataStr) {
 		int timeout;
 		JSONObject cmdJson;
+		String retData = null;
 		JSONArray jsonArray = new JSONArray();
 
 		try {
@@ -328,10 +277,82 @@ public class LeLink {
 			for (JSONObject v : mFindDevs.values()) {
 				jsonArray.put(v);
 			}
+//			if(cmdJson.getInt(LeCmd.K.CMD) == )
 		}
 		return jsonArray.toString();
+//		return retData; 
 	}
 
+	/**
+	 * 控制设备<br>
+	 * 
+	 * @param cmdStr
+	 * 		  详细参考下述说明
+	 * @param dataStr
+	 * 		  详细参考下述说明<br><br>
+	 * 
+	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
+	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
+	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br>
+	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.CTRL_DEV_CMD, 控制设备<br>
+	 *        	cmdStr:<br>
+	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备<br>
+	 *        		b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值<br>
+	 *          dataStr:<br>
+	 *          	a, 控制设备的Json字符串<br>
+	 * 			return
+	 * 				a, 出错返回null<br>
+	 * 				b, 设备列表的Json字符串<br>
+	 *        2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_REQ, 要求设备进行OTA升级<br>
+	 *        	cmdStr:<br>
+	 *        		a, LeCmd.K.TOKEN(String), 设备的token<br>
+	 *          dataStr:<br>
+	 *          	a, 填充由OTA查询得到的Json字符串<br>
+	 * 			return
+	 * 				不用关心返回值
+	 * 
+	 * @return
+	 * 		详细参考上述说明
+	 */
+	public synchronized String ctrl(String cmdStr, String dataStr) {
+		int timeout;
+		JSONObject cmdJson = null;
+
+		try {
+			cmdJson = new JSONObject(cmdStr);
+			if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.CTRL_DEV_CMD && cmdJson.has(LeCmd.K.ADDR)) {
+				cmdJson.put(LeCmd.K.CMD, LeCmd.CTRL_REQ);
+				cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_CMD_REQ);
+			} else {
+				cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_MSG_CTRL_C2R_REQ);
+			}
+			timeout = cmdJson.getInt(LeCmd.K.TIMEOUT);
+			timeout = timeout < 0 ? DEFAULT_TIMEOUT : timeout;
+			cmdJson.put(LeCmd.K.TIMEOUT, timeout);
+			mWaitCtrlUuid = cmdJson.getString(LeCmd.K.UUID);
+		} catch (JSONException e) {
+			LOGE("Json error");
+			e.printStackTrace();
+			return null;
+		}
+		mWaitCtrlBackData = null;
+		if (!send(cmdJson, dataStr)) {
+			LOGE("ctrl send error");
+			return null;
+		}
+		synchronized (mCtrlLock) {
+			try {
+				mCtrlLock.wait(1000 * timeout);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		if (mWaitCtrlBackData == null) {
+			LOGE("Control timeout");
+		}
+		return mWaitCtrlBackData;
+	}
+	
 	/**
 	 * 发送数据<br>
 	 * 
@@ -372,6 +393,7 @@ public class LeLink {
 			e.printStackTrace();
 			return false;
 		}
+		LOGI("CmdJson:\n" + cmdJson.toString());
 		return (send(mPtr, cmdJson.toString()) > 0);
 	}
 
@@ -425,7 +447,7 @@ public class LeLink {
 			return ret;
 		}
 		sendCmdJson = new JSONObject();
-//		LOGI("type " + type + ", onMessage: " + jsonStr);
+		LOGI("type " + type + ", onMessage: " + jsonStr);
 		switch (type) {
 		case MSG_TYPE_LOCALREQUEST:
 		case MSG_TYPE_LOCALRESPOND:

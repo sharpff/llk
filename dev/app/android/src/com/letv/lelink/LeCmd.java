@@ -46,8 +46,12 @@ public class LeCmd {
 
 		public static final int CLOUD_MSG_CTRL_C2R_REQ = 1;
 		public static final int CLOUD_MSG_CTRL_C2R_RSP = 2;
+		public static final int CLOUD_MSG_CTRL_C2R_DO_OTA_REQ = 3;
+		public static final int CLOUD_MSG_CTRL_C2R_DO_OTA_RSP = 4;
 		public static final int CLOUD_MSG_CTRL_R2T_REQ = 1;
 		public static final int CLOUD_MSG_CTRL_R2T_RSP = 2;
+		public static final int CLOUD_MSG_CTRL_R2T_DO_OTA_REQ = 3;
+		public static final int CLOUD_MSG_CTRL_R2T_DO_OTA_RSP = 4;
 
 		public static final int CLOUD_MSG_RELAY_C2R_REQ = 1;
 		public static final int CLOUD_MSG_RELAY_C2R_RSP = 2;
@@ -55,9 +59,13 @@ public class LeCmd {
 		public static final int CLOUD_MSG_RELAY_R2T_RSP = 2;
 		public static final int CLOUD_MSG_NOTIFY_R2T_REQ = 1;
 		public static final int CLOUD_MSG_NOTIFY_R2T_RSP = 2;
-		public static final int CLOUD_REPORT_REQ = 1;
-		public static final int LOUD_REPORT_RSP = 2;
 		
+		public static final int CLOUD_REPORT_REQ = 1;
+		public static final int CLOUD_REPORT_RSP = 2;
+		public static final int CLOUD_REPORT_OTA_QUERY_REQ = 3;
+		public static final int CLOUD_REPORT_OTA_QUERY_RSP = 4;
+		
+		/* 命令映射 */
 		public static final int GET_STATE_CMD = CLOUD_GET_TARGET_REQ;
 		public static final int CTRL_DEV_CMD = CLOUD_MSG_CTRL_C2R_REQ;
 	}
@@ -79,6 +87,9 @@ public class LeCmd {
 		public static final String SUBCMD = "subCmdId";
 		public static final String TOKEN = "token";
 		public static final String SEQID = "seqId";
+		public static final String VERSION = "ver";
+		public static final String URL = "url";
+		public static final String IAID = "iaId";
 	}
 
 	public class V {

@@ -32,7 +32,7 @@ public class MainActivity extends Activity {
 
 		@Override
 		public void run() {
-			String devs;
+			String retData;
 
 			while (true) {
 				Log.e(TAG, "Waitting auth...");
@@ -72,9 +72,9 @@ public class MainActivity extends Activity {
 			 * 进入该函数，首先发送一次发现包。然后等待timeout时间，最后返回大这timeout期间收到的发现回复的设备。
 			 */
 			Log.e(TAG, "Device discover test...");
-			devs = mLeLink.discover(5);
-			if (devs != null) {
-				Log.w(TAG, "find devices:\n" + devs);
+			retData = mLeLink.discover(5);
+			if (retData != null) {
+				Log.w(TAG, "find devices:\n" + retData);
 			} else {
 				Log.e(TAG, "Can't find device!");
 				return;
@@ -83,7 +83,7 @@ public class MainActivity extends Activity {
 			/* 得到设备的uuid */
 			String devUUID = "10000100101000010007F0B429000012";
 			try {
-				JSONArray jsonArray = new JSONArray(devs);
+				JSONArray jsonArray = new JSONArray(retData);
 				JSONObject obj = jsonArray.getJSONObject(jsonArray.length() - 1);
 				if (obj.has(LeCmd.K.UUID)) {
 					devUUID = obj.getString(LeCmd.K.UUID);
@@ -110,9 +110,9 @@ public class MainActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			devs = mLeLink.getState(mJsonCmd.toString(), mJsonData.toString());
-			if (devs != null) {
-				Log.w(TAG, "get state:\n" + devs);
+			retData = mLeLink.getState(mJsonCmd.toString(), mJsonData.toString());
+			if (retData != null) {
+				Log.w(TAG, "get state:\n" + retData);
 			} else {
 				Log.e(TAG, "Can't get state");
 				return;
@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
 			/* 得到设备的token */
 			String devToken = "A9B864558E3CC920DEEDD13A6B1DE4FF";
 			try {
-				JSONArray jsonArray = new JSONArray(devs);
+				JSONArray jsonArray = new JSONArray(retData);
 				JSONObject obj = jsonArray.getJSONObject(jsonArray.length() - 1);
 				if (obj.has(LeCmd.K.TOKEN)) {
 					devToken = obj.getString(LeCmd.K.TOKEN);
@@ -149,13 +149,59 @@ public class MainActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			devs = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
-			if (devs != null) {
-				Log.w(TAG, "ctrl return:\n" + devs);
+			retData = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
+			if (retData != null) {
+				Log.w(TAG, "ctrl return:\n" + retData);
 			} else {
 				Log.e(TAG, "Can't ctrl");
 				return;
 			}
+			
+			/*
+			 * 设备OTA查询 必须传入subcmd, uuid, timeout
+			 * 
+			 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态。
+			 * 如果是该设备需要远程控制，则必须先通过该函数广域网获得到token.
+			 */
+			Log.e(TAG, "OTA check test...");
+			try {
+				mJsonCmd = new JSONObject();
+				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_REPORT_OTA_QUERY_REQ);
+				mJsonCmd.put(LeCmd.K.UUID, devUUID);
+				mJsonCmd.put(LeCmd.K.TIMEOUT, 10);
+//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
+				mJsonData = new JSONObject();
+				mJsonData.put(LeCmd.K.UUID, devUUID); 
+				mJsonData.put(LeCmd.K.VERSION, "1-1.0.0.svn.3338.0-1-1.0"); 
+				mJsonData.put(LeCmd.K.TYPE, 2); 
+//				mJsonData.put(LeCmd.K.IAID, "gvowjhg"); // type=5的时候需要， 生成联动脚本后，得到的该值
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			retData = mLeLink.getState(mJsonCmd.toString(), mJsonData.toString());
+			if (retData != null) {
+				Log.w(TAG, "OTA state:\n" + retData);
+			} else {
+				Log.e(TAG, "Can't check ota");
+				return;
+			}
+			
+			/*
+			 * 触发OTA升级 必须传入subcmd, uuid, token, timeout
+			 */
+			dataStr = retData;
+			Log.e(TAG, "Do OTA test...\n" + dataStr);
+			try {
+				mJsonCmd = new JSONObject();
+				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_REQ);
+				mJsonCmd.put(LeCmd.K.UUID, devUUID);
+				mJsonCmd.put(LeCmd.K.TOKEN, devToken);
+				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			mLeLink.ctrl(mJsonCmd.toString(), dataStr);
+			Log.e(TAG, "Do OTA ok\n");
 		}
 	});
 }
