@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
 		@Override
 		public void run() {
 			String retData;
+			JSONObject dataJson;
 
 			while (true) {
 				Log.e(TAG, "Waitting auth...");
@@ -84,14 +85,14 @@ public class MainActivity extends Activity {
 			String devUUID = "10000100101000010007F0B429000012";
 			try {
 				JSONArray jsonArray = new JSONArray(retData);
-				JSONObject obj = jsonArray.getJSONObject(jsonArray.length() - 1);
-				if (obj.has(LeCmd.K.UUID)) {
-					devUUID = obj.getString(LeCmd.K.UUID);
+				dataJson = jsonArray.getJSONObject(jsonArray.length() - 1);
+				if (dataJson.has(LeCmd.K.UUID)) {
+					devUUID = dataJson.getString(LeCmd.K.UUID);
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
-				return;
 			}
+			
 			/*
 			 * 获得设备状态 必须传入subcmd, uuid, timeout
 			 * 
@@ -121,14 +122,12 @@ public class MainActivity extends Activity {
 			/* 得到设备的token */
 			String devToken = "A9B864558E3CC920DEEDD13A6B1DE4FF";
 			try {
-				JSONArray jsonArray = new JSONArray(retData);
-				JSONObject obj = jsonArray.getJSONObject(jsonArray.length() - 1);
-				if (obj.has(LeCmd.K.TOKEN)) {
-					devToken = obj.getString(LeCmd.K.TOKEN);
+				dataJson = new JSONObject(retData);
+				if (dataJson.has(LeCmd.K.TOKEN)) {
+					devToken = dataJson.getString(LeCmd.K.TOKEN);
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
-				return;
 			}
 			
 			/*
@@ -172,7 +171,7 @@ public class MainActivity extends Activity {
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonData = new JSONObject();
 				mJsonData.put(LeCmd.K.UUID, devUUID); 
-				mJsonData.put(LeCmd.K.VERSION, "1-1.0.0.svn.3338.0-1-1.0"); 
+				mJsonData.put(LeCmd.K.VERSION, "1-0.1.0.svn.3338.0-1-1.0"); 
 				mJsonData.put(LeCmd.K.TYPE, 2); 
 //				mJsonData.put(LeCmd.K.IAID, "gvowjhg"); // type=5的时候需要， 生成联动脚本后，得到的该值
 			} catch (JSONException e) {

@@ -232,7 +232,7 @@ public class LeLink {
 		int timeout;
 		JSONObject cmdJson;
 		String retData = null;
-		JSONArray jsonArray = new JSONArray();
+		boolean isDiscover = false;
 
 		try {
 			cmdJson = new JSONObject(cmdStr);
@@ -246,6 +246,9 @@ public class LeLink {
 				if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.GET_STATE_CMD && cmdJson.has(LeCmd.K.ADDR)) { // 特别处理本地发现
 					cmdJson.put(LeCmd.K.CMD, LeCmd.DISCOVER_REQ);
 					cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.DISCOVER_REQ);
+					if(cmdJson.getString(LeCmd.K.ADDR).equals(LeCmd.V.BROADCAST_ADDR)){
+						isDiscover = true;
+					}
 				} else {
 					cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_REPORT_REQ);
 				}
@@ -274,13 +277,20 @@ public class LeLink {
 			if (mFindDevs.size() <= 0) {
 				return null;
 			}
-			for (JSONObject v : mFindDevs.values()) {
-				jsonArray.put(v);
+			if (isDiscover) {
+				JSONArray jsonArray = new JSONArray();
+				for (JSONObject v : mFindDevs.values()) {
+					jsonArray.put(v);
+				}
+				retData = jsonArray.toString();
+			} else {
+				for (JSONObject v : mFindDevs.values()) {
+					retData = v.toString();
+					break;
+				}
 			}
-//			if(cmdJson.getInt(LeCmd.K.CMD) == )
 		}
-		return jsonArray.toString();
-//		return retData; 
+		return retData; 
 	}
 
 	/**

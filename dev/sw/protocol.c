@@ -1679,7 +1679,7 @@ static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdIn
 
 static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    char rmtCtrl[256] = {0};
+    char rmtCtrl[1024] = {0};
     LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -s");
 
     ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl, sizeof(rmtCtrl));
