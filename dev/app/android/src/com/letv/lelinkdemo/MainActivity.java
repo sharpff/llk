@@ -1,5 +1,6 @@
 package com.letv.lelinkdemo;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -76,8 +77,24 @@ public class MainActivity extends Activity {
 				Log.w(TAG, "find devices:\n" + devs);
 			} else {
 				Log.e(TAG, "Can't find device!");
+				return;
 			}
 
+			/* 得到设备的uuid */
+			String devUUID = "10000100101000010007F0B429000012";
+			try {
+				JSONArray jsonArray = new JSONArray(devs);
+				for (int i = 0; i < jsonArray.length(); i++) {
+					JSONObject obj = jsonArray.getJSONObject(i);
+					if (obj.has(LeCmd.K.UUID)) {
+						devUUID = obj.getString(LeCmd.K.UUID);
+						break;
+					}
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+				return;
+			}
 			/*
 			 * 获得设备状态 必须传入uuid, timeout
 			 * 
@@ -88,11 +105,11 @@ public class MainActivity extends Activity {
 			try {
 				mJsonCmd = new JSONObject();
 				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_GET_TARGET_REQ);
-				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
-				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
+				mJsonCmd.put(LeCmd.K.UUID, devUUID);
+//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 				mJsonData = new JSONObject();
-				mJsonData.put(LeCmd.K.UUID, "10000100101000010007F0B429000012"); 
+				mJsonData.put(LeCmd.K.UUID, devUUID); 
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -101,8 +118,25 @@ public class MainActivity extends Activity {
 				Log.w(TAG, "get state:\n" + devs);
 			} else {
 				Log.e(TAG, "Can't get state");
+				return;
 			}
 
+			/* 得到设备的token */
+			String devToken = "A9B864558E3CC920DEEDD13A6B1DE4FF";
+			try {
+				JSONArray jsonArray = new JSONArray(devs);
+				for (int i = 0; i < jsonArray.length(); i++) {
+					JSONObject obj = jsonArray.getJSONObject(i);
+					if (obj.has(LeCmd.K.TOKEN)) {
+						devToken = obj.getString(LeCmd.K.TOKEN);
+						break;
+					}
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+				return;
+			}
+			
 			/*
 			 * 控制设备状态 必须传入uuid, timeout, token
 			 * 
@@ -113,9 +147,9 @@ public class MainActivity extends Activity {
 			Log.e(TAG, "Control device test...\n" + ctrlStr);
 			try {
 				mJsonCmd = new JSONObject();
-				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
+				mJsonCmd.put(LeCmd.K.UUID, devUUID);
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
-				mJsonCmd.put(LeCmd.K.TOKEN, "A9B864558E3CC920DEEDD13A6B1DE4FF");
+				mJsonCmd.put(LeCmd.K.TOKEN, devToken);
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -125,6 +159,7 @@ public class MainActivity extends Activity {
 				Log.w(TAG, "ctrl return:\n" + devs);
 			} else {
 				Log.e(TAG, "Can't ctrl");
+				return;
 			}
 		}
 	});
