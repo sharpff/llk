@@ -57,6 +57,9 @@ public class LeCmd {
 		public static final int CLOUD_MSG_NOTIFY_R2T_RSP = 2;
 		public static final int CLOUD_REPORT_REQ = 1;
 		public static final int LOUD_REPORT_RSP = 2;
+		
+		public static final int GET_STATE_CMD = CLOUD_GET_TARGET_REQ;
+		public static final int CTRL_DEV_CMD = CLOUD_MSG_CTRL_C2R_REQ;
 	}
 
 	public class K {

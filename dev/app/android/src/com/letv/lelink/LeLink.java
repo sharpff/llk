@@ -195,89 +195,36 @@ public class LeLink {
 	}
 
 	/**
-	 * 控制设备状态 必须传入uuid, timeout, token<br>
-	 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态<br>
-	 * 如果该设备已经连接云，则必须传入token(由广域网获得{@link #getState(String)})<br>
+	 * 控制设备<br>
 	 * 
-	 * @param jsonStr
-	 * 		Json: String uuid; String addr; String token; int timeout
+	 * @param cmdStr
+	 * 		  详细参考下述说明
+	 * @param dataStr
+	 * 		  详细参考下述说明<br><br>
 	 * 
-	 * @param dataJson
-	 * 		Json: control data
+	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
+	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
+	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br>
+	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.CTRL_DEV_CMD, 控制设备<br>
+	 *        	cmdStr:<br>
+	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备<br>
+	 *        		b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值<br>
+	 *          dataStr:<br>
+	 *          	a, 控制设备的Json字符串<br>
+	 * 			return
+	 * 				a, 出错返回null<br>
+	 * 				b, 设备列表的Json字符串<br>
 	 * 
 	 * @return
-	 * 		null - timeout return; else - device array json string
+	 * 		详细参考上述说明
 	 */
-	public synchronized String ctrl(String jsonStr, String dataJson) {
-		int timeout;
-		String uuid;
-		JSONObject cmdJson = null;
-
-		try {
-			cmdJson = new JSONObject(jsonStr);
-			uuid = cmdJson.getString(LeCmd.K.UUID);
-			timeout = cmdJson.getInt(LeCmd.K.TIMEOUT);
-			timeout = timeout < 0 ? DEFAULT_TIMEOUT : timeout;
-			cmdJson.put(LeCmd.K.TIMEOUT, timeout);
-			if (cmdJson.has(LeCmd.K.ADDR)) {
-				cmdJson.put(LeCmd.K.CMD, LeCmd.CTRL_REQ);
-				cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_CMD_REQ);
-			} else if (mState == ST_t.HEART) {
-				cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_MSG_CTRL_C2R_REQ);
-				cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_MSG_CTRL_C2R_REQ);
-			} else {
-				LOGE("Wait cloud auth!");
-				return null;
-			}
-		} catch (JSONException e) {
-			LOGE("Json error");
-			e.printStackTrace();
-			return null;
-		}
-		mWaitCtrlUuid = uuid;
-		mWaitCtrlBackData = null;
-		if (!send(cmdJson, dataJson)) {
-			LOGE("ctrl send error");
-			return null;
-		}
-		synchronized (mCtrlLock) {
-			try {
-				mCtrlLock.wait(1000 * timeout);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		if (mWaitCtrlBackData == null) {
-			LOGE("Control timeout");
-		}
-		return mWaitCtrlBackData;
-	}
-
-	/**
-	 * 控制设备
-	 * 
-	 * @param cmdStr, dataStr
-	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同
-	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID
-	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒
-	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_REQ
-	 *        	功能: 控制设备
-	 *        	cmdStr:
-	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备
-	 *        		b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值
-	 *          dataStr:
-	 *          	a, 控制设备的Json字符串
-	 * 			@return
-	 * 				a, 出错返回null
-	 * 				b, 设备列表的Json字符串
-	 */
-	public synchronized String ctrl(String cmdStr, String dataStr, String tmp) {
+	public synchronized String ctrl(String cmdStr, String dataStr) {
 		int timeout;
 		JSONObject cmdJson = null;
 
 		try {
 			cmdJson = new JSONObject(cmdStr);
-			if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_REQ && cmdJson.has(LeCmd.K.ADDR)) {
+			if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.CTRL_DEV_CMD && cmdJson.has(LeCmd.K.ADDR)) {
 				cmdJson.put(LeCmd.K.CMD, LeCmd.CTRL_REQ);
 				cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_CMD_REQ);
 			} else {
@@ -311,21 +258,27 @@ public class LeLink {
 	}
 	
 	/**
-	 * 获得状态
+	 * 获得状态<br>
 	 * 
-	 * @param cmdStr, dataStr
-	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同
-	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID
-	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒
-	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_GET_TARGET_REQ
-	 *        	功能: 得到设备状态或者上报设备状态
-	 *        	cmdStr:
-	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网得到设备状态
-	 *          dataStr:
-	 *          	a, LeCmd.K.UUID(String), 设备的UUID
-	 * 			@return
-	 * 				a, 出错返回null
-	 * 				b, 设备列表的Json字符串
+	 * @param cmdStr
+	 * 		  详细参考下述说明
+	 * @param dataStr
+	 * 		  详细参考下述说明<br><br>
+	 * 
+	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
+	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
+	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br><br>
+	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.GET_STATE_CMD, 得到设备状态或者上报设备状态<br>
+	 *        	cmdStr:<br>
+	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网得到设备状态<br>
+	 *          dataStr:<br>
+	 *          	a, LeCmd.K.UUID(String), 设备的UUID<br>
+	 * 			return<br>
+	 * 				a, 出错返回null<br>
+	 * 				b, 设备列表的Json字符串<br>
+	 * 
+	 * @return
+	 * 		详细参考上述说明
 	 */
 	public String getState(String cmdStr, String dataStr) {
 		int timeout;
@@ -341,7 +294,7 @@ public class LeLink {
 		synchronized (mFindDevs) {
 			mFindDevs.clear();
 			try {
-				if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.CLOUD_GET_TARGET_REQ && cmdJson.has(LeCmd.K.ADDR)) { // 特别处理本地发现
+				if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.GET_STATE_CMD && cmdJson.has(LeCmd.K.ADDR)) { // 特别处理本地发现
 					cmdJson.put(LeCmd.K.CMD, LeCmd.DISCOVER_REQ);
 					cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.DISCOVER_REQ);
 				} else {

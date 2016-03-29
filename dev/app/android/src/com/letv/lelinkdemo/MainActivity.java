@@ -84,12 +84,9 @@ public class MainActivity extends Activity {
 			String devUUID = "10000100101000010007F0B429000012";
 			try {
 				JSONArray jsonArray = new JSONArray(devs);
-				for (int i = 0; i < jsonArray.length(); i++) {
-					JSONObject obj = jsonArray.getJSONObject(i);
-					if (obj.has(LeCmd.K.UUID)) {
-						devUUID = obj.getString(LeCmd.K.UUID);
-						break;
-					}
+				JSONObject obj = jsonArray.getJSONObject(jsonArray.length() - 1);
+				if (obj.has(LeCmd.K.UUID)) {
+					devUUID = obj.getString(LeCmd.K.UUID);
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -104,7 +101,7 @@ public class MainActivity extends Activity {
 			Log.e(TAG, "Get device state test...");
 			try {
 				mJsonCmd = new JSONObject();
-				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_GET_TARGET_REQ);
+				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.GET_STATE_CMD);
 				mJsonCmd.put(LeCmd.K.UUID, devUUID);
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
@@ -125,12 +122,9 @@ public class MainActivity extends Activity {
 			String devToken = "A9B864558E3CC920DEEDD13A6B1DE4FF";
 			try {
 				JSONArray jsonArray = new JSONArray(devs);
-				for (int i = 0; i < jsonArray.length(); i++) {
-					JSONObject obj = jsonArray.getJSONObject(i);
-					if (obj.has(LeCmd.K.TOKEN)) {
-						devToken = obj.getString(LeCmd.K.TOKEN);
-						break;
-					}
+				JSONObject obj = jsonArray.getJSONObject(jsonArray.length() - 1);
+				if (obj.has(LeCmd.K.TOKEN)) {
+					devToken = obj.getString(LeCmd.K.TOKEN);
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -147,7 +141,7 @@ public class MainActivity extends Activity {
 			Log.e(TAG, "Control device test...\n" + dataStr);
 			try {
 				mJsonCmd = new JSONObject();
-				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_MSG_CTRL_C2R_REQ);
+				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_DEV_CMD);
 				mJsonCmd.put(LeCmd.K.UUID, devUUID);
 				mJsonCmd.put(LeCmd.K.TOKEN, devToken);
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
@@ -155,7 +149,7 @@ public class MainActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			devs = mLeLink.ctrl(mJsonCmd.toString(), dataStr, null);
+			devs = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
 			if (devs != null) {
 				Log.w(TAG, "ctrl return:\n" + devs);
 			} else {
