@@ -254,81 +254,62 @@ public class LeLink {
 	}
 
 	/**
-	 * 获得设备状态 必须传入uuid, timeout<br>
-	 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态<br>
-	 * 如果是该设备需要远程控制，则必须先通过该函数广域网获得到token<br>
+	 * 控制设备
 	 * 
-	 * @param jsonStr
-	 * 		Json - String addr; String uuid; int timeout
-	 * 
-	 * @return
-	 * 		null - timeout return; else - device array json string
+	 * @param cmdStr, dataStr
+	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同
+	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID
+	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒
+	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_REQ
+	 *        	功能: 控制设备
+	 *        	cmdStr:
+	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备
+	 *        		b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值
+	 *          dataStr:
+	 *          	a, 控制设备的Json字符串
+	 * 			@return
+	 * 				a, 出错返回null
+	 * 				b, 设备列表的Json字符串
 	 */
-	public String getState(String jsonStr) {
+	public synchronized String ctrl(String cmdStr, String dataStr, String tmp) {
 		int timeout;
-		String dataStr = null;
-		JSONObject cmdJson, sendJson;
-		JSONArray jsonArray = new JSONArray();
+		JSONObject cmdJson = null;
 
-		synchronized (mFindDevs) {
-			mFindDevs.clear();
-			cmdJson = new JSONObject();
+		try {
+			cmdJson = new JSONObject(cmdStr);
+			if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_REQ && cmdJson.has(LeCmd.K.ADDR)) {
+				cmdJson.put(LeCmd.K.CMD, LeCmd.CTRL_REQ);
+				cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_CMD_REQ);
+			} else {
+				cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_MSG_CTRL_C2R_REQ);
+			}
+			timeout = cmdJson.getInt(LeCmd.K.TIMEOUT);
+			timeout = timeout < 0 ? DEFAULT_TIMEOUT : timeout;
+			cmdJson.put(LeCmd.K.TIMEOUT, timeout);
+			mWaitCtrlUuid = cmdJson.getString(LeCmd.K.UUID);
+		} catch (JSONException e) {
+			LOGE("Json error");
+			e.printStackTrace();
+			return null;
+		}
+		mWaitCtrlBackData = null;
+		if (!send(cmdJson, dataStr)) {
+			LOGE("ctrl send error");
+			return null;
+		}
+		synchronized (mCtrlLock) {
 			try {
-				sendJson = new JSONObject(jsonStr);
-				timeout = sendJson.getInt(LeCmd.K.TIMEOUT);
-				timeout = timeout < 0 ? DEFAULT_TIMEOUT : timeout;
-				cmdJson.put(LeCmd.K.TIMEOUT, timeout);
-				if (sendJson.has(LeCmd.K.ADDR)) {
-					if (!sendJson.getString(LeCmd.K.ADDR).equals(LeCmd.V.BROADCAST_ADDR)) {
-						cmdJson.put(LeCmd.K.UUID, sendJson.getString(LeCmd.K.UUID));
-					}
-					cmdJson.put(LeCmd.K.CMD, LeCmd.DISCOVER_REQ);
-					cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.DISCOVER_REQ);
-					cmdJson.put(LeCmd.K.ADDR, sendJson.getString(LeCmd.K.ADDR));
-				} else if (mState == ST_t.HEART) {
-					cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_REPORT_REQ);
-					cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_REPORT_REQ);
-					cmdJson.put(LeCmd.K.UUID, sendJson.getString(LeCmd.K.UUID));
-				} else {
-					LOGE("Waiting cloud auth, try again!");
-					return null;
-				}
-				mWaitGetUuid = cmdJson.has(LeCmd.K.UUID) ? cmdJson.getString(LeCmd.K.UUID) : null;
-				if (cmdJson.has(LeCmd.K.UUID)) {
-					JSONObject dataJson = new JSONObject();
-					dataStr = cmdJson.getString(LeCmd.K.UUID);
-					dataJson.put(LeCmd.K.UUID, dataStr);
-					dataStr = dataJson.toString();
-				}
-			} catch (JSONException e) {
-				LOGE("Json error");
+				mCtrlLock.wait(1000 * timeout);
+			} catch (InterruptedException e) {
 				e.printStackTrace();
-				return null;
-			}
-
-			if (!send(cmdJson, dataStr)) {
-				LOGE("getState send error");
-				return null;
-			}
-			LOGI("Waiting get...");
-			synchronized (mGetLock) {
-				try {
-					mGetLock.wait(1000 * timeout);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			LOGI("Wait over!");
-			if (mFindDevs.size() <= 0) {
-				return null;
-			}
-			for (JSONObject v : mFindDevs.values()) {
-				jsonArray.put(v);
 			}
 		}
-		return jsonArray.toString();
+		if (mWaitCtrlBackData == null) {
+			LOGE("Control timeout");
+		}
+		return mWaitCtrlBackData;
 	}
-
+	
 	/**
 	 * 获得状态
 	 * 
@@ -344,7 +325,7 @@ public class LeLink {
 	 *          	a, LeCmd.K.UUID(String), 设备的UUID
 	 * 			@return
 	 * 				a, 出错返回null
-	 * 				b, 设备列表的json字符串
+	 * 				b, 设备列表的Json字符串
 	 */
 	public String getState(String cmdStr, String dataStr) {
 		int timeout;

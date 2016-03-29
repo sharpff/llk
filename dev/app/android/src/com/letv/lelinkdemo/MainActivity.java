@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
 				return;
 			}
 			/*
-			 * 获得设备状态 必须传入uuid, timeout
+			 * 获得设备状态 必须传入subcmd, uuid, timeout
 			 * 
 			 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态。
 			 * 如果是该设备需要远程控制，则必须先通过该函数广域网获得到token.
@@ -106,8 +106,8 @@ public class MainActivity extends Activity {
 				mJsonCmd = new JSONObject();
 				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_GET_TARGET_REQ);
 				mJsonCmd.put(LeCmd.K.UUID, devUUID);
-//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
+//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonData = new JSONObject();
 				mJsonData.put(LeCmd.K.UUID, devUUID); 
 			} catch (JSONException e) {
@@ -138,23 +138,24 @@ public class MainActivity extends Activity {
 			}
 			
 			/*
-			 * 控制设备状态 必须传入uuid, timeout, token
+			 * 控制设备状态 必须传入subcmd, uuid, timeout
 			 * 
 			 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态。
 			 * 如果该设备已经连接云，则必须传入token(由getState广域网获得)
 			 */
-			String ctrlStr = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 1, 0, 0);
-			Log.e(TAG, "Control device test...\n" + ctrlStr);
+			String dataStr = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 1, 0, 0);
+			Log.e(TAG, "Control device test...\n" + dataStr);
 			try {
 				mJsonCmd = new JSONObject();
+				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_MSG_CTRL_C2R_REQ);
 				mJsonCmd.put(LeCmd.K.UUID, devUUID);
-//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonCmd.put(LeCmd.K.TOKEN, devToken);
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
+//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			devs = mLeLink.ctrl(mJsonCmd.toString(), ctrlStr);
+			devs = mLeLink.ctrl(mJsonCmd.toString(), dataStr, null);
 			if (devs != null) {
 				Log.w(TAG, "ctrl return:\n" + devs);
 			} else {
