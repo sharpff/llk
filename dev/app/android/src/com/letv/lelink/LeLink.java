@@ -76,7 +76,7 @@ public class LeLink {
 	 * 		true success; false failed
 	 */
 	public static boolean setContent(Context context) {
-		if(context == null){
+		if (context == null) {
 			LOGE("Context null");
 			return false;
 		}
@@ -180,17 +180,18 @@ public class LeLink {
 	 * 		null - timeout return; else - device array json string
 	 */
 	public String discover(int timeout) {
-		JSONObject sendJson;
+		JSONObject cmdJson;
 		try {
-			sendJson = new JSONObject();
-			sendJson.put(LeCmd.K.ADDR, LeCmd.V.BROADCAST_ADDR);
-			sendJson.put(LeCmd.K.TIMEOUT, timeout);
+			cmdJson = new JSONObject();
+			cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_GET_TARGET_REQ);
+			cmdJson.put(LeCmd.K.ADDR, LeCmd.V.BROADCAST_ADDR);
+			cmdJson.put(LeCmd.K.TIMEOUT, timeout);
 		} catch (JSONException e) {
 			LOGE("Json error");
 			e.printStackTrace();
 			return null;
 		}
-		return getState(sendJson.toString());
+		return getState(cmdJson.toString(), null);
 	}
 
 	/**
@@ -305,7 +306,76 @@ public class LeLink {
 				return null;
 			}
 
-			if(!send(cmdJson, dataStr)){
+			if (!send(cmdJson, dataStr)) {
+				LOGE("getState send error");
+				return null;
+			}
+			LOGI("Waiting get...");
+			synchronized (mGetLock) {
+				try {
+					mGetLock.wait(1000 * timeout);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			LOGI("Wait over!");
+			if (mFindDevs.size() <= 0) {
+				return null;
+			}
+			for (JSONObject v : mFindDevs.values()) {
+				jsonArray.put(v);
+			}
+		}
+		return jsonArray.toString();
+	}
+
+	/**
+	 * 获得状态
+	 * 
+	 * @param cmdStr, dataStr
+	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同
+	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID
+	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒
+	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_GET_TARGET_REQ
+	 *        	功能: 得到设备状态或者上报设备状态
+	 *        	cmdStr:
+	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网得到设备状态
+	 *          dataStr:
+	 *          	a, LeCmd.K.UUID(String), 设备的UUID
+	 * 			@return
+	 * 				a, 出错返回null
+	 * 				b, 设备列表的json字符串
+	 */
+	public String getState(String cmdStr, String dataStr) {
+		int timeout;
+		JSONObject cmdJson;
+		JSONArray jsonArray = new JSONArray();
+
+		try {
+			cmdJson = new JSONObject(cmdStr);
+		} catch (JSONException e) {
+			e.printStackTrace();
+			return null;
+		}
+		synchronized (mFindDevs) {
+			mFindDevs.clear();
+			try {
+				if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.CLOUD_GET_TARGET_REQ && cmdJson.has(LeCmd.K.ADDR)) { // 特别处理本地发现
+					cmdJson.put(LeCmd.K.CMD, LeCmd.DISCOVER_REQ);
+					cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.DISCOVER_REQ);
+				} else {
+					cmdJson.put(LeCmd.K.CMD, LeCmd.CLOUD_REPORT_REQ);
+				}
+				timeout = cmdJson.getInt(LeCmd.K.TIMEOUT);
+				timeout = timeout < 0 ? DEFAULT_TIMEOUT : timeout;
+				cmdJson.put(LeCmd.K.TIMEOUT, timeout);
+				mWaitGetUuid = cmdJson.has(LeCmd.K.UUID) ? cmdJson.getString(LeCmd.K.UUID) : null;
+			} catch (JSONException e) {
+				LOGE("Json error");
+				e.printStackTrace();
+				return null;
+			}
+			if (!send(cmdJson, dataStr)) {
 				LOGE("getState send error");
 				return null;
 			}
@@ -573,10 +643,10 @@ public class LeLink {
 
 	static {
 		System.loadLibrary("lelink");
-//        try{
-//            System.loadLibrary("lelink"); 
-//        }catch(Throwable ex){
-//            ex.printStackTrace();
-//        }
+		// try{
+		// System.loadLibrary("lelink");
+		// }catch(Throwable ex){
+		// ex.printStackTrace();
+		// }
 	}
 }

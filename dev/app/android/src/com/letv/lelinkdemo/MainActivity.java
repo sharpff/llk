@@ -14,6 +14,7 @@ public class MainActivity extends Activity {
 	private static final String TAG = "LeLinkDemo";
 	private LeLink mLeLink = null;
 	private JSONObject mJsonCmd = null;
+	private JSONObject mJsonData = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +44,7 @@ public class MainActivity extends Activity {
 					break;
 				}
 			}
+			Log.w(TAG, "Auth finish");
 			/*
 			 * WIFI配置 必须传入参数: ssid, passwd, timeout
 			 * 
@@ -85,13 +87,16 @@ public class MainActivity extends Activity {
 			Log.e(TAG, "Get device state test...");
 			try {
 				mJsonCmd = new JSONObject();
-				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
-//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
+				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_GET_TARGET_REQ);
 				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
+				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
+				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
+				mJsonData = new JSONObject();
+				mJsonData.put(LeCmd.K.UUID, "10000100101000010007F0B429000012"); 
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			devs = mLeLink.getState(mJsonCmd.toString());
+			devs = mLeLink.getState(mJsonCmd.toString(), mJsonData.toString());
 			if (devs != null) {
 				Log.w(TAG, "get state:\n" + devs);
 			} else {
@@ -108,10 +113,10 @@ public class MainActivity extends Activity {
 			Log.e(TAG, "Control device test...\n" + ctrlStr);
 			try {
 				mJsonCmd = new JSONObject();
-				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
-//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonCmd.put(LeCmd.K.UUID, "10000100101000010007F0B429000012");
+//				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonCmd.put(LeCmd.K.TOKEN, "A9B864558E3CC920DEEDD13A6B1DE4FF");
+				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
