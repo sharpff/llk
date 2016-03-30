@@ -21,7 +21,7 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口 <br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version v0.1
+ * @version v1.0
  * 
  * @author  feiguoyou@letv.com
  */
@@ -69,8 +69,8 @@ public class LeLink {
 	 * 只有正确的设置了该信息，才能正确使用其它功能.<br>
 	 * 
 	 * @param context
-	 * 		Application context
-	 * 		Must have file: assets/lelink/auth.cfg
+	 * 		Application context<br>
+	 * 		Must have file: assets/lelink/auth.cfg<br>
 	 * 
 	 * @return
 	 * 		true success; false failed
@@ -215,12 +215,12 @@ public class LeLink {
 	 * 				b, 设备列表的Json字符串<br>
 	 *        2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_REPORT_OTA_QUERY_REQ, OTA查询<br>
 	 *        	cmdStr:<br>
-	 *        		不包括其它键值
+	 *        		不包括其它键值<br>
 	 *          dataStr:<br>
 	 *          	a, LeCmd.K.UUID(String), 设备的UUID<br>
 	 *          	b, LeCmd.K.VERSION(String), 设备的当前版本号<br>
 	 *          	c, LeCmd.K.TYPE(int), 查询的类型(2-固件, 4-固件脚本, 5-联运脚本)<br>
-	 *          	d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联运脚本)的时候需要填充该值
+	 *          	d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联运脚本)的时候需要填充该值<br>
 	 * 			return<br>
 	 * 				a, 出错返回null<br>
 	 * 				b, 查询信息列表的Json字符串, 键值有LeCmd.K.URL(String)<br>
@@ -303,14 +303,15 @@ public class LeLink {
 	 * 
 	 *        cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
 	 *        cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
-	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br>
+	 *        cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br><br>
+	 *        
 	 *        1, LeCmd.K.SUBCMD == LeCmd.Sub.CTRL_DEV_CMD, 控制设备<br>
 	 *        	cmdStr:<br>
 	 *        		a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备<br>
 	 *        		b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值<br>
 	 *          dataStr:<br>
 	 *          	a, 控制设备的Json字符串<br>
-	 * 			return
+	 * 			return<br>
 	 * 				a, 出错返回null<br>
 	 * 				b, 设备列表的Json字符串<br>
 	 *        2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_REQ, 要求设备进行OTA升级<br>
@@ -318,8 +319,8 @@ public class LeLink {
 	 *        		a, LeCmd.K.TOKEN(String), 设备的token<br>
 	 *          dataStr:<br>
 	 *          	a, 填充由OTA查询得到的Json字符串<br>
-	 * 			return
-	 * 				不用关心返回值
+	 * 			return<br>
+	 * 				不用关心返回值<br>
 	 * 
 	 * @return
 	 * 		详细参考上述说明

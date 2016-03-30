@@ -1,5 +1,14 @@
 package com.letv.lelink;
 
+/** 
+ * 
+ * Lelink Android平台接入SDK接口参数 <br>
+ * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
+ * 
+ * @version v1.0
+ * 
+ * @author  feiguoyou@letv.com
+ */
 public class LeCmd {
 	public static final int HELLO_REQ = 7;
 	public static final int HELLO_RSP = 8;
