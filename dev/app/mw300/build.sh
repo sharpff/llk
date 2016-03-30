@@ -52,4 +52,7 @@ do_copy "$MAIN_PATH/sw/sengine/" "$WMSDK/wmsdk/external/sengine"
 $MKDIR $WMSDK/sample_apps/le_demo/obj/app/mw300
 $MKDIR $WMSDK/sample_apps/le_demo/obj/hal/Marvell
 
+# make -C $WMSDK clean
 make -C $WMSDK XIP=1 APPS=le_demo $*
+$RM $WMSDK/build.sh
+$COPY $WMSDK/bin/mw300_rd/le_demo.bin ../../tool

@@ -8,6 +8,8 @@
 #include "ota.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
+char *ginCtrlUUID = UUID_BEING_CTRL;
+char *ginCtrlIP = LOCAL_TEST_IP;
 
 union {  
     int number;  
@@ -55,7 +57,7 @@ redo:
     case '2':
         node.cmdId = LELINK_CMD_CTRL_REQ; 
         node.subCmdId = LELINK_SUBCMD_CTRL_CMD_REQ;
-        strncpy(node.ndIP, LOCAL_TEST_IP, MAX_IPLEN); // TODO: caution 
+        strncpy(node.ndIP, ginCtrlIP, MAX_IPLEN); // TODO: caution 
         // strncpy(node.ndIP, "192.168.3.100", MAX_IPLEN); // TODO: caution
         node.ndPort = LOCAL_TEST_PORT;
         // APPLOG("2 cmdId[%d], subCmdId[%d]\r\n", node.cmdId, node.subCmdId);
@@ -75,7 +77,7 @@ redo:
     case '3':
         node.cmdId = LELINK_CMD_CTRL_REQ; 
         node.subCmdId = LELINK_SUBCMD_CTRL_GET_STATUS_REQ;
-        strncpy(node.ndIP, LOCAL_TEST_IP, MAX_IPLEN); // TODO: caution 
+        strncpy(node.ndIP, ginCtrlIP, MAX_IPLEN); // TODO: caution 
         // strncpy(node.ndIP, "192.168.3.100", MAX_IPLEN); // TODO: caution
         node.ndPort = LOCAL_TEST_PORT;
         if (!node.uuid[0]) {
@@ -116,14 +118,14 @@ redo:
         }
         // strncpy(node.ndIP, "192.168.253.4", MAX_IPLEN);
         // strncpy(node.ndIP, "192.168.1.101", MAX_IPLEN);
-        // strncpy(node.ndIP, LOCAL_TEST_IP, MAX_IPLEN);
+        // strncpy(node.ndIP, ginCtrlIP, MAX_IPLEN);
         // strncpy(node.ndIP, "172.27.35.15", MAX_IPLEN);
         // node.ndPort = TEST_PORT;
         node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ;
 
         // set peer uuid
-        memcpy(node.uuid, UUID_BEING_CTRL, MAX_UUID);
+        memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
 
         }
         break;
@@ -137,7 +139,7 @@ redo:
         node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ; 
 
         // set peer uuid (for 1st, for cloud)
-        memcpy(node.uuid, UUID_BEING_CTRL, MAX_UUID);
+        memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
 
         // set peer token (for 2nd)
         uint8_t peerToken[] = {0x83, 0x2d, 0x62, 0x4f, 0x28, 0x84, 0x11, 0x9c, 0x42, 0xb3, 0x83, 0x29, 0xfe, 0x9a, 0xcf, 0x53};
@@ -182,9 +184,9 @@ redo:
 }
 
 void thread_input_check(void *arg) {
-    void *ctx_r2r = (void *)arg;
+    void *ctxR2R = (void *)arg;
     while (1) {
-        waitForInput(ctx_r2r);
+        waitForInput(ctxR2R);
         delayMS(100);
     }
 }
@@ -210,6 +212,15 @@ int main(int argc, char *argv[]) {
     //     printf(ginScript);
     //     return 0;
     // }
+    if (argc < 3) {
+        APPLOG("EXEC [target uuid] [target ip]");
+        return -1;
+        APPLOG("default uuid[%s] ip[%s] will be used", ginCtrlUUID, ginCtrlIP);
+    } else {
+        ginCtrlUUID = argv[1];
+        ginCtrlIP = argv[2];        
+    }
+
 
     //APPPRINTF("sdk1 \n");
     //ret = genSig(signatureSDK1, sizeof(signatureSDK1));
@@ -230,41 +241,34 @@ int main(int argc, char *argv[]) {
     ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000);
     if (0 > ret) {
         APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
-        return -1;
+        return -2;
     }
     ret = lelinkInit(NULL);
     if (0 > ret) {
         APPLOGE("lelinkInit failed [%d]\r\n", ret);
-        return -2;
+        return -3;
     }
 
-    char *ip = argv[1];
-    int port = atoi(argv[2]);
 
-    if (argc != 3) {
-        ip = REMOTE_IP;
-        port = REMOTE_PORT;
-    }
-
-    void *ctx_r2r = (void *)lelinkNwNew(ip, port, PORT_ONLY_FOR_VM, 0);
-    void *ctx_q2a = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
+    void *ctxR2R = (void *)lelinkNwNew(REMOTE_BAK_IP, REMOTE_BAK_PORT, PORT_ONLY_FOR_VM, NULL);
+    void *ctxQ2A = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, NULL);
 
 
-    ret = pthread_create(&id, NULL, (void *)thread_input_check, ctx_r2r);
+    ret = pthread_create(&id, NULL, (void *)thread_input_check, ctxR2R);
     if (ret != 0) {
         APPLOGE("Create pthread error \r\n");
-        return -1;
+        return -4;
     }
 
     while (1) {
-        // lelinkPollingState(1000, ctx_r2r, ctx_q2a);
-        lelinkDoPollingQ2A(ctx_q2a);
-        lelinkDoPollingR2R(ctx_r2r);
+        // lelinkPollingState(1000, ctxR2R, ctxQ2A);
+        lelinkDoPollingQ2A(ctxQ2A);
+        lelinkDoPollingR2R(ctxR2R);
         delayMS(100);
     }
     
-    lelinkNwDelete(ctx_r2r);
-    lelinkNwDelete(ctx_q2a);
+    lelinkNwDelete(ctxR2R);
+    lelinkNwDelete(ctxQ2A);
 
     return 0;
 }

@@ -477,18 +477,18 @@ void inner_set_ap_info(const ap_passport_t *passport) {
 }
 
 static void thread_lelink_proc(os_thread_arg_t thandle) {
-    void *ctx_r2r = (void *)lelinkNwNew(REMOTE_IP, REMOTE_PORT, 0, 0);
-    void *ctx_q2a = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, ctx_r2r);
+    void *ctxR2R = (void *)lelinkNwNew(REMOTE_BAK_IP, REMOTE_BAK_PORT, 0, NULL);
+    void *ctxQ2A = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, NULL);
     // int i, ret = 0;
 
 
     while (1) {
-        lelinkPollingState(100, ctx_r2r, ctx_q2a);
+        lelinkPollingState(100, ctxR2R, ctxQ2A);
         // LELOG("thread_airconfig_proc pollingState ret [%d]", ret);
     }
 
-    lelinkNwDelete(ctx_r2r);
-    lelinkNwDelete(ctx_q2a);
+    lelinkNwDelete(ctxR2R);
+    lelinkNwDelete(ctxQ2A);
     os_thread_self_complete((os_thread_t *)thandle);
 }
 
@@ -953,6 +953,11 @@ int main()
     //     /* Sleep  5 seconds */
     //     os_thread_sleep(os_msec_to_ticks(3000));
     // }
+    {
+        uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xFF};
+        wlan_set_mac_addr(mac);
+    }
+
 
 #if 1
     /* Start the application framework */

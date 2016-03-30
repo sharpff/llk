@@ -57,36 +57,19 @@ void nwDeinit() {
 void *lelinkNwNew(const char *remoteIP, int remotePort, int selfPort, void *ctx)
 {
     CommonCtx *ctx_p = NULL;  
-    //int ret;
-    //int mode = 1;
-    // joylinkDevInfo *devInfo;
     int sock = 0;
     int broadcastEnable = 1;
-    
-    // if (remoteIP && remotePort) {
-    //     broadcastEnable = 0;
-    // }
+
     ctx_p = newCtx();
 
-
-    // if (!aSock)
-    if (1)
-    {
-        if (0 == halNwNew(selfPort, 0, &sock, &broadcastEnable)) {
-            ctx_p->selfPort = selfPort;
-            // ctx_p->ctx = ctx;
-        } else {
-            deleteCtx(ctx_p);
-            return NULL;
-        }
-    }
-    else
-    {
-        // sock = aSock;
+    if (0 == halNwNew(selfPort, 0, &sock, &broadcastEnable)) {
+        ctx_p->selfPort = selfPort;
+    } else {
+        deleteCtx(ctx_p);
+        return NULL;
     }
 
-    if (remoteIP)
-    {
+    if (remoteIP) {
         int ret = 0;
         AuthCfg authCfg;
         ret = lelinkStorageReadAuthCfg(&authCfg);
@@ -104,7 +87,8 @@ void *lelinkNwNew(const char *remoteIP, int remotePort, int selfPort, void *ctx)
         }
     }
     ctx_p->sock = sock;
-    LELOG("socket [%d]", sock);
+    LELOG("socket [%d] rmt[%s:%d]", sock, remoteIP, remotePort);
+
     
     // wmprintf("nwNew token[%s]", stProfile.token);
     // wmprintf("nwNew did[%s]", stProfile.did);

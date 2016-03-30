@@ -37,7 +37,8 @@
     usleep(ms*1000)
 
 // test only
-#define SELF_IP "192.168.3.109"
+// #define SELF_IP "192.168.3.109"
+#define SELF_IP "192.168.3.110"
 // #define SELF_IP "192.168.1.113"
 
 // #define DOOYA
@@ -50,8 +51,8 @@
 #define LOCAL_TEST_IP "192.168.3.238" // dooya1
 #elif defined HONYAR
 #define UUID_BEING_CTRL "10000100101000010007C80E77ABCD50" // honyar1
-// #define LOCAL_TEST_IP "192.168.3.104" // hoyar1
-#define LOCAL_TEST_IP "192.168.1.114" // hoyar1
+#define LOCAL_TEST_IP "192.168.3.104" // hoyar1
+// #define LOCAL_TEST_IP "192.168.1.114" // hoyar1
 #elif defined DINGDING
 #define UUID_BEING_CTRL "10000100111000810008C80E77ABCD60" // dingding1
 #define LOCAL_TEST_IP "192.168.3.120" // dingding1
@@ -62,7 +63,7 @@
 #pragma error "no matched"
 #endif
 
-#define UUID_BEING_OTA "10000100101000010007FFFFFFFFFFFF"
+// #define UUID_BEING_OTA "10000100101000010007FFFFFFFFFFFF"
 
 
     

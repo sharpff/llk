@@ -6,6 +6,7 @@
 
 extern uint8_t ginBeCtrlToken[];
 static uint8_t ginOTAUrl[RSA_LEN + 128] = {0};
+extern char *ginCtrlUUID;
 
 // static uint8_t ginUUID[32];
 
@@ -27,7 +28,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
     const char *cmd4 = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
 #else
     const char *cmd1 = "{\"ctrl\":{\"pwr\":1,\"idx1\":1,\"idx2\":1,\"idx3\":1,\"idx4\":1}}";
-    const char *cmd2 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":0,\"idx3\":1,\"idx4\":1}}";
+    const char *cmd2 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":1,\"idx3\":1,\"idx4\":1}}";
     const char *cmd3 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":0,\"idx3\":0,\"idx4\":0}}";
     const char *cmd4 = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
 #endif
@@ -79,11 +80,11 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
                 // test only for trig a OTA
                 if (RSA_LEN >= sizeOTA) {
-                    // type = OTA_TYPE_FW;
+                    type = OTA_TYPE_FW;
                     // type = OTA_TYPE_FW_SCRIPT;
                     // type = OTA_TYPE_IA_SCRIPT;
                     // type = OTA_TYPE_AUTH;
-                    type = OTA_TYPE_PRIVATE;
+                    // type = OTA_TYPE_PRIVATE;
                     switch (type) {
                         case OTA_TYPE_FW: {
                             sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo.bin", type, 35);
@@ -130,13 +131,13 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
             // PF-FW-PROTOCOL-FWS
             char ver[] = {"\"1-0.9.9-1-1.0\""};
             if (LELINK_SUBCMD_CLOUD_REPORT_REQ == cmdInfo->subCmdId) {
-                strcpy(uuid, UUID_BEING_CTRL);
+                strcpy(uuid, ginCtrlUUID);
                 ret = sprintf(data, "{\"uuid\":\"%s\"}", uuid);
             } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ == cmdInfo->subCmdId) {
                 int type = OTA_TYPE_FW;
                 // int type = OTA_TYPE_FW_SCRIPT;
                 // int type = OTA_TYPE_IA_SCRIPT;
-                strcpy(uuid, UUID_BEING_OTA);
+                strcpy(uuid, ginCtrlUUID);
                 ret = sprintf(data, "{\"uuid\":\"%s\",\"type\":%d,\"ver\":%s}", uuid, type, ver);
                 // memcpy(data, uuid, ret);
                 APPLOG("OTA query data [%d][%s]", ret, data);

@@ -58,26 +58,8 @@ extern "C"
 #define USED(a) ((void)a)
 
 
-#if 1
-// vpn out side
-// #define REMOTE_IP "192.168.3.107"
-// #define REMOTE_PORT 5545
-// #define REMOTE_IP "10.58.187.59"
-// #define REMOTE_IP "10.58.184.174"
-// #define REMOTE_IP "10.58.187.104"
-// #define REMOTE_IP "10.58.185.120"
-
-#define REMOTE_IP "115.182.94.173"
-#define REMOTE_PORT 5546
-#else
-// internal test
-#define REMOTE_IP "192.168.1.104"
-#define REMOTE_PORT 5546 
-
-#endif
-
-
-
+#define REMOTE_BAK_IP "115.182.94.173"
+#define REMOTE_BAK_PORT 5546
 
 
 #ifdef __cplusplus
