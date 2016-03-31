@@ -811,9 +811,9 @@ void le_ota(int argc, char **argv)
     int c;
     char fwVer[32] = {0};
     bool optflag = false, startflag = false;
-    static int type = 0;
+    static int type = 2;
     // static const char *sig = NULL;
-    static char url[64] = "http://115.182.63.167/feng/le_demo.bin";
+    static char url[64] = "http://115.182.63.167/fei/le_demo.bin";
 
     cli_optind = 1;
     while ((c = cli_getopt(argc, argv, "t:u:sp")) != -1) {

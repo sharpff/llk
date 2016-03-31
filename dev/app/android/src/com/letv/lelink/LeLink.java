@@ -458,7 +458,7 @@ public class LeLink {
 			return ret;
 		}
 		sendCmdJson = new JSONObject();
-		LOGI("type " + type + ", onMessage: " + jsonStr);
+		LOGI("type " + type + ", size " + buf.length + ", onMessage: " + jsonStr);
 		switch (type) {
 		case MSG_TYPE_LOCALREQUEST:
 		case MSG_TYPE_LOCALRESPOND:
@@ -496,7 +496,12 @@ public class LeLink {
 						mCtrlLock.notifyAll();
 					}
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
+					LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
+					if(dataJson.has(LeCmd.K.URL)){
+					LOGI("dataJson:\n" + dataJson.toString());
+					LOGI("dataJson:\n" + dataJson.getString(LeCmd.K.URL));
+					}
 					if (mWaitGetUuid != null) {
 						mFindDevs.clear();
 						mFindDevs.put(uuid, dataJson);
