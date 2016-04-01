@@ -7,6 +7,8 @@
 extern uint8_t ginBeCtrlToken[];
 static uint8_t ginOTAUrl[RSA_LEN + 128] = {0};
 extern char *ginCtrlUUID;
+extern char *ginCtrlCmd1;
+extern char *ginCtrlCmd2;
 
 // static uint8_t ginUUID[32];
 
@@ -27,10 +29,13 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
     const char *cmd3 = "{\"ctrl\":{\"pwr\":1,\"action\":3}}";
     const char *cmd4 = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
 #else
-    const char *cmd1 = "{\"ctrl\":{\"pwr\":1,\"idx1\":1,\"idx2\":1,\"idx3\":1,\"idx4\":1}}";
-    const char *cmd2 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":1,\"idx3\":1,\"idx4\":1}}";
-    const char *cmd3 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":0,\"idx3\":0,\"idx4\":0}}";
-    const char *cmd4 = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
+    char *cmd1 = ginCtrlCmd1;
+    char *cmd2 = ginCtrlCmd2;
+    // char *cmd1 = "{\"ctrl\":{\"pwr\":1,\"idx1\":1,\"idx2\":1,\"idx3\":1,\"idx4\":1}}";
+    // char *cmd2 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":1,\"idx3\":1,\"idx4\":1}}";
+    // const char *cmd3 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":0,\"idx3\":0,\"idx4\":0}}";
+    // const char *cmd3 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":0,\"idx3\":0,\"idx4\":0}}";
+    // const char *cmd4 = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
 #endif
     char cmdCtrl[64] = {0};
     static int a = 0;
@@ -68,9 +73,9 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
         case LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ: {
             if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == cmdInfo->subCmdId) {
                 if (a) {
-                    strcpy(cmdCtrl, cmd2);
+                    strcpy(cmdCtrl, cmd1);
                 } else {
-                    strcpy(cmdCtrl, cmd3);
+                    strcpy(cmdCtrl, cmd2);
                 }
                 ret = len < strlen(cmdCtrl) ? len : strlen(cmdCtrl);
                 memcpy(data, cmdCtrl, ret);
@@ -80,9 +85,9 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
                 // test only for trig a OTA
                 if (RSA_LEN >= sizeOTA) {
-                    type = OTA_TYPE_FW;
+                    // type = OTA_TYPE_FW;
                     // type = OTA_TYPE_FW_SCRIPT;
-                    // type = OTA_TYPE_IA_SCRIPT;
+                    type = OTA_TYPE_IA_SCRIPT;
                     // type = OTA_TYPE_AUTH;
                     // type = OTA_TYPE_PRIVATE;
                     switch (type) {
@@ -90,14 +95,17 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                             sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo.bin", type, 35);
                         } break;
                         case OTA_TYPE_FW_SCRIPT: {
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar.lua", type, 35);
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dingding.lua", type, 35);
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dingding.lua", type, 35);
                         } break;
                         case OTA_TYPE_IA_SCRIPT: {
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_honyarOn.lua", type, 35);
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_honyarOff.lua", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOn.lua", type, 35);
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOff.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_withTime.lua", type, 35);
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOff.lua", type, 35);
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_hOn_sOn.lua", type, 35);
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_hOff_sOff.lua", type, 35);
                         } break;
                         case OTA_TYPE_AUTH: {
                             sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1c2000.bin", type, 35);

@@ -953,10 +953,6 @@ int main()
     //     /* Sleep  5 seconds */
     //     os_thread_sleep(os_msec_to_ticks(3000));
     // }
-    {
-        uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xFF};
-        wlan_set_mac_addr(mac);
-    }
 
 
 #if 1

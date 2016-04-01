@@ -41,8 +41,9 @@
 #define SELF_IP "192.168.3.110"
 // #define SELF_IP "192.168.1.113"
 
-// #define DOOYA
-#define HONYAR
+#if 0
+#define DOOYA
+// #define HONYAR
 // #define DINGDING
 // #define MYLOCAL
 
@@ -62,8 +63,8 @@
 #else
 #pragma error "no matched"
 #endif
-
 // #define UUID_BEING_OTA "10000100101000010007FFFFFFFFFFFF"
+#endif
 
 
     

@@ -514,6 +514,9 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
         case IO_TYPE_UART: {
             return halUartWrite(hdl, data, dataLen);
         }break;
+        case IO_TYPE_GPIO: {
+            return halGPIOWrite(hdl, data, dataLen);
+        }break;
         case IO_TYPE_PIPE: {
 
         }break;
@@ -528,6 +531,9 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
     switch (ioType) {
         case IO_TYPE_UART: {
             return halUartRead(hdl, data, dataLen);
+        }break;
+        case IO_TYPE_GPIO: {
+            return halGPIORead(hdl, data, dataLen);
         }break;
         case IO_TYPE_PIPE: {
 

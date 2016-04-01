@@ -7,8 +7,7 @@ extern int getRegion(E_FLASH_TYPE type, FlashRegion *region);
 
 int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
 {
-    char tmpurl[256];
-    int i, ret, status = -1;
+    int ret, status = -1;
     OTAInfo_t info = {0};
     ScriptCfg *tmpScriptCfg = NULL;
 

@@ -8,8 +8,10 @@
 #include "ota.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
-char *ginCtrlUUID = UUID_BEING_CTRL;
-char *ginCtrlIP = LOCAL_TEST_IP;
+char *ginCtrlUUID = NULL;
+char *ginCtrlIP = NULL;
+char *ginCtrlCmd1 = NULL;
+char *ginCtrlCmd2 = NULL;
 
 union {  
     int number;  
@@ -212,13 +214,17 @@ int main(int argc, char *argv[]) {
     //     printf(ginScript);
     //     return 0;
     // }
-    if (argc < 3) {
-        APPLOG("EXEC [target uuid] [target ip]");
-        return -1;
+    if (argc < 5) {
+        APPLOG("EXEC [target uuid] [target ip] [cmd1] [cmd2]");
         APPLOG("default uuid[%s] ip[%s] will be used", ginCtrlUUID, ginCtrlIP);
+        return -1;
     } else {
         ginCtrlUUID = argv[1];
-        ginCtrlIP = argv[2];        
+        ginCtrlIP = argv[2];
+        ginCtrlCmd1 = argv[3];
+        ginCtrlCmd2 = argv[4];
+        APPLOG("default uuid[%s] ip[%s] cmd1[%s], cmd2[%s]", ginCtrlUUID, ginCtrlIP, ginCtrlCmd1, ginCtrlCmd2);
+        // return 0;
     }
 
 
@@ -261,10 +267,11 @@ int main(int argc, char *argv[]) {
     }
 
     while (1) {
-        // lelinkPollingState(1000, ctxR2R, ctxQ2A);
-        lelinkDoPollingQ2A(ctxQ2A);
-        lelinkDoPollingR2R(ctxR2R);
-        delayMS(100);
+        lelinkPollingState(100, ctxR2R, ctxQ2A);
+        
+        // lelinkDoPollingQ2A(ctxQ2A);
+        // lelinkDoPollingR2R(ctxR2R);
+        // delayMS(100);
     }
     
     lelinkNwDelete(ctxR2R);
