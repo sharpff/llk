@@ -13,17 +13,6 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
     ScriptCfg *tmpScriptCfg = NULL;
 
     LELOG("update type = %d, url = %s", type, url);
-#if 1 // TODO: because --> url":"http:\/\/g3.letv.cn\/186\/34\/110\/resolve-smart\/0\/le_fw.bin""
-    for(i = 0; *url && i < sizeof(tmpurl); url++) {
-        if(*url == '\\') {
-            continue;
-        }
-        tmpurl[i++] = *url;
-    }
-    tmpurl[i++] = '\0';
-    url = tmpurl;
-    LELOG("URL:[%s]", url);
-#endif
     if(type < 0 || type >= OTA_TYPE_MAX) {
         LELOGW("Update type error, %d", type);
         goto skip_update;

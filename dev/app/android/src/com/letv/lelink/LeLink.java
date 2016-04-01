@@ -390,7 +390,16 @@ public class LeLink {
 				mMinSeqId = min + 1;
 			}
 			if (dataStr != null) {
-				mWaitSendCmds.put(String.valueOf(mSeqId + 1), dataStr);
+				String jsonStr;
+				try {
+					com.alibaba.fastjson.JSONObject dataFJson = com.alibaba.fastjson.JSONObject.parseObject(dataStr);
+					jsonStr = dataFJson.toJSONString();
+				} catch (Exception e) {
+					LOGE("Data json error");
+					e.printStackTrace();
+					return false;
+				}
+				mWaitSendCmds.put(String.valueOf(mSeqId + 1), jsonStr);
 			}
 		}
 		mSeqId++;
@@ -400,7 +409,7 @@ public class LeLink {
 				cmdJson.put(LeCmd.K.ADDR, mCloudAddr);
 			}
 		} catch (JSONException e) {
-			LOGE("Json error");
+			LOGE("Cmd json error");
 			e.printStackTrace();
 			return false;
 		}
@@ -498,10 +507,6 @@ public class LeLink {
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
 					LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
-					if(dataJson.has(LeCmd.K.URL)){
-					LOGI("dataJson:\n" + dataJson.toString());
-					LOGI("dataJson:\n" + dataJson.getString(LeCmd.K.URL));
-					}
 					if (mWaitGetUuid != null) {
 						mFindDevs.clear();
 						mFindDevs.put(uuid, dataJson);

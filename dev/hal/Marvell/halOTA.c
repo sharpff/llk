@@ -10,8 +10,9 @@ int halHttpOpen(OTAInfo_t *info, const char *url)
     int status = -1;
     char tmpurl[512];
     http_resp_t *resp;
-    static http_session_t session;
+    http_session_t session;
 
+    info->session = NULL;
     strcpy(tmpurl, url);
     url = tmpurl;
 again:
@@ -43,7 +44,7 @@ again:
         APPLOGE("HTTP size(%d) error", resp->content_length);
         goto err_out;
     }
-    info->session = &session;
+    info->session = (void *)session;
     info->imgLen = resp->content_length;
     return 0;
 err_out:
@@ -53,7 +54,7 @@ err_out:
 void halHttpClose(OTAInfo_t *info)
 {
     if(info && info->session) {
-        http_close_session(info->session);
+        http_close_session((http_session_t *)&info->session);
         info->session = NULL;
     }
 }
@@ -102,7 +103,7 @@ static size_t httpFetchData(void *priv, void *buf, size_t max_len)
     int ret = 0;
     OTAInfo_t *info = (OTAInfo_t *) priv;
 
-    if((ret = http_read_content(*(http_session_t *)info->session, buf, max_len)) > 0){
+    if((ret = http_read_content((http_session_t)info->session, buf, max_len)) > 0){
         info->nowLen += ret;
     }
     APPLOG("%d/%d", info->nowLen, info->imgLen);
