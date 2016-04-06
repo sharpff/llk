@@ -67,6 +67,144 @@
 #define dbg(...)
 #endif /* APPCONFIG_DEBUG_ENABLE */
 
+//--------------------------- For Micro Ap ------------------------------------
+#include <httpd.h>
+#include <string.h>
+#include <wmsysinfo.h>
+
+/* mDNS */
+#ifdef APPCONFIG_MDNS_ENABLE
+void hp_mdns_announce(void *iface, int state);
+void hp_mdns_deannounce(void *iface);                                                                                                                                  
+void hp_mdns_down_up(void *iface);
+#else
+static inline void hp_mdns_down_up(void *iface) {}
+static inline void hp_mdns_announce(void *iface, int state) {}
+static inline void hp_mdns_deannounce(void *iface) {}
+#endif   /* APPCONFIG_MDNS_ENABLE */
+
+#define MAX_SRVNAME_LEN 32
+
+/* This structure holds all the application specific
+ * configuration data.
+ */
+typedef struct __appln_config {
+    /* These two variables are used for starting uAP network. */
+    char *ssid;                                                                                                                                                          
+    char *passphrase;
+
+    /* If mdns is enabled, following variables hold hostname
+     *  and service name respectively.
+     */
+    char servname[MAX_SRVNAME_LEN];
+    char *hostname;
+
+    /*
+     * GPIO number for WPS push button.
+     * When not configured, set it to -1.
+     */
+    int wps_pb_gpio;
+
+    /*
+     * GPIO number for reset to provisioning push button.
+     * When not configured, set it to -1.
+     */
+    int reset_prov_pb_gpio;
+} appln_config_t;
+
+appln_config_t appln_cfg = {
+    .ssid = "Marvell uAP Demo",
+    .passphrase = "marvellwm",
+    .hostname = "uAPdemo"
+
+};
+
+/* This function must initialize the variables required (network name,
+ * passphrase, etc.) It should also register all the event handlers that are of
+ * interest to the application.
+ */
+int appln_config_init()
+{
+    /* Initialize service name for mdns */
+    snprintf(appln_cfg.servname, MAX_SRVNAME_LEN, "uAPdemo");
+    return 0;
+
+}
+
+/*
+ * A simple HTTP Web-Service Handler
+ *
+ * Returns the string "Hello World" when a GET on http://<IP>/hello
+ * is done.
+ */                                                                                                                                                                    
+
+char *hello_world_string = "Hello World\n";
+
+int hello_handler(httpd_request_t *req)
+{
+    char *content = hello_world_string;
+
+    httpd_send_response(req, HTTP_RES_200,
+            content, strlen(content),
+            HTTP_CONTENT_PLAIN_TEXT_STR);
+    return WM_SUCCESS;
+
+}
+
+struct httpd_wsgi_call hello_wsgi_handler = {
+    "/hello",
+    HTTPD_DEFAULT_HDR_FLAGS,
+    0,
+    hello_handler,
+    NULL,
+    NULL,
+    NULL
+
+};
+
+/*
+ * Register Web-Service handlers
+ *
+ */ 
+int register_httpd_handlers()
+{   
+    return httpd_register_wsgi_handler(&hello_wsgi_handler);
+}
+
+/*
+ * Handler invoked when the Micro-AP Network interface
+ * is ready.
+ *
+ */
+
+void event_uap_started(void *data)
+{
+    int ret;
+    void *iface_handle = net_get_uap_handle();
+
+    dbg("Starting mdns");
+    app_mdns_start(appln_cfg.hostname);
+
+    hp_mdns_announce(iface_handle, UP);
+    dbg("mdns uap up event");
+
+    /* Start http server */
+    ret = app_httpd_start();
+    if (ret != WM_SUCCESS)
+        dbg("Failed to start HTTPD");
+
+    ret = register_httpd_handlers();
+    if (ret != WM_SUCCESS)
+        dbg("Failed to register HTTPD handlers");
+}
+
+void event_uap_stopped(void *data)
+{
+    dbg("uap interface stopped");
+
+}
+
+//---------------------------End For Micro Ap ---------------------------------
 
 
 static uint8_t gin_airconfig_running;
@@ -556,6 +694,14 @@ void printOutBytes(const uint8_t buf[], int len) {
 void event_wlan_init_done(void *data)
 {
 	int ret;
+    ret = psm_cli_init();
+    if (ret != WM_SUCCESS)
+        dbg("Error: psm_cli_init failed");
+    ret = wlan_cli_init();                                                                                                                                               
+    if (ret != WM_SUCCESS)
+        dbg("Error: wlan_cli_init failed");
+    app_uap_start_with_dhcp(appln_cfg.ssid, appln_cfg.passphrase);
+    return;
     // char utc[] = "{\"redirect\":0,\"utc\":123412341234}";
     // char tmp2[] = "{\"dir\":\"54321\"}";
     // char utc[64] = "{\"utc\":1234}";
@@ -786,8 +932,14 @@ int common_event_handler(int event, void *data)
 {
 	switch (event) {
 	case AF_EVT_WLAN_INIT_DONE:
-		event_wlan_init_done(data);
-		break;
+        event_wlan_init_done(data);
+        break;
+    case AF_EVT_UAP_STARTED:
+        event_uap_started(data);
+        break;
+    case AF_EVT_UAP_STOPPED:
+        event_uap_stopped(data);
+        break;
     case AF_EVT_NORMAL_CONNECTING:
         // if (gin_airconfig_ap_connected == 1) {
         //     LELOGW("need to reconnect");
@@ -944,6 +1096,8 @@ int main()
 {
     // int count = 0;
     modules_init();
+
+    appln_config_init();
 
     dbg("Build Time: " __DATE__ " " __TIME__ "");
     // while (1) {
