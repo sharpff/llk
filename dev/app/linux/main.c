@@ -8,6 +8,7 @@
 #include "ota.h"
 #include "header.h"
 #include "network.h"
+#include "airconfig.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
 char *ginCtrlUUID = NULL;
@@ -284,17 +285,6 @@ int main(int argc, char *argv[]) {
 
 #else
 
-#define WIFICONFIG_MAGIC    (0x7689)
-#define WIFICONFIG_VERSION  (1)
-
-typedef struct {
-    uint32_t magic;
-    uint8_t version;
-    uint8_t checksum;
-    uint8_t ssid[32];
-    uint8_t wap2passwd[32];
-} wificonfig_t;
-
 int main(int argc, char** argv) {
 
     char configInfo[256] = {0};
@@ -334,6 +324,7 @@ int main(int argc, char** argv) {
     // configInfo = "SSID=ff,PASSWD=fengfeng2qiqi,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10";
     APPLOG("starting with [%s:%s][%d]...", ssid, passwd, delay);
 
+#if  ENABLE_WIFI_SOFT_AP
     {
         wificonfig_t wc = {
             WIFICONFIG_MAGIC,
@@ -363,6 +354,7 @@ int main(int argc, char** argv) {
             lelinkNwDelete(ctx);
         }
     }
+#else
     while (1) {
         sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
         // APPLOG("start => %s", configInfo);
@@ -375,6 +367,7 @@ int main(int argc, char** argv) {
         }
 
     }
+#endif
 	return (EXIT_SUCCESS);
 
 }

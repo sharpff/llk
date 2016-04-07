@@ -64,7 +64,6 @@ EXTRACFLAGS += -I./src/hal/Marvell
 
 
 SRCS = ./app/mw300/main.c \
-	   ./app/mw300/uap.c \
 	./hal/Marvell/halAES.c \
 	./hal/Marvell/halAirConfig.c \
 	./hal/Marvell/halCallback.c \

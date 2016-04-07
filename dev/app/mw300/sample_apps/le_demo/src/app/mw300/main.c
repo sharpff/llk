@@ -53,7 +53,6 @@
 #include <lelink/sw/data.h>
 #include <lelink/sw/io.h>
 #include <lelink/sw/ota.h>
-#include "uap.h"
 
 
 static uint8_t gin_airconfig_running;
@@ -543,7 +542,6 @@ void printOutBytes(const uint8_t buf[], int len) {
 void event_wlan_init_done(void *data)
 {
 	int ret;
-    char uuid[32] = {0};
 
 	ret = wlan_cli_init();
     if (ret != WM_SUCCESS) {
@@ -566,17 +564,7 @@ void event_wlan_init_done(void *data)
         APPLOGE("lelinkInit ret[%d]\r\n", ret);
         return;
     }
-    ret = getTerminalUUID((uint8_t *)uuid, sizeof(uuid));
-    if (0 > ret) {
-        APPLOGE("getTerminalUUID ret[%d]\r\n", ret);
-        return;
-    }
-    ret = wlanUAPInit(uuid);
-    if (0 > ret) {
-        APPLOGE("wlanUAPInit ret[%d]\r\n", ret);
-        return;
-    }
-    //lelink_start();
+    lelink_start();
 }
 
 /* This is the main event handler for this project. The application framework
@@ -589,10 +577,10 @@ int common_event_handler(int event, void *data)
         event_wlan_init_done(data);
         break;
     case AF_EVT_UAP_STARTED:
-        eventUAPStarted(data);
+        APPLOG("uap interface started");
         break;
     case AF_EVT_UAP_STOPPED:
-        eventUAPStopped(data);
+        APPLOG("uap interface stopped");
         break;
     case AF_EVT_NORMAL_CONNECTING:
         // if (gin_airconfig_ap_connected == 1) {

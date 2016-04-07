@@ -34,4 +34,17 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
 int airconfig_get_info(int len, int base, ap_passport_t *account, const char *ssid, int len_ssid);
 int airconfig_reset(void);
 
+#define ENABLE_WIFI_SOFT_AP         (1)
+#define WIFICONFIG_LISTEN_PORT      (4911)
+#define WIFICONFIG_MAGIC            (0x7689)
+#define WIFICONFIG_VERSION          (1)
+
+typedef struct {
+    uint32_t magic;
+    uint8_t version;
+    uint8_t checksum;
+    uint8_t ssid[32];
+    uint8_t wap2passwd[32];
+} wificonfig_t;
+
 #endif /* AIRCONFIG_H */

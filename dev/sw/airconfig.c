@@ -786,3 +786,68 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
     return 0;
 }
 
+#include "network.h"
+int softApStarted(void)
+{
+    int ret;
+    char ssid[32];
+    uint16_t port;
+    char ipaddr[32];
+    wificonfig_t wc;
+    char buf[UDP_MTU];
+    void *ctx = NULL;
+    char uuid[32] = {0};
+    char wpa2_passphrase[32] = "00000000";
+
+    if((ret = getTerminalUUID((uint8_t *)uuid, sizeof(uuid))) < 0) {
+        LELOGE("getTerminalUUID ret[%d]", ret);
+        goto out;
+    }
+    snprintf(ssid, sizeof(ssid), "-lelink0.1-%s", uuid);
+    if((ret = halSoftApStart(ssid, wpa2_passphrase))) {
+        LELOGE("halSoftApStart ret[%d]", ret);
+        goto out;
+    }
+    ctx = lelinkNwNew(NULL, 0, 4911, NULL);
+    if(!ctx) {
+        LELOGE("New link");
+        goto out;
+    }
+    while(1) {
+        LELOG("Waitting wifi configure.");
+        delayms(1000);
+        ret = nwUDPRecvfrom(ctx, (uint8_t *)buf, UDP_MTU, ipaddr, sizeof(ipaddr), &port);
+        if(ret > 0 ) {
+            LELOG("nwUDPRecvfrom ret = %d", ret);
+            if(ret != sizeof(wc)) {
+                LELOGE("Wrong len = %d", ret);
+                continue;
+            }
+            memcpy(&wc, buf, ret);
+            LELOG("Get ssid[%s] passwd[%s]", wc.ssid, wc.wap2passwd);
+            {
+                PrivateCfg cfg;
+                lelinkStorageReadPrivateCfg(&cfg);
+                LELOG("read last ssid[%s], psk[%s], configStatus[%d]", 
+                        cfg.data.nwCfg.config.ssid,
+                        cfg.data.nwCfg.config.psk, 
+                        cfg.data.nwCfg.configStatus);
+                strcpy(cfg.data.nwCfg.config.ssid, wc.ssid);
+                strcpy(cfg.data.nwCfg.config.psk, wc.wap2passwd);
+                cfg.data.nwCfg.configStatus = 1;
+                ret = lelinkStorageWritePrivateCfg(&cfg);
+                LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
+            }
+            break;
+        } else {
+            LELOGE("nwUDPRecvfrom ret = %d", ret);
+        }
+    }
+out:
+    if(ctx) {
+        lelinkNwDelete(ctx);
+    }
+    halSoftApStop();
+    return ret;
+}
+
