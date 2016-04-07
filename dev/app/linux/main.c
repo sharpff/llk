@@ -6,6 +6,8 @@
 #include "protocol.h"
 #include "io.h"
 #include "ota.h"
+#include "header.h"
+#include "network.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
 char *ginCtrlUUID = NULL;
@@ -196,7 +198,7 @@ void thread_input_check(void *arg) {
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0, 
 
-// #define DO_AIR_CONFIG
+#define DO_AIR_CONFIG
 
 #ifndef DO_AIR_CONFIG
 int main(int argc, char *argv[]) {
@@ -282,6 +284,17 @@ int main(int argc, char *argv[]) {
 
 #else
 
+#define WIFICONFIG_MAGIC    (0x7689)
+#define WIFICONFIG_VERSION  (1)
+
+typedef struct {
+    uint32_t magic;
+    uint8_t version;
+    uint8_t checksum;
+    uint8_t ssid[32];
+    uint8_t wap2passwd[32];
+} wificonfig_t;
+
 int main(int argc, char** argv) {
 
     char configInfo[256] = {0};
@@ -321,6 +334,35 @@ int main(int argc, char** argv) {
     // configInfo = "SSID=ff,PASSWD=fengfeng2qiqi,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10";
     APPLOG("starting with [%s:%s][%d]...", ssid, passwd, delay);
 
+    {
+        wificonfig_t wc = {
+            WIFICONFIG_MAGIC,
+            WIFICONFIG_VERSION,
+            0
+        };
+        int len, ret;
+        uint16_t port = 4911;
+        char ipaddr[32] = "255.255.255.255";
+        void *ctx  = lelinkNwNew(NULL, 0, 0, NULL);
+
+        if(!ctx) {
+            APPLOGE("New link error");
+            return -1;
+        }
+        strncpy(wc.ssid, ssid, sizeof(wc.ssid));
+        strncpy(wc.wap2passwd, passwd, sizeof(wc.wap2passwd));
+        while(1) {
+            APPLOG("Send wifi configure, [%s:%s][%d]...", ssid, passwd, delay);
+            delayms(1000);
+            ret = nwUDPSendto(ctx, ipaddr, port, (uint8_t *)&wc, sizeof(wc));
+            if(ret <= 0 ) {
+                APPLOGE("nwUDPSendto ret = %d", ret);
+            }
+        }
+        if(ctx) {
+            lelinkNwDelete(ctx);
+        }
+    }
     while (1) {
         sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
         // APPLOG("start => %s", configInfo);

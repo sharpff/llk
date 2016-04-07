@@ -576,7 +576,7 @@ void event_wlan_init_done(void *data)
         APPLOGE("wlanUAPInit ret[%d]\r\n", ret);
         return;
     }
-    lelink_start();
+    //lelink_start();
 }
 
 /* This is the main event handler for this project. The application framework
