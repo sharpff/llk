@@ -6,10 +6,6 @@
 #include "protocol.h"
 #include "io.h"
 #include "ota.h"
-#include "header.h"
-#include "network.h"
-#include "utility.h"
-#include "airconfig.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
 char *ginCtrlUUID = NULL;
@@ -201,6 +197,7 @@ void thread_input_check(void *arg) {
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0, 
 
 #define DO_AIR_CONFIG
+#define ENABLE_WIFI_SOFT_AP 1
 
 #ifndef DO_AIR_CONFIG
 int main(int argc, char *argv[]) {
@@ -326,35 +323,8 @@ int main(int argc, char** argv) {
     APPLOG("starting with [%s:%s][%d]...", ssid, passwd, delay);
 
 #if  ENABLE_WIFI_SOFT_AP
-    {
-        wificonfig_t wc = {
-            WIFICONFIG_MAGIC,
-            WIFICONFIG_VERSION,
-            0
-        };
-        int len, ret;
-        uint16_t port = 4911;
-        char ipaddr[32] = "255.255.255.255";
-        void *ctx  = lelinkNwNew(NULL, 0, 0, NULL);
-
-        if(!ctx) {
-            APPLOGE("New link error");
-            return -1;
-        }
-        strncpy(wc.ssid, ssid, sizeof(wc.ssid));
-        strncpy(wc.wap2passwd, passwd, sizeof(wc.wap2passwd));
-        wc.checksum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
-        while(1) {
-            APPLOG("Send wifi configure, [%s:%s][%d]...", ssid, passwd, delay);
-            delayms(1000);
-            ret = nwUDPSendto(ctx, ipaddr, port, (uint8_t *)&wc, sizeof(wc));
-            if(ret <= 0 ) {
-                APPLOGE("nwUDPSendto ret = %d", ret);
-            }
-        }
-        if(ctx) {
-            lelinkNwDelete(ctx);
-        }
+    while (1) {
+        ret = softApDoConfig(ssid, passwd, delay);
     }
 #else
     while (1) {

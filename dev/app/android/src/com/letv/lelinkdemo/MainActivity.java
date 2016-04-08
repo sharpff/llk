@@ -14,6 +14,7 @@ import com.letv.lelink.LeLink;
 public class MainActivity extends Activity {
 	private static final String TAG = "LeLinkDemo";
 	private LeLink mLeLink = null;
+	private String sdkUUID = null;
 	private JSONObject mJsonCmd = null;
 	private JSONObject mJsonData = null;
 
@@ -46,26 +47,36 @@ public class MainActivity extends Activity {
 					break;
 				}
 			}
-			Log.w(TAG, "Auth finish");
+			
+			/*
+			 * 设备发现 必须传入timeout
+			 * 
+			 * 进入该函数，首先发送一次发现包。然后等待timeout时间，最后返回大这timeout期间收到的发现回复的设备。
+			 */
+			Log.w(TAG, "Get SDK uuid");
+			sdkUUID = mLeLink.getSdkUUID();
+			Log.i(TAG, "SDK UUID: " + sdkUUID);
+			
 			/*
 			 * WIFI配置 必须传入参数: ssid, passwd, timeout
 			 * 
 			 * 在timeout时间内，不断重复发送配置包。如果期间收到hello,则退出该函数。
 			 */
-//			Log.e(TAG, "Wifi config test...");
-//			try {
-//				mJsonCmd = new JSONObject();
-//				mJsonCmd.put(LeCmd.K.TIMEOUT, 60 * 5);
-//				mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_A7DD");
-//				mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
-//			} catch (JSONException e) {
-//				e.printStackTrace();
-//			}
-//			if (mLeLink.airConfig(mJsonCmd.toString()) == 0) {
-//				Log.w(TAG, "airConfig ok!\n");
-//			} else {
-//				Log.e(TAG, "airConfig timeout");
-//			}
+			Log.e(TAG, "Wifi config test...");
+			try {
+				mJsonCmd = new JSONObject();
+				mJsonCmd.put(LeCmd.K.TIMEOUT, 60 * 5);
+				mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_A7DD");
+				mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			if (mLeLink.airConfig(mJsonCmd.toString()) == 0) {
+				Log.w(TAG, "airConfig ok!\n");
+			} else {
+				Log.e(TAG, "airConfig timeout");
+				return;
+			}
 
 			/*
 			 * 设备发现 必须传入timeout
@@ -73,7 +84,7 @@ public class MainActivity extends Activity {
 			 * 进入该函数，首先发送一次发现包。然后等待timeout时间，最后返回大这timeout期间收到的发现回复的设备。
 			 */
 			Log.e(TAG, "Device discover test...");
-			retData = mLeLink.discover(5);
+			retData = mLeLink.discover(20);
 			if (retData != null) {
 				Log.w(TAG, "find devices:\n" + retData);
 			} else {
@@ -85,9 +96,11 @@ public class MainActivity extends Activity {
 			String devUUID = "10000100101000010007F0B429000012";
 			try {
 				JSONArray jsonArray = new JSONArray(retData);
-				dataJson = jsonArray.getJSONObject(jsonArray.length() - 1);
-				if (dataJson.has(LeCmd.K.UUID)) {
-					devUUID = dataJson.getString(LeCmd.K.UUID);
+				for (int i = 0; i < jsonArray.length(); i++) {
+					dataJson = jsonArray.getJSONObject(i);
+					if (dataJson.has(LeCmd.K.UUID) && dataJson.getString(LeCmd.K.UUID).equals(sdkUUID)) {
+						devUUID = dataJson.getString(LeCmd.K.UUID);
+					}
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -104,7 +117,7 @@ public class MainActivity extends Activity {
 				mJsonCmd = new JSONObject();
 				mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.GET_STATE_CMD);
 				mJsonCmd.put(LeCmd.K.UUID, devUUID);
-				mJsonCmd.put(LeCmd.K.TIMEOUT, 5);
+				mJsonCmd.put(LeCmd.K.TIMEOUT, 10);
 //				mJsonCmd.put(LeCmd.K.ADDR, "192.168.1.102");
 				mJsonData = new JSONObject();
 				mJsonData.put(LeCmd.K.UUID, devUUID); 
@@ -181,7 +194,7 @@ public class MainActivity extends Activity {
 			if (retData != null) {
 				Log.w(TAG, "OTA state:\n" + retData);
 			} else {
-				Log.e(TAG, "Can't check ota");
+				Log.e(TAG, "Can't check OTA");
 				return;
 			}
 			

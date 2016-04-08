@@ -17,6 +17,10 @@
 #include "halCenter.h"
 #include "airconfig_ctrl.h"
 
+extern "C" {
+    int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout);
+};
+
 nativeContext_t gNativeContext = {
     SW_VERSION " " __DATE__ " " __TIME__,
     true
@@ -77,11 +81,14 @@ void airConfig(void *ptr, char *json)
 	snprintf(parambuf, sizeof(parambuf), "SSID=%s,PASSWD=%s,AES=%s,TYPE=%d,DELAY=%d",
 			ssid, passwd, aes, type, delay);
 	APPLOG("airConfig: %s", parambuf);
-	void *context = airconfig_new(parambuf);
-//	void *context = airconfig_new("SSID=TP-LINK_JJFA1,PASSWD=987654321,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10");
-
-	airconfig_do_config(context);
-	airconfig_delete(context);
+    if(type < 3) {
+        void *context = airconfig_new(parambuf);
+        //	void *context = airconfig_new("SSID=TP-LINK_JJFA1,PASSWD=987654321,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10");
+        airconfig_do_config(context);
+        airconfig_delete(context);
+    } else {
+        softApDoConfig(ssid, passwd, delay);
+    }
 }
 
 int cmdSend(void *ptr, char *json)

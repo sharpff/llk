@@ -42,6 +42,7 @@ public class LeLink {
 	private long mSendHeartTime = 0;
 	private long mGetCloudHeartRspTime = 0;
 	private static String mInitInfo = null;
+	private static String mSdkInfo = null;
 	// for get & discover
 	private String mWaitGetUuid = null;
 	private Map<String, JSONObject> mFindDevs = new HashMap<String, JSONObject>(); // uuid
@@ -61,7 +62,10 @@ public class LeLink {
 	 * 		SDK信息
 	 */
 	public static String getSdkInfo() {
-		return getSDKInfo();
+		if (mSdkInfo == null) {
+			mSdkInfo = getSDKInfo();
+		}
+		return mSdkInfo; 
 	}
 	
 	/**
@@ -101,6 +105,7 @@ public class LeLink {
 	public static LeLink getInstance() {
 		if (sLeLink == null) {
 			sLeLink = new LeLink(mInitInfo);
+			mSdkInfo = getSDKInfo();
 		}
 		return sLeLink;
 	}
@@ -117,6 +122,26 @@ public class LeLink {
 	}
 	
 	/**
+	 * 得到SDK对应的UUID.<br>
+	 * 必须在成功执行setContent()后才可以用.<br>
+	 * 
+	 * @return
+	 * 		String - SDK UUID
+	 */
+	public String getSdkUUID() {
+		String uuid = null;
+//		LOGI(mSdkInfo);
+		try {
+			JSONObject obj = new JSONObject(mSdkInfo);
+			uuid = obj.getString(LeCmd.K.UUID);
+		} catch (JSONException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return uuid;
+	}
+	
+	/**
 	 * 
 	 * WIFI配置.<br>
 	 * 必须传入参数: ssid, passwd, timeout<br>
@@ -129,7 +154,9 @@ public class LeLink {
 	 */
 	public int airConfig(String jsonStr) {
 		int startTime, timeout, tryTimes = 1;
-		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_MULTICAST;
+//		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_MULTICAST;
+//		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_BROADCAST;
+		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_SOFTAP;
 		JSONObject sendJson = null;
 
 		if (jsonStr == null) {
@@ -150,12 +177,13 @@ public class LeLink {
 				LOGI(logStr);
 				sendJson.put(LeCmd.K.TYPE, airConfigType);
 				airConfig(mPtr, sendJson.toString());
-				if (tryTimes++ > 5) {
+				if (++tryTimes > 3) {
 					tryTimes = 1;
-					airConfigType = (airConfigType == LeCmd.V.AIR_CONFIG_TYPE_BROADCAST) ? LeCmd.V.AIR_CONFIG_TYPE_MULTICAST
-							: LeCmd.V.AIR_CONFIG_TYPE_BROADCAST;
+//					if(++airConfigType >= LeCmd.V.AIR_CONFIG_TYPE_MAXNUM){
+//						airConfigType = 0;
+//					}
 					try {
-						Thread.sleep(5000);
+						Thread.sleep(1000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}

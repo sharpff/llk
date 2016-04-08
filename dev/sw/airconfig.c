@@ -861,3 +861,33 @@ out:
     return ret;
 }
 
+int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout)
+{
+    void *ctx;
+    uint16_t port = 4911;
+    int i, ret, count, delay = 1000; // ms
+    char ipaddr[32] = "255.255.255.255";
+    wificonfig_t wc = { WIFICONFIG_MAGIC, WIFICONFIG_VERSION, 0 };
+
+    ctx  = lelinkNwNew(NULL, 0, 0, NULL);
+    if(!ctx) {
+        LELOGE("New link error");
+        return -1;
+    }
+    count = timeout / delay + 1;
+    strncpy(wc.ssid, ssid, sizeof(wc.ssid));
+    strncpy(wc.wap2passwd, passwd, sizeof(wc.wap2passwd));
+    wc.checksum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
+    for( i = 0; i < count; i++ ) {
+        LELOG("Send wifi configure, [%s:%s][%d]...", ssid, passwd, delay);
+        delayms(delay);
+        ret = nwUDPSendto(ctx, ipaddr, port, (uint8_t *)&wc, sizeof(wc));
+        if(ret <= 0 ) {
+            LELOGE("nwUDPSendto ret = %d", ret);
+        }
+    }
+    if(ctx) {
+        lelinkNwDelete(ctx);
+    }
+    return 0;
+}

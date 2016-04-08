@@ -15,6 +15,7 @@ JNIEXPORT jstring JNICALL Java_com_letv_lelink_LeLink_getSDKInfo(JNIEnv *env, jc
 	Json::Value root;
 
 	root["version"] = gNativeContext.version;
+    root["uuid"] = (char *)(gNativeContext.authCfg.data.uuid);
 
 	return c2js(env, root.toStyledString().c_str());
 }

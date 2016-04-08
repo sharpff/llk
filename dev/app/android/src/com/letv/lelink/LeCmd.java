@@ -104,6 +104,8 @@ public class LeCmd {
 	public class V {
 		public static final int AIR_CONFIG_TYPE_MULTICAST = 1;
 		public static final int AIR_CONFIG_TYPE_BROADCAST = 2;
+		public static final int AIR_CONFIG_TYPE_SOFTAP = 3;
+		public static final int AIR_CONFIG_TYPE_MAXNUM = 4;
 		public static final String BROADCAST_ADDR = "255.255.255.255";
 	}
 }
