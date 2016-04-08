@@ -15,15 +15,15 @@
 #define LELOG(...)
 #endif
 
-#ifdef LELOG
+#ifdef LELOGW
 #undef LELOGW
 #define LELOGW(...)
 #endif
 
-#ifdef LELOG
-#undef LELOGE
-#define LELOGE(...)
-#endif
+// #ifdef LELOGE
+// #undef LELOGE
+// #define LELOGE(...)
+// #endif
 
 #ifdef LEPRINTF
 #undef LEPRINTF
@@ -1710,7 +1710,11 @@ static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdIn
         switch (type) {
             case OTA_TYPE_FW_SCRIPT:
             case OTA_TYPE_IA_SCRIPT: {
-                leOTA(type, url, sig, RSA_LEN);
+                if (0 <= leOTA(type, url, sig, RSA_LEN)) {
+                    if (OTA_TYPE_FW_SCRIPT == type) {
+                        halReboot();
+                    }
+                }
             }break;
             case OTA_TYPE_PRIVATE:
             case OTA_TYPE_AUTH: 

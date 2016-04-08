@@ -9,15 +9,15 @@
 #define LELOG(...)
 #endif
 
-#ifdef LELOG
+#ifdef LELOGW
 #undef LELOGW
 #define LELOGW(...)
 #endif
 
-#ifdef LELOG
-#undef LELOGE
-#define LELOGE(...)
-#endif
+// #ifdef LELOGE
+// #undef LELOGE
+// #define LELOGE(...)
+// #endif
 
 #ifdef LEPRINTF
 #undef LEPRINTF
@@ -248,10 +248,12 @@ static int stateProcApConnected(StateContext *cntx) {
     }
 
     // only for backup
+    // LELOG("***** start stateProcApConnected ginPrivateCfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus, ginConfigStatus);
     lelinkStorageReadPrivateCfg(&ginPrivateCfg);
     if (ginPrivateCfg.csum != crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
         ginPrivateCfg.data.nwCfg.configStatus = 2;
     }
+    // LELOG("***** end stateProcApConnected ginPrivateCfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus, ginConfigStatus);
 
     if (2 != ginPrivateCfg.data.nwCfg.configStatus && (1 == ginConfigStatus)) {
         char br[32] = {0};

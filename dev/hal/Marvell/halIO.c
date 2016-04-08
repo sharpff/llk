@@ -48,15 +48,27 @@ int halUartClose(void *dev) {
 
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     int ret = 0;
+    int i = 0;
     ret = uart_drv_read((mdev_t *)dev, buf, len);
-    // APPLOG("uart_drv_read [%d]", ret);
+    APPLOG("uart_drv_read [%d]", ret);
+    if (ret > 0)
+    for (i = 0; i < ret; i++) {
+        APPPRINTF("%02x ", buf[i]);
+    }
+    APPPRINTF("\r\n");
     return ret;
 }
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
     int ret = 0;
+    int i = 0;
     ret = uart_drv_write((mdev_t *)dev, buf, len);
-    // APPLOG("uart_drv_write [%d] ", ret);
+    APPLOG("uart_drv_write [%d] ", ret);
+    if (ret > 0)
+    for (i = 0; i < ret; i++) {
+        APPPRINTF("%02x ", buf[i]);
+    }
+    APPPRINTF("\r\n");
     return ret;
 }
 
@@ -68,6 +80,7 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
 // void callbackGPIOFallingEdgeInt(int pin, void *data) {
 //     ginGPIOFlag = 0;
 // }
+static int ginGpioId;
 void *halGPIOInit(int gpioId, int isInput, int initVal) {
     mdev_t * gpio_dev;
     gpio_drv_init();
@@ -76,18 +89,20 @@ void *halGPIOInit(int gpioId, int isInput, int initVal) {
      */
     APPLOG("halGPIOInit gpioId[%d], isInput[%d], initVal[%d]", gpioId, isInput, initVal);
     gpio_dev = gpio_drv_open("MDEV_GPIO");
-    
-    // gpioid 39 <=> GPIO_39
-    GPIO_PinMuxFun(gpioId, PINMUX_FUNCTION_0);
-    GPIO_SetPinDir(gpioId, isInput ? GPIO_INPUT : GPIO_OUTPUT);
+    if (gpio_dev) {
+        // gpioid 39 <=> GPIO_39
+        GPIO_PinMuxFun(gpioId, PINMUX_FUNCTION_0);
+        GPIO_SetPinDir(gpioId, isInput ? GPIO_INPUT : GPIO_OUTPUT);
 
-    // initVal:
-    // PINMODE_DEFAULT = 0,                      /*!< GPIO pin mode default define */
-    // PINMODE_PULLUP,                          /*!< GPIO pin mode pullup define */
-    // PINMODE_PULLDOWN,                        /*!< GPIO pin mode pulldown define */
-    // PINMODE_NOPULL,                          /*!< GPIO pin mode nopull define */
-    // PINMODE_TRISTATE,                        /*!< GPIO pin mode tristate define */
-    GPIO_PinModeConfig(gpioId, initVal);
+        // initVal:
+        // PINMODE_DEFAULT = 0,                      /*!< GPIO pin mode default define */
+        // PINMODE_PULLUP,                          /*!< GPIO pin mode pullup define */
+        // PINMODE_PULLDOWN,                        /*!< GPIO pin mode pulldown define */
+        // PINMODE_NOPULL,                          /*!< GPIO pin mode nopull define */
+        // PINMODE_TRISTATE,                        /*!< GPIO pin mode tristate define */
+        GPIO_PinModeConfig(gpioId, initVal);        
+        ginGpioId = gpioId;
+    }
     // gpio_drv_set_cb(gpio_dev, gpioId, GPIO_INT_RISING_EDGE,  NULL, callbackGPIORaisingEdgeInt);
     // gpio_drv_set_cb(gpio_dev, gpioId, GPIO_INT_FALLING_EDGE,  NULL, callbackGPIOFallingEdgeInt);
 
@@ -96,20 +111,21 @@ void *halGPIOInit(int gpioId, int isInput, int initVal) {
 int halGPIOClose(void *dev) {
     return 0;
 }
-int halGPIORead(void *dev, uint8_t *buf, uint32_t len) {
-    int val = 0;
-    int ret = gpio_drv_read((mdev_t *)dev, GPIO_39, &val);
+int halGPIORead(void *dev, int gpioId, int *val) {
+    int ret = gpio_drv_read((mdev_t *)dev, gpioId, val);
     // APPLOG("gpio read ret[%d] val[%d]", ret, val);
     if (0 > ret) {
         return 0;
     }
-    memcpy(buf, &val, sizeof(val));
-    return sizeof(val);
+    return sizeof(*val);
 }
-int halGPIOWrite(void *dev, const uint8_t *buf, uint32_t len) {
-    int ret = len;
+int halGPIOWrite(void *dev, int gpioId, const int val) {
+    int ret = gpio_drv_write((mdev_t *)dev, gpioId, val);
+    if (0 > ret) {
+        return 0;
+    }    
     // APPLOG("gpio write ret[%d] ", ret);
-    return ret;
+    return sizeof(val);
 }
 
 int halFlashInit(void)

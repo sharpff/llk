@@ -3,19 +3,19 @@ MAIN_PATH="../.."
 $MAIN_PATH/lelinkTool.py \
     -a 10.154.252.130 \
     -p 5546 \
-    -u 10000100101000010007 \
-    -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrTxpVJHzbLoxSk7CzBaeyg4Czz7rANfqZUu7bD57C4fGbmfdaMEG4VfuMxWYw08OLW/f735FwVpP89YPOcjrRW/o/p76UfIS84KZCkMkFi/2InfNTm+ep2tuOlCpq7C6TTdX04MJsTpfbERqKnfuSBRbg12OEtpmRmcTmYqjosQIDAQAB \
-    -s hY+ZAdXoFBVNowMuqAWjhoUubQucdhDVpa8JzAFD6HTR7Jkz1cUvrvaMh/OFi8LgTBinHDaHpnZBvfDl95SFyeJBpLFM1p9G0m46ZVESkeGPjQJkxd5pjYFhzbpDSlBzMWGfYPlWrpgZNGeWJ5hVc8lu/lW2OSMrI0Z5xADMq3Q= \
+    -u 10000100051000710010 \
+    -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDBJ0U4kFnSWA4u9/s+1zEaZK0MfWxhrSfFJcNiMgKvSMnuxrYEg1w5eZ+YvaM97zakfhH9l+Aneqz71ol+jPtvGoYARvGbQ6yFixokDZNi8LnrUr+d94xQYfA7boKbtruKiFQrXjMO+xg6oWbIesnfYPEqfZZj9ntpwooZhHKwWQIDAQAB \
+    -s msgAop3Gkl4x8br2cVZZEp2bZQt5E7ERg0tUgCcg34AIsijRsfLArXDv1SrXn6lyo8SrTcGvIHkqVecfrzVwK3RfBTCGo+9PZZOx6kAIS0joBuVYnx9LK5WIUhztEh4mgK/+x8cMkzGph+K33a6xRZo6yFMZI26g1Qik8Bw0bZE= \
     -o ./0x1c2000.bin
 
 $MAIN_PATH/lelinkTool.py \
-    -t $MAIN_PATH/product/honyar/honyar.lua \
+    -t $MAIN_PATH/product/honyar/honyar2.lua \
     -o ./0x1c3000.bin
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid Xiaomi_A7DD \
-    --passwd 987654321 \
+    --ssid ff \
+    --passwd fengfeng2qiqi \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \

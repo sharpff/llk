@@ -2,6 +2,15 @@
 #undef __LE_SDK__
 #endif
 
+// lftp letv:1q2w3e4r@115.182.63.167:21
+// 115.182.94.173 <=> 10.204.28.134
+// xxx <=> 10.154.252.130
+// ./Debug/linux 10000100091000610006C80E77ABCD40 192.168.3.238 \{\"ctrl\":\{\"action\":1}\} \{\"ctrl\":\{\"action\":2}\}
+// ./Debug/linux 10000100101000010007C80E77ABCD50 192.168.3.104 \{\"ctrl\":\{\"idx1\":1,\"idx2\":1,\"idx3\":1,\"idx4\":1\}\} \{\"ctrl\":\{\"idx1\":0,\"idx2\":0,\"idx3\":0,\"idx4\":0\}\}
+// ./Debug/linux 10000100111000810008C80E77ABCD60 192.168.3.120 \{\"ctrl\":\{\"abc\":1}\} \{\"ctrl\":\{\"abc\":2}\}
+// ./Debug/linux 10000100051000710010C80E77ABCD70 192.168.3.136 \{\"ctrl\":\{\"pwr\":1}\} \{\"ctrl\":\{\"pwr\":0}\}
+// ./Debug/linux 10000100111000810008C80E77ABCDFF 192.168.3.129 \{\"ctrl\":\{\"abc\":1}\} \{\"ctrl\":\{\"abc\":2}\}
+
 #include "leconfig.h"
 #include "protocol.h"
 #include "io.h"

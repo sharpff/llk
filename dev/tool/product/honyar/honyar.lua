@@ -114,6 +114,10 @@ end
 -- a5 a5 5a 5a b9 c0 04 00 04 00 00 00 00 04    # 返回 04 00
 -- a5 a5 5a 5a c1 c0 02 00 03 00 00 0f 00       # 控制 02 00
 -- a5 a5 5a 5a c8 c0 04 00 04 00 00 00 0f 04    # 返回 04 00
+
+-- a5 a5 5a 5a b1 c0 01 00 03 00 00 00 00   	# query
+-- a5 a5 5a 5a c1 c0 02 00 03 00 00 0f 00 		# all on
+-- a5 a5 5a 5a d0 c0 02 00 03 00 00 0f 0f 		# all off
 function s1CvtStd2Pri(json)
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]

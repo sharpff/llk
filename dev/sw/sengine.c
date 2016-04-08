@@ -14,12 +14,12 @@
 #define LELOG(...)
 #endif
 
-#ifdef LELOG
+#ifdef LELOGW
 #undef LELOGW
 #define LELOGW(...)
 #endif
 
-// #ifdef LELOG
+// #ifdef LELOGE
 // #undef LELOGE
 // #define LELOGE(...)
 // #endif

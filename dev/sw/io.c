@@ -9,12 +9,12 @@
 #define LELOG(...)
 #endif
 
-#ifdef LELOG
+#ifdef LELOGW
 #undef LELOGW
 #define LELOGW(...)
 #endif
 
-// #ifdef LELOG
+// #ifdef LELOGE
 // #undef LELOGE
 // #define LELOGE(...)
 // #endif
@@ -41,13 +41,18 @@
 
 extern void *halFlashOpen(void);
 
-
+typedef struct {
+    int gpioId;
+    int isInput;
+    uint8_t data;
+}GpioCtx;
 
 static FlashRegion ginRegion[E_FLASH_TYPE_MAX];
 static uint32_t ginStartAddr;
 static uint32_t ginTotalSize;
 static uint32_t ginMinSize;
-const int ginScriptSize;
+// const int ginScriptSize;
+static GpioCtx ginGpioCtx;
 /*
  * modify here, in order to change the ocuppied size.
  */
@@ -450,6 +455,8 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
                 LELOGW("ioInit halUartInit halGPIOInit[%p]", ioHdl);
                 return NULL;
             }
+            ginGpioCtx.isInput = isInput;
+            ginGpioCtx.gpioId = gpioId;
             return ioHdl;
         }break;
         case IO_TYPE_PIPE: {
@@ -515,7 +522,17 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             return halUartWrite(hdl, data, dataLen);
         }break;
         case IO_TYPE_GPIO: {
-            return halGPIOWrite(hdl, data, dataLen);
+            int ret = 0, val = 0;
+            // only for gpio output pin mode
+            if (!ginGpioCtx.isInput) {
+                val = *data;
+                ret = halGPIOWrite(hdl, ginGpioCtx.gpioId, val);
+                if (0 < ret) {
+                    ginGpioCtx.data = *data;
+                    // LELOGE("TESTLOG 3 GPIO Write ret[%d] isInput[%d] val[%d]", ret, ginGpioCtx.isInput, val);
+                    return sizeof(*data);
+                }
+            }
         }break;
         case IO_TYPE_PIPE: {
 
@@ -533,7 +550,22 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             return halUartRead(hdl, data, dataLen);
         }break;
         case IO_TYPE_GPIO: {
-            return halGPIORead(hdl, data, dataLen);
+            int ret = 0;
+            int val = 0;
+            if (ginGpioCtx.isInput) {
+                // only for gpio input pin mode
+                ret = halGPIORead(hdl, ginGpioCtx.gpioId, &val);
+                if (0 < ret) {
+                    *data = (uint8_t)val;
+                    // LELOGE("TESTLOG 1 GPIO Read ret[%d] isInput[%d] read *data[%d]", ret, ginGpioCtx.isInput, *data);
+                    return sizeof(*data);
+                }
+            } else {
+                // only for gpio output pin mode, cached data for read
+                *data = ginGpioCtx.data;
+                // LELOGE("TESTLOG 2 GPIO Read ret[%d] isInput[%d] cached *data[%d]", ret, ginGpioCtx.isInput, *data);
+                return sizeof(ginGpioCtx.data);
+            }
         }break;
         case IO_TYPE_PIPE: {
 

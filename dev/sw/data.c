@@ -226,6 +226,7 @@ void setTerminalUUID(const uint8_t *uuid, int len) {
     if (len < MAX_UUID) {
         return;
     }
+    LELOG("setTerminalUUID [%s]", uuid);
     memcpy(ginUUID, uuid, MAX_UUID);
 }
 

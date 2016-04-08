@@ -23,10 +23,10 @@ void *halGPIOInit(int gpioId, int isInput, int initVal) {
 int halGPIOClose(void *dev) {
     return 0;
 }
-int halGPIORead(void *dev, uint8_t *buf, uint32_t len) {
+int halGPIORead(void *dev, int gpioId, int *val) {
     return 0;
 }
-int halGPIOWrite(void *dev, const uint8_t *buf, uint32_t len) {
+int halGPIOWrite(void *dev, int gpioId, const int val) {
     return 0;
 }
 
