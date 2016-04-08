@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
 				mJsonCmd.put(LeCmd.K.TIMEOUT, 60 * 5);
 				mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_A7DD");
 				mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
+				mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_SOFTAP);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}

@@ -154,9 +154,9 @@ public class LeLink {
 	 */
 	public int airConfig(String jsonStr) {
 		int startTime, timeout, tryTimes = 1;
-//		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_MULTICAST;
+		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_MULTICAST;
 //		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_BROADCAST;
-		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_SOFTAP;
+//		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_SOFTAP;
 		JSONObject sendJson = null;
 
 		if (jsonStr == null) {
@@ -172,6 +172,9 @@ public class LeLink {
 			sendJson.put(LeCmd.K.DELAY, DEFAULT_AIRCONFIG_DELAY); // ms
 			timeout = sendJson.getInt(LeCmd.K.TIMEOUT);
 			timeout = timeout < DEFAULT_TIMEOUT ? DEFAULT_TIMEOUT : timeout;
+			if (sendJson.has(LeCmd.K.TYPE)) {
+				airConfigType = sendJson.getInt(LeCmd.K.TYPE);
+			}
 			while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
 				String logStr = String.format("AirConfig type = %d tryTimes = %d", airConfigType, tryTimes);
 				LOGI(logStr);
