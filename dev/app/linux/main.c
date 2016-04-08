@@ -8,6 +8,7 @@
 #include "ota.h"
 #include "header.h"
 #include "network.h"
+#include "utility.h"
 #include "airconfig.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
@@ -342,6 +343,7 @@ int main(int argc, char** argv) {
         }
         strncpy(wc.ssid, ssid, sizeof(wc.ssid));
         strncpy(wc.wap2passwd, passwd, sizeof(wc.wap2passwd));
+        wc.checksum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
         while(1) {
             APPLOG("Send wifi configure, [%s:%s][%d]...", ssid, passwd, delay);
             delayms(1000);

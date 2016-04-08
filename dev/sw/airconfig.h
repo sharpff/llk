@@ -38,11 +38,14 @@ int airconfig_reset(void);
 #define WIFICONFIG_LISTEN_PORT      (4911)
 #define WIFICONFIG_MAGIC            (0x7689)
 #define WIFICONFIG_VERSION          (1)
+//#define WIFICONFIG_CKSUM_LEN        ((uint32_t)&(((wificonfig_t *)0)->reserved))
+#define WIFICONFIG_CKSUM_LEN        (2 + 32 + 32)
 
 typedef struct {
     uint32_t magic;
     uint8_t version;
     uint8_t checksum;
+    uint16_t reserved;
     uint8_t ssid[32];
     uint8_t wap2passwd[32];
 } wificonfig_t;

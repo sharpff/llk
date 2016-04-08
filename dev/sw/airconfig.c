@@ -792,6 +792,7 @@ int softApStarted(void)
     int ret;
     char ssid[32];
     uint16_t port;
+    uint8_t sum;
     char ipaddr[32];
     wificonfig_t wc;
     char buf[UDP_MTU];
@@ -803,7 +804,7 @@ int softApStarted(void)
         LELOGE("getTerminalUUID ret[%d]", ret);
         goto out;
     }
-    snprintf(ssid, sizeof(ssid), "-lelink0.1-%s", uuid);
+    snprintf(ssid, sizeof(ssid), "-lelink%03d-%s", WIFICONFIG_VERSION, uuid);
     if((ret = halSoftApStart(ssid, wpa2_passphrase))) {
         LELOGE("halSoftApStart ret[%d]", ret);
         goto out;
@@ -824,6 +825,15 @@ int softApStarted(void)
                 continue;
             }
             memcpy(&wc, buf, ret);
+            if(wc.magic != WIFICONFIG_MAGIC) {
+                LELOGE("magic = %d", wc.magic);
+                continue;
+            }
+            sum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
+            if(wc.checksum != sum) {
+                LELOGE("checksum = %d", wc.magic);
+                continue;
+            }
             LELOG("Get ssid[%s] passwd[%s]", wc.ssid, wc.wap2passwd);
             {
                 PrivateCfg cfg;
