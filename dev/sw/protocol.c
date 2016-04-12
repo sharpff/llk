@@ -1272,6 +1272,7 @@ static int cbDiscoverStatusChangedRemoteReq(void *ctx, const CmdHeaderInfo* cmdI
     LELOG("cbDiscoverStatusChangedRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
     senginePollingRules((char *)dataIn, dataLen);
+    halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbDiscoverStatusChangedRemoteReq -e");
     return ret;
 }
@@ -1768,6 +1769,7 @@ static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, co
     LELOG("cbCloudIndStatusRemoteReq -s");
     LELOG("[%d][%s]", len, data);
     senginePollingRules((char *)data, len);
+    halCBRemoteReq(ctx, cmdInfo, data, len);
     LELOG("cbCloudIndStatusRemoteReq -e");
     return 1;
 }

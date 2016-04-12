@@ -62,6 +62,7 @@ static uint32_t ginMSDelay;
 PrivateCfg ginPrivateCfg;
 
 // 0. nothing, 1. req done, 2. rsp done
+int8_t ginStateApLinked;
 int8_t ginStateCloudLinked;
 int8_t ginStateCloudAuthed;
 static int8_t ginConfigStatus;
@@ -117,7 +118,7 @@ static int changeState(int direction, StateContext *cntx, int idx) {
 
 
 int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
-    int i = 0, ret = 0, hasDelayed = 0;
+    int i = 0, ret = 0;
     // char status[MAX_BUF] = {0};
     if (NULL == r2r || NULL == q2a) {
         return -100;
@@ -132,24 +133,25 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     }
     ginMSDelay = msDelay;
     
-    TIMEOUT_BEGIN(1000)
-    sengineQuerySlave();
-    if (0 < ginMSDelay) {
-        delayms(ginMSDelay);
-    }
-    senginePollingSlave();
-    senginePollingRules(NULL, 0);
-    hasDelayed = 1;
-    TIMEOUT_END
+    if(ginStateApLinked) {
+        TIMEOUT_BEGIN(1000)
+        senginePollingRules(NULL, 0);
+        TIMEOUT_END
 
-    if (!hasDelayed) {
-        if (0 < ginMSDelay) {
-            delayms(ginMSDelay);
-        }
+        TIMEOUT_BEGIN(300)
+        sengineQuerySlave();
+        TIMEOUT_END
+
+        TIMEOUT_BEGIN(100)
+        senginePollingSlave();
+        TIMEOUT_END
+
+        TIMEOUT_BEGIN(100)
+        lelinkDoPollingQ2A(ginCtxQ2A);
+        lelinkDoPollingR2R(ginCtxR2R);
+        TIMEOUT_END
     }
-    
-    lelinkDoPollingQ2A(ginCtxQ2A);
-    lelinkDoPollingR2R(ginCtxR2R);
+    delayms(msDelay);
     return changeState(ret, &ginStateCntx, i);
 }
 
@@ -224,6 +226,7 @@ static int stateProcApConnecting(StateContext *cntx) {
     //     resetConfigData();
     // TIMEOUT_END
 
+    ginStateApLinked = ret > 0 ? 1 : 0;
     return ret;
 }
 

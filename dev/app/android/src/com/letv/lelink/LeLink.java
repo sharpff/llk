@@ -525,6 +525,16 @@ public class LeLink {
 				send(sendCmdJson, null);
 				mIsGetDevHello = true;
 			}
+			if ((cmd == LeCmd.DISCOVER_REQ && subcmd == LeCmd.Sub.DISCOVER_STATUS_CHANGED_REQ)
+					|| (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_STATUS_REQ)) {
+				try {
+					dataStr = new String(buf, "UTF-8");
+					LOGI("Json:\n" + dataStr);
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+					return ret;
+				}
+			}
 			break;
 		case MSG_TYPE_REMOTERESPOND:
 			try {
