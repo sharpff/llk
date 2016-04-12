@@ -4,10 +4,10 @@ URL: http://svn.letv.cn/solutions/tech/dev
 Relative URL: ^/tech/dev
 Repository Root: http://svn.letv.cn/solutions
 Repository UUID: 46ee92d5-445f-48a7-8500-e67eb4a94df2
-Revision: 3479
+Revision: 3490
 Node Kind: directory
 Schedule: normal
-Last Changed Author: feiguoyou
-Last Changed Rev: 3479
-Last Changed Date: 2016-04-08 17:39:18 +0800 (五, 08  4月 2016)
+Last Changed Author: linfeng
+Last Changed Rev: 3481
+Last Changed Date: 2016-04-08 20:16:44 +0800 (五, 08  4月 2016)
 

@@ -94,74 +94,55 @@ static int hexStr2bytes(const char *hexStr, unsigned char *buf, int bufLen) {
 	return len;
 }
 
+#include <sys/stat.h>
+unsigned long getFileSize(const char *path)  
+{  
+    unsigned long filesize = -1;      
+    struct stat statbuff;  
+    if(stat(path, &statbuff) < 0){  
+        return filesize;  
+    }else{  
+        filesize = statbuff.st_size;  
+    }  
+    return filesize;  
+}
+
 //#include <Windows.h>
 int main(int argc, char *argv[]) {
-
-	ginScriptCfg = (ScriptCfg *)malloc(sizeof(ScriptCfg));
-	memset(ginScriptCfg, 0, sizeof(ScriptCfg));
-	//// GETSTATUS
-	//if (strstr(argv[3], GETSTATUS)) {
-
-	    //}
-	    //// STD2PRI
-	    //else if (strstr(argv[3], FILE_JSON))
-	    //{
-	    //    g_dir = 1;
-	    //    FILE *fp1 = fopen(argv[3], "rb");
-	    //    if (fp1)
-	    //    {
-	    //        fread(g_json, sizeof(g_json), 1, fp1);
-	    //        fclose(fp1);
-	    //    }
-
-	        //    if (5 == argc)
-	        //    {
-	        //        hexStr2bytes(argv[4], g_buf, sizeof(g_buf));
-	        //        //printf("ser data is [%s]\r\n", g_buf);
-	        //    }
-	        //}
-	        //// PRI2STD
-	        //else
-	        //{
-	        //    g_dir = 0;
-	        //    size_t i = 0;
-	        //    g_bufLen = hexStr2bytes(argv[3], g_buf, sizeof(g_buf));
-	        //    //strcpy(g_buf, argv[3]);
-	        //    //memcpy(g_buf, argv[3], strlen(argv[3]));
-	        //    //printf("PRI2STD:\r\n");
-	        //    //for (i = 0; i < strlen(argv[3]); i++)
-	        //    //{
-	        //    //    //g_buf[i] = argv[3][i];
-	        //    //    printf("%02x ", g_buf[i]);
-	        //    //}
-	        //    //printf("\r\n");
-	        //}
 	char func_name[128] = { 0 };
 	uint8_t *inputParam = NULL;
 	uint8_t *inputParam2 = NULL;
 	int inputParamLen = 0;
 	int inputParamLen2 = 0;
 	uint8_t buf[MAX_BUF] = { 0 };
+	int fd;
+
+	ginScriptCfg = (ScriptCfg *)malloc(sizeof(ScriptCfg));
+	memset(ginScriptCfg, 0, sizeof(ScriptCfg));
 	if (argc < 3) {
 ERROR_PARAM:
 		printf("exec [lua] [func name] [param/json | buf if translate for PRI2STD] [resp cache if jsonfile | optional]\r\n");
 		return 0;
 	}
 	strcpy(filename, argv[1]);
-	FILE *fp = fopen(filename, "rb");
+	fd = open(filename, O_RDONLY);
+    if (0 >= fd) {
+        printf("open FAILED [%d]\r\n", errno);
+        return fd;
+    }
 	strcpy(func_name, argv[2]);
-
-	    // only for luait.py. in case of std2pri.json
+    // only for luait.py. in case of std2pri.json
 	if (argv[3] && strstr(argv[3], FILE_JSON)) {
-		FILE *fp1 = fopen(argv[3], "rb");
-		if (fp1) {
+		// int fd1 = open(filename, O_RDONLY);
+		FILE *fd1 = fopen(argv[3], "rb");
+		if (fd1 > 0) {
 			int filesize1 = 0;
-			fseek(fp1, 0, SEEK_END);
-			filesize1 = ftell(fp1);
-			fseek(fp1, 0 - (filesize1), SEEK_END);
+			fseek(fd1, 0, SEEK_END);
+			filesize1 = ftell(fd1);
+			fseek(fd1, 0 - (filesize1), SEEK_END);
 
-			fread(g_buf, sizeof(g_buf), 1, fp1);
-			fclose(fp1);
+			fread(g_buf, sizeof(g_buf), 1, fd1);
+			fclose(fd1);
 
 			inputParam = g_buf;
 			inputParamLen = filesize1;
@@ -257,14 +238,12 @@ ERROR_PARAM:
 	else {
 		goto ERROR_PARAM;
 	}
-	if (fp) {
+	if (fd > 0) {
 		int ret = 0;
 		char json[1024] = { 0 };
-		fseek(fp, 0, SEEK_END);
-		ginScriptCfg->data.size = filesize = ftell(fp);
-		fseek(fp, 0 - (filesize), SEEK_END);
+		ginScriptCfg->data.size = getFileSize(filename);
 		memset(ginScriptCfg->data.script, 0, ginScriptCfg->data.size);
-		fread(ginScriptCfg->data.script, ginScriptCfg->data.size, 1, fp);
+    	ret = read(fd, ginScriptCfg->data.script, ginScriptCfg->data.size);
 #ifndef TEST_ONLY
 		ret = sengineCall((const char *)ginScriptCfg->data.script,
 			ginScriptCfg->data.size,
@@ -274,7 +253,11 @@ ERROR_PARAM:
 			(uint8_t *)json,
 			sizeof(json));
 
-		fclose(fp);
+		// {
+		// 	fp = fopen("./abc.lua", "wb");
+		// 	fwrite(ginScriptCfg->data.script, ginScriptCfg->data.size, 1, fp);
+		// 	fclose(fp);
+		// }
 #endif
 	}
 #ifdef TEST_ONLY
