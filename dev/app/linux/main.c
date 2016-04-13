@@ -2,15 +2,6 @@
 #undef __LE_SDK__
 #endif
 
-// lftp letv:1q2w3e4r@115.182.63.167:21
-// 115.182.94.173 <=> 10.204.28.134
-// xxx <=> 10.154.252.130
-// ./Debug/linux 10000100091000610006C80E77ABCD40 192.168.3.238 \{\"ctrl\":\{\"action\":1}\} \{\"ctrl\":\{\"action\":2}\}
-// ./Debug/linux 10000100101000010007C80E77ABCD50 192.168.3.104 \{\"ctrl\":\{\"idx1\":1,\"idx2\":1,\"idx3\":1,\"idx4\":1\}\} \{\"ctrl\":\{\"idx1\":0,\"idx2\":0,\"idx3\":0,\"idx4\":0\}\}
-// ./Debug/linux 10000100111000810008C80E77ABCD60 192.168.3.120 \{\"ctrl\":\{\"abc\":1}\} \{\"ctrl\":\{\"abc\":2}\}
-// ./Debug/linux 10000100051000710010C80E77ABCD70 192.168.3.136 \{\"ctrl\":\{\"pwr\":1}\} \{\"ctrl\":\{\"pwr\":0}\}
-// ./Debug/linux 10000100111000810008C80E77ABCDFF 192.168.3.129 \{\"ctrl\":\{\"abc\":1}\} \{\"ctrl\":\{\"abc\":2}\}
-
 #include "leconfig.h"
 #include "protocol.h"
 #include "io.h"
@@ -205,8 +196,8 @@ void thread_input_check(void *arg) {
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0, 
 
-#define DO_AIR_CONFIG
-#define ENABLE_WIFI_SOFT_AP 1
+// #define DO_AIR_CONFIG
+// #define ENABLE_WIFI_SOFT_AP 1
 
 #ifndef DO_AIR_CONFIG
 int main(int argc, char *argv[]) {
@@ -329,7 +320,7 @@ int main(int argc, char** argv) {
     // configInfo = "SSID=TP-LINK_08F8,PASSWD=12345678,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10";
     // configInfo = "SSID=TP-LINK_564FCE,PASSWD=64373537,AES=912EC803B2CE49E4A541068D495AB570,TYPE=2,DELAY=10";
     // configInfo = "SSID=ff,PASSWD=fengfeng2qiqi,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10";
-    APPLOG("starting with [%s:%s][%d]...", ssid, passwd, delay);
+    APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
 
 #if  ENABLE_WIFI_SOFT_AP
     while (1) {
@@ -339,12 +330,15 @@ int main(int argc, char** argv) {
     while (1) {
         sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
         // APPLOG("start => %s", configInfo);
+        // APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
         ret = lelinkDoConfig(configInfo);
         if (0 > ret) {
-            APPLOG("waiting ...");
+            // APPLOG("waiting ...");
             delayMS(1000);
         } else {
+            APPLOG("ending with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
             type = type == 1 ? 2 : 1;
+            APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
         }
 
     }
