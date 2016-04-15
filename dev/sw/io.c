@@ -41,18 +41,11 @@
 
 extern void *halFlashOpen(void);
 
-typedef struct {
-    int gpioId;
-    int isInput;
-    uint8_t data;
-}GpioCtx;
-
 static FlashRegion ginRegion[E_FLASH_TYPE_MAX];
 static uint32_t ginStartAddr;
 static uint32_t ginTotalSize;
 static uint32_t ginMinSize;
-// const int ginScriptSize;
-static GpioCtx ginGpioCtx;
+static gpioHand_t gpioTable[GPIO_MAX_ID + 1];
 /*
  * modify here, in order to change the ocuppied size.
  */
@@ -104,9 +97,6 @@ int getRegion(E_FLASH_TYPE type, FlashRegion *region) {
     return type;
 }
 
-
-
-
 int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) {
     int i = 0;
     uint32_t tmpTotal = 0, tmpSize = 0;
@@ -130,7 +120,7 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
         // LELOG("[%d] [%d]", i, ginRegion[i].size);
         ginRegion[i].addr = ginStartAddr + tmpSize;
         tmpSize += ginRegion[i].size;
-        LELOG("idx[%d] addr[0x%x] size[0x%x]", i, ginRegion[i].addr, ginRegion[i].size);
+        LELOG("idx[%d] addr[0x%x] size[0x%x] type[%d]", i, ginRegion[i].addr, ginRegion[i].size, ginRegion[i].type);
     }
 
     return 0;
@@ -418,6 +408,27 @@ int processStdMessage() {
     return 0;
 }
 
+static void gpioSetDefault(gpioHand_t *table, int n)
+{
+    int i;
+
+    if(!table || n <= 0) {
+        return;
+    }
+    memset(table, 0, sizeof(*table) * n);
+    for( i = 0; i < n; i++ ) {
+        table[i].id = 0;
+        table[i].num = -1;
+        table[i].blink = 0;
+        table[i].dir = GPIO_DIR_INPUT; 
+        table[i].mode = GPIO_MODE_DEFAULT;
+        table[i].inter = GPIO_INTER_DISABLE; 
+        table[i].state = GPIO_STATE_LOW;
+        table[i].reserved = 0;
+        table[i].priv = NULL;
+    }
+}
+
 void *ioInit(int ioType, const char *json, int jsonLen) {
     void *ioHdl = NULL;
     int ret = 0;
@@ -444,19 +455,18 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             return ioHdl;
         }break;
         case IO_TYPE_GPIO: {
-            int gpioId = 0, isInput = 0, initVal = 0;
-            ret = getGPIOInfo(json, jsonLen, &gpioId, &isInput, &initVal);
-            if (0 > ret) {
+            gpioSetDefault(gpioTable, GPIO_MAX_ID);
+            ret = getGPIOInfo(json, jsonLen, gpioTable, GPIO_MAX_ID);
+            if (0 >= ret) {
                 LELOGW("ioInit getGPIOInfo ret[%d]", ret);
                 return NULL;
             }
-            ioHdl = (void *)halGPIOInit(gpioId, isInput, initVal);
-            if (NULL == ioHdl) {
-                LELOGW("ioInit halUartInit halGPIOInit[%p]", ioHdl);
+            ret = halGPIOInit(gpioTable, GPIO_MAX_ID);
+            if (ret) {
+                LELOGW("ioInit halGPIOInit halGPIOInit[%p]", ret);
                 return NULL;
             }
-            ginGpioCtx.isInput = isInput;
-            ginGpioCtx.gpioId = gpioId;
+            ioHdl = gpioTable;
             return ioHdl;
         }break;
         case IO_TYPE_PIPE: {
@@ -472,7 +482,7 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
 
 void **ioGetHdl(int *ioType) {
     static void *ioHdl = NULL;
-    char json[256] = {0};
+    char json[2560] = {0};
     int ret = 0;
     static int whatCvtType = -1;
     if (-1 == whatCvtType) {
@@ -522,17 +532,23 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             return halUartWrite(hdl, data, dataLen);
         }break;
         case IO_TYPE_GPIO: {
-            int ret = 0, val = 0;
-            // only for gpio output pin mode
-            if (!ginGpioCtx.isInput) {
-                val = *data;
-                ret = halGPIOWrite(hdl, ginGpioCtx.gpioId, val);
-                if (0 < ret) {
-                    ginGpioCtx.data = *data;
-                    // LELOGE("TESTLOG 3 GPIO Write ret[%d] isInput[%d] val[%d]", ret, ginGpioCtx.isInput, val);
-                    return sizeof(*data);
+            gpioHand_t *p;
+            int i, id, val;
+            for( i = 0; i < dataLen; i++ ) {
+                p = (gpioHand_t *)hdl;
+                id = (data[i] >> 4) & 0xF;
+                val = (data[i] & 0xF);
+                while(p && p->id > 0 && p->num >= 0) {
+                    if(id == p->id) {
+                        if(val == GPIO_STATE_LOW || val == GPIO_STATE_LOW) {
+                            halGPIOWrite(p->priv, p->num, val);
+                        }
+                        p->state = val;
+                        break;
+                    }
                 }
             }
+            return dataLen;
         }break;
         case IO_TYPE_PIPE: {
 
@@ -550,22 +566,21 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             return halUartRead(hdl, data, dataLen);
         }break;
         case IO_TYPE_GPIO: {
-            int ret = 0;
-            int val = 0;
-            if (ginGpioCtx.isInput) {
-                // only for gpio input pin mode
-                ret = halGPIORead(hdl, ginGpioCtx.gpioId, &val);
-                if (0 < ret) {
-                    *data = (uint8_t)val;
-                    // LELOGE("TESTLOG 1 GPIO Read ret[%d] isInput[%d] read *data[%d]", ret, ginGpioCtx.isInput, *data);
-                    return sizeof(*data);
+            gpioHand_t *p; 
+            int t, val, i = 0;
+            for(p = (gpioHand_t *)hdl; p && p->id > 0 && p->num >= 0 && i < dataLen; p++, i++) {
+                if(p->state == GPIO_STATE_LOW || p->state == GPIO_STATE_HIGH) {
+                    halGPIORead(p->priv, p->num, &val);
+                    p->state = val;
+                } else {
+                    val = p->state;
                 }
-            } else {
-                // only for gpio output pin mode, cached data for read
-                *data = ginGpioCtx.data;
-                // LELOGE("TESTLOG 2 GPIO Read ret[%d] isInput[%d] cached *data[%d]", ret, ginGpioCtx.isInput, *data);
-                return sizeof(ginGpioCtx.data);
+                data[i] = (p->id << 4) & 0xF0;
+                data[i] |= val & 0x0F;
+                t = p->id;
+                LELOGE("id = %d, val = %d, data[%d] = %02x", t, val, i, data[i]);
             }
+            return i;
         }break;
         case IO_TYPE_PIPE: {
 

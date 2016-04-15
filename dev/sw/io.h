@@ -142,6 +142,46 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen);
 void ioDeinit(int ioType, void *hdl);
 
+typedef enum {
+    GPIO_DIR_INPUT = 0,
+    GPIO_DIR_OUTPUT,
+} GPIO_DIR_t;
+
+typedef enum {
+    GPIO_MODE_DEFAULT = 0,
+    GPIO_MODE_PULLUP,
+    GPIO_MODE_PULLDOWN,
+    GPIO_MODE_NOPULL,
+    GPIO_MODE_RISTATE,
+} GPIO_MODE_t;
+
+typedef enum {
+    GPIO_INTER_DISABLE = 0,
+    GPIO_INTER_RISING, 
+    GPIO_INTER_FALLING, 
+    GPIO_INTER_RISING_AND_FALLING,
+} GPIO_INTER_t;
+
+typedef enum {
+    GPIO_STATE_LOW = 0,
+    GPIO_STATE_HIGH, 
+    GPIO_STATE_BLINK,
+} GPIO_STATE_t;
+
+typedef struct {
+    int8_t id;         // support 1, 2, 3 
+    int8_t num;        // gpio num
+    uint16_t blink;     // only output. ms, blink frequency
+    uint16_t dir:1;     // 0 - input; 1 - output
+    uint16_t mode:3;    // 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
+    uint16_t inter:2;   // only input.  0 - disable; 1 - rising; 2 - falling; 3 -  rising and falling
+    uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
+    uint16_t reserved;
+    void *priv;         // for hal
+} gpioHand_t;
+
+#define GPIO_MAX_ID     (3)
+
 #ifdef __cplusplus
 }
 #endif

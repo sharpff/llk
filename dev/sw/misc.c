@@ -13,13 +13,17 @@
 #define JSON_NAME_UTC "utc"
 #define JSON_NAME_WHATTYPE "whatCvtType"
 #define JSON_NAME_BAUD "baud"
-#define JSON_NAME_GPIO_ID "gpioId"
-#define JSON_NAME_GPIO_isInput "isInput"
-#define JSON_NAME_GPIO_initVal "initVal"
 #define JSON_NAME_STATUS "status"
 #define JSON_NAME_UUID "uuid"
 #define JSON_NAME_URL "url"
 #define JSON_NAME_TYPE "type"
+#define JSON_NAME_GPIO_CONF         "conf"
+#define JSON_NAME_GPIO_ID           "id"
+#define JSON_NAME_GPIO_DIR          "dir"
+#define JSON_NAME_GPIO_MODE         "mode"
+#define JSON_NAME_GPIO_INTER        "inter"
+#define JSON_NAME_GPIO_BLINK        "blink"
+#define JSON_NAME_GPIO_STATE        "state"
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
@@ -202,29 +206,58 @@ int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *st
     return 0;
 }
 
-int getGPIOInfo(const char *json, int jsonLen, int *gpioId, int *isInput, int *initVal) {
-    int ret = -1;
-    jsontok_t jsonToken[NUM_TOKENS];
+#define JSON_NAME_GPIO_isInput      "isInput"
+#define JSON_NAME_GPIO_initVal      "initVal"
+int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
+{
     jobj_t jobj;
+    int i, k, num, ret, tmp, j = -1;
+    jsontok_t jsonToken[NUM_TOKENS];
 
-    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
-    if (WM_SUCCESS != ret) {
+    if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
         return -1;
     }
-
-    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_GPIO_ID, gpioId)) {
-        return -2;
+    if((ret = json_get_array_object(&jobj, JSON_NAME_GPIO_CONF, &num))== WM_SUCCESS) {
+        LELOGE("Debug num = %d\r\n", num);
+        num = num > n ? n : num;
+        for( i = 0, j = 0; i < num; i++ ) {
+            if((ret = json_array_get_composite_object(&jobj, i)) != WM_SUCCESS) {
+                return -1;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_ID, &tmp)) != WM_SUCCESS) {
+                return -1;
+            }
+            for( k = 0; k < i; k++ ) {
+                if(table[k].id == tmp) {
+                    tmp = -1;
+                    break;
+                }
+            }
+            if(tmp <= 0 || tmp > n) {
+                continue;
+            }
+            table[j].id = tmp;
+            if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_DIR, &tmp)) == WM_SUCCESS) {
+                table[j].dir = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_MODE, &tmp)) == WM_SUCCESS) {
+                table[j].mode = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_INTER, &tmp)) == WM_SUCCESS) {
+                table[j].inter = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_BLINK, &tmp)) == WM_SUCCESS) {
+                table[j].blink = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_STATE, &tmp)) == WM_SUCCESS) {
+                table[j].state = tmp;
+            }
+            j++;
+            json_release_composite_object(&jobj);
+        }
+        // json_release_array_object(jobj);
     }
-
-    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_GPIO_isInput, isInput)) {
-        return -3;
-    }
-
-    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_GPIO_initVal, initVal)) {
-        return -4;
-    }
-
-    return 0;
+    return j;
 }
 
 int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
