@@ -91,7 +91,7 @@ function s1GetCvtType()
             {
                 "id":1,
                 "dir":0,
-                "mode":0,
+                "mode":2,
                 "inter":0
             },
             {
@@ -132,29 +132,29 @@ end
 ]]
 -- {"ctrl":{"led":2, "hub":1}}, 0 - low; 1 - high; 2 - blink
 function s1CvtStd2Pri(json)
-    local val
-    local i = 1
-    local cmdtb = {}
-	local ctrl = tb["ctrl"]
+    local i = 0, val
+    local cmdtb = {0, 0, 0}
 	local tb = cjson.decode(json)
-    val = tb["key"]
+	local ctrl = tb["ctrl"]
+    val = ctrl["key"]
     if val ~= nil and type(val) == "number" then
-        cmdtb[i] = (1 << 8) | (val & 0xF)
         i = i + 1
+        cmdtb[i] = (1 << 4) | (val & 0xF)
     end
-    val = tb["led"]
+    val = ctrl["led"]
     if val ~= nil and type(val) == "number" then
-        cmdtb[i] = (1 << 8) | (val & 0xF)
         i = i + 1
+        cmdtb[i] = (2 << 4) | (val & 0xF)
     end
-    val = tb["hub"]
+    val = ctrl["hub"]
     if val ~= nil and type(val) == "number" then
-        cmdtb[i] = (1 << 8) | (val & 0xF)
         i = i + 1
+        cmdtb[i] = (3 << 4) | (val & 0xF)
     end
+    print(i, "\r\n")
     LOGTBL(cmdtb)
     local cmd = tableToString(cmdtb)
-	return string.len(cmd), cmd
+	return i, cmd
 end
 
 --[[ MUST
@@ -175,7 +175,6 @@ function s1CvtPri2Std(bin)
         end
 	end
     str = cjson.encode(ctrltb)
-    str = string.format("{\"ctrl\":%s}", str)
 	return string.len(str), str
 end
 

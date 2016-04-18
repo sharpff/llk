@@ -189,6 +189,7 @@ int halGPIOWrite(void *dev, int gpio, const int val) {
     int ret, v;
 
     v = (val ==  GPIO_STATE_LOW) ? GPIO_IO_LOW : GPIO_IO_HIGH;
+    APPLOGE("halwrite, %d <- %d", gpio, v);
     ret = gpio_drv_write((mdev_t *)dev, gpio, v);
     if (0 > ret) {
         return -1;

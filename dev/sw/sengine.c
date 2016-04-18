@@ -663,10 +663,18 @@ int sengineSetStatus(char *json, int jsonLen) {
         LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]", ret);
         return ret;
     }
+    LELOGE("Debug");
     hdl = ioGetHdl(&ioType);
     if (NULL == hdl || *hdl == NULL) {
         LELOGE("sengineGetStatus ioGetHdl NULL");
         return -1;
+    }
+    LELOGE("Debug, ret = %d", ret);
+    {
+        int i;
+        for(i = 0; i < ret; i++) {
+            LELOGE("bin[%d] = %02x", i, bin[i]);
+        }
     }
     ret = ioWrite(ioType, *hdl, bin, ret);
     if (ret <= 0) {
@@ -734,6 +742,7 @@ int senginePollingSlave(void) {
         LELOGW("senginePollingSlave ioRead [%d]", ret);
         return ret;
     }
+#if 0
     {
         int i;
         LELOGE("ioRead ret = %d", ret);
@@ -741,10 +750,11 @@ int senginePollingSlave(void) {
             LELOGE("bin[%d] = %02x", i, bin[i]);
         }
     }
+#endif
     size = ret;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
             bin, size, (uint8_t *)&whatKind, sizeof(whatKind));
-    LELOGE("sengineCall ret = %d, what = %d", ret, whatKind);
+    // LELOGE("sengineCall ret = %d, what = %d", ret, whatKind);
     if (ret <= 0) {
         LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
         return -1;
@@ -764,7 +774,7 @@ int senginePollingSlave(void) {
                 int len = 0;
                 len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                         bin, size, (uint8_t *)status, sizeof(status));
-                LELOGE("sengineCall len = %d. [%s]", len, status);
+                // LELOGE("sengineCall len = %d. [%s]", len, status);
                 if (len <= 0) {
                     LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                 } else if (cacheIsChanged(status, len)) {

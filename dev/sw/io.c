@@ -533,14 +533,16 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
         }break;
         case IO_TYPE_GPIO: {
             gpioHand_t *p;
-            int i, id, val;
+            int i, id, val, num;
             for( i = 0; i < dataLen; i++ ) {
-                p = (gpioHand_t *)hdl;
                 id = (data[i] >> 4) & 0xF;
                 val = (data[i] & 0xF);
-                while(p && p->id > 0 && p->num >= 0) {
+                for(p = (gpioHand_t *)hdl; p && p->id > 0 && p->num >= 0; p++) {
+                    num = p->num;
                     if(id == p->id) {
-                        if(val == GPIO_STATE_LOW || val == GPIO_STATE_LOW) {
+                        LELOGE("will, %d <- %d <- %d", id, num, val);
+                        if(val == GPIO_STATE_LOW || val == GPIO_STATE_HIGH) {
+                            LELOGE("hal, %d <- %d <- %d", id, num, val);
                             halGPIOWrite(p->priv, p->num, val);
                         }
                         p->state = val;
@@ -567,7 +569,7 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
         }break;
         case IO_TYPE_GPIO: {
             gpioHand_t *p; 
-            int t, val, i = 0;
+            int val, i = 0;
             for(p = (gpioHand_t *)hdl; p && p->id > 0 && p->num >= 0 && i < dataLen; p++, i++) {
                 if(p->state == GPIO_STATE_LOW || p->state == GPIO_STATE_HIGH) {
                     halGPIORead(p->priv, p->num, &val);
@@ -577,8 +579,6 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
                 }
                 data[i] = (p->id << 4) & 0xF0;
                 data[i] |= val & 0x0F;
-                t = p->id;
-                LELOGE("id = %d, val = %d, data[%d] = %02x", t, val, i, data[i]);
             }
             return i;
         }break;
