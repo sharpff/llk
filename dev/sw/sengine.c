@@ -663,13 +663,11 @@ int sengineSetStatus(char *json, int jsonLen) {
         LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]", ret);
         return ret;
     }
-    LELOGE("Debug");
     hdl = ioGetHdl(&ioType);
     if (NULL == hdl || *hdl == NULL) {
         LELOGE("sengineGetStatus ioGetHdl NULL");
         return -1;
     }
-    LELOGE("Debug, ret = %d", ret);
     {
         int i;
         for(i = 0; i < ret; i++) {

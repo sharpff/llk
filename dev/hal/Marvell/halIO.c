@@ -156,14 +156,11 @@ int halGPIOInit(gpioHand_t *table, int n) {
                 default:
                     continue;
             }
-        } else {
-            GPIO_IntConfig(p->gpio, GPIO_INT_DISABLE);
-            // switch(table[i].inter) { default: continue; } // TODO: need to support interrupt
         }
         table[i].num = p->gpio;
         table[i].priv = gpio_dev;
-        APPLOGE("Debug i = %d, id = %d, num = %d, dir = %d, mode = %d,  inter = %d,  state = %d", 
-                i, table[i].id, table[i].num, table[i].dir, table[i].mode, table[i].inter, table[i].state);
+        APPLOG("IO %d, id = %d, num = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
+                i, table[i].id, table[i].num, table[i].dir, table[i].mode, table[i].state, table[i].type, table[i].blink);
     }
     return 0;
 }
@@ -189,7 +186,6 @@ int halGPIOWrite(void *dev, int gpio, const int val) {
     int ret, v;
 
     v = (val ==  GPIO_STATE_LOW) ? GPIO_IO_LOW : GPIO_IO_HIGH;
-    APPLOGE("halwrite, %d <- %d", gpio, v);
     ret = gpio_drv_write((mdev_t *)dev, gpio, v);
     if (0 > ret) {
         return -1;

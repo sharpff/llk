@@ -422,8 +422,11 @@ static void gpioSetDefault(gpioHand_t *table, int n)
         table[i].blink = 0;
         table[i].dir = GPIO_DIR_INPUT; 
         table[i].mode = GPIO_MODE_DEFAULT;
-        table[i].inter = GPIO_INTER_DISABLE; 
         table[i].state = GPIO_STATE_LOW;
+        table[i].type = 0;
+        table[i].gpiostate = 0;
+        table[i].keepLowTimes = 0;
+        table[i].keepHighTimes = 0;
         table[i].reserved = 0;
         table[i].priv = NULL;
     }
@@ -533,18 +536,12 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
         }break;
         case IO_TYPE_GPIO: {
             gpioHand_t *p;
-            int i, id, val, num;
+            int i, id, val;
             for( i = 0; i < dataLen; i++ ) {
                 id = (data[i] >> 4) & 0xF;
                 val = (data[i] & 0xF);
                 for(p = (gpioHand_t *)hdl; p && p->id > 0 && p->num >= 0; p++) {
-                    num = p->num;
-                    if(id == p->id) {
-                        LELOGE("will, %d <- %d <- %d", id, num, val);
-                        if(val == GPIO_STATE_LOW || val == GPIO_STATE_HIGH) {
-                            LELOGE("hal, %d <- %d <- %d", id, num, val);
-                            halGPIOWrite(p->priv, p->num, val);
-                        }
+                    if(id == p->id && p->dir == GPIO_DIR_OUTPUT) {
                         p->state = val;
                         break;
                     }
@@ -562,26 +559,34 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
     return 0;
 }
 
+static void gpioCheckState(gpioHand_t *p);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
     switch (ioType) {
         case IO_TYPE_UART: {
             return halUartRead(hdl, data, dataLen);
         }break;
         case IO_TYPE_GPIO: {
-            gpioHand_t *p; 
+            gpioHand_t *p;
             int val, i = 0;
+            uint8_t *pTimes;
             for(p = (gpioHand_t *)hdl; p && p->id > 0 && p->num >= 0 && i < dataLen; p++, i++) {
-                if(p->state == GPIO_STATE_LOW || p->state == GPIO_STATE_HIGH) {
-                    halGPIORead(p->priv, p->num, &val);
-                    p->state = val;
-                } else {
+                halGPIORead(p->priv, p->num, &val);
+                pTimes = (val == GPIO_STATE_LOW) ? &p->keepLowTimes : &p->keepHighTimes;
+                if(p->gpiostate != val) {
+                    *pTimes = 0;
+                } else if(*pTimes < 0xFF) {
+                    (*pTimes)++;
+                }
+                p->gpiostate = val;
+                if(p->state != GPIO_STATE_LOW && p->state != GPIO_STATE_HIGH) {
                     val = p->state;
                 }
                 data[i] = (p->id << 4) & 0xF0;
                 data[i] |= val & 0x0F;
+                gpioCheckState(p);
             }
             return i;
-        }break;
+        } break;
         case IO_TYPE_PIPE: {
 
         }break;
@@ -590,6 +595,37 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
         }break;
     }    
     return 0;
+}
+
+static uint8_t s_resetLevel = 0;
+static void gpioCheckState(gpioHand_t *p)
+{
+    if(p->type) {
+        if(p->dir == GPIO_DIR_INPUT) {
+            if(p->type == GPIO_TYPE_INPUT_RESET) {
+                if(p->gpiostate == GPIO_STATE_HIGH && p->keepHighTimes > p->blink) {
+                    s_resetLevel = (p->keepHighTimes > p->blink * 5) ? 2 : 1;
+                }
+            }
+        } else {
+            if(p->type == GPIO_TYPE_OUTPUT_RESET) {
+                p->state = s_resetLevel ? GPIO_STATE_BLINK : GPIO_STATE_LOW;
+            }
+        }
+    } 
+    if(p->dir == GPIO_DIR_OUTPUT) {
+        if(p->state == GPIO_STATE_LOW || p->state == GPIO_STATE_HIGH) {
+            if(p->state != p->gpiostate) {
+                halGPIOWrite(p->priv, p->num, p->state);
+            }
+        } else if(p->state == GPIO_STATE_BLINK) {
+            uint8_t times = (p->gpiostate == GPIO_STATE_LOW) ? p->keepLowTimes : p->keepHighTimes;
+            uint8_t kt = (p->type != GPIO_TYPE_OUTPUT_RESET) ? p->blink : ((s_resetLevel == 1) ? p->blink * 5 : p->blink);
+            if(p->blink > 0 && times > kt) {
+                halGPIOWrite(p->priv, p->num, !p->gpiostate);
+            }
+        }
+    }
 }
 
 void ioDeinit(int ioType, void *hdl) {

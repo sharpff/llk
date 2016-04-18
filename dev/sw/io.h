@@ -156,28 +156,32 @@ typedef enum {
 } GPIO_MODE_t;
 
 typedef enum {
-    GPIO_INTER_DISABLE = 0,
-    GPIO_INTER_RISING, 
-    GPIO_INTER_FALLING, 
-    GPIO_INTER_RISING_AND_FALLING,
-} GPIO_INTER_t;
-
-typedef enum {
     GPIO_STATE_LOW = 0,
     GPIO_STATE_HIGH, 
     GPIO_STATE_BLINK,
 } GPIO_STATE_t;
 
+typedef enum {
+    GPIO_TYPE_INPUT_RESET = 1
+} GPIO_TYPE_INPUT_t;
+
+typedef enum {
+    GPIO_TYPE_OUTPUT_RESET = 1
+} GPIO_TYPE_OUTPUT_t;
+
 typedef struct {
-    int8_t id;         // support 1, 2, 3 
-    int8_t num;        // gpio num
-    uint16_t blink;     // only output. ms, blink frequency
+    int8_t id;          // support 1, 2, 3 
+    int8_t num;         // gpio num
     uint16_t dir:1;     // 0 - input; 1 - output
     uint16_t mode:3;    // 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
-    uint16_t inter:2;   // only input.  0 - disable; 1 - rising; 2 - falling; 3 -  rising and falling
     uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
-    uint16_t reserved;
-    void *priv;         // for hal
+    uint16_t type:3;    // 0 - stdio; input: 1 - reset; output: 1 - reset
+    uint16_t gpiostate:1;   // only : 0 - low; 1 - high
+    uint8_t blink;          // only output. ticks, blink frequency
+    uint8_t keepLowTimes;   // ticks, gpiostat keep low times
+    uint8_t keepHighTimes;  // ticks, gpiostat keep high times
+    uint8_t reserved;   
+    void *priv;             // for hal
 } gpioHand_t;
 
 #define GPIO_MAX_ID     (3)

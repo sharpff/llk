@@ -62,7 +62,6 @@ end
 --            "id": 1,                        # support 1, 2, 3
 --            "dir": 0,                       # 0 - input; 1 - output
 --            "mode": 0,                      # 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
---            "inter": 3,                     # only input.  0 - disable; 1 - rising; 2 - falling; 3 -  rising and falling
 --            "blink": 200,                   # only output. ms, blink frequency.
 --            "state": 0,                     # init state. 0 - low; 1 - high; 2 - blink
 --        },
@@ -71,14 +70,12 @@ end
 --            "id": 2,
 --            "dir": 1,
 --            "mode": 0,
---            "inter": 0,
 --        },
 --        # supply hub
 --        {
 --            "id": 3,
 --            "dir": 1,
 --            "mode": 0,
---            "inter": 0,
 --        }
 --]]
 function s1GetCvtType()
@@ -92,20 +89,23 @@ function s1GetCvtType()
                 "id":1,
                 "dir":0,
                 "mode":2,
-                "inter":0
+                "type":1,
+                "blink":6,
             },
             {
                 "id":2,
                 "dir":1,
                 "mode":0,
-                "blink":200,
-                "state":0
+                "state":0,
+                "type":1,
+                "blink":2,
             },
             {
                 "id":3,
                 "dir":1,
                 "mode":0,
                 "state":0
+                "blink":3,
             }
         ]
     }
@@ -151,8 +151,6 @@ function s1CvtStd2Pri(json)
         i = i + 1
         cmdtb[i] = (3 << 4) | (val & 0xF)
     end
-    print(i, "\r\n")
-    LOGTBL(cmdtb)
     local cmd = tableToString(cmdtb)
 	return i, cmd
 end
