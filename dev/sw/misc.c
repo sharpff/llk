@@ -24,6 +24,8 @@
 #define JSON_NAME_GPIO_BLINK        "blink"
 #define JSON_NAME_GPIO_STATE        "state"
 #define JSON_NAME_GPIO_TYPE         "type"
+#define JSON_NAME_GPIO_TIME_SHORT   "shortTime"
+#define JSON_NAME_GPIO_TIME_LONG    "longTime"
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
@@ -249,6 +251,21 @@ int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
             if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_TYPE, &tmp)) == WM_SUCCESS) {
                 table[j].type = tmp;
             }
+            if((table[j].dir == GPIO_DIR_INPUT && table[j].type == GPIO_TYPE_INPUT_RESET) || 
+                    (table[j].dir == GPIO_DIR_OUTPUT && table[j].type == GPIO_TYPE_OUTPUT_RESET)) {
+                if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_TIME_SHORT, &tmp)) != WM_SUCCESS || tmp < 1) {
+                    LELOGE("GPIO wrang value: %s = %d",  JSON_NAME_GPIO_TIME_SHORT, (ret == WM_SUCCESS ? tmp : ret));
+                    continue;
+                }
+                table[j].shortTime = tmp;
+                if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_TIME_LONG, &tmp)) != WM_SUCCESS || tmp <= table[j].shortTime) {
+                    LELOGE("GPIO wrang value: %s = %d",  JSON_NAME_GPIO_TIME_LONG, (ret == WM_SUCCESS ? tmp : ret));
+                    continue;
+                }
+                table[j].longTime = tmp;
+            }
+            /*LELOGE("IO id = %d, num = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", */
+                    /*table[j].id, table[j].num, table[j].dir, table[j].mode, table[j].state, table[j].type, table[j].blink);*/
             j++;
             json_release_composite_object(&jobj);
         }

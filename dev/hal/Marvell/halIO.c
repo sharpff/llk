@@ -88,21 +88,22 @@ static struct _gpioTable{
     {3, 39, GPIO39_GPIO39}, // hub
 };
 
-int halGPIOInit(gpioHand_t *table, int n) {
+int halGPIOInit(gpioManager_t *mgr) {
     int i, j;
     mdev_t *gpio_dev;
+    gpioHand_t *table;
     struct _gpioTable *p;
 
-    if(!table || n <= 0) {
+    if(!mgr || !mgr->table) {
         return -1;
     }
     gpio_drv_init();
     if(!(gpio_dev = gpio_drv_open("MDEV_GPIO"))) {
         return -1;
     }
-    for( i = 0; i < n; i++ ) {
-        p = NULL;
-        for(j = 0; j < 3; j++) {
+    mgr->handle = (void *)gpio_dev;
+    for(i = 0, table = mgr->table; i < mgr->num; i++) {
+        for(p = NULL, j = 0; j < 3; j++) {
             if(gpioTable[j].id == table[i].id) {
                 p = &gpioTable[j];
                 break;
@@ -158,18 +159,15 @@ int halGPIOInit(gpioHand_t *table, int n) {
             }
         }
         table[i].num = p->gpio;
-        table[i].priv = gpio_dev;
-        APPLOG("IO %d, id = %d, num = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
-                i, table[i].id, table[i].num, table[i].dir, table[i].mode, table[i].state, table[i].type, table[i].blink);
     }
     return 0;
 }
 
-int halGPIOClose(void *table) {
-    if(!table) {
+int halGPIOClose(gpioManager_t *mgr) {
+    if(!mgr || !mgr->handle) {
         return -1;
     }
-    return gpio_drv_close(((gpioHand_t *)table)->priv);
+    return gpio_drv_close(mgr->handle);
 }
 
 int halGPIORead(void *dev, int gpio, int *val) {

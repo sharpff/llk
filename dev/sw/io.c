@@ -45,7 +45,8 @@ static FlashRegion ginRegion[E_FLASH_TYPE_MAX];
 static uint32_t ginStartAddr;
 static uint32_t ginTotalSize;
 static uint32_t ginMinSize;
-static gpioHand_t gpioTable[GPIO_MAX_ID + 1];
+static gpioManager_t gpioManager;
+
 /*
  * modify here, in order to change the ocuppied size.
  */
@@ -408,15 +409,16 @@ int processStdMessage() {
     return 0;
 }
 
-static void gpioSetDefault(gpioHand_t *table, int n)
+static void gpioSetDefault(gpioManager_t *mgr)
 {
     int i;
+    gpioHand_t *table;
 
-    if(!table || n <= 0) {
+    if(!mgr && !mgr->table) {
         return;
     }
-    memset(table, 0, sizeof(*table) * n);
-    for( i = 0; i < n; i++ ) {
+    table = mgr->table;
+    for( i = 0; i < GPIO_MAX_ID; i++ ) {
         table[i].id = 0;
         table[i].num = -1;
         table[i].blink = 0;
@@ -432,6 +434,7 @@ static void gpioSetDefault(gpioHand_t *table, int n)
     }
 }
 
+static void gpioInitState(gpioManager_t *mgr);
 void *ioInit(int ioType, const char *json, int jsonLen) {
     void *ioHdl = NULL;
     int ret = 0;
@@ -458,18 +461,20 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             return ioHdl;
         }break;
         case IO_TYPE_GPIO: {
-            gpioSetDefault(gpioTable, GPIO_MAX_ID);
-            ret = getGPIOInfo(json, jsonLen, gpioTable, GPIO_MAX_ID);
+            gpioSetDefault(&gpioManager);
+            ret = getGPIOInfo(json, jsonLen, gpioManager.table, GPIO_MAX_ID);
             if (0 >= ret) {
                 LELOGW("ioInit getGPIOInfo ret[%d]", ret);
                 return NULL;
             }
-            ret = halGPIOInit(gpioTable, GPIO_MAX_ID);
+            gpioManager.num = ret;
+            ret = halGPIOInit(&gpioManager);
             if (ret) {
                 LELOGW("ioInit halGPIOInit halGPIOInit[%p]", ret);
                 return NULL;
             }
-            ioHdl = gpioTable;
+            ioHdl = &gpioManager;
+            gpioInitState(&gpioManager);
             return ioHdl;
         }break;
         case IO_TYPE_PIPE: {
@@ -481,6 +486,21 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
     }
     // halUartInit()
     return NULL;
+}
+
+static void gpioInitState(gpioManager_t *mgr)
+{
+    int i;
+    gpioHand_t *table = mgr->table;
+
+    for(i = 0; i < mgr->num; i++, table++) {
+        if(table->num < 0) {
+            continue;
+        }
+        LELOGE("IO id = %d, num = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
+                table->id, table->num, table->dir, table->mode, table->state, table->type, table->blink);
+        halGPIOWrite(mgr->handle, table->num, !!table->state);
+    }
 }
 
 void **ioGetHdl(int *ioType) {
@@ -500,7 +520,6 @@ void **ioGetHdl(int *ioType) {
         }
     }
     ioType ? *(ioType) = whatCvtType : 0;
-    // LELOG("ioGetHdl IO_TYPE_GPIO ioInit 0 [%d]\r\n", whatCvtType);
     switch (whatCvtType) {
         case IO_TYPE_UART: {
             if (NULL == ioHdl) {
@@ -510,7 +529,6 @@ void **ioGetHdl(int *ioType) {
             return &ioHdl;
         }break;
         case IO_TYPE_GPIO: {
-            // LELOG("ioGetHdl IO_TYPE_GPIO ioInit 1 [%d]\r\n", whatCvtType);
             if (NULL == ioHdl) {
                 LELOG("ioGetHdl IO_TYPE_GPIO ioInit 2 [%d]", whatCvtType);
                 ioHdl = ioInit(whatCvtType, json, ret);
@@ -536,11 +554,12 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
         }break;
         case IO_TYPE_GPIO: {
             gpioHand_t *p;
-            int i, id, val;
+            int i, j, id, val;
+            gpioManager_t *mgr = ((gpioManager_t *)hdl);
             for( i = 0; i < dataLen; i++ ) {
                 id = (data[i] >> 4) & 0xF;
                 val = (data[i] & 0xF);
-                for(p = (gpioHand_t *)hdl; p && p->id > 0 && p->num >= 0; p++) {
+                for(j = 0, p = mgr->table; j < mgr->num; j++, p++) {
                     if(id == p->id && p->dir == GPIO_DIR_OUTPUT) {
                         p->state = val;
                         break;
@@ -559,18 +578,22 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
     return 0;
 }
 
-static void gpioCheckState(gpioHand_t *p);
+static void gpioCheckState(gpioManager_t *mgr, int index);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
     switch (ioType) {
         case IO_TYPE_UART: {
             return halUartRead(hdl, data, dataLen);
         }break;
         case IO_TYPE_GPIO: {
+            int val, i, j;
             gpioHand_t *p;
-            int val, i = 0;
             uint8_t *pTimes;
-            for(p = (gpioHand_t *)hdl; p && p->id > 0 && p->num >= 0 && i < dataLen; p++, i++) {
-                halGPIORead(p->priv, p->num, &val);
+            gpioManager_t *mgr = ((gpioManager_t *)hdl);
+            for(i = j = 0, p = mgr->table; j < mgr->num && i < dataLen; j++, p++) {
+                if(p->num < 0) {
+                    continue;
+                }
+                halGPIORead(mgr->handle, p->num, &val);
                 pTimes = (val == GPIO_STATE_LOW) ? &p->keepLowTimes : &p->keepHighTimes;
                 if(p->gpiostate != val) {
                     *pTimes = 0;
@@ -583,7 +606,8 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
                 }
                 data[i] = (p->id << 4) & 0xF0;
                 data[i] |= val & 0x0F;
-                gpioCheckState(p);
+                gpioCheckState(mgr, j);
+                i++;
             }
             return i;
         } break;
@@ -598,13 +622,15 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
 }
 
 static uint8_t s_resetLevel = 0;
-static void gpioCheckState(gpioHand_t *p)
+static void gpioCheckState(gpioManager_t *mgr, int index)
 {
+    gpioHand_t *p = &mgr->table[index];
+
     if(p->type) {
         if(p->dir == GPIO_DIR_INPUT) {
             if(p->type == GPIO_TYPE_INPUT_RESET) {
-                if(p->gpiostate == GPIO_STATE_HIGH && p->keepHighTimes > p->blink) {
-                    s_resetLevel = (p->keepHighTimes > p->blink * 5) ? 2 : 1;
+                if(p->gpiostate == GPIO_STATE_HIGH && p->keepHighTimes > p->shortTime) {
+                    s_resetLevel = (p->keepHighTimes > p->longTime) ? 2 : 1;
                 }
             }
         } else {
@@ -616,13 +642,13 @@ static void gpioCheckState(gpioHand_t *p)
     if(p->dir == GPIO_DIR_OUTPUT) {
         if(p->state == GPIO_STATE_LOW || p->state == GPIO_STATE_HIGH) {
             if(p->state != p->gpiostate) {
-                halGPIOWrite(p->priv, p->num, p->state);
+                halGPIOWrite(mgr->handle, p->num, p->state);
             }
         } else if(p->state == GPIO_STATE_BLINK) {
             uint8_t times = (p->gpiostate == GPIO_STATE_LOW) ? p->keepLowTimes : p->keepHighTimes;
-            uint8_t kt = (p->type != GPIO_TYPE_OUTPUT_RESET) ? p->blink : ((s_resetLevel == 1) ? p->blink * 5 : p->blink);
+            uint8_t kt = (p->type == GPIO_TYPE_OUTPUT_RESET) ? ((s_resetLevel == 1) ? p->longTime : p->shortTime) : p->blink;
             if(p->blink > 0 && times > kt) {
-                halGPIOWrite(p->priv, p->num, !p->gpiostate);
+                halGPIOWrite(mgr->handle, p->num, !p->gpiostate);
             }
         }
     }
@@ -639,7 +665,7 @@ void ioDeinit(int ioType, void *hdl) {
         case IO_TYPE_GPIO: {
             void **hdlGPIO = NULL; 
             hdlGPIO = ioGetHdl(NULL);
-            halGPIOClose(hdl);
+            halGPIOClose(((gpioManager_t *)hdl)->handle);
             *hdlGPIO = NULL;
         }break;
         case IO_TYPE_PIPE: {

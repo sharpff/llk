@@ -169,6 +169,7 @@ typedef enum {
     GPIO_TYPE_OUTPUT_RESET = 1
 } GPIO_TYPE_OUTPUT_t;
 
+#define GPIO_MAX_ID     (3)
 typedef struct {
     int8_t id;          // support 1, 2, 3 
     int8_t num;         // gpio num
@@ -178,13 +179,19 @@ typedef struct {
     uint16_t type:3;    // 0 - stdio; input: 1 - reset; output: 1 - reset
     uint16_t gpiostate:1;   // only : 0 - low; 1 - high
     uint8_t blink;          // only output. ticks, blink frequency
+    uint8_t longTime;
+    uint8_t shortTime;
     uint8_t keepLowTimes;   // ticks, gpiostat keep low times
     uint8_t keepHighTimes;  // ticks, gpiostat keep high times
     uint8_t reserved;   
     void *priv;             // for hal
 } gpioHand_t;
 
-#define GPIO_MAX_ID     (3)
+typedef struct {
+    void *handle;
+    uint32_t num;
+    gpioHand_t table[GPIO_MAX_ID + 1];
+} gpioManager_t;
 
 #ifdef __cplusplus
 }

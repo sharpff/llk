@@ -89,16 +89,20 @@ function s1GetCvtType()
                 "id":1,
                 "dir":0,
                 "mode":2,
-                "type":1,
                 "blink":6,
+                "type":1,
+                "longTime":30,
+                "shortTime":3,
             },
             {
                 "id":2,
                 "dir":1,
                 "mode":0,
-                "state":0,
-                "type":1,
+                "state":1,
                 "blink":2,
+                "type":1,
+                "longTime":10,
+                "shortTime":1,
             },
             {
                 "id":3,
@@ -106,6 +110,7 @@ function s1GetCvtType()
                 "mode":0,
                 "state":0
                 "blink":3,
+                "type":0,
             }
         ]
     }
