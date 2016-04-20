@@ -178,13 +178,16 @@ typedef struct {
     uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
     uint16_t type:3;    // 0 - stdio; input: 1 - reset; output: 1 - reset
     uint16_t gpiostate:1;   // only : 0 - low; 1 - high
+    uint16_t freestate:1;   // only output reset: 0 - low; 1 - high
     uint8_t blink;          // only output. ticks, blink frequency
+    // for input/output type reset
     uint8_t longTime;
     uint8_t shortTime;
+    // for output type reset
+    // TODO: only for internal
     uint8_t keepLowTimes;   // ticks, gpiostat keep low times
     uint8_t keepHighTimes;  // ticks, gpiostat keep high times
     uint8_t reserved;   
-    void *priv;             // for hal
 } gpioHand_t;
 
 typedef struct {

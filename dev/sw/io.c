@@ -418,19 +418,22 @@ static void gpioSetDefault(gpioManager_t *mgr)
         return;
     }
     table = mgr->table;
+    memset(table, 0, sizeof(*table) * GPIO_MAX_ID);
     for( i = 0; i < GPIO_MAX_ID; i++ ) {
         table[i].id = 0;
         table[i].num = -1;
-        table[i].blink = 0;
         table[i].dir = GPIO_DIR_INPUT; 
         table[i].mode = GPIO_MODE_DEFAULT;
         table[i].state = GPIO_STATE_LOW;
         table[i].type = 0;
         table[i].gpiostate = 0;
+        table[i].freestate = GPIO_STATE_LOW;
+        table[i].blink = 0;
+        table[i].longTime = 0;
+        table[i].shortTime = 0;
         table[i].keepLowTimes = 0;
         table[i].keepHighTimes = 0;
         table[i].reserved = 0;
-        table[i].priv = NULL;
     }
 }
 
@@ -499,6 +502,7 @@ static void gpioInitState(gpioManager_t *mgr)
         }
         LELOGE("IO id = %d, num = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
                 table->id, table->num, table->dir, table->mode, table->state, table->type, table->blink);
+        table->freestate = table->state;
         halGPIOWrite(mgr->handle, table->num, !!table->state);
     }
 }
@@ -629,13 +633,13 @@ static void gpioCheckState(gpioManager_t *mgr, int index)
     if(p->type) {
         if(p->dir == GPIO_DIR_INPUT) {
             if(p->type == GPIO_TYPE_INPUT_RESET) {
-                if(p->gpiostate == GPIO_STATE_HIGH && p->keepHighTimes > p->shortTime) {
+                if(s_resetLevel < 2 && p->gpiostate == GPIO_STATE_HIGH && p->keepHighTimes > p->shortTime) {
                     s_resetLevel = (p->keepHighTimes > p->longTime) ? 2 : 1;
                 }
             }
         } else {
             if(p->type == GPIO_TYPE_OUTPUT_RESET) {
-                p->state = s_resetLevel ? GPIO_STATE_BLINK : GPIO_STATE_LOW;
+                p->state = s_resetLevel ? GPIO_STATE_BLINK : p->freestate;
             }
         }
     } 
@@ -645,9 +649,13 @@ static void gpioCheckState(gpioManager_t *mgr, int index)
                 halGPIOWrite(mgr->handle, p->num, p->state);
             }
         } else if(p->state == GPIO_STATE_BLINK) {
+            uint8_t kt = p->blink;
             uint8_t times = (p->gpiostate == GPIO_STATE_LOW) ? p->keepLowTimes : p->keepHighTimes;
-            uint8_t kt = (p->type == GPIO_TYPE_OUTPUT_RESET) ? ((s_resetLevel == 1) ? p->longTime : p->shortTime) : p->blink;
-            if(p->blink > 0 && times > kt) {
+
+            if(p->type == GPIO_TYPE_OUTPUT_RESET && s_resetLevel > 0) {
+                kt = (s_resetLevel == 1) ? p->longTime : p->shortTime;
+            }
+            if(kt > 0 && times > kt) {
                 halGPIOWrite(mgr->handle, p->num, !p->gpiostate);
             }
         }

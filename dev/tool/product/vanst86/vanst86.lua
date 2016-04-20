@@ -61,22 +61,36 @@ end
 --        {
 --            "id": 1,                        # support 1, 2, 3
 --            "dir": 0,                       # 0 - input; 1 - output
---            "mode": 0,                      # 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
---            "blink": 200,                   # only output. ms, blink frequency.
+--            "mode": 2,                      # 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
+--            "blink": 6,                     # only output. tick, blink frequency.
+--            "type":1,                       # 0 - stdio; 1 - reset output/input
 --            "state": 0,                     # init state. 0 - low; 1 - high; 2 - blink
+--            // for input type 1 (reset)
+--            "longTime":30,
+--            "shortTime":3,
 --        },
---        # led
+--        # led, reset output
 --        {
---            "id": 2,
---            "dir": 1,
---            "mode": 0,
+--            "id":2,
+--            "dir":1,
+--            "mode":0,
+--            "state":1,
+--            "blink":2,
+--            "type":1,
+--            // for output type 1 (reset)
+--            "longTime":10,
+--            "shortTime":1,
 --        },
 --        # supply hub
 --        {
---            "id": 3,
---            "dir": 1,
---            "mode": 0,
+--            "id":3,
+--            "dir":1,
+--            "mode":0,
+--            "state":0
+--            "blink":3,
+--            "type":0,
 --        }
+--   }
 --]]
 function s1GetCvtType()
     --key, led, hub
@@ -89,8 +103,8 @@ function s1GetCvtType()
                 "id":1,
                 "dir":0,
                 "mode":2,
-                "blink":6,
                 "type":1,
+
                 "longTime":30,
                 "shortTime":3,
             },
@@ -101,6 +115,7 @@ function s1GetCvtType()
                 "state":1,
                 "blink":2,
                 "type":1,
+
                 "longTime":10,
                 "shortTime":1,
             },
@@ -109,7 +124,8 @@ function s1GetCvtType()
                 "dir":1,
                 "mode":0,
                 "state":0
-                "blink":3,
+                "blink":30,
+
                 "type":0,
             }
         ]
