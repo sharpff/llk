@@ -50,7 +50,9 @@ int halUartClose(void *dev) {
 #define TO_DO_FOR_HONYAR_BUG    1
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     int ret = 0;
+#if TO_DO_FOR_HONYAR_BUG
     int i = 0;
+#endif
     ret = uart_drv_read((mdev_t *)dev, buf, len);
 #if TO_DO_FOR_HONYAR_BUG
     APPLOG("uart_drv_read [%d]", ret);
@@ -65,7 +67,9 @@ int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
     int ret = 0;
+#if TO_DO_FOR_HONYAR_BUG
     int i = 0;
+#endif
     ret = uart_drv_write((mdev_t *)dev, buf, len);
 #if TO_DO_FOR_HONYAR_BUG
     APPLOG("uart_drv_write [%d] ", ret);

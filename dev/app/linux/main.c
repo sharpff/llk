@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
 int main(int argc, char** argv) {
 
     char configInfo[256] = {0};
-    int delay = 10, type = 1;
+    int delay = 10, type = 2;
     const char *configFmt = "SSID=%s,PASSWD=%s,AES=%s,TYPE=%d,DELAY=%d";
     int ret = 0;
     //test();
@@ -333,7 +333,7 @@ int main(int argc, char** argv) {
         // APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
         ret = lelinkDoConfig(configInfo);
         if (0 > ret) {
-            // APPLOG("waiting ...");
+            APPLOG("waiting ...");
             delayMS(1000);
         } else {
             APPLOG("ending with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);

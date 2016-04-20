@@ -8,7 +8,9 @@ extern void inner_set_ap_info(const ap_passport_t *passport);
 extern int8_t gin_airconfig_ap_connected;
 extern int8_t gin_airconfig_sniffer_got;
 extern struct wlan_network gin_sta_net;
+#if ENABLE_WIFI_SOFT_AP
 static int startApListen(void);
+#endif
 
 int halDoConfig(void *ptr, int ptrLen) {
 	int ret;
@@ -84,11 +86,11 @@ int halDoApConnecting(void *ptr, int ptrLen) {
 //
 //
 extern int softApStarted(void);
+#if ENABLE_WIFI_SOFT_AP
 static int thread_uapconfig_run = 0;
 static os_thread_t thread_uapconfig;
 static os_thread_stack_define(thread_stack_uapconfig, 1024 * 10);
 static void thread_uapconfig_proc(os_thread_arg_t thandle);
-
 static void thread_uapconfig_proc(os_thread_arg_t thandle)
 {
     thread_uapconfig_run = 1;
@@ -96,7 +98,6 @@ static void thread_uapconfig_proc(os_thread_arg_t thandle)
     os_thread_self_complete((os_thread_t *)thandle);
     thread_uapconfig_run = 0;
 }
-
 static int startApListen(void)
 {
     int ret = 0;
@@ -111,6 +112,7 @@ static int startApListen(void)
     }
     return ret;
 }
+#endif
 
 int halSoftApStart(char *ssid, char *wpa2_passphrase)
 {
