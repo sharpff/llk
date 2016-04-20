@@ -81,86 +81,71 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
 static struct _gpioTable{
     int8_t id;
     int8_t gpio;
+    int8_t used;
     GPIO_PinMuxFunc_Type fun;
 } gpioTable[] = {
-    {1, 48, GPIO48_GPIO48}, // key
-    {2, 49, GPIO49_GPIO49}, // led
-    {3, 39, GPIO39_GPIO39}, // hub
+    {1, 48, 0, GPIO48_GPIO48}, // key
+    {2, 49, 0, GPIO49_GPIO49}, // led
+    {3, 39, 0, GPIO39_GPIO39}, // hub
 };
+#define GPIO_SUPPORT_NUM   ((int)(sizeof(gpioTable)/sizeof(gpioTable[0])))
 
-int halGPIOInit(gpioManager_t *mgr) {
-    int i, j;
+void* halGPIOInit(void) {
     mdev_t *gpio_dev;
-    gpioHand_t *table;
-    struct _gpioTable *p;
 
-    if(!mgr || !mgr->table) {
-        return -1;
-    }
     gpio_drv_init();
     if(!(gpio_dev = gpio_drv_open("MDEV_GPIO"))) {
+        return NULL;
+    }
+    return (void *)gpio_dev;
+}
+
+int halGPIOOpen(int8_t id, int8_t dir, int8_t mode) {
+    int i;
+    struct _gpioTable *p;
+
+    for(i = 0, p = gpioTable; i < GPIO_SUPPORT_NUM; i++, p++) {
+        if(p->id == id && !p->used) {
+            break;
+        }
+    }
+    if(i == GPIO_SUPPORT_NUM) {
         return -1;
     }
-    mgr->handle = (void *)gpio_dev;
-    for(i = 0, table = mgr->table; i < mgr->num; i++) {
-        for(p = NULL, j = 0; j < 3; j++) {
-            if(gpioTable[j].id == table[i].id) {
-                p = &gpioTable[j];
-                break;
-            }
-        }
-        if(!p) {
-             continue;
-        }
-        GPIO_PinMuxFun(p->gpio, p->fun);
-        switch(table[i].dir)
-        {
-            case GPIO_DIR_INPUT:
-                GPIO_SetPinDir(p->gpio, GPIO_INPUT);
-                break;
-            case GPIO_DIR_OUTPUT:
-                GPIO_SetPinDir(p->gpio, GPIO_OUTPUT);
-                break;
-            default:
-                continue;
-        }
-        switch(table[i].mode)
-        {
-            case GPIO_MODE_DEFAULT:
-                GPIO_PinModeConfig(p->gpio, PINMODE_DEFAULT);
-                break;
-            case GPIO_MODE_PULLUP:
-                GPIO_PinModeConfig(p->gpio, PINMODE_PULLUP);
-                break;
-            case GPIO_MODE_PULLDOWN:
-                GPIO_PinModeConfig(p->gpio, PINMODE_PULLDOWN);
-                break;
-            case GPIO_MODE_NOPULL:
-                GPIO_PinModeConfig(p->gpio, PINMODE_NOPULL);
-                break;
-            case GPIO_MODE_RISTATE:
-                GPIO_PinModeConfig(p->gpio, PINMODE_TRISTATE);
-                break;
-            default:
-                continue;
-        }
-        if(table[i].dir ==  GPIO_DIR_OUTPUT) {
-            switch(table[i].state)
-            {
-                case GPIO_STATE_LOW:
-                case GPIO_STATE_BLINK:
-                    GPIO_WritePinOutput(p->gpio, GPIO_IO_LOW);
-                    break;
-                case GPIO_STATE_HIGH: 
-                    GPIO_WritePinOutput(p->gpio, GPIO_IO_HIGH);
-                    break;
-                default:
-                    continue;
-            }
-        }
-        table[i].num = p->gpio;
+    GPIO_PinMuxFun(p->gpio, p->fun);
+    switch(dir)
+    {
+        case GPIO_DIR_INPUT:
+            GPIO_SetPinDir(p->gpio, GPIO_INPUT);
+            break;
+        case GPIO_DIR_OUTPUT:
+            GPIO_SetPinDir(p->gpio, GPIO_OUTPUT);
+            break;
+        default:
+            return -1;
     }
-    return 0;
+    switch(mode)
+    {
+        case GPIO_MODE_DEFAULT:
+            GPIO_PinModeConfig(p->gpio, PINMODE_DEFAULT);
+            break;
+        case GPIO_MODE_PULLUP:
+            GPIO_PinModeConfig(p->gpio, PINMODE_PULLUP);
+            break;
+        case GPIO_MODE_PULLDOWN:
+            GPIO_PinModeConfig(p->gpio, PINMODE_PULLDOWN);
+            break;
+        case GPIO_MODE_NOPULL:
+            GPIO_PinModeConfig(p->gpio, PINMODE_NOPULL);
+            break;
+        case GPIO_MODE_RISTATE:
+            GPIO_PinModeConfig(p->gpio, PINMODE_TRISTATE);
+            break;
+        default:
+            return -1;
+    }
+    p->used = 1;
+    return p->gpio;
 }
 
 int halGPIOClose(gpioManager_t *mgr) {

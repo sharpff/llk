@@ -439,8 +439,9 @@ static void gpioSetDefault(gpioManager_t *mgr)
 
 static void gpioInitState(gpioManager_t *mgr);
 void *ioInit(int ioType, const char *json, int jsonLen) {
-    void *ioHdl = NULL;
     int ret = 0;
+    void *ioHdl = NULL;
+
     switch (ioType) {
         case IO_TYPE_UART: {
             int baud = 0, dataBits = 0, stopBits = 0, flowCtrl = 0, PARITY = 0;
@@ -464,6 +465,8 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             return ioHdl;
         }break;
         case IO_TYPE_GPIO: {
+            int i;
+            gpioHand_t *table;
             gpioSetDefault(&gpioManager);
             ret = getGPIOInfo(json, jsonLen, gpioManager.table, GPIO_MAX_ID);
             if (0 >= ret) {
@@ -471,10 +474,12 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
                 return NULL;
             }
             gpioManager.num = ret;
-            ret = halGPIOInit(&gpioManager);
-            if (ret) {
-                LELOGW("ioInit halGPIOInit halGPIOInit[%p]", ret);
+            if(!(gpioManager.handle = halGPIOInit())) {
+                LELOGW("ioInit halGPIOInit");
                 return NULL;
+            }
+            for(i = 0, table = gpioManager.table; i < gpioManager.num; i++, table++) {
+                table->num =  halGPIOOpen(table->id, table->dir, table->mode);
             }
             ioHdl = &gpioManager;
             gpioInitState(&gpioManager);
