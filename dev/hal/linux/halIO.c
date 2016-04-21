@@ -17,12 +17,18 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
     return len;
 }
 
-void *halGPIOInit(int gpioId, int isInput, int initVal) {
+void *halGPIOInit(void) {
     return NULL;
 }
+
 int halGPIOClose(void *dev) {
     return 0;
 }
+
+int halGPIOOpen(int8_t id, int8_t dir, int8_t mode) {
+    return -1;
+}
+
 int halGPIORead(void *dev, int gpioId, int *val) {
     return 0;
 }

@@ -152,11 +152,11 @@ int halGPIOOpen(int8_t id, int8_t dir, int8_t mode) {
     return p->gpio;
 }
 
-int halGPIOClose(gpioManager_t *mgr) {
-    if(!mgr || !mgr->handle) {
+int halGPIOClose(void *dev) {
+    if(!dev) {
         return -1;
     }
-    return gpio_drv_close(mgr->handle);
+    return gpio_drv_close(dev);
 }
 
 int halGPIORead(void *dev, int gpio, int *val) {
