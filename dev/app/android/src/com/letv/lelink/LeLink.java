@@ -79,7 +79,7 @@ public class LeLink {
 	 * @return
 	 * 		true success; false failed
 	 */
-	public static boolean setContent(Context context) {
+	public static boolean setContext(Context context) {
 		if (context == null) {
 			LOGE("Context null");
 			return false;
@@ -123,7 +123,7 @@ public class LeLink {
 	
 	/**
 	 * 得到SDK对应的UUID.<br>
-	 * 必须在成功执行setContent()后才可以用.<br>
+	 * 必须在成功执行setContext()后才可以用.<br>
 	 * 
 	 * @return
 	 * 		String - SDK UUID
@@ -250,8 +250,8 @@ public class LeLink {
 	 *          dataStr:<br>
 	 *          	a, LeCmd.K.UUID(String), 设备的UUID<br>
 	 *          	b, LeCmd.K.VERSION(String), 设备的当前版本号<br>
-	 *          	c, LeCmd.K.TYPE(int), 查询的类型(2-固件, 4-固件脚本, 5-联运脚本)<br>
-	 *          	d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联运脚本)的时候需要填充该值<br>
+	 *          	c, LeCmd.K.TYPE(int), 查询的类型(OTA_TYPE_FIRMWARE-固件, OTA_TYPE_FW_SCRIPT-固件脚本, OTA_TYPE_IA_SCRIPT-联动脚本)<br>
+	 *          	d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联动脚本)的时候需要填充该值<br>
 	 * 			return<br>
 	 * 				a, 出错返回null<br>
 	 * 				b, 查询信息列表的Json字符串, 键值有LeCmd.K.URL(String)<br>
@@ -351,7 +351,8 @@ public class LeLink {
 	 *          dataStr:<br>
 	 *          	a, 填充由OTA查询得到的Json字符串<br>
 	 * 			return<br>
-	 * 				不用关心返回值<br>
+	 * 				a, 成功返回字符串"ok"<br>
+	 * 				b, 失败返回失败说明字符串<br>
 	 * 
 	 * @return
 	 * 		详细参考上述说明
@@ -539,21 +540,33 @@ public class LeLink {
 		case MSG_TYPE_REMOTERESPOND:
 			try {
 				dataStr = new String(buf, "UTF-8");
-//				LOGI("Json:\n" + dataStr);
+				LOGI("Json(" + buf.length + "):\n" + dataStr);
 				if (cmd == LeCmd.CTRL_RSP || cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP) {
-					mWaitCtrlBackData = dataStr;
+					if(uuid.indexOf(mWaitCtrlUuid) < 0) {
+						LOGW("Get ctrl respond, other uuid: " + uuid + ", need: " + mWaitCtrlUuid);
+						break;
+					}
+					if(cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP && subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_RSP) {
+						mWaitCtrlBackData = (buf.length == 0) ? "ok" : dataStr;
+					} else {
+						mWaitCtrlBackData = dataStr;
+					}
 					synchronized (mCtrlLock) {
 						mCtrlLock.notifyAll();
 					}
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
-					LOGI("Data:\n" + dataStr);
+//					LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
 					if (mWaitGetUuid != null) {
-						mFindDevs.clear();
-						mFindDevs.put(uuid, dataJson);
-						synchronized (mGetLock) {
-							mGetLock.notifyAll();
-						}
+//						if (uuid.indexOf(mWaitGetUuid) >= 0) {
+							mFindDevs.clear();
+							mFindDevs.put(uuid, dataJson);
+							synchronized (mGetLock) {
+								mGetLock.notifyAll();
+							}
+//						} else { // getstate not
+//							LOGW("Get get respond, other uuid: " + uuid + ", need: " + mWaitGetUuid);
+//						}
 					} else {
 						mFindDevs.put(uuid, dataJson);
 					}
@@ -592,6 +605,10 @@ public class LeLink {
 		logout(Log.INFO, msg);
 	}
 
+	private static void LOGW(String msg) {
+		logout(Log.WARN, msg);
+	}
+	
 	private static void LOGE(String msg) {
 		logout(Log.ERROR, msg);
 	}

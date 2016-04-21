@@ -24,7 +24,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		
 		Log.i(TAG, LeLink.getSdkInfo());
-		LeLink.setContent(getApplicationContext());
+		LeLink.setContext(getApplicationContext());
 		mLeLink = LeLink.getInstance();
 		mTestThread.start();
 	}
@@ -94,13 +94,13 @@ public class MainActivity extends Activity {
 			}
 
 			/* 得到设备的uuid */
-			String devUUID = "10000100101000010007F0B429000012";
+			String devUUID = "10000100101000010007C80E77ABCD52";
 			try {
 				JSONArray jsonArray = new JSONArray(retData);
 				for (int i = 0; i < jsonArray.length(); i++) {
 					dataJson = jsonArray.getJSONObject(i);
 					if (dataJson.has(LeCmd.K.UUID) && dataJson.getString(LeCmd.K.UUID).equals(sdkUUID)) {
-						devUUID = dataJson.getString(LeCmd.K.UUID);
+//						devUUID = dataJson.getString(LeCmd.K.UUID);
 					}
 				}
 			} catch (JSONException e) {
@@ -186,8 +186,8 @@ public class MainActivity extends Activity {
 				mJsonData = new JSONObject();
 				mJsonData.put(LeCmd.K.UUID, devUUID); 
 				mJsonData.put(LeCmd.K.VERSION, "1-0.1.0.svn.3338.0-1-1.0"); 
-				mJsonData.put(LeCmd.K.TYPE, 2); 
-//				mJsonData.put(LeCmd.K.IAID, "gvowjhg"); // type=5的时候需要， 生成联动脚本后，得到的该值
+				mJsonData.put(LeCmd.K.TYPE, LeCmd.V.OTA_TYPE_IA_SCRIPT); 
+				mJsonData.put(LeCmd.K.IAID, "2016042117413700000"); // type=LeCmd.V.OTA_TYPE_IA_SCRIPT的时候需要， 生成联动脚本后，得到的该值
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -213,8 +213,8 @@ public class MainActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			mLeLink.ctrl(mJsonCmd.toString(), dataStr);
-			Log.e(TAG, "Do OTA ok\n");
+			retData = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
+			Log.e(TAG, "Do OTA: " + retData);
 		}
 	});
 }
