@@ -153,7 +153,7 @@ public class LeLink {
 	 * 		-1 - error; 0 - success; 1 - timeout
 	 */
 	public int airConfig(String jsonStr) {
-		int startTime, timeout, tryTimes = 1;
+		int ret, startTime, timeout, tryTimes = 1;
 		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_MULTICAST;
 //		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_BROADCAST;
 //		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_SOFTAP;
@@ -179,18 +179,8 @@ public class LeLink {
 				String logStr = String.format("AirConfig type = %d tryTimes = %d", airConfigType, tryTimes);
 				LOGI(logStr);
 				sendJson.put(LeCmd.K.TYPE, airConfigType);
-				airConfig(mPtr, sendJson.toString());
-				if (++tryTimes > 3) {
-					tryTimes = 1;
-//					if(++airConfigType >= LeCmd.V.AIR_CONFIG_TYPE_MAXNUM){
-//						airConfigType = 0;
-//					}
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
+				ret = airConfig(mPtr, sendJson.toString());
+				tryTimes++;
 			}
 		} catch (JSONException e) {
 			LOGE("Parameter json error");
@@ -663,7 +653,7 @@ public class LeLink {
 	 * 
 	 * @hide
 	 */
-	private native void airConfig(long ptr, String jsonStr);
+	private native int airConfig(long ptr, String jsonStr);
 
 	/**
 	 * 

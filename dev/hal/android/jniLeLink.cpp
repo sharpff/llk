@@ -36,11 +36,14 @@ JNIEXPORT jlong JNICALL Java_com_letv_lelink_LeLink_init(JNIEnv *env, jobject jo
 	return (long) &gNativeContext;
 }
 
-JNIEXPORT void JNICALL Java_com_letv_lelink_LeLink_airConfig(JNIEnv *env, jobject jobj, jlong ptr, jstring jstr)
+JNIEXPORT jint JNICALL Java_com_letv_lelink_LeLink_airConfig(JNIEnv *env, jobject jobj, jlong ptr, jstring jstr)
 {
+    int ret = 0;
 	char *str = js2c(env, jstr);
-	airConfig((void *) ptr, str);
+
+	ret = airConfig((void *) ptr, str);
 	free(str);
+    return ret;
 }
 
 JNIEXPORT jint JNICALL Java_com_letv_lelink_LeLink_send(JNIEnv *env, jobject jobj, jlong ptr, jstring jstr)

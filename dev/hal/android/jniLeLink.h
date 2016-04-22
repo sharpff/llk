@@ -34,9 +34,9 @@ JNIEXPORT jlong JNICALL Java_com_letv_lelink_LeLink_init
 /*
  * Class:     com_letv_lelink_LeLink
  * Method:    airConfig
- * Signature: (JLjava/lang/String;)V
+ * Signature: (JLjava/lang/String;)I
  */
-JNIEXPORT void JNICALL Java_com_letv_lelink_LeLink_airConfig
+JNIEXPORT jint JNICALL Java_com_letv_lelink_LeLink_airConfig
   (JNIEnv *, jobject, jlong, jstring);
 
 /*

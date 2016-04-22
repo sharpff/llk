@@ -58,37 +58,45 @@ int initTask(char *str)
 	return ret;
 }
 
-void airConfig(void *ptr, char *json)
+int airConfig(void *ptr, char *json)
 {
+    int ret = 0;
 	std::string s;
 	Json::Value value;
 	Json::Reader reader;
 	int delay, type;
-	char parambuf[256];
+    char configInfo[256] = {0};
 	const char *ssid, *passwd;
 	const char *aes = "912EC803B2CE49E4A541068D495AB570";
+    const char *configFmt = "SSID=%s,PASSWD=%s,AES=%s,TYPE=%d,DELAY=%d";
 
 	s = std::string(static_cast<char *>(json));
 	if (!reader.parse(s, value)) {
 		LELOGE("airConfig parse error!\n");
-		return;
+		return -1;
 	}
 	type = value[FJK_TYPE].asInt();
 	delay = value[FJK_DELAY].asInt();
 	ssid = value[FJK_SSID].asCString();
 	passwd = value[FJK_PASSWD].asCString();
 
-	snprintf(parambuf, sizeof(parambuf), "SSID=%s,PASSWD=%s,AES=%s,TYPE=%d,DELAY=%d",
-			ssid, passwd, aes, type, delay);
-	APPLOG("airConfig: %s", parambuf);
     if(type < 3) {
-        void *context = airconfig_new(parambuf);
-        //	void *context = airconfig_new("SSID=TP-LINK_JJFA1,PASSWD=987654321,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10");
-        airconfig_do_config(context);
-        airconfig_delete(context);
+        while (1) {
+            sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
+            ret = lelinkDoConfig(configInfo);
+            if (0 > ret) {
+                APPLOGW("waiting ...\n%s", configInfo);
+                delayMS(1000);
+            } else {
+                APPLOGW("ending with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
+                type = type == 1 ? 2 : 1;
+                APPLOGW("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
+            }
+        }
     } else {
         softApDoConfig(ssid, passwd, delay);
     }
+    return ret;
 }
 
 int cmdSend(void *ptr, char *json)

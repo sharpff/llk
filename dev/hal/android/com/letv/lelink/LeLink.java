@@ -43,7 +43,7 @@ public class LeLink {
 	 * 
 	 * @hide
 	 */
-	private native void airConfig(long ptr, String jsonStr);
+	private native int airConfig(long ptr, String jsonStr);
 
 	/**
 	 * 

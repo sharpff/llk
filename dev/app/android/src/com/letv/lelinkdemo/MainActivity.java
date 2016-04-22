@@ -57,27 +57,27 @@ public class MainActivity extends Activity {
 			sdkUUID = mLeLink.getSdkUUID();
 			Log.i(TAG, "SDK UUID: " + sdkUUID);
 			
-//			/*
-//			 * WIFI配置 必须传入参数: ssid, passwd, timeout
-//			 * 
-//			 * 在timeout时间内，不断重复发送配置包。如果期间收到hello,则退出该函数。
-//			 */
-//			Log.e(TAG, "Wifi config test...");
-//			try {
-//				mJsonCmd = new JSONObject();
-//				mJsonCmd.put(LeCmd.K.TIMEOUT, 60 * 5);
-//				mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_A7DD");
-//				mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
-//				mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_SOFTAP);
-//			} catch (JSONException e) {
-//				e.printStackTrace();
-//			}
-//			if (mLeLink.airConfig(mJsonCmd.toString()) == 0) {
-//				Log.w(TAG, "airConfig ok!\n");
-//			} else {
-//				Log.e(TAG, "airConfig timeout");
-//				return;
-//			}
+			/*
+			 * WIFI配置 必须传入参数: ssid, passwd, timeout
+			 * 
+			 * 在timeout时间内，不断重复发送配置包。如果期间收到hello,则退出该函数。
+			 */
+			Log.e(TAG, "Wifi config test...");
+			try {
+				mJsonCmd = new JSONObject();
+				mJsonCmd.put(LeCmd.K.TIMEOUT, 60 * 5);
+				mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_A7DD");
+				mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
+				mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_BROADCAST);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			if (mLeLink.airConfig(mJsonCmd.toString()) == 0) {
+				Log.w(TAG, "airConfig ok!\n");
+			} else {
+				Log.e(TAG, "airConfig timeout");
+				return;
+			}
 
 			/*
 			 * 设备发现 必须传入timeout
