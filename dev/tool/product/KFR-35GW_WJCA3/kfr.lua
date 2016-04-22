@@ -133,7 +133,7 @@ function s1GetQueries()
 	cmdTbl[35] = msGenCrc8Value(cmdTbl, 24)
 	cmdTbl[36] = msGenChksumValue(cmdTbl)
 
-	LOGTBL(cmdTbl)
+	-- LOGTBL(cmdTbl)
 
 	local query = tableToString(cmdTbl)
 
@@ -156,9 +156,9 @@ function s1GetValidKind(data)
 	--[[ MUST
 		wifi reset cmd
 	]]
-	print ('--------> recv type start\r\n')
+	-- print ('--------> recv type start\r\n')
 	tmpTbl = stringToTable(data)
-	LOGTBL(tmpTbl)
+	-- LOGTBL(tmpTbl)
 	--tmpTbl = stringToTable(reset)
 	--LOGTBL(tmpTbl)
 	--print (string.find(data, reset))
@@ -167,11 +167,11 @@ function s1GetValidKind(data)
 	local length = data:byte(2)
 	local cmdtype = data:byte(10)
 
-	print(length, cmdtype)	
+	-- print(length, cmdtype)	
 
 	--if nil ~= string.find(data, reset) then
 	if 0x64 == cmdtype and length >= 10 then	
-		print '------> recv type 1'
+		-- print '------> recv type 1'
 		return 1
 	end
 
@@ -180,10 +180,10 @@ function s1GetValidKind(data)
 	]]
 	--if 9 == #data then
 	if 0x02 == cmdtype or 0x03 == cmdtype or 0x05 == cmdtype then	
-		 print '------> recv type 2'
+		 -- print '------> recv type 2'
 		return 2
 	end
-	 print '------> recv type 0'
+	 -- print '------> recv type 0'
 
 	-- invalid kind
 	return 0
@@ -262,6 +262,7 @@ function s1CvtStd2Pri(json)
 	cmdTbl[35] = msGenCrc8Value(cmdTbl, 24)
 	cmdTbl[36] = msGenChksumValue(cmdTbl)
 
+	print ("s1CvtStd2Pri\r\n")
 	LOGTBL(cmdTbl)
 
 	-- u have to make the bin as string for the return value
@@ -282,9 +283,15 @@ function s1CvtPri2Std(bin)
                           0x00,0x5c,0xff,0x0e,0x00,0x00,0x00,0x00,0x00,0x00,
                           0x05,0x0f,0x5d}
 --]]
+
+	local str = '{}'
+	if #dataTbl < 14 then
+		return string.len(str), str
+	end
+	
+	print ("s1CvtPri2Std\r\n")
 	LOGTBL(dataTbl)
 
-	local str = ''
 	local temp = 26 -- target temperature
 	local envTemp = 20 -- env temperature
 
@@ -313,6 +320,6 @@ function s1CvtPri2Std(bin)
 	str = string.format(str, pwr, temp, mode, speed, envTemp)
 	-- str = string.format(str, 100 - dataTbl[3])
 	-- str = string.format(str, #dataTbl)
-	print (str)
+	-- print (str)
 	return string.len(str), str
 end
