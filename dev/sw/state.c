@@ -133,6 +133,10 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     }
     ginMSDelay = msDelay;
     
+    TIMEOUT_BEGIN(100)
+    senginePollingSlave();
+    TIMEOUT_END
+
     if(ginStateApLinked) {
         TIMEOUT_BEGIN(1000)
         senginePollingRules(NULL, 0);
@@ -143,14 +147,11 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
         TIMEOUT_END
 
         TIMEOUT_BEGIN(100)
-        senginePollingSlave();
-        TIMEOUT_END
-
-        TIMEOUT_BEGIN(100)
         lelinkDoPollingQ2A(ginCtxQ2A);
         lelinkDoPollingR2R(ginCtxR2R);
         TIMEOUT_END
     }
+
     delayms(msDelay);
     return changeState(ret, &ginStateCntx, i);
 }
