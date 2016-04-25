@@ -81,17 +81,15 @@ int airConfig(void *ptr, char *json)
 	passwd = value[FJK_PASSWD].asCString();
 
     if(type < 3) {
-        while (1) {
-            sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
-            ret = lelinkDoConfig(configInfo);
-            if (0 > ret) {
-                APPLOGW("waiting ...\n%s", configInfo);
-                delayMS(1000);
-            } else {
-                APPLOGW("ending with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
-                type = type == 1 ? 2 : 1;
-                APPLOGW("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
-            }
+        sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
+        ret = lelinkDoConfig(configInfo);
+        if (0 > ret) {
+            APPLOGW("waiting ...\n%s", configInfo);
+            delayMS(1000);
+        } else {
+            APPLOGW("ending with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
+            type = type == 1 ? 2 : 1;
+            APPLOGW("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
         }
     } else {
         softApDoConfig(ssid, passwd, delay);
