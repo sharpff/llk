@@ -172,6 +172,7 @@ public class LeLink {
 			sendJson.put(LeCmd.K.DELAY, DEFAULT_AIRCONFIG_DELAY); // ms
 			timeout = sendJson.getInt(LeCmd.K.TIMEOUT);
 			timeout = timeout < DEFAULT_TIMEOUT ? DEFAULT_TIMEOUT : timeout;
+			sendJson.put(LeCmd.K.TIMEOUT, timeout);
 			if (sendJson.has(LeCmd.K.TYPE)) {
 				airConfigType = sendJson.getInt(LeCmd.K.TYPE);
 			}
@@ -187,6 +188,7 @@ public class LeLink {
 			e.printStackTrace();
 			return -1;
 		}
+		LOGW("airConfig " + (mIsGetDevHello ? "ok" : "timeout"));
 		return mIsGetDevHello ? 0 : 1;
 	}
 
