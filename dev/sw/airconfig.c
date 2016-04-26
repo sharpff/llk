@@ -875,8 +875,8 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout)
         return -1;
     }
     count = timeout / delay + 1;
-    strncpy(wc.ssid, ssid, sizeof(wc.ssid));
-    strncpy(wc.wap2passwd, passwd, sizeof(wc.wap2passwd));
+    strncpy((char *)wc.ssid, ssid, sizeof(wc.ssid));
+    strncpy((char *)wc.wap2passwd, passwd, sizeof(wc.wap2passwd));
     wc.checksum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
     for( i = 0; i < count; i++ ) {
         LELOG("Send wifi configure, [%s:%s][%d]...", ssid, passwd, delay);

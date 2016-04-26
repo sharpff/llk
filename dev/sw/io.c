@@ -474,7 +474,7 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
                 return NULL;
             }
             gpioManager.num = ret;
-            if(!(gpioManager.handle = halGPIOInit())) {
+            if(!(gpioManager.handle = (void *)halGPIOInit())) {
                 LELOGW("ioInit halGPIOInit");
                 return NULL;
             }
