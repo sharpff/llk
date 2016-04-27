@@ -6,6 +6,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 #include "ota.h"
+#include "state.h"
 #include "protocol.h"
 
 #ifndef LOG_SENGINE
@@ -37,8 +38,6 @@
 // #define MAX_STATUS 64
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
-extern int8_t ginStateCloudAuthed;
-
 
 typedef struct
 {
@@ -777,7 +776,7 @@ int senginePollingSlave(void) {
                     LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                 } else if (cacheIsChanged(status, len)) {
                     NodeData node = {0};
-                    if (2 == ginStateCloudAuthed) {
+                    if (isCloudAuthed()) {
                         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
                         node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
                     } else {

@@ -60,11 +60,6 @@ static void *ginCtxR2R;
 static void *ginCtxQ2A;
 static uint32_t ginMSDelay;
 PrivateCfg ginPrivateCfg;
-
-// 0. nothing, 1. req done, 2. rsp done
-int8_t ginStateApLinked;
-int8_t ginStateCloudLinked;
-int8_t ginStateCloudAuthed;
 static int8_t ginConfigStatus;
 
 static int stateProcStart(StateContext *cntx);
@@ -97,18 +92,29 @@ StateRecord ginStateTbl[] = {
     { E_STATE_NONE, 0, E_STATE_NONE, 0, E_STATE_NONE, 0 }
 };
 
+
+int isCloudAuthed(void)
+{
+    return (ginStateCntx.stateIdCurr == E_STATE_CLOUD_AUTHED);
+}
+
+StateId changeStateId(StateId next) {
+    ginStateCntx.stateIdCurr = next;
+    return ginStateCntx.stateIdCurr; 
+}
+
 static int changeState(int direction, StateContext *cntx, int idx) {
     int ret = 0;
     if (0 > direction) {
         if (E_STATE_NONE != ginStateTbl[idx].stateIdPrev) {
-            cntx->stateIdCurr = ginStateTbl[idx].stateIdPrev;
+            changeStateId(ginStateTbl[idx].stateIdPrev);
             LELOG("changeState to prev");
             ret = direction;
         }
     }
     else if (0 < direction) {
         if (E_STATE_NONE != ginStateTbl[idx].stateIdNext) {
-            cntx->stateIdCurr = ginStateTbl[idx].stateIdNext;
+            changeStateId(ginStateTbl[idx].stateIdNext);
             LELOG("changeState to next");
             ret = direction;
         }
@@ -137,7 +143,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     senginePollingSlave();
     TIMEOUT_END
 
-    if(ginStateApLinked) {
+    if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED && ginStateCntx.stateIdCurr <= E_STATE_CLOUD_AUTHED) {
         TIMEOUT_BEGIN(1000)
         senginePollingRules(NULL, 0);
         TIMEOUT_END
@@ -227,27 +233,24 @@ static int stateProcApConnecting(StateContext *cntx) {
     //     resetConfigData();
     // TIMEOUT_END
 
-    ginStateApLinked = ret > 0 ? 1 : 0;
     return ret;
 }
 
 static int stateProcApConnected(StateContext *cntx) {
+    int ret = -1;
     int count = 3;
 
     NodeData node = {0};
 
     if (0 == ginConfigStatus) {
-        return -1;
+        return ret;
     }
     
-    if (0 == ginStateCloudLinked) {
-        node.cmdId = LELINK_CMD_CLOUD_GET_TARGET_REQ;
-        node.subCmdId = LELINK_SUBCMD_CLOUD_GET_TARGET_REQ;
-        if (ginCtxR2R) {
-            if (lelinkNwPostCmd(ginCtxR2R, &node)) {
-                ginStateCloudLinked = 1;
-            }
-
+    node.cmdId = LELINK_CMD_CLOUD_GET_TARGET_REQ;
+    node.subCmdId = LELINK_SUBCMD_CLOUD_GET_TARGET_REQ;
+    if (ginCtxR2R) {
+        if (lelinkNwPostCmd(ginCtxR2R, &node)) {
+            ret = 1;
         }
     }
 
@@ -279,41 +282,23 @@ static int stateProcApConnected(StateContext *cntx) {
         ginPrivateCfg.data.nwCfg.configStatus = 2;
         lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     }
-    LELOG("stateProcApConnected ginStateCloudLinked[%d]", ginStateCloudLinked);
+    LELOG("stateProcApConnected");
     // ret = halDoApConnected(NULL, 0);
-    return (2 == ginStateCloudLinked) ? 1 : 0;
+    return ret;
 }
 
 static int stateProcCloudLinked(StateContext *cntx) {
     // int ret = 1;
-    LELOG("stateProcCloudLinked [%d]", ginStateCloudAuthed);
-    if (0 == ginConfigStatus) {
+    LELOG("stateProcCloudLinked");
+
+    TIMEOUT_BEGIN(5000)
         return -1;
-    }
+    TIMEOUT_END
 
-
-    // ret = halDoCloudLinked(NULL, 0);
-    if (0 > ginStateCloudAuthed) {
-        return -1;
-    } else if (0 == ginStateCloudAuthed || 1 == ginStateCloudAuthed) {
-        return 0;
-    } else {
-        NodeData node = {0};
-        node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
-        node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
-        if (ginCtxR2R) {
-            if (lelinkNwPostCmd(ginCtxR2R, &node)) {
-
-            }
-        }
-        return 1;
-    }
+    return 0;
 }
 
 static int stateProcCloudAuthed(StateContext *cntx) {
-    // int ret = 0;
-    // LELOG("stateProcCloudAuthed [%d]", ginStateCloudAuthed);
-    // ret = halDoCloudAuthed(NULL, 0);
     if (0 == ginConfigStatus) {
         return -1;
     }
@@ -324,13 +309,12 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
         if (ginCtxR2R) {
             if (lelinkNwPostCmd(ginCtxR2R, &node)) {
-
             }
         }
         LELOG("stateProcCloudAuthed timeout");
     TIMEOUT_END
 
-    return ginStateCloudAuthed;
+    return 0;
 }
 
 int resetConfigData(void) {

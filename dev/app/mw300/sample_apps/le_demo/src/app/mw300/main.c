@@ -739,6 +739,16 @@ int main()
 {
     modules_init();
 
+    {
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x50}; // honyar
+        uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x51}; // honyar
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x60}; // dingding
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x70}; // honyar 86 box
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xFF}; // my local
+        wlan_set_mac_addr(mac);
+
+    }
     APPLOG("Build Time: " __DATE__ " " __TIME__ "");
     /* Start the application framework */
     if (app_framework_start(common_event_handler) != WM_SUCCESS) {

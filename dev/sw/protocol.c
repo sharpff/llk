@@ -6,6 +6,7 @@
 #include "io.h"
 #include "data.h"
 #include "ota.h"
+#include "state.h"
 #include "utility.h"
 #include "airconfig_ctrl.h"
 
@@ -69,11 +70,6 @@ typedef struct
 }FindToken;
 
 #define DEF_JSON "{\"def\":\"nothing\"}"
-
-// for state
-extern int8_t ginStateCloudLinked;
-extern int8_t ginStateCloudAuthed;
-// static CmdRecord tblCmdType[];
 
 typedef int (*CBLocalReq)(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len);
 typedef void (*CBRemoteRsp)(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
@@ -1098,14 +1094,13 @@ static int isNeedDelCB(CACHE_NODE_TYPE *currNode)
         case LELINK_CMD_CLOUD_HEARTBEAT_REQ:
             {
                 if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ) {
-                    ginStateCloudLinked = 0;
-                    ginStateCloudAuthed = -1;                    
+                    changeStateId(E_STATE_AP_CONNECTED);
                 }
             }
             break;
         case LELINK_CMD_CLOUD_GET_TARGET_REQ:
             {
-                ginStateCloudLinked = 0;
+                changeStateId(E_STATE_AP_CONNECTED);
             }
             break;
         }
@@ -1372,7 +1367,7 @@ static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint
     char rspCtrlCmd[MAX_BUF] = {0};
     LELOG("cbCtrlCmdLocalRsp -s");
     ret = getTerminalStatus(rspCtrlCmd, sizeof(rspCtrlCmd));
-    encType = (2 == ginStateCloudAuthed) ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+    encType = isCloudAuthed() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspCtrlCmd, strlen(rspCtrlCmd), dataOut, dataLen);
     LELOG("cbCtrlCmdLocalRsp -e");
     senginePollingSlave();
@@ -1419,7 +1414,9 @@ static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     lenSignature = getTerminalSignature(signature, RSA_LEN);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, signature, lenSignature, dataOut, dataLen);
     
-    ginStateCloudLinked = ret > 0 ? 1 : 0;
+    if(ret <= 0) {
+        changeStateId(E_STATE_AP_CONNECTED);
+    }
 
     LELOG("cbCloudGetTargetLocalReq [%d] -e", ret);
     return ret;
@@ -1438,7 +1435,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
 
     if (0 != (ret = rsaVerify(tPubkey, tPubkeyLen, dataIn + RSA_LEN, dataLen - RSA_LEN, dataIn, RSA_LEN))) {
         LELOGW("cbCloudGetTargetRemoteRsp rsaVerify Failed[%d]", ret);
-        ginStateCloudLinked = 0;
+        changeStateId(E_STATE_AP_CONNECTED);
         return;
     }
 
@@ -1449,14 +1446,14 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         memcpy(node.ndIP, ip, MAX_IPLEN);
         node.ndPort = port;
         lelinkNwPostCmd(ctx, &node);
+        changeStateId(E_STATE_CLOUD_LINKED);
     } else {
         // auth done
         syncUTC(dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
         halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
-        ginStateCloudAuthed = 2;
+        changeStateId(E_STATE_CLOUD_AUTHED);
     }
-    ginStateCloudLinked = 2;
 
     LELOG("cbCloudGetTargetRemoteRsp -e");
 }
@@ -1478,7 +1475,9 @@ static int cbCloudAuthLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t 
     lenSignature = getTerminalSignature(signature, RSA_LEN);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, signature, lenSignature, dataOut, dataLen);
     
-    ginStateCloudAuthed = ret > 0 ? 1 : 0;
+    if(ret <= 0) {
+        changeStateId(E_STATE_AP_CONNECTED);
+    }
 
     LELOG("cbCloudAuthLocalReq [%d] -e", ret);
     return ret;
@@ -1492,13 +1491,12 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
 
     // auth done
     if (0 > cmdInfo->status) {
-        ginStateCloudLinked = 0;
-        ginStateCloudAuthed = -1;     
+        changeStateId(E_STATE_AP_CONNECTED);
     } else {
         syncUTC(dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
         halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
-        ginStateCloudAuthed = 2;
+        changeStateId(E_STATE_CLOUD_AUTHED);
     }
     LELOG("cbCloudAuthRemoteRsp -e");
 }
