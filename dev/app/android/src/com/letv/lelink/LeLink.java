@@ -118,6 +118,9 @@ public class LeLink {
 	 * 		true - SDK成功连接到云。false - 没有成功连接到云。
 	 */
 	public boolean isCloud() {
+		if (mState == ST_t.HEART && System.currentTimeMillis() - mGetCloudHeartRspTime > CLOUD_HEART_RESPOND_TIMEOUT) {
+			mState = ST_t.AUTH1;
+		}
 		return (mState == ST_t.HEART);
 	}
 	
@@ -572,6 +575,7 @@ public class LeLink {
 					}
 				} else if (cmd == LeCmd.CLOUD_AUTH_RSP && subcmd == LeCmd.Sub.CLOUD_AUTH_RSP) {
 					mState = ST_t.HEART;
+					mGetCloudHeartRspTime = System.currentTimeMillis();
 				} else if (cmd == LeCmd.CLOUD_HEARTBEAT_RSP && subcmd == LeCmd.Sub.CLOUD_HEARTBEAT_RSP) {
 					mGetCloudHeartRspTime = System.currentTimeMillis();
 				}
