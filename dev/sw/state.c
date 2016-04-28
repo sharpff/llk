@@ -32,9 +32,10 @@
     } else {\
         ot++;\
     }\
-    if (0 < ((ot * ginMSDelay) / ms)) {
+    if (0 < ((ot * ginMSDelay) / ms)) {\
+        ot = 0;
 
-#define TIMEOUT_END ot = 0;}}
+#define TIMEOUT_END }}
 
 int resetConfigData(void);
 
@@ -109,6 +110,7 @@ static int changeState(int direction, StateContext *cntx, int idx) {
 
     if(ginStateId != E_STATE_NONE) {
         direction = ginStateId - ginStateCntx.stateIdCurr;
+        LELOGE("Protocol set %d -> %d", ginStateCntx.stateIdCurr, ginStateId);
     }
     if (0 > direction) {
         if (E_STATE_NONE != ginStateTbl[idx].stateIdPrev) {
@@ -300,6 +302,7 @@ static int stateProcCloudLinked(StateContext *cntx) {
     LELOG("stateProcCloudLinked");
 
     TIMEOUT_BEGIN(5000)
+        LELOGW("stateProcCloudLinked timeout");
         return -1;
     TIMEOUT_END
 
@@ -319,7 +322,6 @@ static int stateProcCloudAuthed(StateContext *cntx) {
             if (lelinkNwPostCmd(ginCtxR2R, &node)) {
             }
         }
-        LELOG("stateProcCloudAuthed timeout");
     TIMEOUT_END
 
     return 0;
