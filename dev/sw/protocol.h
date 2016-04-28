@@ -44,10 +44,12 @@ enum
     LELINK_ERR_NETWORK_TIMEOUT          = -1002,            /*网络超时*/
     LELINK_ERR_RECV_DATA_ERR            = -1003,             /*接收到的数据有误*/
     LELINK_ERR_CANCEL_ERR               = -1004,            /*用户取消操作*/
+    LELINK_ERR_BUSY_ERR                 = -1005,            /*in processing*/
 };
 
 typedef enum
 {
+    LELINK_CMD_ASYNC_OTA_REQ = 1,
     /*
      * send this cmd only for a case that getting AP connection 
      * by the wlan configure info in the air 
@@ -168,7 +170,12 @@ typedef enum
     LELINK_SUBCMD_CLOUD_IND_STATUS_REQ,
     LELINK_SUBCMD_CLOUD_IND_STATUS_RSP,
     LELINK_SUBCMD_CLOUD_IND_MSG_REQ,
-    LELINK_SUBCMD_CLOUD_IND_MSG_RSP
+    LELINK_SUBCMD_CLOUD_IND_MSG_RSP,
+
+    /*
+     * handle the async request
+     */
+    LELINK_SUBCMD_ASYNC_OTA_REQ = 1,
 }E_LELINK_SUBCMD;
 
 

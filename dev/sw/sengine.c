@@ -664,13 +664,13 @@ int sengineSetStatus(char *json, int jsonLen) {
     }
     hdl = ioGetHdl(&ioType);
     if (NULL == hdl || *hdl == NULL) {
-        LELOGE("sengineGetStatus ioGetHdl NULL");
+        LELOG("sengineGetStatus ioGetHdl NULL");
         return -1;
     }
     {
         int i;
         for(i = 0; i < ret; i++) {
-            LELOGE("bin[%d] = %02x", i, bin[i]);
+            LELOG("bin[%d] = %02x", i, bin[i]);
         }
     }
     ret = ioWrite(ioType, *hdl, bin, ret);
