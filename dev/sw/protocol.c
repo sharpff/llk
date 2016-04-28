@@ -1638,7 +1638,6 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     setTerminalStatus((const char *)dataIn, dataLen);
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
-    senginePollingSlave();
     return ret;
 }
 
@@ -1651,6 +1650,7 @@ static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, co
     ret = getTerminalStatus(status, sizeof(status));
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TLocalRsp -e");
+    senginePollingSlave();
     return ret;
 }
 

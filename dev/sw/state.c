@@ -61,6 +61,7 @@ static void *ginCtxQ2A;
 static uint32_t ginMSDelay;
 PrivateCfg ginPrivateCfg;
 static int8_t ginConfigStatus;
+static StateId ginStateId = E_STATE_NONE;
 
 static int stateProcStart(StateContext *cntx);
 static int stateProcConfiguring(StateContext *cntx);
@@ -98,27 +99,31 @@ int isCloudAuthed(void)
     return (ginStateCntx.stateIdCurr == E_STATE_CLOUD_AUTHED);
 }
 
-StateId changeStateId(StateId next) {
-    ginStateCntx.stateIdCurr = next;
+StateId changeStateId(StateId state) {
+    ginStateId = state;
     return ginStateCntx.stateIdCurr; 
 }
 
 static int changeState(int direction, StateContext *cntx, int idx) {
     int ret = 0;
+
+    if(ginStateId != E_STATE_NONE) {
+        direction = ginStateId - ginStateCntx.stateIdCurr;
+    }
     if (0 > direction) {
         if (E_STATE_NONE != ginStateTbl[idx].stateIdPrev) {
-            changeStateId(ginStateTbl[idx].stateIdPrev);
+            ginStateCntx.stateIdCurr = ginStateTbl[idx].stateIdPrev;
             LELOG("changeState to prev");
             ret = direction;
         }
-    }
-    else if (0 < direction) {
+    } else if (0 < direction) {
         if (E_STATE_NONE != ginStateTbl[idx].stateIdNext) {
-            changeStateId(ginStateTbl[idx].stateIdNext);
+            ginStateCntx.stateIdCurr = ginStateTbl[idx].stateIdNext;
             LELOG("changeState to next");
             ret = direction;
         }
     }
+    ginStateId = E_STATE_NONE;
     return ret;
 }
 
@@ -289,6 +294,9 @@ static int stateProcApConnected(StateContext *cntx) {
 
 static int stateProcCloudLinked(StateContext *cntx) {
     // int ret = 1;
+    if (0 == ginConfigStatus) {
+        return -1;
+    }
     LELOG("stateProcCloudLinked");
 
     TIMEOUT_BEGIN(5000)

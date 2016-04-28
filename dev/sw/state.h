@@ -20,7 +20,7 @@ typedef enum {
 
 
 int isCloudAuthed(void);
-StateId changeStateId(StateId next);
+StateId changeStateId(StateId state);
 int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a);
 
 #ifdef __cplusplus
