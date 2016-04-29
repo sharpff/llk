@@ -72,12 +72,14 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
 #endif
     ret = uart_drv_write((mdev_t *)dev, buf, len);
 #if TO_DO_FOR_HONYAR_BUG
+    APPLOG("---------------------------------------------------------");
     APPLOG("uart_drv_write [%d] ", ret);
     if (ret > 0)
     for (i = 0; i < ret; i++) {
         APPPRINTF("%02x ", buf[i]);
     }
     APPPRINTF("\r\n");
+    APPLOG("---------------------------------------------------------\r\n");
 #endif
     return ret;
 }
