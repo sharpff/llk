@@ -4,6 +4,7 @@
 RM="rm -f"
 COPY="cp -prf"
 MKDIR="mkdir -p"
+RENAME="mv -f"
 MAIN_PATH="`pwd`/../../"
 
 if [ ! -n "$WMSDK" ]; then
@@ -40,15 +41,25 @@ function do_copy()
     popd > /dev/null 2>&1
 }
 
-
+# version
 touch "$MAIN_PATH/sw/data.c"
 $MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
+# ld
+LDFILE="mw300-xip.ld"
+LDFILE_BK="mw300-xip.ld.bk"
+if [ ! -f "$WMSDK/sample_apps/toolchains/gnu/$LDFILE_BK" ]; then
+    $RENAME "$WMSDK/sample_apps/toolchains/gnu/$LDFILE" "$WMSDK/sample_apps/toolchains/gnu/$LDFILE_BK"
+fi
+$COPY "$MAIN_PATH/app/mw300/$LDFILE" "$WMSDK/sample_apps/toolchains/gnu/$LDFILE"
+
+# source
 do_copy "$MAIN_PATH/app/mw300"  $WMSDK
 do_copy "$MAIN_PATH/hal/Marvell/" "$WMSDK/sample_apps/le_demo/src/hal/Marvell/"
 do_copy "$MAIN_PATH/sw/" "$WMSDK/wmsdk/external/lelink/sw/"
 do_copy "$MAIN_PATH/sw/sengine/" "$WMSDK/wmsdk/external/sengine"
 
+# obj dir
 $MKDIR $WMSDK/sample_apps/le_demo/obj/app/mw300
 $MKDIR $WMSDK/sample_apps/le_demo/obj/hal/Marvell
 

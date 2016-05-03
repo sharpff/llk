@@ -56,7 +56,7 @@ function s1GetCvtType()
 	-- delay time (ms) for the interval during write & read. 
 	local delay = 5
 	local gpioId = 39
-	local isInput = 1
+	local isInput = 0
 	--[[
 	    LELINK_GPIO_PINMODE_DEFAULT = 0,                      /*!< GPIO pin mode default define */
 	    LELINK_GPIO_PINMODE_PULLUP,                          /*!< GPIO pin mode pullup define */
@@ -64,7 +64,7 @@ function s1GetCvtType()
 	    LELINK_GPIO_PINMODE_NOPULL,                          /*!< GPIO pin mode nopull define */
 	    LELINK_GPIO_PINMODE_TRISTATE,                        /*!< GPIO pin mode tristate define */
 	]] 
-	local gpioMode = 1
+	local gpioMode = 2
 	local str = string.format('{"whatCvtType":%d,"gpioId":%d,"isInput":%d,"initVal",%d}', whatCvtType, gpioId, isInput, gpioMode)
 	return string.len(str), str, delay
 end
@@ -74,8 +74,8 @@ end
 	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
 ]]
 function s1GetQueries()
-	local query = string.char( 0xab )
-	local queryCountLen = string.char( 0x01, 0x00 )
+	local query = ""
+	local queryCountLen = ""
 	-- print('hello')
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
@@ -89,10 +89,24 @@ end
 
 --[[ MUST
 ]]
--- {"ctrl":{"action":1}}
+
 function s1CvtStd2Pri(json)
-	local cmd = string.char( 0xcd )
-	return string.len(cmd), cmd
+	local tb = cjson.decode(json)
+	local ctrl = tb["ctrl"]
+	local dataStr = ""
+	local cmdTbl = { 0x00 }
+
+	-- 关闭
+	if (ctrl["pwr"] == 0) then
+		cmdTbl[1] = 0x00
+	-- 打开
+	else
+		cmdTbl[1] = 0x01
+	end
+	LOGTBL(cmdTbl)
+	dataStr = tableToString(cmdTbl)
+
+	return string.len(dataStr), dataStr
 end
 
 --[[ MUST
@@ -100,7 +114,7 @@ end
 ]]
 function s1CvtPri2Std(bin)
 	local dataTbl = {}
-	local str = '{"switcher":%d}'
+	local str = '{"pwr":%d}'
 	dataTbl = stringToTable(bin)
 	-- for i = 1, #bin
 	-- 		 (bin[i])

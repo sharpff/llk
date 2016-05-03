@@ -196,7 +196,8 @@ void thread_input_check(void *arg) {
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0, 
 
-// #define DO_AIR_CONFIG
+// #define DO_AIR_CONFIG    
+// #define ENABLE_WIFI_SOFT_AP 1
 
 #ifndef DO_AIR_CONFIG
 int main(int argc, char *argv[]) {
@@ -285,7 +286,7 @@ int main(int argc, char *argv[]) {
 int main(int argc, char** argv) {
 
     char configInfo[256] = {0};
-    int delay = 10, type = 1;
+    int delay = 10, type = 2;
     const char *configFmt = "SSID=%s,PASSWD=%s,AES=%s,TYPE=%d,DELAY=%d";
     int ret = 0;
     //test();
@@ -319,20 +320,29 @@ int main(int argc, char** argv) {
     // configInfo = "SSID=TP-LINK_08F8,PASSWD=12345678,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10";
     // configInfo = "SSID=TP-LINK_564FCE,PASSWD=64373537,AES=912EC803B2CE49E4A541068D495AB570,TYPE=2,DELAY=10";
     // configInfo = "SSID=ff,PASSWD=fengfeng2qiqi,AES=912EC803B2CE49E4A541068D495AB570,TYPE=1,DELAY=10";
-    APPLOG("starting with [%s:%s][%d]...", ssid, passwd, delay);
+    APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
 
+#if  ENABLE_WIFI_SOFT_AP
+    while (1) {
+        ret = softApDoConfig(ssid, passwd, delay);
+    }
+#else
     while (1) {
         sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
         // APPLOG("start => %s", configInfo);
+        // APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
         ret = lelinkDoConfig(configInfo);
         if (0 > ret) {
             APPLOG("waiting ...");
             delayMS(1000);
         } else {
+            APPLOG("ending with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
             type = type == 1 ? 2 : 1;
+            APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
         }
 
     }
+#endif
 	return (EXIT_SUCCESS);
 
 }

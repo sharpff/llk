@@ -30,13 +30,16 @@ public class LeCmd {
 	public static final int CLOUD_MSG_CTRL_C2R_REQ = 95;
 	public static final int CLOUD_MSG_CTRL_C2R_RSP = 96;
 	public static final int CLOUD_MSG_CTRL_R2T_REQ = 97;
-	public static final int LOUD_MSG_CTRL_R2T_RSP = 98;
+	public static final int CLOUD_IND_REQ = 99;
+	public static final int CLOUD_IND_RSP = 100;
 
 	public class Sub {
 		public static final int HELLO_REQ = 1;
 		public static final int HELLO_RSP = 2;
 		public static final int DISCOVER_REQ = 1;
 		public static final int DISCOVER_RSP = 2;
+		public static final int DISCOVER_STATUS_CHANGED_REQ = 3;
+		public static final int DISCOVER_STATUS_CHANGED_RSP = 4;
 		public static final int DEVNOTICE_REQ = 1;
 		public static final int DEVNOTICE_RSP = 2;
 		public static final int DEVAUTH_REQ = 1;
@@ -74,6 +77,15 @@ public class LeCmd {
 		public static final int CLOUD_REPORT_OTA_QUERY_REQ = 3;
 		public static final int CLOUD_REPORT_OTA_QUERY_RSP = 4;
 		
+        public static final int CLOUD_IND_CTRL_REQ = 1; 
+        public static final int CLOUD_IND_CTRL_RSP = 2;
+        public static final int CLOUD_IND_OTA_REQ = 3;
+        public static final int CLOUD_IND_OTA_RSP = 4;
+        public static final int CLOUD_IND_STATUS_REQ = 5;                                                                                                                              
+        public static final int CLOUD_IND_STATUS_RSP = 6;
+        public static final int CLOUD_IND_MSG_REQ = 7;
+        public static final int CLOUD_IND_MSG_RSP = 8;
+		
 		/* 命令映射 */
 		public static final int GET_STATE_CMD = CLOUD_GET_TARGET_REQ;
 		public static final int CTRL_DEV_CMD = CLOUD_MSG_CTRL_C2R_REQ;
@@ -104,6 +116,11 @@ public class LeCmd {
 	public class V {
 		public static final int AIR_CONFIG_TYPE_MULTICAST = 1;
 		public static final int AIR_CONFIG_TYPE_BROADCAST = 2;
+		public static final int AIR_CONFIG_TYPE_SOFTAP = 3;
+		public static final int AIR_CONFIG_TYPE_MAXNUM = 4;
+		public static final int OTA_TYPE_FIRMWARE = 2;
+		public static final int OTA_TYPE_FW_SCRIPT = 4;
+		public static final int OTA_TYPE_IA_SCRIPT = 5;
 		public static final String BROADCAST_ADDR = "255.255.255.255";
 	}
 }

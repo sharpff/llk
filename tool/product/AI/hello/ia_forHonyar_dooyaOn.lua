@@ -64,7 +64,7 @@ end
 ]]
 function getBeingReservedInfo()
 	-- CUSTOMIZATION START
-	local tblInfo = {'10000100101000010007C80E77ABCD52', '10000100101000010007C80E77ABCD50'}
+	local tblInfo = {'10000100091000610006C80E77ABCD40'}
 	-- CUSTOMIZATION END
 	return tblInfo
 end
@@ -92,6 +92,7 @@ function s2IsValid(selfStatus)
 	end
 
 	-- print(string.format('[LUA] valid [%d]\r\n', valid))
+	-- return 0
 	return valid
 end
 
@@ -158,51 +159,17 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 	print(string.format('[LUA] s2IsConditionOKExt 2 ok[%d]\r\n', ok))
 
 	-- CONDITION(s) START
-	-- tblConditions[retIdx] = 0
-	-- tblConditionsOld[retIdx] = 0
-	-- if nil ~= string.find(rmtUUID, '10000100111000810008C80E77ABCD60') then
-	-- 	print('checking 1\r\n')
-	-- 	if 0 == tblNewStatus["switcher"] and 0 ~= cmpValInOldStatus('10000100111000810008C80E77ABCD60', tblNewStatus["switcher"], "switcher") then
-	-- 		tblConditions[retIdx] = 1
-	-- 		print('ok 1\r\n')
-	-- 	end
-	-- else
-	-- 	print('checking 2\r\n')
-	-- 	if 0 == cmpValInOldStatus('10000100111000810008C80E77ABCD60', 0, "switcher") then
-	-- 		tblConditionsOld[retIdx] = 1
-	-- 		print('okOld 1\r\n')
-	-- 	end
-	-- end
-	-- retIdx = retIdx + 1
-
 	tblConditions[retIdx] = 0
 	tblConditionsOld[retIdx] = 0
-	if nil ~= string.find(rmtUUID, '10000100101000010007C80E77ABCD52') then
+	if nil ~= string.find(rmtUUID, '10000100091000610006C80E77ABCD40') then
 		print('checking 1\r\n')
-		if 0 == tblNewStatus["idx4"] and 0 ~= cmpValInOldStatus('10000100101000010007C80E77ABCD52', tblNewStatus["idx4"], "idx4") then
+		if 100 == tblNewStatus["percentage"] and 0 ~= cmpValInOldStatus('10000100091000610006C80E77ABCD40', tblNewStatus["percentage"], "percentage") then
 			tblConditions[retIdx] = 1
 			print('ok 1\r\n')
 		end
 	else
 		print('checking 2\r\n')
-		if 0 == cmpValInOldStatus('10000100101000010007C80E77ABCD52', 0, "idx4") then
-			tblConditionsOld[retIdx] = 1
-			print('okOld 1\r\n')
-		end
-	end
-	retIdx = retIdx + 1
-
-	tblConditions[retIdx] = 0
-	tblConditionsOld[retIdx] = 0
-	if nil ~= string.find(rmtUUID, '10000100101000010007C80E77ABCD50') then
-		print('checking 1\r\n')
-		if 0 == tblNewStatus["idx2"] and 0 ~= cmpValInOldStatus('10000100101000010007C80E77ABCD50', tblNewStatus["idx2"], "idx2") then
-			tblConditions[retIdx] = 1
-			print('ok 1\r\n')
-		end
-	else
-		print('checking 2\r\n')
-		if 0 == cmpValInOldStatus('10000100101000010007C80E77ABCD50', 0, "idx2") then
+		if 0 == cmpValInOldStatus('10000100091000610006C80E77ABCD40', 1, "percentage") then
 			tblConditionsOld[retIdx] = 1
 			print('okOld 1\r\n')
 		end
@@ -216,7 +183,7 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 		$(CONDITIONS CHECK) may include the following cases
 	]]
 	-- 1. OR condition check 
-	if 1 == tblConditions[1] or 1 == tblConditions[2] then
+	if 1 == tblConditions[1] then
 		ok = 1
 	end
 
@@ -253,7 +220,7 @@ end
 function s2GetSelfName()
 	local name = ''
 	-- CUSTOMIZATION START
-	name = 'helloTest2'
+	name = 'helloTest3'
 	-- CUSTOMIZATION END
 	return string.len(name), name
 end
@@ -271,7 +238,7 @@ function s2GetSelfCtrlCmd()
 	local selfCtrl = ''
 	
 	-- CUSTOMIZATION START
-	selfCtrl = '{"ctrl":{"action":2}}'
+	selfCtrl = '{"ctrl":{"idx3":1}}'
 	-- CUSTOMIZATION END
 	print(string.format('[LUA] s2GetSelfCtrlCmd [%s]\r\n', selfCtrl))
 	return string.len(selfCtrl), selfCtrl

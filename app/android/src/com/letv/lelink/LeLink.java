@@ -42,6 +42,7 @@ public class LeLink {
 	private long mSendHeartTime = 0;
 	private long mGetCloudHeartRspTime = 0;
 	private static String mInitInfo = null;
+	private static String mSdkInfo = null;
 	// for get & discover
 	private String mWaitGetUuid = null;
 	private Map<String, JSONObject> mFindDevs = new HashMap<String, JSONObject>(); // uuid
@@ -61,7 +62,10 @@ public class LeLink {
 	 * 		SDK信息
 	 */
 	public static String getSdkInfo() {
-		return getSDKInfo();
+		if (mSdkInfo == null) {
+			mSdkInfo = getSDKInfo();
+		}
+		return mSdkInfo; 
 	}
 	
 	/**
@@ -75,7 +79,7 @@ public class LeLink {
 	 * @return
 	 * 		true success; false failed
 	 */
-	public static boolean setContent(Context context) {
+	public static boolean setContext(Context context) {
 		if (context == null) {
 			LOGE("Context null");
 			return false;
@@ -101,6 +105,7 @@ public class LeLink {
 	public static LeLink getInstance() {
 		if (sLeLink == null) {
 			sLeLink = new LeLink(mInitInfo);
+			mSdkInfo = getSDKInfo();
 		}
 		return sLeLink;
 	}
@@ -113,7 +118,30 @@ public class LeLink {
 	 * 		true - SDK成功连接到云。false - 没有成功连接到云。
 	 */
 	public boolean isCloud() {
+		if (mState == ST_t.HEART && System.currentTimeMillis() - mGetCloudHeartRspTime > CLOUD_HEART_RESPOND_TIMEOUT) {
+			mState = ST_t.AUTH1;
+		}
 		return (mState == ST_t.HEART);
+	}
+	
+	/**
+	 * 得到SDK对应的UUID.<br>
+	 * 必须在成功执行setContext()后才可以用.<br>
+	 * 
+	 * @return
+	 * 		String - SDK UUID
+	 */
+	public String getSdkUUID() {
+		String uuid = null;
+//		LOGI(mSdkInfo);
+		try {
+			JSONObject obj = new JSONObject(mSdkInfo);
+			uuid = obj.getString(LeCmd.K.UUID);
+		} catch (JSONException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return uuid;
 	}
 	
 	/**
@@ -130,6 +158,8 @@ public class LeLink {
 	public int airConfig(String jsonStr) {
 		int startTime, timeout, tryTimes = 1;
 		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_MULTICAST;
+//		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_BROADCAST;
+//		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_SOFTAP;
 		JSONObject sendJson = null;
 
 		if (jsonStr == null) {
@@ -145,27 +175,23 @@ public class LeLink {
 			sendJson.put(LeCmd.K.DELAY, DEFAULT_AIRCONFIG_DELAY); // ms
 			timeout = sendJson.getInt(LeCmd.K.TIMEOUT);
 			timeout = timeout < DEFAULT_TIMEOUT ? DEFAULT_TIMEOUT : timeout;
+			sendJson.put(LeCmd.K.TIMEOUT, timeout);
+			if (sendJson.has(LeCmd.K.TYPE)) {
+				airConfigType = sendJson.getInt(LeCmd.K.TYPE);
+			}
 			while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
 				String logStr = String.format("AirConfig type = %d tryTimes = %d", airConfigType, tryTimes);
 				LOGI(logStr);
 				sendJson.put(LeCmd.K.TYPE, airConfigType);
 				airConfig(mPtr, sendJson.toString());
-				if (tryTimes++ > 5) {
-					tryTimes = 1;
-					airConfigType = (airConfigType == LeCmd.V.AIR_CONFIG_TYPE_BROADCAST) ? LeCmd.V.AIR_CONFIG_TYPE_MULTICAST
-							: LeCmd.V.AIR_CONFIG_TYPE_BROADCAST;
-					try {
-						Thread.sleep(5000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
+				tryTimes++;
 			}
 		} catch (JSONException e) {
 			LOGE("Parameter json error");
 			e.printStackTrace();
 			return -1;
 		}
+		LOGW("airConfig " + (mIsGetDevHello ? "ok" : "timeout"));
 		return mIsGetDevHello ? 0 : 1;
 	}
 
@@ -219,8 +245,8 @@ public class LeLink {
 	 *          dataStr:<br>
 	 *          	a, LeCmd.K.UUID(String), 设备的UUID<br>
 	 *          	b, LeCmd.K.VERSION(String), 设备的当前版本号<br>
-	 *          	c, LeCmd.K.TYPE(int), 查询的类型(2-固件, 4-固件脚本, 5-联运脚本)<br>
-	 *          	d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联运脚本)的时候需要填充该值<br>
+	 *          	c, LeCmd.K.TYPE(int), 查询的类型(OTA_TYPE_FIRMWARE-固件, OTA_TYPE_FW_SCRIPT-固件脚本, OTA_TYPE_IA_SCRIPT-联动脚本)<br>
+	 *          	d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联动脚本)的时候需要填充该值<br>
 	 * 			return<br>
 	 * 				a, 出错返回null<br>
 	 * 				b, 查询信息列表的Json字符串, 键值有LeCmd.K.URL(String)<br>
@@ -320,7 +346,8 @@ public class LeLink {
 	 *          dataStr:<br>
 	 *          	a, 填充由OTA查询得到的Json字符串<br>
 	 * 			return<br>
-	 * 				不用关心返回值<br>
+	 * 				a, 成功返回字符串"ok"<br>
+	 * 				b, 失败返回失败说明字符串<br>
 	 * 
 	 * @return
 	 * 		详细参考上述说明
@@ -390,7 +417,16 @@ public class LeLink {
 				mMinSeqId = min + 1;
 			}
 			if (dataStr != null) {
-				mWaitSendCmds.put(String.valueOf(mSeqId + 1), dataStr);
+				String jsonStr;
+				try {
+					com.alibaba.fastjson.JSONObject dataFJson = com.alibaba.fastjson.JSONObject.parseObject(dataStr);
+					jsonStr = dataFJson.toJSONString();
+				} catch (Exception e) {
+					LOGE("Data json error");
+					e.printStackTrace();
+					return false;
+				}
+				mWaitSendCmds.put(String.valueOf(mSeqId + 1), jsonStr);
 			}
 		}
 		mSeqId++;
@@ -400,7 +436,7 @@ public class LeLink {
 				cmdJson.put(LeCmd.K.ADDR, mCloudAddr);
 			}
 		} catch (JSONException e) {
-			LOGE("Json error");
+			LOGE("Cmd json error");
 			e.printStackTrace();
 			return false;
 		}
@@ -458,7 +494,7 @@ public class LeLink {
 			return ret;
 		}
 		sendCmdJson = new JSONObject();
-		LOGI("type " + type + ", onMessage: " + jsonStr);
+		LOGI("type " + type + ", size " + buf.length + ", onMessage: " + jsonStr);
 		switch (type) {
 		case MSG_TYPE_LOCALREQUEST:
 		case MSG_TYPE_LOCALRESPOND:
@@ -485,24 +521,47 @@ public class LeLink {
 				send(sendCmdJson, null);
 				mIsGetDevHello = true;
 			}
+			if ((cmd == LeCmd.DISCOVER_REQ && subcmd == LeCmd.Sub.DISCOVER_STATUS_CHANGED_REQ)
+					|| (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_STATUS_REQ)) {
+				try {
+					dataStr = new String(buf, "UTF-8");
+					LOGI("Json:\n" + dataStr);
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+					return ret;
+				}
+			}
 			break;
 		case MSG_TYPE_REMOTERESPOND:
 			try {
 				dataStr = new String(buf, "UTF-8");
-//				LOGI("Json:\n" + dataStr);
+				LOGI("Json(" + buf.length + "):\n" + dataStr);
 				if (cmd == LeCmd.CTRL_RSP || cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP) {
-					mWaitCtrlBackData = dataStr;
+					if(uuid.indexOf(mWaitCtrlUuid) < 0) {
+						LOGW("Get ctrl respond, other uuid: " + uuid + ", need: " + mWaitCtrlUuid);
+						break;
+					}
+					if(cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP && subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_RSP) {
+						mWaitCtrlBackData = (buf.length == 0) ? "ok" : dataStr;
+					} else {
+						mWaitCtrlBackData = dataStr;
+					}
 					synchronized (mCtrlLock) {
 						mCtrlLock.notifyAll();
 					}
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
+//					LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
 					if (mWaitGetUuid != null) {
-						mFindDevs.clear();
-						mFindDevs.put(uuid, dataJson);
-						synchronized (mGetLock) {
-							mGetLock.notifyAll();
-						}
+//						if (uuid.indexOf(mWaitGetUuid) >= 0) {
+							mFindDevs.clear();
+							mFindDevs.put(uuid, dataJson);
+							synchronized (mGetLock) {
+								mGetLock.notifyAll();
+							}
+//						} else { // getstate not
+//							LOGW("Get get respond, other uuid: " + uuid + ", need: " + mWaitGetUuid);
+//						}
 					} else {
 						mFindDevs.put(uuid, dataJson);
 					}
@@ -516,6 +575,7 @@ public class LeLink {
 					}
 				} else if (cmd == LeCmd.CLOUD_AUTH_RSP && subcmd == LeCmd.Sub.CLOUD_AUTH_RSP) {
 					mState = ST_t.HEART;
+					mGetCloudHeartRspTime = System.currentTimeMillis();
 				} else if (cmd == LeCmd.CLOUD_HEARTBEAT_RSP && subcmd == LeCmd.Sub.CLOUD_HEARTBEAT_RSP) {
 					mGetCloudHeartRspTime = System.currentTimeMillis();
 				}
@@ -541,6 +601,10 @@ public class LeLink {
 		logout(Log.INFO, msg);
 	}
 
+	private static void LOGW(String msg) {
+		logout(Log.WARN, msg);
+	}
+	
 	private static void LOGE(String msg) {
 		logout(Log.ERROR, msg);
 	}
@@ -595,7 +659,7 @@ public class LeLink {
 	 * 
 	 * @hide
 	 */
-	private native void airConfig(long ptr, String jsonStr);
+	private native int airConfig(long ptr, String jsonStr);
 
 	/**
 	 * 

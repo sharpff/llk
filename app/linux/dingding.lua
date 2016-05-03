@@ -55,17 +55,14 @@ function s1GetCvtType()
 	local whatCvtType = 1
 	-- delay time (ms) for the interval during write & read. 
 	local delay = 5
-	local gpioId = 39
-	local isInput = 1
 	--[[
-	    LELINK_GPIO_PINMODE_DEFAULT = 0,                      /*!< GPIO pin mode default define */
-	    LELINK_GPIO_PINMODE_PULLUP,                          /*!< GPIO pin mode pullup define */
-	    LELINK_GPIO_PINMODE_PULLDOWN,                        /*!< GPIO pin mode pulldown define */
-	    LELINK_GPIO_PINMODE_NOPULL,                          /*!< GPIO pin mode nopull define */
-	    LELINK_GPIO_PINMODE_TRISTATE,                        /*!< GPIO pin mode tristate define */
+		E.g."9600-8N1"
+		FORMAT [baud(9600, ...) - dataBits(8, 9, ...) parity(None:0, Odd:1, Even:2) stopBits(1, 2)]
+		refer to func(halIO.c)
+		void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
 	]] 
-	local gpioMode = 1
-	local str = string.format('{"whatCvtType":%d,"gpioId":%d,"isInput":%d,"initVal",%d}', whatCvtType, gpioId, isInput, gpioMode)
+	-- local baud = '"9600-8N1"'
+	local str = string.format('{"whatCvtType":%d,"gpioId":%d,"isInput":%d,"initVal",%d}', whatCvtType, 39, 1, 1)
 	return string.len(str), str, delay
 end
 
@@ -86,6 +83,14 @@ end
 function s1GetValidKind(data)
 	return 2
 end
+
+-- 杜亚窗帘电机
+-- bb 00 00 00 00 00 00 fa 44 不明
+-- bb 01 00 00 00 00 00 fa 44 逆时针 有目的
+-- bb 02 00 00 00 00 00 fa 44 顺时针 有目的
+-- bb 05 00 00 00 00 00 fa 44 测量
+-- bb 03 00 00 00 00 00 fa 44 暂停
+-- bb 06 00 00 00 00 00 fa 44 状态获取
 
 --[[ MUST
 ]]

@@ -36,12 +36,9 @@
 #include <app_framework.h>
 #include <wmtime.h>
 #include <partition.h>
-// #include <appln_cb.h>
-// #include <appln_dbg.h>
 #include <cli.h>
 #include <cli_utils.h>
 #include <wlan.h>
-#include <psm.h>
 #include <wmstdio.h>
 #include <wmsysinfo.h>
 #include <wm_net.h>
@@ -53,20 +50,9 @@
 #include <lelink/sw/airconfig.h>
 #include <lelink/sw/protocol.h>
 #include <lelink/sw/state.h>
+#include <lelink/sw/data.h>
 #include <lelink/sw/io.h>
 #include <lelink/sw/ota.h>
-
-
-// #define DEBUG_AIRCONFIG
-
-#include <wmlog.h>
-#if APPCONFIG_DEBUG_ENABLE
-#define dbg(_fmt_, ...)             \
-    wmprintf("[appln] "_fmt_"\r\n", ##__VA_ARGS__)
-#else
-#define dbg(...)
-#endif /* APPCONFIG_DEBUG_ENABLE */
-
 
 
 static uint8_t gin_airconfig_running;
@@ -556,227 +542,29 @@ void printOutBytes(const uint8_t buf[], int len) {
 void event_wlan_init_done(void *data)
 {
 	int ret;
-    // char utc[] = "{\"redirect\":0,\"utc\":123412341234}";
-    // char tmp2[] = "{\"dir\":\"54321\"}";
-    // char utc[64] = "{\"utc\":1234}";
-    // syncUTC(utc, sizeof(utc));
-
-    // memset(utc, 0, sizeof(utc));
-    // memcpy(utc, tmp1, sizeof(tmp1));
-    // syncUTC(utc, sizeof(utc));
-
-    // memset(utc, 0, sizeof(utc));
-    // memcpy(utc, tmp1, sizeof(tmp1));
-    // syncUTC(utc, sizeof(utc));
-
-	/*
-	 * Initialize CLI Commands for some of the modules:
-	 *
-	 * -- wlan: allows user to explore basic wlan functions
-	 */
 
 	ret = wlan_cli_init();
-	if (ret != WM_SUCCESS)
-		dbg("Error: wlan_cli_init failed");
-
+    if (ret != WM_SUCCESS) {
+		APPLOGE("Error: wlan_cli_init failed");
+    }
 	ret = wlan_iw_cli_init();
-	if (ret != WM_SUCCESS)
-		dbg("Error: wlan_iw_init failed");
-
-	/** Filter flags:
-	 *		Bit[0]: Enable/disable management frame receive,
-	 *		Bit[1]: Enable/disable control frame receive,
-	 *		Bit[2]: Enable/disable data frame receive.
-	 *
-	 * radio_type:
-	 *		Band configuration type
-	 *		Bits[7:6]: Reserved (set to 0)
-	 *		Bits[5:4]: Secondary channel offset
-	 *		     00 = no secondary channel
-	 *		     01 = secondary channel is above primary channel
-	 *		     10 = reserved
-	 *		     11 = secondary channel is below primary channel
-	 *		Bits[3:2]: Channel width
-	 *		     00 = 20 MHz channel width
-	 *		     01, 10 and 11 = reserved
-	 *		Bits[1:0]: Band information
-	 *		     00 = 2.4 GHz band
-	 *		     01 = 5 GHz band
-	 *		     10 and 11 = reserved
-	 *
-	 * channel:
-	 * 		Channel number in respective band.
-	 *
-	 * To sniff packets in 40 MHz channel bandwidth, specify secondary
-	 * channel offset above/below in radio type.
-	 *
-	 * wlan_sniffer_start(4, 17, 40, sniffer_cb);
-	 *
-	 * The above call with start sniffer for data frames on channel
-	 * number 40 and 44 in 5 GHz band, as secondary channel specified
-	 * is above primary channel.
-	 *
-	 * Following call starts WLAN sniffer capturing control, management
-	 * and data frames on channel 8 of 2.4 GHz band.
-	 *
-	 * All captured frames are delivered to registered sniffer callback
-	 * sniffer_cb.
-	 *
-	 */
-
-	 
-    /*
-    ret = wlan_sniffer_start(0x07, 0x00, 0x08, sniffer_cb);
-    if (ret != WM_SUCCESS)
-    dbg("Error: wlan_sniffer_start failed");
-    */
-    #ifdef DEBUG_AIRCONFIG
-    if (0 != airconfig_start(NULL, NULL, 0))
-    {
-        dbg("Error: wlan_sniffer_start failed");
+    if (ret != WM_SUCCESS) {
+		APPLOGE("Error: wlan_iw_init failed");
     }
-    return;
-    #endif
-
-#if 0
-    {
-#include <lelink/sw/sengine.h>
-
-        uint32_t parity = UART_PARITY_NONE;
-        uint32_t stop = UART_STOPBITS_1;
-        uint32_t baud = 9600;
-        mdev_t  *uartPort;
-        uint8_t buf[] = {0x12, 0x34, 0xab, 0xcd};
-        int count = sizeof(buf) + 1;
-
-        // extern int preGenStableInfo2Flash(void);
-        // ret = preGenStableInfo2Flash();
-        // APPLOG("preGenStableInfo2Flash [%d] \r\n", ret);
-
-        #if 0
-        ret = uart_drv_init(UART1_ID, UART_8BIT);
-        APPLOG("uart_drv_init [%d] \r\n", ret);
-        ret = uart_drv_set_opts(UART1_ID, parity, stop, UART_PARITY_NONE);
-        APPLOG("uart_drv_set_opts [%d] \r\n", ret);
-        uartPort = uart_drv_open(UART1_ID, baud);
-        APPLOG("uart_drv_open [%d] \r\n", uartPort);
-        while (count--) { // 4, 3, 2, 1
-            ret = uart_drv_write(uartPort, &buf[sizeof(buf) - count], 1);
-            APPLOG("uart_drv_write [%d] \r\n", ret);
-            os_thread_sleep(os_msec_to_ticks(1000));
-        }
-        while (1) {
-            int i = 0;
-            ret = uart_drv_read(uartPort, buf, sizeof(buf));
-            APPLOG("uart_drv_read [%d]\r\n", ret);
-            if (ret > 0) {
-                for (i = 0; i < ret; i++) {
-                    APPPRINTF("%02x ", buf[i]);
-                }
-                APPPRINTF("\r\n");
-            }
-            os_thread_sleep(os_msec_to_ticks(1000));
-        }
-        #endif
-
-        #if 1
-        {
-            // #define PAGE_SIZE 0x100
-            #define PAGE_SIZE (0x1000)
-            #define WRITE_SIZE 8*1024
-            #define PIECES (WRITE_SIZE/PAGE_SIZE)
-            #define START_ADDR (0x1E0000)
-
-            mdev_t * dev = NULL;
-            int ret, counts = 4;
-            int pieces = PIECES, i, j;
-            static uint8_t data[PAGE_SIZE] = {0};
-            static uint8_t out[WRITE_SIZE] = {0};
-            int tmpAddr = 0;
-
-            while (counts--) {
-                os_thread_sleep(os_msec_to_ticks(1000));
-                APPLOG("waiting... [%d]\r\n", counts);
-            }
-            for (i = 0; i < pieces; i++) {
-                int m = 0;
-                tmpAddr = START_ADDR + i*PAGE_SIZE;
-                for (j = 0; j < PAGE_SIZE; j++) {
-                    data[m++] = j;
-                }
-                data[sizeof(data) - 1] = i;
-                dev = (mdev_t *)flash_drv_open(FL_INT);
-                ret = flash_drv_erase((mdev_t *)dev, tmpAddr, PAGE_SIZE);
-                APPLOG("flash_drv_erase idx[%d][0x%x] ret[%d]\r\n", i, tmpAddr, ret);
-                ret = flash_drv_write((mdev_t *)dev, data, PAGE_SIZE, tmpAddr);
-                APPLOG("flash_drv_write idx[%d][0x%x] ret[%d]\r\n", i, tmpAddr, ret);
-                memset(out, 0, sizeof(out));
-                flash_drv_close((mdev_t *)dev);
-
-                // os_thread_sleep(os_msec_to_ticks(100));
-
-                dev = (mdev_t *)flash_drv_open(FL_INT);
-                ret = flash_drv_read(dev, out, PAGE_SIZE, tmpAddr);
-                APPLOG("flash_drv_read [0x%x] ret[%d]\r\n", tmpAddr, ret);
-                if (0 == ret) {
-                    ret = PAGE_SIZE;
-                }
-                printOutBytes(out, PAGE_SIZE); 
-                flash_drv_close((mdev_t *)dev);
-                APPLOG("flash_drv_close\n");
-            }
-
-            dev = (mdev_t *)flash_drv_open(FL_INT);
-            memset(out, 0, sizeof(out));
-            ret = flash_drv_read(dev, out, sizeof(out), START_ADDR);
-            APPLOG("flash_drv_read [0x%x] ret[%d]\r\n", START_ADDR, ret);
-            if (0 == ret) {
-                ret = sizeof(out);
-            }
-            flash_drv_close((mdev_t *)dev);
-
-            printOutBytes(out, ret); 
-
-            APPLOG("flash pieces reading...\r\n");
-            for (i = 0; i < pieces; i++) {
-                tmpAddr = START_ADDR + i*PAGE_SIZE;
-                dev = (mdev_t *)flash_drv_open(FL_INT);
-                memset(out, 0, PAGE_SIZE);
-                ret = flash_drv_read(dev, out, PAGE_SIZE, tmpAddr);
-                APPLOG("flash_drv_read [0x%x] ret[%d]\r\n", tmpAddr, ret);
-                if (0 == ret) {
-                    ret = PAGE_SIZE;
-                }
-                flash_drv_close((mdev_t *)dev);
-
-                printOutBytes(out, ret); 
-            }
-        }
-        #endif
-
-        return;
-    }
-#else
     os_dump_mem_stats();
-
     // sector 0x1000(512pcs), block 0x10000(32pcs)
     ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000);
     if (0 > ret) {
         APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
         return;
     }
-
     // protocol
     ret = lelinkInit(NULL);
     if (0 > ret) {
+        APPLOGE("lelinkInit ret[%d]\r\n", ret);
         return;
     }
     lelink_start();
-    
-    // flash
-    // testFlash();
-
-#endif
 }
 
 /* This is the main event handler for this project. The application framework
@@ -786,8 +574,14 @@ int common_event_handler(int event, void *data)
 {
 	switch (event) {
 	case AF_EVT_WLAN_INIT_DONE:
-		event_wlan_init_done(data);
-		break;
+        event_wlan_init_done(data);
+        break;
+    case AF_EVT_UAP_STARTED:
+        APPLOG("uap interface started");
+        break;
+    case AF_EVT_UAP_STOPPED:
+        APPLOG("uap interface stopped");
+        break;
     case AF_EVT_NORMAL_CONNECTING:
         // if (gin_airconfig_ap_connected == 1) {
         //     LELOGW("need to reconnect");
@@ -811,9 +605,9 @@ void le_ota(int argc, char **argv)
     int c;
     char fwVer[32] = {0};
     bool optflag = false, startflag = false;
-    static int type = 0;
+    static int type = 2;
     // static const char *sig = NULL;
-    static char url[64] = "http://115.182.63.167/feng/le_demo.bin";
+    static char url[64] = "http://115.182.63.167/fei/le_demo.bin";
 
     cli_optind = 1;
     while ((c = cli_getopt(argc, argv, "t:u:sp")) != -1) {
@@ -881,7 +675,7 @@ static void modules_init()
 	 */
 	ret = wmstdio_init(UART0_ID, 0);
 	if (ret != WM_SUCCESS) {
-		dbg("Error: wmstdio_init failed");
+		APPLOGE("Error: wmstdio_init failed");
 		appln_critical_error_handler((void *) -WM_FAIL);
 	}
 
@@ -890,25 +684,26 @@ static void modules_init()
 	 */
 	ret = cli_init();
 	if (ret != WM_SUCCESS) {
-		dbg("Error: cli_init failed");
+		APPLOGE("Error: cli_init failed");
 		appln_critical_error_handler((void *) -WM_FAIL);
 	}
+
 	/* Initialize time subsystem.
 	 *
 	 * Initializes time to 1/1/1970 epoch 0.
 	*/
     ret = wmtime_init();
     if (ret != WM_SUCCESS) {
-        dbg("Error: wmtime_init failed");
+        APPLOGE("Error: wmtime_init failed");
         appln_critical_error_handler((void *) - WM_FAIL);
     }
 
     /*
-    	* Register Power Management CLI Commands
-    	*/
+     * Register Power Management CLI Commands
+     */
     ret = pm_cli_init();
     if (ret != WM_SUCCESS) {
-        dbg("Error: pm_cli_init failed");
+        APPLOGE("Error: pm_cli_init failed");
         appln_critical_error_handler((void *) - WM_FAIL);
     }
 
@@ -917,24 +712,24 @@ static void modules_init()
 	 */
 	ret = wmtime_cli_init();
 	if (ret != WM_SUCCESS) {
-		dbg("Error: wmtime_cli_init failed");
+		APPLOGE("Error: wmtime_cli_init failed");
 		appln_critical_error_handler((void *) -WM_FAIL);
 	}
 
     ret = sysinfo_init();
     if (ret != WM_SUCCESS) {
-        dbg("Error: sysinfo_init failed");
+        APPLOGE("Error: sysinfo_init failed");
         appln_critical_error_handler((void *) -WM_FAIL);
     }
 
     ret = nw_utils_cli_init();
     if (ret != WM_SUCCESS) {
-        dbg("Error: nw_utils_cli_init failed");
+        APPLOGE("Error: nw_utils_cli_init failed");
         appln_critical_error_handler((void *) -WM_FAIL);
     }
     ret = le_utils_cli_init();
     if (ret != WM_SUCCESS) {
-        dbg("Error: le_utils_cli_init failed");
+        APPLOGE("Error: le_utils_cli_init failed");
         appln_critical_error_handler((void *) -WM_FAIL);
     }
 	return;
@@ -942,27 +737,23 @@ static void modules_init()
 
 int main()
 {
-    // int count = 0;
     modules_init();
 
-    dbg("Build Time: " __DATE__ " " __TIME__ "");
-    // while (1) {
-    //     count++;
-    //     wmprintf("Hello World: iteration %d\r\n", count);
+    {
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x50}; // honyar
+        uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x51}; // honyar
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x60}; // dingding
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x70}; // honyar 86 box
+        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xFF}; // my local
+        wlan_set_mac_addr(mac);
 
-    //     /* Sleep  5 seconds */
-    //     os_thread_sleep(os_msec_to_ticks(3000));
-    // }
-
-
-#if 1
+    }
+    APPLOG("Build Time: " __DATE__ " " __TIME__ "");
     /* Start the application framework */
     if (app_framework_start(common_event_handler) != WM_SUCCESS) {
-        dbg("Failed to start application framework");
+        APPLOGE("Failed to start application framework");
                 appln_critical_error_handler((void *) -WM_FAIL);
     }
-#endif
-
-
     return 0;
 }
