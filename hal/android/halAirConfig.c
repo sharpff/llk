@@ -17,6 +17,13 @@ int halDoApConnecting(void *ptr, int ptrLen) {
     return 1;
 }
 
+int halSoftApStart(char *ssid, char *wpa2_passphrase) {
+    return 0;
+}
+
+int halSoftApStop(void) {
+    return 0;
+}
 
 
 //

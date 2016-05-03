@@ -4,6 +4,67 @@
 
 extern int getFlashMinSize();
 extern int getRegion(E_FLASH_TYPE type, FlashRegion *region);
+static int ginOTAType = OTA_TYPE_NONE;
+static char ginOTAUrl[MAX_BUF];
+static uint8_t ginOTASig[RSA_LEN];
+
+// OTA_SET_INFO(type, url, lenUrl, sig) {\
+//     extern int ginOTAType;
+//     extern char ginOTAUrl[MAX_BUF];
+//     extern char ginOTASig[RSA_LEN];
+
+// }
+
+// OTA_GET_INFO(type, url, lenUrl, sig) {\
+//     extern int ginOTAType;
+//     extern char ginOTAUrl[MAX_BUF];
+//     extern char ginOTASig[RSA_LEN];
+//     type = ginOTAType;
+//     if (url) {
+//         memcpy()
+//     } else {
+//         memset(url, 0, )
+//     }
+// }
+
+const char *otaGetLatestUrl() {
+    return ginOTAUrl[0] ? ginOTAUrl : NULL;
+}
+void otaSetLatestUrl(const char *url, int lenUrl) {
+    int len = 0; 
+    if (NULL == url || 0 >= lenUrl) {
+        return;
+    }
+    len = MIN(lenUrl, MAX_BUF - 1);
+    memcpy(ginOTAUrl, url, len);
+    ginOTAUrl[len] = 0;
+    return;
+}
+
+const uint8_t *otaGetLatestSig() {
+    return ginOTASig[0] ? ginOTASig : NULL;
+}
+void otaSetLatestSig(const uint8_t *sig) {
+    // int len = 0; 
+    if (NULL == sig) {
+        return;
+    }
+    memcpy(ginOTASig, sig, sizeof(ginOTASig));
+    return;
+}
+
+int otaGetLatestType() {
+    return ginOTAType;
+}
+void otaSetLatestType(int type) {
+    ginOTAType = type;
+}
+
+void otaInfoClean() {
+    ginOTAType = OTA_TYPE_NONE;
+    memset(ginOTASig, 0, sizeof(ginOTASig));
+    memset(ginOTAUrl, 0, sizeof(ginOTAUrl));
+}
 
 int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
 {

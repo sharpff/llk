@@ -786,3 +786,108 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
     return 0;
 }
 
+#include "network.h"
+int softApStarted(void)
+{
+    int ret;
+    char ssid[32];
+    uint16_t port;
+    uint8_t sum;
+    char ipaddr[32];
+    wificonfig_t wc;
+    char buf[UDP_MTU];
+    void *ctx = NULL;
+    char uuid[32] = {0};
+    char wpa2_passphrase[32] = "00000000";
+
+    if((ret = getTerminalUUID((uint8_t *)uuid, sizeof(uuid))) < 0) {
+        LELOGE("getTerminalUUID ret[%d]", ret);
+        goto out;
+    }
+    snprintf(ssid, sizeof(ssid), "-lelink%03d-%s", WIFICONFIG_VERSION, uuid);
+    if((ret = halSoftApStart(ssid, wpa2_passphrase))) {
+        LELOGE("halSoftApStart ret[%d]", ret);
+        goto out;
+    }
+    ctx = lelinkNwNew(NULL, 0, 4911, NULL);
+    if(!ctx) {
+        LELOGE("New link");
+        goto out;
+    }
+    while(1) {
+        LELOG("Waitting wifi configure.");
+        delayms(1000);
+        ret = nwUDPRecvfrom(ctx, (uint8_t *)buf, UDP_MTU, ipaddr, sizeof(ipaddr), &port);
+        if(ret > 0 ) {
+            LELOG("nwUDPRecvfrom ret = %d", ret);
+            if(ret != sizeof(wc)) {
+                LELOGE("Wrong len = %d", ret);
+                continue;
+            }
+            memcpy(&wc, buf, ret);
+            if(wc.magic != WIFICONFIG_MAGIC) {
+                LELOGE("magic = %d", wc.magic);
+                continue;
+            }
+            sum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
+            if(wc.checksum != sum) {
+                LELOGE("checksum = %d", wc.magic);
+                continue;
+            }
+            LELOG("Get ssid[%s] passwd[%s]", wc.ssid, wc.wap2passwd);
+            {
+                PrivateCfg cfg;
+                lelinkStorageReadPrivateCfg(&cfg);
+                LELOG("read last ssid[%s], psk[%s], configStatus[%d]", 
+                        cfg.data.nwCfg.config.ssid,
+                        cfg.data.nwCfg.config.psk, 
+                        cfg.data.nwCfg.configStatus);
+                strcpy(cfg.data.nwCfg.config.ssid, wc.ssid);
+                strcpy(cfg.data.nwCfg.config.psk, wc.wap2passwd);
+                cfg.data.nwCfg.configStatus = 1;
+                ret = lelinkStorageWritePrivateCfg(&cfg);
+                LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
+            }
+            break;
+        } else {
+            LELOGE("nwUDPRecvfrom ret = %d", ret);
+        }
+    }
+out:
+    if(ctx) {
+        lelinkNwDelete(ctx);
+    }
+    halSoftApStop();
+    return ret;
+}
+
+int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout)
+{
+    void *ctx;
+    uint16_t port = 4911;
+    int i, ret, count, delay = 1000; // ms
+    char ipaddr[32] = "255.255.255.255";
+    wificonfig_t wc = { WIFICONFIG_MAGIC, WIFICONFIG_VERSION, 0 };
+
+    ctx  = lelinkNwNew(NULL, 0, 0, NULL);
+    if(!ctx) {
+        LELOGE("New link error");
+        return -1;
+    }
+    count = timeout / delay + 1;
+    strncpy((char *)wc.ssid, ssid, sizeof(wc.ssid));
+    strncpy((char *)wc.wap2passwd, passwd, sizeof(wc.wap2passwd));
+    wc.checksum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
+    for( i = 0; i < count; i++ ) {
+        LELOG("Send wifi configure, [%s:%s][%d]...", ssid, passwd, delay);
+        delayms(delay);
+        ret = nwUDPSendto(ctx, ipaddr, port, (uint8_t *)&wc, sizeof(wc));
+        if(ret <= 0 ) {
+            LELOGE("nwUDPSendto ret = %d", ret);
+        }
+    }
+    if(ctx) {
+        lelinkNwDelete(ctx);
+    }
+    return 0;
+}

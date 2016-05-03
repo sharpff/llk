@@ -6,13 +6,12 @@
 #include "sengine.h"
 #include "network.h"
 #include "io.h"
+#include "state.h"
 #include "version.h" // Auto generate by SVN
 #ifndef SW_VERSION
 #define SW_VERSION "0.9.9"
 #endif
 
-
-extern int8_t ginStateCloudAuthed;
 
 /* built-in global rsa pubkey */
 const uint8_t ginPubkeyGlobalDer[] =
@@ -91,7 +90,7 @@ const uint8_t *getPreSharedToken() {
 
 const uint8_t *getTerminalToken() {
     // TODO: GEN IT BY UTC
-    if (2 == ginStateCloudAuthed) {
+    if (isCloudAuthed()) {
         if ((0 == ginTerminalToken[0]) || 
             (0 == memcmp(ginTerminalToken, getPreSharedToken(), AES_LEN))) {
             md5(&ginRemoteUTC, sizeof(uint32_t), ginTerminalToken);
@@ -226,6 +225,7 @@ void setTerminalUUID(const uint8_t *uuid, int len) {
     if (len < MAX_UUID) {
         return;
     }
+    LELOG("setTerminalUUID [%s]", uuid);
     memcpy(ginUUID, uuid, MAX_UUID);
 }
 
@@ -292,7 +292,7 @@ int getTerminalStatus(char *status, int len) {
     }
     tmpLen = strlen(status);
 
-    sprintf(status + tmpLen, ",\"cloud\":%d", ginStateCloudAuthed);
+    sprintf(status + tmpLen, ",\"cloud\":%d", isCloudAuthed());
     tmpLen = strlen(status);
 
     strcpy(status + tmpLen, ",\"uuid\":\""); tmpLen = strlen(status);

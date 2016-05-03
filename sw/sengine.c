@@ -6,6 +6,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 #include "ota.h"
+#include "state.h"
 #include "protocol.h"
 
 #ifndef LOG_SENGINE
@@ -14,12 +15,12 @@
 #define LELOG(...)
 #endif
 
-#ifdef LELOG
+#ifdef LELOGW
 #undef LELOGW
 #define LELOGW(...)
 #endif
 
-// #ifdef LELOG
+// #ifdef LELOGE
 // #undef LELOGE
 // #define LELOGE(...)
 // #endif
@@ -37,8 +38,6 @@
 // #define MAX_STATUS 64
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
-extern int8_t ginStateCloudAuthed;
-
 
 typedef struct
 {
@@ -665,8 +664,14 @@ int sengineSetStatus(char *json, int jsonLen) {
     }
     hdl = ioGetHdl(&ioType);
     if (NULL == hdl || *hdl == NULL) {
-        LELOGE("sengineGetStatus ioGetHdl NULL");
+        LELOG("sengineGetStatus ioGetHdl NULL");
         return -1;
+    }
+    {
+        int i;
+        for(i = 0; i < ret; i++) {
+            LELOG("bin[%d] = %02x", i, bin[i]);
+        }
     }
     ret = ioWrite(ioType, *hdl, bin, ret);
     if (ret <= 0) {
@@ -734,9 +739,19 @@ int senginePollingSlave(void) {
         LELOGW("senginePollingSlave ioRead [%d]", ret);
         return ret;
     }
+#if 0
+    {
+        int i;
+        LELOGE("ioRead ret = %d", ret);
+        for(i = 0; i < ret; i++) {
+            LELOGE("bin[%d] = %02x", i, bin[i]);
+        }
+    }
+#endif
     size = ret;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
             bin, size, (uint8_t *)&whatKind, sizeof(whatKind));
+    // LELOGE("sengineCall ret = %d, what = %d", ret, whatKind);
     if (ret <= 0) {
         LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
         return -1;
@@ -756,11 +771,12 @@ int senginePollingSlave(void) {
                 int len = 0;
                 len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                         bin, size, (uint8_t *)status, sizeof(status));
+                // LELOGE("sengineCall len = %d. [%s]", len, status);
                 if (len <= 0) {
                     LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                 } else if (cacheIsChanged(status, len)) {
                     NodeData node = {0};
-                    if (2 == ginStateCloudAuthed) {
+                    if (isCloudAuthed()) {
                         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
                         node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
                     } else {

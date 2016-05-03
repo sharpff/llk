@@ -13,7 +13,10 @@ int halUnlock(void *ptr, const char *file, int line) {
 }
 
 unsigned int halGetTimeStamp(void) {
-    return os_get_timestamp() / 1000000UL;
+    uint64_t tmp = os_get_timestamp();
+    APPLOG("halGetTimeStamp [%lld]", tmp);
+    tmp = tmp / 1000000UL;
+    return (unsigned int)tmp;
 }
 
 unsigned int halGetUTC(void) {

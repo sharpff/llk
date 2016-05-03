@@ -142,6 +142,60 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen);
 void ioDeinit(int ioType, void *hdl);
 
+typedef enum {
+    GPIO_DIR_INPUT = 0,
+    GPIO_DIR_OUTPUT,
+} GPIO_DIR_t;
+
+typedef enum {
+    GPIO_MODE_DEFAULT = 0,
+    GPIO_MODE_PULLUP,
+    GPIO_MODE_PULLDOWN,
+    GPIO_MODE_NOPULL,
+    GPIO_MODE_RISTATE,
+} GPIO_MODE_t;
+
+typedef enum {
+    GPIO_STATE_LOW = 0,
+    GPIO_STATE_HIGH, 
+    GPIO_STATE_BLINK,
+} GPIO_STATE_t;
+
+typedef enum {
+    GPIO_TYPE_INPUT_RESET = 1
+} GPIO_TYPE_INPUT_t;
+
+typedef enum {
+    GPIO_TYPE_OUTPUT_RESET = 1
+} GPIO_TYPE_OUTPUT_t;
+
+#define GPIO_MAX_ID     (3)
+typedef struct {
+    int8_t id;          // support 1, 2, 3 
+    int8_t num;         // gpio num
+    uint16_t dir:1;     // 0 - input; 1 - output
+    uint16_t mode:3;    // 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
+    uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
+    uint16_t type:3;    // 0 - stdio; input: 1 - reset; output: 1 - reset
+    uint16_t gpiostate:1;   // only : 0 - low; 1 - high
+    uint16_t freestate:1;   // only output reset: 0 - low; 1 - high
+    uint8_t blink;          // only output. ticks, blink frequency
+    // for input/output type reset
+    uint8_t longTime;
+    uint8_t shortTime;
+    // for output type reset
+    // TODO: only for internal
+    uint8_t keepLowTimes;   // ticks, gpiostat keep low times
+    uint8_t keepHighTimes;  // ticks, gpiostat keep high times
+    uint8_t reserved;   
+} gpioHand_t;
+
+typedef struct {
+    void *handle;
+    uint32_t num;
+    gpioHand_t table[GPIO_MAX_ID + 1];
+} gpioManager_t;
+
 #ifdef __cplusplus
 }
 #endif

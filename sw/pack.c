@@ -11,15 +11,15 @@
 #define LELOG(...)
 #endif
 
-#ifdef LELOG
+#ifdef LELOGW
 #undef LELOGW
 #define LELOGW(...)
 #endif
 
-#ifdef LELOG
-#undef LELOGE
-#define LELOGE(...)
-#endif
+// #ifdef LELOGE
+// #undef LELOGE
+// #define LELOGE(...)
+// #endif
 
 #ifdef LEPRINTF
 #undef LEPRINTF

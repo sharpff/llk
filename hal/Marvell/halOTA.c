@@ -8,15 +8,31 @@ static size_t httpFetchData(void *priv, void *buf, size_t max_len);
 int halHttpOpen(OTAInfo_t *info, const char *url)
 {
     int status = -1;
+    char tmpurl[512];
     http_resp_t *resp;
-    static http_session_t session;
+    http_session_t session;
 
+    info->session = NULL;
+    strcpy(tmpurl, url);
+    url = tmpurl;
+again:
     status = httpc_get(url, &session, &resp, NULL);
     if (status != 0) {
         APPLOGE("Unable to connect to server");
         goto err_out;
     }
-    if (resp->status_code != 200) {
+    if (resp->status_code > 300 && resp->status_code < 400) {
+        char *pv = NULL;
+        status = http_get_response_hdr_value(session, "Location", &pv);
+        if(status) {
+            APPLOGE("Can't get moved Location, status = %d", status);
+            goto err_out;
+        }
+        APPLOGW("Http moved:%s", pv);
+        strcpy(tmpurl, pv);
+        http_close_session(&session);
+        goto again;
+    } else if (resp->status_code != 200) {
         APPLOGE("HTTP Error %d", resp->status_code);
         goto err_out;
     }
@@ -28,7 +44,7 @@ int halHttpOpen(OTAInfo_t *info, const char *url)
         APPLOGE("HTTP size(%d) error", resp->content_length);
         goto err_out;
     }
-    info->session = &session;
+    info->session = (void *)session;
     info->imgLen = resp->content_length;
     return 0;
 err_out:
@@ -38,7 +54,7 @@ err_out:
 void halHttpClose(OTAInfo_t *info)
 {
     if(info && info->session) {
-        http_close_session(info->session);
+        http_close_session((http_session_t *)&info->session);
         info->session = NULL;
     }
 }
@@ -87,7 +103,7 @@ static size_t httpFetchData(void *priv, void *buf, size_t max_len)
     int ret = 0;
     OTAInfo_t *info = (OTAInfo_t *) priv;
 
-    if((ret = http_read_content(*(http_session_t *)info->session, buf, max_len)) > 0){
+    if((ret = http_read_content((http_session_t)info->session, buf, max_len)) > 0){
         info->nowLen += ret;
     }
     APPLOG("%d/%d", info->nowLen, info->imgLen);
