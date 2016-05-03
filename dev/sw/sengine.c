@@ -77,7 +77,8 @@ static IA_CACHE ginIACache;
 
 static IO lf_s1GetQueries_input(lua_State *L, const uint8_t *input, int inputLen) {
     // lua_pushlstring(L, (char *)input, inputLen);
-    IO io = { 0, 4 };
+    lua_pushinteger(L, 5);
+    IO io = { 1, 4 };
     return io;
 }
 static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
