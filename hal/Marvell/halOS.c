@@ -25,7 +25,7 @@ unsigned int halGetTimeStamp(void) {
     time_t timeUTC = mktime(&c_time);
 
     // test only
-    int64_t utc = 0;
+    // int64_t utc = 0;
     // getTerminalUTC(&utc);
 
     // APPLOG("halGetTimeStamp [%u]", timeUTC);//
