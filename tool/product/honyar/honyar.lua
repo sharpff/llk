@@ -48,18 +48,47 @@ end
 	1. PIPE/IPC json <-> json
 ]]
 function s1GetCvtType()
-
-	local whatCvtType = 0
-	-- delay time (ms) for the interval during write & read. 
+    -- combained uart(0x1) & gpio(0x2)
+    local str = [[
+    {
+    "whatCvtType":3,
+    "uart":[
+    	{
+    		"id":1, 
+    		"baud":"9600-8N1"
+    	}
+    ],
+    "gpio":[
+	        {
+	            "id":1,
+	            "dir":0,
+	            "mode":2,
+	            "type":1,
+	            "longTime":30,
+	            "shortTime":3
+	        },
+	        {
+	            "id":2,
+	            "dir":1,
+	            "mode":0,
+	            "state":1,
+	            "blink":2,
+	            "type":1,
+	            "longTime":10,
+	            "shortTime":1
+	        },
+	        {
+	            "id":3,
+	            "dir":1,
+	            "mode":0,
+	            "state":0,
+	            "blink":30,
+	            "type":0
+	        }
+	    ]
+	}
+    ]]
 	local delay = 5
-	--[[
-		E.g."9600-8N1"
-		FORMAT [baud(9600, ...) - dataBits(8, 9, ...) parity(None:0, Odd:1, Even:2) stopBits(1, 2)]
-		refer to func(halIO.c)
-		void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
-	]] 
-	local baud = '"9600-8N1"'
-	local str = string.format('{"whatCvtType":%d,"baud":%s}', whatCvtType, baud)
 
 	return string.len(str), str, delay
 end
@@ -106,7 +135,7 @@ function s1GetValidKind(data)
 
 	-- print '0'
 	-- invalid kind
-	return 0
+	return 2
 end
 
 -- 插排

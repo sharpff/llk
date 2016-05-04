@@ -12,12 +12,13 @@
 #define JSON_NAME_PORT "port"
 #define JSON_NAME_UTC "utc"
 #define JSON_NAME_WHATTYPE "whatCvtType"
-#define JSON_NAME_BAUD "baud"
+#define JSON_NAME_UART_CONF         "uart"
+#define JSON_NAME_UART_BAUD "baud"
 #define JSON_NAME_STATUS "status"
 #define JSON_NAME_UUID "uuid"
 #define JSON_NAME_URL "url"
 #define JSON_NAME_TYPE "type"
-#define JSON_NAME_GPIO_CONF         "conf"
+#define JSON_NAME_GPIO_CONF         "gpio"
 #define JSON_NAME_GPIO_ID           "id"
 #define JSON_NAME_GPIO_DIR          "dir"
 #define JSON_NAME_GPIO_MODE         "mode"
@@ -188,7 +189,7 @@ int getWhatCvtType(const char *json, int jsonLen) {
 }
 
 int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *stopBits, char *parity, int *flowCtrl) {
-    int ret = -1;
+    int ret = -1, num = 0, i = 0;
     char strBaud[96] = {0};
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
@@ -198,11 +199,19 @@ int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *st
         return -1;
     }
 
-    if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_BAUD, strBaud, sizeof(strBaud))) {
-        return -2;
-    }
+    if((ret = json_get_array_object(&jobj, JSON_NAME_UART_CONF, &num)) == WM_SUCCESS) {
+        num = num < 0 ? 0 : num;
+        for(i = 0; i < num; i++) {
+            if((ret = json_array_get_composite_object(&jobj, i)) != WM_SUCCESS) {
+                return -2;
+            }
 
-    // TODO: adption
+            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_UART_BAUD, strBaud, sizeof(strBaud))) {
+                return -3;
+            }
+        }
+    }
+    // TODO: to support multi-uart
     sscanf(strBaud, "%u-%u%c%u", baud, dataBits, parity, stopBits);
 
     return 0;

@@ -51,18 +51,47 @@ end
 	1. PIPE/IPC json <-> json
 ]]
 function s1GetCvtType()
-
-	local whatCvtType = 0
-	-- delay time (ms) for the interval during write & read. 
+    -- combained uart(0x1) & gpio(0x2)
+    local str = [[
+    {
+    "whatCvtType":3,
+    "uart":[
+    	{
+    		"id":1, 
+    		"baud":"115200-8N1"
+    	}
+    ],
+    "gpio":[
+	        {
+	            "id":1,
+	            "dir":0,
+	            "mode":2,
+	            "type":1,
+	            "longTime":30,
+	            "shortTime":3
+	        },
+	        {
+	            "id":2,
+	            "dir":1,
+	            "mode":0,
+	            "state":1,
+	            "blink":2,
+	            "type":1,
+	            "longTime":10,
+	            "shortTime":1
+	        },
+	        {
+	            "id":3,
+	            "dir":1,
+	            "mode":0,
+	            "state":0,
+	            "blink":30,
+	            "type":0
+	        }
+	    ]
+	}
+    ]]
 	local delay = 5
-	--[[
-		E.g."9600-8N1"
-		FORMAT [baud(9600, ...) - dataBits(8, 9, ...) parity(None:0, Odd:1, Even:2) stopBits(1, 2)]
-		refer to func(halIO.c)
-		void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
-	]] 
-	local baud = '"115200-8N1"'
-	local str = string.format('{"whatCvtType":%d,"baud":%s}', whatCvtType, baud)
 
 	return string.len(str), str, delay
 end
@@ -71,7 +100,9 @@ end
 	查询设备状态。
 	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
 ]]
-function s1GetQueries()
+function s1GetQueries(queryType)
+	local cvtType = s1apiGetCurrCvtType()
+	-- print ('s1GetQueries return => '..cvtType..'\r\n')
 	local query = string.char( 0xbb, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 )
 	local queryCountLen = string.char( 0x09, 0x00 )
 
@@ -79,9 +110,11 @@ function s1GetQueries()
 end
 
 --[[ MUST
-	WIFI 重置命令判别
+	 
 ]]
 function s1GetValidKind(data)
+	local cvtType = s1apiGetCurrCvtType()
+	-- print ('s1GetValidKind return => '..cvtType..'\r\n')
 	local reset = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00)
 
 	-- print (data, #data)
@@ -89,13 +122,13 @@ function s1GetValidKind(data)
 	--[[ MUST
 		wifi reset cmd
 	]]
-	--print ('start\r\n')
-	--tmpTbl = stringToTable(data)
-	--LOGTBL(tmpTbl)
-	--tmpTbl = stringToTable(reset)
-	--LOGTBL(tmpTbl)
-	--print (string.find(data, reset))
-	--print ('\r\n')
+	-- print ('start\r\n')
+	-- tmpTbl = stringToTable(data)
+	-- LOGTBL(tmpTbl)
+	-- tmpTbl = stringToTable(reset)
+	-- LOGTBL(tmpTbl)
+	-- print (string.find(data, reset))
+	-- print ('\r\n')
 	
 	if nil ~= string.find(data, reset) then
 		--print '1'
@@ -112,7 +145,7 @@ function s1GetValidKind(data)
 
 	-- print '0'
 	-- invalid kind
-	return 0
+	return 2
 end
 
 
@@ -127,6 +160,8 @@ end
 ]]
 -- {"ctrl":{"action":1}}
 function s1CvtStd2Pri(json)
+	local cvtType = s1apiGetCurrCvtType()
+	-- print ('s1CvtStd2Pri return => '..cvtType..'\r\n')
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]
 	local cmdTbl = { 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 }
@@ -145,7 +180,7 @@ function s1CvtStd2Pri(json)
 	else
 		cmdTbl[2] = 0x05
 	end
-	LOGTBL(cmdTbl)
+	-- LOGTBL(cmdTbl)
 
 	-- u have to make the bin as string for the return value
 	dataStr = tableToString(cmdTbl)
@@ -156,6 +191,8 @@ end
 	return value: return 0, 0, if the input param 'bin' is not valid
 ]]
 function s1CvtPri2Std(bin)
+	local cvtType = s1apiGetCurrCvtType()
+	-- print ('s1CvtPri2Std return => '..cvtType..'\r\n')
 	local dataTbl = {}
 	local str = '{"percentage":%d}'
 	dataTbl = stringToTable(bin)

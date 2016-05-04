@@ -523,7 +523,8 @@ void testSengine() {
 int lelinkInit() {
     int ret = 0;
     AuthCfg authCfg;
-    void **ioHdl = NULL;
+    // void **ioHdl = NULL;
+    IOHDL *ioHdl = NULL;
     uint8_t mac[6] = {0};
 
     ret = halLockInit();
@@ -550,9 +551,10 @@ int lelinkInit() {
         // goto failed;
     }
 
-    ioHdl = (void **)ioGetHdl(NULL);
+    // ioHdl = (void **)ioGetHdl(NULL);
+    ioHdl = ioGetHdlExt();
     if (NULL == ioHdl) {
-        LELOGE("ioInit ioHdl[%p]\r\n", ioHdl);
+        LELOGE("ioInit ioGetHdlExt[%p]\r\n", ioHdl);
         // goto failed;
     }
     ret = lelinkStorageReadAuthCfg(&authCfg);

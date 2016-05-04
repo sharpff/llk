@@ -18,7 +18,7 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
 }
 
 void *halGPIOInit(void) {
-    return NULL;
+    return (void *)0xffffffff;
 }
 
 int halGPIOClose(void *dev) {
