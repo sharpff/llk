@@ -104,9 +104,9 @@ function s1GetQueries(queryType)
         queryCountLen = string.char(string.len(query), 0x00 )
     end
 
-    print(string.len(queryCountLen), string.len( query ), "\n")
-    LOGSTR(queryCountLen)
-    LOGSTR(query)
+    --print(string.len(queryCountLen), string.len( query ), "\n")
+    --LOGSTR(queryCountLen)
+    --LOGSTR(query)
     return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
 
@@ -129,6 +129,8 @@ end
 
 -- 晾霸
 --{ "ctrl": { "action":0, "speaker":0, "anti":0, "anion":0, "h-dry":0, "w-dry":0, "light":1, "wDryTime":0, "hDryTime":0, "antiTime":0 } }
+--"{ \"ctrl\": { \"action\":0, \"speaker\":0, \"anti\":0, \"anion\":0, \"h-dry\":0, \"w-dry\":0, \"light\":1, \"wDryTime\":0, \"hDryTime\":0, \"antiTime\":0 } }"
+--"{ \"ctrl\": { \"action\":0, \"speaker\":0, \"anti\":0, \"anion\":0, \"h-dry\":0, \"w-dry\":0, \"light\":0, \"wDryTime\":0, \"hDryTime\":0, \"antiTime\":0 } }"
 function s1CvtStd2Pri(json)
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]
@@ -152,7 +154,7 @@ function s1CvtStd2Pri(json)
 
 	--LOGTBL(cmdTbl)
 	dataStr = tableToString(cmdTbl)
-    LOGSTR(dataStr);
+    --LOGSTR(dataStr);
 	return string.len(dataStr), dataStr
 end
 
@@ -163,10 +165,10 @@ end
 function s1CvtPri2Std(bin)
     local str = ""
     local dataTbl = {}
-    local fmtstr = "{ \"ctrl\": { \"action\":%d, \"speaker\":%d, \"anti\":%d, \"anion\":%d, \"h-dry\":%d, \"w-dry\":%d, \"light\":%d, \"wDryTime\":%d, \"hDryTime\":%d, \"antiTime\":%d, \"pos\":%d } }"
+    local fmtstr = "{ \"action\":%d, \"speaker\":%d, \"anti\":%d, \"anion\":%d, \"h-dry\":%d, \"w-dry\":%d, \"light\":%d, \"wDryTime\":%d, \"hDryTime\":%d, \"antiTime\":%d, \"pos\":%d } }"
 
     dataTbl = stringToTable(bin)
-    LOGTBL(dataTbl)
+    --LOGTBL(dataTbl)
     if #dataTbl >= 12 and dataTbl[1] == 0xbb and dataTbl[2] == 0xa3 and dataTbl[3] == 0x03 then
         local sum = 0
         local chsum = (dataTbl[10] << 8 | dataTbl[11])
@@ -180,8 +182,7 @@ function s1CvtPri2Std(bin)
         end
     end
 
-    --str = string.format(str, (dataTbl[13] >> 0) & 0x1, (dataTbl[13] >> 1) & 0x1, (dataTbl[13] >> 2) & 0x1, (dataTbl[13] >> 3) & 0x1)
-    print(str)
+    --print(str)
     return string.len(str), str
 end
 

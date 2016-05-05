@@ -76,8 +76,7 @@ static uint32_t ginDelayMS;
 static IA_CACHE ginIACache;
 
 static IO lf_s1GetQueries_input(lua_State *L, const uint8_t *input, int inputLen) {
-    // lua_pushlstring(L, (char *)input, inputLen);
-    lua_pushinteger(L, 5);
+    lua_pushinteger(L, *(QuerieType_t *)input);
     IO io = { 1, 4 };
     return io;
 }
@@ -694,7 +693,7 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     return ret;
 }
 
-int sengineQuerySlave(void) 
+int sengineQuerySlave(QuerieType_t type)
 {
     Queries queries;
     int ret = 0, i = 0, ioType = 0;
@@ -703,7 +702,7 @@ int sengineQuerySlave(void)
 
     // 0. getQueries from script
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
-            NULL, 0, (uint8_t *)&queries, sizeof(queries));
+            &type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
     if (ret <= 0) {
         LELOGW("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]", ret);
         return ret;
