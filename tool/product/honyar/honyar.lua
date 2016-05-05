@@ -57,7 +57,7 @@ function s1GetCvtType()
     		"id":1, 
     		"baud":"9600-8N1"
     	}
-    ],
+    	],
     "gpio":[
 	        {
 	            "id":1,

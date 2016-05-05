@@ -1,5 +1,5 @@
 --[[ 
-	THIS IS FW SCRIPT
+	THIS IS FW SCRIPT abc
   ]]
 --[[ INTERNAL
 	Table to string
@@ -54,41 +54,13 @@ function s1GetCvtType()
     -- combained uart(0x1) & gpio(0x2)
     local str = [[
     {
-    "whatCvtType":3,
+    "whatCvtType":1,
     "uart":[
-    	{
-    		"id":1, 
-    		"baud":"115200-8N1"
-    	}
-    ],
-    "gpio":[
-	        {
-	            "id":1,
-	            "dir":0,
-	            "mode":2,
-	            "type":1,
-	            "longTime":30,
-	            "shortTime":3
-	        },
-	        {
-	            "id":2,
-	            "dir":1,
-	            "mode":0,
-	            "state":1,
-	            "blink":2,
-	            "type":1,
-	            "longTime":10,
-	            "shortTime":1
-	        },
-	        {
-	            "id":3,
-	            "dir":1,
-	            "mode":0,
-	            "state":0,
-	            "blink":30,
-	            "type":0
-	        }
-	    ]
+		{
+			"id":1, 
+			"baud":"115200-8N1"
+		}
+    	]
 	}
     ]]
 	local delay = 5
@@ -102,9 +74,18 @@ end
 ]]
 function s1GetQueries(queryType)
 	local cvtType = s1apiGetCurrCvtType()
-	-- print ('s1GetQueries return => '..cvtType..'\r\n')
-	local query = string.char( 0xbb, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 )
-	local queryCountLen = string.char( 0x09, 0x00 )
+	local query = ''
+	local queryCountLen = ''
+
+	print ("s1GetQueries cvtType is " .. cvtType .. "\r\n")
+
+	-- UART
+	if 0x01 == cvtType then
+		print ("abcccc" .. cvtType .. "\r\n")
+		query = string.char( 0xAA, 0x00, 0x02, 0x01, 0x10, 0x9D )
+		queryCountLen = string.char( 0x06, 0x00 )
+	end
+	-- GPIO
 
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
@@ -114,38 +95,41 @@ end
 ]]
 function s1GetValidKind(data)
 	local cvtType = s1apiGetCurrCvtType()
-	-- print ('s1GetValidKind return => '..cvtType..'\r\n')
-	local reset = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00)
 
-	-- print (data, #data)
+	if 0x01 == cvtType then
 
-	--[[ MUST
-		wifi reset cmd
-	]]
-	-- print ('start\r\n')
-	-- tmpTbl = stringToTable(data)
-	-- LOGTBL(tmpTbl)
-	-- tmpTbl = stringToTable(reset)
-	-- LOGTBL(tmpTbl)
-	-- print (string.find(data, reset))
-	-- print ('\r\n')
-	
-	if nil ~= string.find(data, reset) then
-		--print '1'
-		return 1
+		-- print ('s1GetValidKind return => '..cvtType..'\r\n')
+		local reset = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00)
+
+		-- print (data, #data)
+
+		--[[ MUST
+			wifi reset cmd
+		]]
+		-- print ('start\r\n')
+		-- tmpTbl = stringToTable(data)
+		-- LOGTBL(tmpTbl)
+		-- tmpTbl = stringToTable(reset)
+		-- LOGTBL(tmpTbl)
+		-- print (string.find(data, reset))
+		-- print ('\r\n')
+		
+		if nil ~= string.find(data, reset) then
+			--print '1'
+			return 1
+		end
+
+		--[[ MUST
+			valid LOW LEVEL status cmd
+		]]
+		if 9 == #data then
+			-- print '2'
+			return 2
+		end
 	end
-
-	--[[ MUST
-		valid LOW LEVEL status cmd
-	]]
-	if 9 == #data then
-		-- print '2'
-		return 2
-	end
-
 	-- print '0'
 	-- invalid kind
-	return 2
+	return 0
 end
 
 
