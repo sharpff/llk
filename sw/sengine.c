@@ -702,7 +702,7 @@ int sengineQuerySlave(QuerieType_t type)
 
     // 0. getQueries from script
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
-            &type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
+            (uint8_t *)&type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
     if (ret <= 0) {
         LELOGW("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]", ret);
         return ret;
