@@ -25,10 +25,10 @@
 // #define LELOGE(...)
 // #endif
 
-#ifdef LEPRINTF
-#undef LEPRINTF
-#define LEPRINTF(...)
-#endif
+// #ifdef LEPRINTF
+// #undef LEPRINTF
+// #define LEPRINTF(...)
+// #endif
 #endif
 
 // #include <stdio.h>
@@ -96,7 +96,10 @@ static int ginCurrCvtType;
 
 static IO lf_s1GetQueries_input(lua_State *L, const uint8_t *input, int inputLen) {
     // lua_pushlstring(L, (char *)input, inputLen);
-    IO io = { 0, 4 };
+    lua_Integer tmp = 0;
+    memcpy(&tmp, input, sizeof(lua_Integer));
+    lua_pushinteger(L, tmp);
+    IO io = { 1, 4 };
     return io;
 }
 static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
@@ -127,17 +130,20 @@ static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
         size = 0;
     }
 
-    /*
-    for (i = 0; i < queries->queriesCountsLen; i += 2) {
-        LEPRINTF("[SENGINE]_s1GetQueries_[%d]_cmd: ", i/2);
-        memcpy(&currLen, &queries->arrQueriesCounts[i], 2);
-        for (j = 0; j < currLen; j++) {
-            LEPRINTF("%02x ", queries->arrQueries[j + appendLen]);
+    // test only
+    {
+        int currLen = 0, i = 0, j = 0, appendLen = 0;
+        for (i = 0; i < queries->queriesCountsLen; i += 2) {
+            LEPRINTF("[SENGINE]_s1GetQueries_[%d]_cmd: ", i/2);
+            memcpy(&currLen, &queries->arrQueriesCounts[i], 2);
+            for (j = 0; j < currLen; j++) {
+                LEPRINTF("%02x ", queries->arrQueries[j + appendLen]);
+            }
+            appendLen += currLen;
+            LEPRINTF("\r\n");
         }
-        appendLen += currLen;
-        LEPRINTF("\r\n");
     }
-    */
+    
     return sizeof(Queries);
 }
 

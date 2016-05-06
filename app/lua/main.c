@@ -176,8 +176,12 @@ ERROR_PARAM:
 		inputParamLen = g_bufLen;
 	}
 	else if (argv[2] && strstr(argv[2], S1_GET_QUERIES)) {
-		inputParam = NULL;
-		inputParamLen = 0;
+		if (!argv[3]) {
+			goto ERROR_PARAM;
+		}
+		g_bufLen = hexStr2bytes(argv[3], g_buf, sizeof(g_buf));
+		inputParam = g_buf;
+		inputParamLen = g_bufLen;
 	}
 	else if (argv[2] && strstr(argv[2], S1_GET_VER)) {
 		inputParam = NULL;
