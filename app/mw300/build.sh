@@ -43,7 +43,8 @@ function do_copy()
 
 # version
 touch "$MAIN_PATH/sw/data.c"
-$MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
+# $MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
+$MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
 # ld
 LDFILE="mw300-xip.ld"

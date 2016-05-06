@@ -53,7 +53,8 @@ if [ "$1" = "gdb" ]; then
 fi
 
 touch "$MAIN_PATH/sw/data.c"
-$MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
+# $MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
+$MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
 pushd $PATH_SENGINE > /dev/null 2>&1
 make
