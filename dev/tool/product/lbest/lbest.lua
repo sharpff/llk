@@ -129,7 +129,6 @@ end
 
 -- 晾霸
 --{ "ctrl": { "action":0, "speaker":0, "disinfect":0,"anion":0, "dry":0, "wind":0, "light":1, "wTime":0, "hTime":0, "aTime":0 } }
-"{ \"ctrl\": { \"action\":0, \"speaker\":0, \"disinfect\":0,\"anion\":0, \"dry\":0, \"wind\":0, \"light\":0, \"wTime\":0, \"hTime\":0, \"aTime\":0 } }"
 function s1CvtStd2Pri(json)
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]

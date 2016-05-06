@@ -1340,7 +1340,7 @@ static void cbCtrlGetStatusRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, co
 static int cbCtrlCmdLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
 
     int ret = 0, encType = -1;
-    char reqCtrlCmd[128];
+    char reqCtrlCmd[MAX_BUF] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdLocalReq -s");
 
