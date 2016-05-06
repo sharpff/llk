@@ -58,6 +58,15 @@ typedef struct {
     uint16_t arrQueriesCounts[MAX_QUERY_COUNTS];
 }Queries;
 
+typedef enum {
+    QUERIETYPE_INVAIL = 0,
+    QUERIETYPE_STATE = 1,       // 1, 查询设备状态
+    QUERIETYPE_WAITCONFIG = 2,  // 2, 设备进入配置状态
+    QUERIETYPE_CONNECTING = 3,  // 3, 设备进入连接AP状态
+    QUERIETYPE_CONNECTED = 4,   // 4, 已经连接到AP，可以本地控制
+    QUERIETYPE_CLOUD = 5,       // 5, 已经正常连到云服务，可远程控制
+}QuerieType_t;
+
 extern ScriptCfg *ginScriptCfg;
 extern ScriptCfg *ginScriptCfg2;
 
@@ -66,7 +75,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
 int sengineGetStatus(char *json, int jsonLen);
 int sengineSetStatus(char *json, int jsonLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
-int sengineQuerySlave(void);
+int sengineQuerySlave(QuerieType_t type);
 int senginePollingSlave(void);
 int senginePollingRules(const char *jsonRmt, int jsonLen);
 

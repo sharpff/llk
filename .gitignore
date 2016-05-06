@@ -1,0 +1,9 @@
+*.d
+*.bin
+*.class
+*~
+Debug
+dev/hal/jni/obj
+dev/hal/jni/libs
+dev/hal/android/version.h
+dev/sw/version.h

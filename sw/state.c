@@ -1,6 +1,7 @@
 #include "leconfig.h"
 #include "state.h"
 #include "protocol.h"
+#include "sengine.h"
 #include "io.h"
 
 #ifndef LOG_STATE
@@ -126,6 +127,27 @@ static int changeState(int direction, StateContext *cntx, int idx) {
         }
     }
     ginStateId = E_STATE_NONE;
+    if(direction) {
+        switch(ginStateCntx.stateIdCurr)
+        {
+            case E_STATE_CONFIGURING:
+                sengineQuerySlave(QUERIETYPE_WAITCONFIG);
+                break;
+            case E_STATE_SNIFFER_GOT:
+            //case E_STATE_AP_CONNECTING:
+                sengineQuerySlave(QUERIETYPE_CONNECTING);
+                break;
+            case E_STATE_AP_CONNECTED:
+                sengineQuerySlave(QUERIETYPE_CONNECTED);
+                break;
+            case E_STATE_CLOUD_LINKED:
+            //case E_STATE_CLOUD_AUTHED:
+                sengineQuerySlave(QUERIETYPE_CLOUD);
+                break;
+            default:
+                break;
+        }
+    }
     return ret;
 }
 
@@ -156,7 +178,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
         TIMEOUT_END
 
         TIMEOUT_BEGIN(300)
-        sengineQuerySlave();
+        sengineQuerySlave(QUERIETYPE_STATE);
         TIMEOUT_END
 
         TIMEOUT_BEGIN(100)
