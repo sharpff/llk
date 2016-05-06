@@ -36,7 +36,11 @@ extern "C"
 #define MAX_IA_BUF 64
 #define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
 
-
+enum {
+	WHATKIND_MAIN_DEV_RESET = 1,
+	WHATKIND_MAIN_DEV_DATA,
+	WHATKIND_SUB_DEV,
+};
 /*
  * script info
  */

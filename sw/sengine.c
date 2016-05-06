@@ -790,7 +790,7 @@ int senginePollingSlave(void) {
             continue;
         }
         switch (whatKind) {
-            case 1: {
+            case WHATKIND_MAIN_DEV_RESET: {
                     extern int resetConfigData(void);
                     ret = resetConfigData();
                     LELOG("resetConfigData [%d]", ret);
@@ -799,7 +799,7 @@ int senginePollingSlave(void) {
                     }
                 }
                 break;
-            case 2: {
+            case WHATKIND_MAIN_DEV_DATA: {
                     extern int lelinkNwPostCmdExt(const void *node);
                     int len = 0;
                     len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
