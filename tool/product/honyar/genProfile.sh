@@ -1,7 +1,7 @@
 #!/bin/bash
 MAIN_PATH="../.."
 $MAIN_PATH/lelinkTool.py \
-    -a 10.182.192.19 \
+    -a 115.182.63.167 \
     -p 9002 \
     -u 10000100101000010007 \
     -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrTxpVJHzbLoxSk7CzBaeyg4Czz7rANfqZUu7bD57C4fGbmfdaMEG4VfuMxWYw08OLW/f735FwVpP89YPOcjrRW/o/p76UfIS84KZCkMkFi/2InfNTm+ep2tuOlCpq7C6TTdX04MJsTpfbERqKnfuSBRbg12OEtpmRmcTmYqjosQIDAQAB \
