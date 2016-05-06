@@ -132,6 +132,19 @@ int doUnpack(void *ctx,
             }
             // cmdHeader = (CmdHeader *)(tmpBuf + sizeof(CommonHeader));
             PACK_GET_CMD_HEADER(cmdHeader, tmpBuf);
+
+            // check for invalid unpack
+            if (LELINK_CMD_CTRL_REQ == cmdHeader->cmdId) {
+                if (isCloudAuthed()) {
+                    if (ENC_TYPE_STRATEGY_11 == commonHeader->encType) {
+                        return LELINK_ERR_LOGIC_ERR1;
+                    }
+                } else {
+                    if (ENC_TYPE_STRATEGY_13 == commonHeader->encType) {
+                        return LELINK_ERR_LOGIC_ERR2;
+                    }
+                }
+            }
             // payloadHeader = (PayloadHeader *)(tmpBuf + sizeof(CommonHeader) + sizeof(CmdHeader));
             PACK_GET_PAYLOAD_HEADER(payloadHeader, tmpBuf, sizeof(CmdHeader));
             payloadLen = encLen - sizeof(CmdHeader);
