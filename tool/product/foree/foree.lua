@@ -214,7 +214,9 @@ function s1GetValidKind(data)
 	local WHATKIND_MAIN_DEV_RESET = 1
 	local WHATKIND_MAIN_DEV_DATA = 2
 	local WHATKIND_SUB_DEV_RESET = 10
-	local WHATKIND_SUB_DEV_DATA = 10
+	local WHATKIND_SUB_DEV_DATA = 11
+	local WHATKIND_SUB_DEV_JOIN = 12
+	local WHATKIND_SUB_DEV_LEAVE = 13
 
 	-- test only
 	cvtType = 1
@@ -255,7 +257,7 @@ function s1GetValidKind(data)
 			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x11, 0x82)) then
 				-- (IND) new device joining, rep is 0xAA, 0x00, 0x11, 0x82
 				print ("s1GetValidKind - sub devices - new device joining\r\n")
-				ret = WHATKIND_SUB_DEV_DATA
+				ret = WHATKIND_SUB_DEV_JOIN
 				break
 			end
 
@@ -273,7 +275,7 @@ function s1GetValidKind(data)
 			return WHATKIND_MAIN_DEV_DATA
 		end
 	end
-	-- print '0'
+	print ("RET is "..ret.."\r\n")
 	-- invalid kind
 	return ret
 end
