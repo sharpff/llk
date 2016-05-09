@@ -60,7 +60,27 @@ function s1GetCvtType()
 			"id":1, 
 			"baud":"115200-8N1"
 		}
-    	]
+    	],
+    "gpio":[
+	        {
+	            "id":1,
+	            "dir":0,
+	            "mode":2,
+	            "type":1,
+	            "longTime":10,
+	            "shortTime":3
+	        },
+	        {
+	            "id":2,
+	            "dir":1,
+	            "mode":0,
+	            "state":1,
+	            "blink":2,
+	            "type":1,
+	            "longTime":10,
+	            "shortTime":1
+	        }
+	    ]
 	}
     ]]
 	local delay = 5
@@ -68,68 +88,149 @@ function s1GetCvtType()
 	return string.len(str), str, delay
 end
 
+-- function s1HasSubDevs() 
+-- 	return 1
+-- end
+
 --[[ MUST
-	查询设备状态。
-	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
+	
 ]]
 function s1GetQueries(queryType)
 	local cvtType = s1apiGetCurrCvtType()
 	local query = ''
 	local queryCountLen = ''
 
-	print ("s1GetQueries cvtType is " .. cvtType .. "\r\n")
+	-- test only
+	cvtType = 1
 
-	-- UART
-	if 0x01 == cvtType then
-		print ("abcccc" .. cvtType .. "\r\n")
-		query = string.char( 0xAA, 0x00, 0x02, 0x01, 0x10, 0x9D )
-		queryCountLen = string.char( 0x06, 0x00 )
+	print ("s1GetQueries cvtType is " .. cvtType .. ", queryType is " .. queryType .."\r\n")
+
+	for i = 1, 1 do
+		-- UART
+		if 0x01 == cvtType then
+
+			-- for status indication
+			if 0 ~= (queryType & 0x000000FF) then
+				print ("status indication \r\n")
+				break
+			end
+
+			-- START for status of itself
+			if 1 == ((queryType & 0x0000FF00) >> 8) then
+				-- reset itself, is as the same as BEFORE fw script
+				print ("for status of itself - reset itself\r\n")
+				break
+			end
+			-- ********************** this will be trigger by ctrl cmd ***********************
+			-- if 2 == ((queryType & 0x0000FF00) >> 8) then
+			-- 	-- reset gw
+			-- 	query = string.char(0xAA, 0x00, 0x04, 0x02, 0x00, 0x00, 0x00, 0xDB)
+			-- 	queryCountLen = string.char(0x08, 0x00)
+			-- 	print ("for status of itself - reset gw\r\n")
+			-- 	break
+			-- end
+			-- if 3 == ((queryType & 0x0000FF00) >> 8) then
+			-- 	-- classical join
+			-- 	query = string.char(0xAA, 0x00, 0x0D, 0x02, 0x04, 0x01, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7B)
+			-- 	queryCountLen = string.char(0x11, 0x00)
+			-- 	print ("for status of itself - classical join\r\n")
+			-- 	break
+			-- end
+			-- END for status of itself
+
+
+			-- if a == 1 then
+			-- 	do()
+			-- elseif a == 2 then
+			-- 	do()
+			-- elseif a == 3 then
+			-- 	do()
+			-- else
+			-- 	do()
+			-- end
+		end
+
+		-- GPIO
+		if 0x02 == cvtType then
+
+		end
 	end
-	-- GPIO
 
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
 
 --[[ MUST
-	 
+
 ]]
+
 function s1GetValidKind(data)
 	local cvtType = s1apiGetCurrCvtType()
+	local ret = 0
+	local dataTbl = nil
+	local WHATKIND_MAIN_DEV_RESET = 1
+	local WHATKIND_MAIN_DEV_DATA = 2
+	local WHATKIND_SUB_DEV = 10
 
-	if 0x01 == cvtType then
+	-- test only
+	cvtType = 1
 
-		-- print ('s1GetValidKind return => '..cvtType..'\r\n')
-		local reset = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00)
+	for i = 1, 1 do
+		-- UART
+		if 0x01 == cvtType then
+			dataTbl = stringToTable(data)
+			-- START for status of sub devices
+			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x05, 0x82, 0x00, 0x00, 0x00, 0x00, 0xB1, 0xFF, 0xFF)) then
+				-- (RSP) reset rsp , rep is AA 00 04 02 00 00 00 DB
+				print ("s1GetValidKind - sub devices - reset rsp\r\n")
+				ret = WHATKIND_SUB_DEV
+				break
+			end
 
-		-- print (data, #data)
+			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x05, 0x82, 0x04, 0x01, 0x41, 0x00, 0xCC)) then
+				-- (RSP) join permition rsp , rep is AA 00 0D 02 04 01 41 00 00 00 00 00 00 00 00 00 7B
+				print ("s1GetValidKind - sub devices - join permition rsp\r\n")
+				ret = WHATKIND_SUB_DEV
+				break
+			end
 
-		--[[ MUST
-			wifi reset cmd
-		]]
-		-- print ('start\r\n')
-		-- tmpTbl = stringToTable(data)
-		-- LOGTBL(tmpTbl)
-		-- tmpTbl = stringToTable(reset)
-		-- LOGTBL(tmpTbl)
-		-- print (string.find(data, reset))
-		-- print ('\r\n')
-		
-		if nil ~= string.find(data, reset) then
-			--print '1'
-			return 1
+			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x13, 0x81, 0x10)) then
+				-- (RSP) list rsp , rep is AA 00 02 01 10 9D
+				print ("s1GetValidKind - sub devices - list rsp\r\n")
+				ret = WHATKIND_SUB_DEV
+				break
+			end
+
+			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x81 and dataTbl[5] == 0x00 then
+				-- (RSP) device info rsp , rep is AA 00 04 01 00 00 00 E1
+				print ("s1GetValidKind - sub devices - device info rsp "..#dataTbl.."\r\n")
+				ret = WHATKIND_SUB_DEV
+				break
+			end
+
+			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x11, 0x82)) then
+				-- (IND) new device joining, rep is 0xAA, 0x00, 0x11, 0x82
+				print ("s1GetValidKind - sub devices - new device joining\r\n")
+				ret = WHATKIND_SUB_DEV
+				break
+			end
+
+			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x90 then
+				-- (IND) sensor action ind
+				print ("s1GetValidKind - sub devices - sensor action ind "..#dataTbl.."\r\n")
+				ret = WHATKIND_SUB_DEV
+				break
+			end
+
 		end
 
-		--[[ MUST
-			valid LOW LEVEL status cmd
-		]]
-		if 9 == #data then
-			-- print '2'
-			return 2
+		-- GPIO
+		if 0x02 == cvtType then
+			return WHATKIND_MAIN_DEV_DATA
 		end
 	end
 	-- print '0'
 	-- invalid kind
-	return 0
+	return ret
 end
 
 
@@ -139,31 +240,59 @@ end
 -- s1apiGetMacFromIdx()
 -- s1apiGetIdxFromMac()
 
+-- \{\"ctrl\":\{\"reset\":1\}\}
+-- \{\"ctrl\":\{\"cjoin\":1\}\}
+-- \{\"ctrl\":\{\"subDevGetList\":1\}\}
+-- \{\"ctrl\":\{\"subDevGetList\":1\}\}
 
 --[[ MUST
 ]]
--- {"ctrl":{"action":1}}
 function s1CvtStd2Pri(json)
 	local cvtType = s1apiGetCurrCvtType()
 	-- print ('s1CvtStd2Pri return => '..cvtType..'\r\n')
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]
-	local cmdTbl = { 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 }
+	local cmdTbl = nil
 	local dataStr = ""
 
-	-- 打开
-	if (ctrl["action"] == 1) then
-		cmdTbl[2] = 0x02
-	-- 关闭
-	elseif (ctrl["action"] == 2) then
-		cmdTbl[2] = 0x01
-	-- 暂停
-	elseif (ctrl["action"] == 3) then
-		cmdTbl[2] = 0x03
-	-- 测量
-	else
-		cmdTbl[2] = 0x05
+	-- test only
+	cvtType = 1
+
+	for i = 1, 1 do
+		-- UART
+		if 0x01 == cvtType then
+			if (ctrl["reset"] == 1) then
+				cmdTbl = {0xAA, 0x00, 0x04, 0x02, 0x00, 0x00, 0x00, 0xDB}
+				break
+			end
+			if (ctrl["cjoin"] == 1) then
+				cmdTbl = {0xAA, 0x00, 0x0D, 0x02, 0x04, 0x01, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7B}
+ 				break
+			end
+			if (ctrl["subDevGetList"] == 1) then
+				cmdTbl = {0xAA, 0x00, 0x02, 0x01, 0x10, 0x9D}
+				break
+			end
+		end
+
+		-- GPIO
+		if 0x02 == cvtType then
+		end
 	end
+
+	-- -- 打开
+	-- if (ctrl["action"] == 1) then
+	-- 	cmdTbl[2] = 0x02
+	-- -- 关闭
+	-- elseif (ctrl["action"] == 2) then
+	-- 	cmdTbl[2] = 0x01
+	-- -- 暂停
+	-- elseif (ctrl["action"] == 3) then
+	-- 	cmdTbl[2] = 0x03
+	-- -- 测量
+	-- else
+	-- 	cmdTbl[2] = 0x05
+	-- end
 	-- LOGTBL(cmdTbl)
 
 	-- u have to make the bin as string for the return value
