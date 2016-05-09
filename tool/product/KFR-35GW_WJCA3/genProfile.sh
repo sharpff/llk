@@ -3,7 +3,7 @@ MAIN_PATH="../.."
 
 # 配置服务器及设备认证
 $MAIN_PATH/lelinkTool.py \
-    -a 115.182.94.173 \
+    -a 115.182.63.167 \
     -p 9002 \
     -u 10000100111000810008 \
     -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCH1BhSuBWnfUGxeVHIFvZlPRXU4NtlCoi3sNi21p5igwTcI2tpqwokluxTLZKKi/DOFqmUfYKNBrVCLDotOf72qneyjR4XjhX51DvJA5RLbSGeYNqjcxFybhz0XBGCQZdski9Zu7ZnucfBytbUp1hFN4tPuvn44803LdKyTfmgXwIDAQAB \
