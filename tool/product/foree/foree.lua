@@ -35,12 +35,46 @@ function LOGTBL(tblObj)
 	print ('LOGTBL '..str..'\r\n')
 end
 
+function crcByte(data)
+	local byte = 0
+	for i = 1, 8 do
+		if ((byte ~ data) & 0x01) then
+			byte = byte ~ 0x18
+			byte = byte >> 1
+			byte = byte | 0x80
+		else
+			byte = byte >> 1
+		end
+		data = data >> 1
+	end
+	return byte
+end
+
+function crc8(data)
+	ret = 0x00
+	-- # data = struct.unpack('i', data)
+	-- for byte in data:
+	for _, byte in ipairs(data) do
+		-- byte = ord(byte)
+		local str = string.format('%02x ', byte)
+		print ("byte "..str.."\r\n")
+		ret = (crcByte(ret ~ byte))
+	end
+	return ret
+end
+
 --[[ MUST
 	0. UART json <-> bin
 	1. PIPE/IPC json <-> json
 ]]
 function s1GetVer()
 	-- body
+	-- local cmdTbl = {0xAA, 0x00, 0x04, 0x02, 0x00, 0x00, 0x00, 0xDB}
+	local cmdTbl = {0xAA, 0x00, 0x04, 0x02, 0x00, 0x00, 0x00}
+	local ret = crc8(cmdTbl)
+	local str = string.format('%02x ', ret)
+	print ("crc8 "..str.."\r\n")
+
 	local str = '1.0'
 	return string.len(str), str
 end
@@ -261,41 +295,35 @@ function s1CvtStd2Pri(json)
 	for i = 1, 1 do
 		-- UART
 		if 0x01 == cvtType then
-			if (ctrl["reset"] == 1) then
+			if ctrl["reset"] == 1 then
 				cmdTbl = {0xAA, 0x00, 0x04, 0x02, 0x00, 0x00, 0x00, 0xDB}
 				break
 			end
 
-			if (ctrl["cjoin"] == 1) then
+			if ctrl["cjoin"] == 1 then
 				cmdTbl = {0xAA, 0x00, 0x0D, 0x02, 0x04, 0x01, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7B}
  				break
 			end
 
-			if (ctrl["subDevGetList"] == 1) then
+			if ctrl["subDevGetList"] == 1 then
 				cmdTbl = {0xAA, 0x00, 0x02, 0x01, 0x10, 0x9D}
 				break
 			end
+
+			-- if ctrl["subDevGetInfo"] then
+			-- 	local idx = s1apiGetIdxFromMac(ctrl["subDevGetInfo"])
+			-- 	if 0 <= idx then
+			-- 		cmdTbl = {0xAA, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0xE1}
+			-- 		cmdTbl[6] = idx
+			-- 		cmdTbl[8] = 
+			-- 	break
+			-- end
 		end
 
 		-- GPIO
 		if 0x02 == cvtType then
 		end
 	end
-
-	-- -- 打开
-	-- if (ctrl["action"] == 1) then
-	-- 	cmdTbl[2] = 0x02
-	-- -- 关闭
-	-- elseif (ctrl["action"] == 2) then
-	-- 	cmdTbl[2] = 0x01
-	-- -- 暂停
-	-- elseif (ctrl["action"] == 3) then
-	-- 	cmdTbl[2] = 0x03
-	-- -- 测量
-	-- else
-	-- 	cmdTbl[2] = 0x05
-	-- end
-	-- LOGTBL(cmdTbl)
 
 	-- u have to make the bin as string for the return value
 	dataStr = tableToString(cmdTbl)
