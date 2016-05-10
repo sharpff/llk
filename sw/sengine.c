@@ -25,17 +25,17 @@
 // #define LELOGE(...)
 // #endif
 
-// #ifdef LEPRINTF
-// #undef LEPRINTF
-// #define LEPRINTF(...)
-// #endif
+#ifdef LEPRINTF
+#undef LEPRINTF
+#define LEPRINTF(...)
+#endif
 #endif
 
 // #include <stdio.h>
 // #include <stdlib.h>
 // #include <string.h>
 
-// #define MAX_STATUS 64
+#define MAX_SDEV_NUM 64
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
@@ -88,6 +88,13 @@ typedef struct {
     // char buf[1024*10];
 }IA_CACHE;
 
+typedef struct {
+    char mac[32];
+    uint8_t status[MAX_BUF];
+    int idx;
+}SDevCtx;
+
+static SDevCtx *ginSDevArray = NULL;
 ScriptCfg *ginScriptCfg;
 ScriptCfg *ginScriptCfg2;
 static uint32_t ginDelayMS;
@@ -173,6 +180,18 @@ static int lf_s1GetCvtType(lua_State *L, uint8_t *output, int outputLen) {
     // }
     // LEPRINTF("\r\n");
     return size;
+}
+
+static IO lf_s1HasSubDevs_input(lua_State *L, const uint8_t *input, int inputLen) {
+    // lua_pushlstring(L, (char *)input, inputLen);
+    IO io = { 0, 1 };
+    return io;
+}
+static int lf_s1HasSubDevs(lua_State *L, uint8_t *output, int outputLen) {
+    // int i = 0;
+    *((int*)output) = lua_tointeger(L, -1);
+    LELOG("[SENGINE] s1HasSubDevs [%d]", *((int*)output));
+    return sizeof(int);
 }
 
 static IO lf_s1GetValidKind_input(lua_State *L, const uint8_t *input, int inputLen) {
@@ -423,6 +442,7 @@ static int lf_s2GetSelfCtrlCmd(lua_State *L, uint8_t *output, int outputLen) {
 }
 static FUNC_LIST func_list[] = {
     { S1_GET_CVTTYPE, { lf_s1GetCvtType_input, lf_s1GetCvtType } },
+    { S1_HAS_SUBDEVS, { lf_s1HasSubDevs_input, lf_s1HasSubDevs } },
     { S1_GET_QUERIES, { lf_s1GetQueries_input, lf_s1GetQueries } },
     { S1_STD2PRI, { lf_s1CvtStd2Pri_input, lf_s1CvtStd2Pri } },
     { S1_PRI2STD, { lf_s1CvtPri2Std_input, lf_s1CvtPri2Std } },
@@ -480,7 +500,15 @@ int sengineInit(void) {
         LELOG("ginScriptCfg crc8 FAILED");
         return -2;
     }
-
+    if (sengineHasDevs()) {
+        ginSDevArray = (SDevCtx *)halCalloc(MAX_SDEV_NUM, sizeof(SDevCtx));
+        if (NULL == ginSDevArray) {
+            LELOG("ginSDevArray NULL");
+            return -3;
+        }
+        LELOG("ginSDevArray size[%d]", MAX_SDEV_NUM * sizeof(SDevCtx));
+    }
+    LELOG("sengineInit Done");
     return 0;
 }
 
@@ -558,6 +586,17 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
 
     lua_close(L);
     return ret;
+}
+
+int sengineHasDevs(void) {
+    int ret = 0, hasDevs = 0;
+    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_HAS_SUBDEVS,
+            NULL, 0, (uint8_t *)&hasDevs, sizeof(hasDevs));
+    if (ret <= 0) {
+        LELOGW("sengineGetStatus sengineCall("S1_HAS_SUBDEVS") [%d]", ret);
+        return 0;
+    }
+    return hasDevs;
 }
 
 int s1apiGetCurrCvtType(lua_State *L) {
@@ -741,7 +780,7 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     return ret;
 }
 
-int sengineQuerySlave(void)
+int sengineQuerySlave(QuerieType_t type)
 {
     Queries queries;
     int ret = 0, i = 0;
@@ -749,7 +788,7 @@ int sengineQuerySlave(void)
 
     FOR_EACH_IO_HDL_START;
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
-                NULL, 0, (uint8_t *)&queries, sizeof(queries));
+                (uint8_t *)&type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
         if (ret <= 0) {
             LELOGW("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]", ret);
             continue;
@@ -777,14 +816,14 @@ int senginePollingSlave(void) {
     FOR_EACH_IO_HDL_START;
         ret = ioRead(ioHdl[x].ioType, ioHdl[x].hdl, bin, sizeof(bin));
         if (ret <= 0) {
-            LELOGW("senginePollingSlave ioRead [%d]", ret);
+            // LELOGW("senginePollingSlave ioRead [%d]", ret);
             continue;
         }
         size = ret;
 
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                 bin, size, (uint8_t *)&whatKind, sizeof(whatKind));
-        // LELOGE("sengineCall ret = %d, what = %d", ret, whatKind);
+        LELOG("sengineCall ret size [%d], whatKind [%d]", ret, whatKind);
         if (0 >= ret) {
             LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
             continue;
@@ -829,13 +868,31 @@ int senginePollingSlave(void) {
                     }
                 }
                 break;
+            // for sub devs
+            case WHATKIND_SUB_DEV_RESET: {
+                    LELOG("WHATKIND_SUB_DEV_RESET");
+                }
+                break;
+            case WHATKIND_SUB_DEV_DATA: {
+                    LELOG("WHATKIND_SUB_DEV_DATA");
+                }
+                break;
+            case WHATKIND_SUB_DEV_JOIN: {
+                    LELOG("WHATKIND_SUB_DEV_JOIN");
+                }
+                break;
+            case WHATKIND_SUB_DEV_LEAVE: {
+                    LELOG("WHATKIND_SUB_DEV_LEAVE");
+                }
+                break;
+
             default:
                 LELOGW("Unknow whatKind = %d", whatKind);
                 continue;
         }
     FOR_EACH_IO_HDL_END;
     
-    return 1;
+    return 0;
 }
 /*
  * 0. 
@@ -1005,7 +1062,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     PrivateCfg privCfg;
     // char strBeingReserved[64] = {0};
 
-    LELOG("senginePollingRules -s ");
+    // LELOG("senginePollingRules -s ");
     ret = lelinkStorageReadPrivateCfg(&privCfg);
     if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
         LELOGW("senginePollingRules lelinkStorageReadPrivateCfg csum FAILED");
@@ -1014,7 +1071,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     // LELOG("sengineFindRule [%d][%d]", privCfg.data.iaCfg.num);
 
     if (0 >= privCfg.data.iaCfg.num || MAX_IA < privCfg.data.iaCfg.num) {
-        LELOGW("senginePollingRules rules num[%d]", privCfg.data.iaCfg.num);
+        // LELOGW("senginePollingRules rules num[%d]", privCfg.data.iaCfg.num);
         return 0;
     }
     LELOGW("senginePollingRules rules num[%d] ", privCfg.data.iaCfg.num);

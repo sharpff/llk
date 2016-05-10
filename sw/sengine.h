@@ -16,6 +16,7 @@ extern "C"
  * fw script
  */
 #define S1_GET_CVTTYPE "s1GetCvtType"
+#define S1_HAS_SUBDEVS "s1HasSubDevs"
 #define S1_GET_QUERIES "s1GetQueries"
 #define S1_STD2PRI "s1CvtStd2Pri"
 #define S1_PRI2STD "s1CvtPri2Std"
@@ -44,6 +45,17 @@ enum {
     WHATKIND_SUB_DEV_JOIN,
     WHATKIND_SUB_DEV_LEAVE,
 };
+
+typedef enum {
+    QUERIETYPE_INVAIL = 0,
+    QUERIETYPE_STATE = 1,       // 1, 查询设备状态
+    QUERIETYPE_WAITCONFIG = 2,  // 2, 设备进入配置状态
+    QUERIETYPE_CONNECTING = 3,  // 3, 设备进入连接AP状态
+    QUERIETYPE_CONNECTED = 4,   // 4, 已经连接到AP，可以本地控制
+    QUERIETYPE_CLOUD = 5,       // 5, 已经正常连到云服务，可远程控制
+    // QUERIETYPE_SUBDEV_LIST = (1 << 16) & 0xFFFF0000, // 0xFFFF0001, query sub dev state
+    // QUERIETYPE_SUBDEV_INFO = (2 << 16) & 0xFFFF0000, // 0xFFFF0001, query sub dev state
+}QuerieType_t;
 /*
  * script info
  */
@@ -70,10 +82,11 @@ extern ScriptCfg *ginScriptCfg2;
 
 int sengineInit(void);
 int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen);
+int sengineHasDevs(void);
 int sengineGetStatus(char *json, int jsonLen);
 int sengineSetStatus(char *json, int jsonLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
-int sengineQuerySlave(void);
+int sengineQuerySlave(QuerieType_t type);
 int senginePollingSlave(void);
 int senginePollingRules(const char *jsonRmt, int jsonLen);
 

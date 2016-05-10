@@ -204,7 +204,7 @@ typedef unsigned int uint32_t;
 #endif
 
 
-// #define LOG_SENGINE
+#define LOG_SENGINE
 // #define LOG_IO
 #define LOG_PROTOCOL
 #define LOG_STATE

@@ -51,7 +51,7 @@ function fastCRC(lastCRC, newByte)
 	lastCRC = lastCRC ~ crcTbl2[idx + 1]
 	-- local stridx = string.format('%02x ', idx)
 	-- local strLastCRC = string.format('%02x ', lastCRC)
-	-- print ("fastCRC int is "..stridx.." "..strLastCRC.."\r\n")
+	-- print ("[LUA] fastCRC int is "..stridx.." "..strLastCRC.."\r\n")
 	idx = lastCRC
 	idx = idx ~ newByte
 	idx = idx & 0x0F
@@ -70,10 +70,10 @@ function crc8(data)
 	for _, byte in ipairs(data) do
 		-- byte = ord(byte)
 		local str = string.format('%02x ', byte)
-		-- print ("byte "..str.."\r\n")
+		-- print ("[LUA] byte "..str.."\r\n")
 		pec = (fastCRC(pec, byte))
 		-- str = string.format('%02x ', pec)
-		-- print ("fastCRC "..str.."\r\n")
+		-- print ("[LUA] fastCRC "..str.."\r\n")
 	end
 	return pec
 end
@@ -85,7 +85,7 @@ function s1GetVer()
 	-- local cmdTbl = {0xAA, 0x00, 0x04, 0x02, 0x00, 0x00, 0x00}
 	-- local ret = crc8(cmdTbl)
 	-- local str = string.format('%02x ', ret)
-	-- print ("crc8 "..str.."\r\n")
+	-- print ("[LUA] crc8 "..str.."\r\n")
 
 	-- body
 	local str = '1.0'
@@ -133,9 +133,9 @@ function s1GetCvtType()
 	return string.len(str), str, delay
 end
 
--- function s1HasSubDevs() 
--- 	return 1
--- end
+function s1HasSubDevs()
+	return 1
+end
 
 --[[ EXTERNAL
 	s1GetQueries
@@ -144,55 +144,41 @@ function s1GetQueries(queryType)
 	local cvtType = s1apiGetCurrCvtType()
 	local query = ''
 	local queryCountLen = ''
-
+	local tmpType = 0
 	-- test only
 	cvtType = 1
 
-	print ("s1GetQueries cvtType is " .. cvtType .. ", queryType is " .. queryType .."\r\n")
+	-- print ("[LUA] s1GetQueries cvtType is " .. cvtType .. ", queryType is " .. queryType .."\r\n")
 
 	for i = 1, 1 do
 		-- UART
 		if 0x01 == cvtType then
 
-			-- for status indication
-			if 0 ~= (queryType & 0x000000FF) then
-				print ("status indication \r\n")
+			-- status for itself
+			tmpType = (queryType & 0x0000FFFF)
+			if 0 ~= tmpType then
+				-- print ("[LUA] status for itself \r\n")
+				-- if tmpType == 1 then
+				-- 	print ("[LUA] tmpType is "..tmpType.."\r\n")
+				-- elseif tmpType == 2 then
+				-- 	print ("[LUA] tmpType is "..tmpType.."\r\n")
+				-- end
 				break
 			end
 
-			-- START for status of itself
-			if 1 == ((queryType & 0x0000FF00) >> 8) then
-				-- reset itself, is as the same as BEFORE fw script
-				print ("for status of itself - reset itself\r\n")
+			-- status for sub devs
+			tmpType = ((queryType & 0xFFFF0000) >> 16)
+			if 0 ~= tmpType then
+				print ("[LUA] status for sub devs\r\n")
+				-- if tmpType == 1 then
+				-- 	print ("[LUA] tmpType is "..tmpType.."\r\n")
+				-- elseif tmpType == 2 then
+				-- 	print ("[LUA] tmpType is "..tmpType.."\r\n")
+				-- end
 				break
 			end
-			-- ********************** this will be trigger by ctrl cmd ***********************
-			-- if 2 == ((queryType & 0x0000FF00) >> 8) then
-			-- 	-- reset gw
-			-- 	query = string.char(0xAA, 0x00, 0x04, 0x02, 0x00, 0x00, 0x00, 0xDB)
-			-- 	queryCountLen = string.char(0x08, 0x00)
-			-- 	print ("for status of itself - reset gw\r\n")
-			-- 	break
-			-- end
-			-- if 3 == ((queryType & 0x0000FF00) >> 8) then
-			-- 	-- classical join
-			-- 	query = string.char(0xAA, 0x00, 0x0D, 0x02, 0x04, 0x01, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7B)
-			-- 	queryCountLen = string.char(0x11, 0x00)
-			-- 	print ("for status of itself - classical join\r\n")
-			-- 	break
-			-- end
-			-- END for status of itself
 
 
-			-- if a == 1 then
-			-- 	do()
-			-- elseif a == 2 then
-			-- 	do()
-			-- elseif a == 3 then
-			-- 	do()
-			-- else
-			-- 	do()
-			-- end
 		end
 
 		-- GPIO
@@ -228,42 +214,42 @@ function s1GetValidKind(data)
 			-- START for status of sub devices
 			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x05, 0x82, 0x00, 0x00, 0x00, 0x00, 0xB1, 0xFF, 0xFF)) then
 				-- (RSP) reset FAC rsp , rep is AA 00 04 02 00 00 00 DB
-				print ("s1GetValidKind - sub devices - reset rsp\r\n")
+				print ("[LUA] s1GetValidKind - sub devices - reset rsp\r\n")
 				ret = WHATKIND_SUB_DEV_RESET
 				break
 			end
 
 			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x05, 0x82, 0x04, 0x01, 0x41, 0x00, 0xCC)) then
 				-- (RSP) join permition rsp , rep is AA 00 0D 02 04 01 41 00 00 00 00 00 00 00 00 00 7B
-				print ("s1GetValidKind - sub devices - join permition rsp\r\n")
+				print ("[LUA] s1GetValidKind - sub devices - join permition rsp\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
 			end
 
 			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x13, 0x81, 0x10)) then
 				-- (RSP) list rsp , rep is AA 00 02 01 10 9D
-				print ("s1GetValidKind - sub devices - list rsp\r\n")
+				print ("[LUA] s1GetValidKind - sub devices - list rsp\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
 			end
 
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x81 and dataTbl[5] == 0x00 then
 				-- (RSP) device info rsp , rep is AA 00 04 01 00 00 00 E1
-				print ("s1GetValidKind - sub devices - device info rsp "..#dataTbl.."\r\n")
+				print ("[LUA] s1GetValidKind - sub devices - device info rsp "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
 			end
 
 			if nil ~= string.find(data, string.char(0xAA, 0x00, 0x11, 0x82)) then
 				-- (IND) new device joining, rep is 0xAA, 0x00, 0x11, 0x82
-				print ("s1GetValidKind - sub devices - new device joining\r\n")
+				print ("[LUA] s1GetValidKind - sub devices - new device joining\r\n")
 				ret = WHATKIND_SUB_DEV_JOIN
 				break
 			end
 
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x90 then
 				-- (IND) sensor action ind
-				print ("s1GetValidKind - sub devices - sensor action ind "..#dataTbl.."\r\n")
+				print ("[LUA] s1GetValidKind - sub devices - sensor action ind "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
 			end
@@ -275,7 +261,7 @@ function s1GetValidKind(data)
 			return WHATKIND_MAIN_DEV_DATA
 		end
 	end
-	print ("RET is "..ret.."\r\n")
+	print ("[LUA] whatKind is "..ret.."\r\n")
 	-- invalid kind
 	return ret
 end
@@ -375,7 +361,7 @@ function s1CvtPri2Std(bin)
 			-- START for status of sub devices
 			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x05, 0x82, 0x04, 0x01, 0x41, 0x00, 0xCC)) then
 				-- (RSP) join permition rsp , rep is AA 00 0D 02 04 01 41 00 00 00 00 00 00 00 00 00 7B
-				print ("s1CvtPri2Std - sub devices - join permition rsp\r\n")
+				print ("[LUA] s1CvtPri2Std - sub devices - join permition rsp\r\n")
 				strMain = string.format('{"cjoin":%d}', 2)
 				break
 			end
@@ -383,7 +369,7 @@ function s1CvtPri2Std(bin)
 			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x13, 0x81, 0x10)) then
 				-- (RSP) list rsp , rep is AA 00 02 01 10 9D
 				-- {"subDevGetList":[0,1,2]}
-				print ("s1CvtPri2Std - sub devices - list rsp\r\n")
+				print ("[LUA] s1CvtPri2Std - sub devices - list rsp\r\n")
 				local num = 0
 				local sDevList = {}
 				for idx = 7, 22 do
@@ -414,7 +400,7 @@ function s1CvtPri2Std(bin)
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x81 and dataTbl[5] == 0x00 then
 				-- (RSP) device info rsp , rep is AA 00 04 01 00 00 00 E1
 				-- {"subDevGetInfo":2,"sDev":{"pid":"0401","ept":[["0000",1],["0000",2],["0000",3]],"mac":"7409e17e3376af60"}}
-				print ("s1CvtPri2Std - sub devices - device info rsp "..#dataTbl.."\r\n")
+				print ("[LUA] s1CvtPri2Std - sub devices - device info rsp "..#dataTbl.."\r\n")
 				local strMac = string.format("%02x%02x%02x%02x%02x%02x%02x%02x", dataTbl[9], dataTbl[10], dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16])
 				local strProId = string.format("%02x%02x", dataTbl[17], dataTbl[18])
 				local devNumIdx = 26
@@ -456,7 +442,7 @@ function s1CvtPri2Std(bin)
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x90 then
 				-- (IND) sensor action ind
 				-- {"sensor":1,"sDev":{"pid":"0401","ept":[["0701",1]],"mac":"6fe34ce400a06fc0"}}
-				print ("s1CvtPri2Std - sub devices - sensor action ind "..#dataTbl.."\r\n")
+				print ("[LUA] s1CvtPri2Std - sub devices - sensor action ind "..#dataTbl.."\r\n")
 				local strProId = string.format("%02x%02x", dataTbl[5], dataTbl[6])
 				local addr = dataTbl[10]
 				-- local strMac = s1apiGetMacFromIdx(addr)

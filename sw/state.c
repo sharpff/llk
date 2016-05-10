@@ -2,6 +2,7 @@
 #include "state.h"
 #include "protocol.h"
 #include "io.h"
+#include "sengine.h"
 
 #ifndef LOG_STATE
 #ifdef LELOG
@@ -156,7 +157,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
         TIMEOUT_END
 
         TIMEOUT_BEGIN(300)
-        sengineQuerySlave();
+        sengineQuerySlave(QUERIETYPE_STATE);
         TIMEOUT_END
 
         TIMEOUT_BEGIN(100)

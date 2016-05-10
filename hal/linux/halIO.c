@@ -52,8 +52,21 @@ int halUartClose(void *dev) {
 
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     int ret = read((int)dev, buf, len);
-    APPLOG("halUartRead ret [%d]", ret);
-    return ret;
+    int tmpLen = 0;
+    if (0 < ret) {
+        do {
+            tmpLen += ret;
+            APPLOG("snap [%d]", ret);
+            ret = read((int)dev, buf + tmpLen, len - tmpLen);
+        } while (0 < ret);
+        int i = 0;
+        APPLOG("halUartRead tmpLen [%d]", tmpLen);
+        for (i = 0; i < tmpLen; i++) {
+            APPPRINTF("%02x ", buf[i]);
+        }
+        APPPRINTF("\r\n");
+    }
+    return tmpLen;
 }
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {

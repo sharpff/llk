@@ -3,6 +3,7 @@
 #include "halHeader.h"
 #include "protocol.h"
 #include "ota.h"
+#include "io.h"
 
 extern uint8_t ginBeCtrlToken[];
 static uint8_t ginOTAUrl[RSA_LEN + 128] = {0};
@@ -37,7 +38,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
     // const char *cmd3 = "{\"ctrl\":{\"pwr\":1,\"idx1\":0,\"idx2\":0,\"idx3\":0,\"idx4\":0}}";
     // const char *cmd4 = "{\"ctrl\":{\"pwr\":1,\"action\":4}}";
 #endif
-    char cmdCtrl[64] = {0};
+    char cmdCtrl[MAX_BUF] = {0};
     static int a = 0;
     // strcpy(cmdCtrl, cmd4);
 

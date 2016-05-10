@@ -175,6 +175,10 @@ ERROR_PARAM:
 		inputParam = g_buf;
 		inputParamLen = g_bufLen;
 	}
+	else if (argv[2] && strstr(argv[2], S1_HAS_SUBDEVS)) {
+		inputParam = NULL;
+		inputParamLen = 0;
+	}
 	else if (argv[2] && strstr(argv[2], S1_GET_QUERIES)) {
 		if (!argv[3]) {
 			goto ERROR_PARAM;
