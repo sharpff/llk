@@ -64,7 +64,7 @@ end
 ]]
 function getBeingReservedInfo()
 	-- CUSTOMIZATION START
-	local tblInfo = {'10000100111000810008C80E77ABCD60'}
+	local tblInfo = {'10000100011000510005C80E77ABCD60'}
 	-- CUSTOMIZATION END
 	return tblInfo
 end
@@ -160,15 +160,15 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 	-- CONDITION(s) START
 	tblConditions[retIdx] = 0
 	tblConditionsOld[retIdx] = 0
-	if nil ~= string.find(rmtUUID, '10000100111000810008C80E77ABCD60') then
+	if nil ~= string.find(rmtUUID, '10000100011000510005C80E77ABCD60') then
 		print('checking 1\r\n')
-		if 1 == tblNewStatus["switcher"] and 0 ~= cmpValInOldStatus('10000100111000810008C80E77ABCD60', tblNewStatus["switcher"], "switcher") then
+		if 1 == tblNewStatus["switcher"] and 0 ~= cmpValInOldStatus('10000100011000510005C80E77ABCD60', tblNewStatus["switcher"], "switcher") then
 			tblConditions[retIdx] = 1
 			print('ok 1\r\n')
 		end
 	else
 		print('checking 2\r\n')
-		if 0 == cmpValInOldStatus('10000100111000810008C80E77ABCD60', 1, "switcher") then
+		if 0 == cmpValInOldStatus('10000100011000510005C80E77ABCD60', 1, "switcher") then
 			tblConditionsOld[retIdx] = 1
 			print('okOld 1\r\n')
 		end
