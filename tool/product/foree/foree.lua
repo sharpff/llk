@@ -284,7 +284,7 @@ end
   ]]
 function s1CvtStd2Pri(json)
 	local cvtType = s1apiGetCurrCvtType()
-	-- print ('s1CvtStd2Pri return => '..json..'\r\n')
+	print ('[LUA] s1CvtStd2Pri return => '..json..'\r\n')
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]
 	local sDev = tb["sDev"]
@@ -334,6 +334,7 @@ function s1CvtStd2Pri(json)
 		end
 	end
 
+	LOGTBL(cmdTbl)
 	-- u have to make the bin as string for the return value
 	dataStr = tableToString(cmdTbl)
 	return string.len(dataStr), dataStr

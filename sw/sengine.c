@@ -170,7 +170,7 @@ static int lf_s1GetCvtType(lua_State *L, uint8_t *output, int outputLen) {
         size = 0;
     }
     ginDelayMS = lua_tointeger(L, -1);
-    LELOG("[SENGINE] s1GetCvtType: [%d][%s] ginDelayMS[%d]", size, output, ginDelayMS);
+    // LELOG("[SENGINE] s1GetCvtType: [%d][%s] ginDelayMS[%d]", size, output, ginDelayMS);
     if (200 < ginDelayMS) {
         ginDelayMS = 200;
     }

@@ -47,22 +47,28 @@ int halUartClose(void *dev) {
     return uart_drv_close((mdev_t *)dev);
 }
 
-#define TO_DO_FOR_HONYAR_BUG    0
+#define TO_DO_FOR_HONYAR_BUG    1
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
-    int ret = 0;
 #if TO_DO_FOR_HONYAR_BUG
     int i = 0;
 #endif
-    ret = uart_drv_read((mdev_t *)dev, buf, len);
+    int ret = uart_drv_read((mdev_t *)dev, buf, len);
+    int tmpLen = 0;
+    if (0 < ret) {
+        do {
+            tmpLen += ret;
+            APPLOG("snap [%d]", ret);
+            ret = uart_drv_read((mdev_t *)dev, buf + tmpLen, len - tmpLen);
+        } while (0 < ret);
 #if TO_DO_FOR_HONYAR_BUG
-    APPLOG("uart_drv_read [%d]", ret);
-    if (ret > 0)
-    for (i = 0; i < ret; i++) {
-        APPPRINTF("%02x ", buf[i]);
-    }
-    APPPRINTF("\r\n");
+        APPLOG("halUartRead tmpLen [%d]", tmpLen);
+        for (i = 0; i < tmpLen; i++) {
+            APPPRINTF("%02x ", buf[i]);
+        }
+        APPPRINTF("\r\n");
 #endif
-    return ret;
+    }
+    return tmpLen;
 }
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
