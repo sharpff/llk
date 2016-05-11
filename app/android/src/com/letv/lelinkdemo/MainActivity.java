@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
 	private static String mTestDevUUID = "10000100101000010007C80E77ABCD50";
 	private static String mTestTevToken = "A9B864558E3CC920DEEDD13A6B1DE4FF"; // auto set by uuid, depend on TEST_GET_STATE
-	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 1, 0, 0);
+	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 0, 0);
 	private static int mWifiConfigTimeout = (60 * 5);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;

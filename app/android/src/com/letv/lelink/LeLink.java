@@ -21,12 +21,13 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口 <br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version v1.0
+ * @version 0.1
  * 
- * @author feiguoyou@letv.com
+ * @author feiguoyou@le.com
  */
 public class LeLink {
 
+	private static final String VERSION = "0.1"; // 与以上的注释一致
 	private static LeLink sLeLink = null;
 	private static final String TAG = "LeLinkJar";
 	private static final int MAX_WAIT_CMD = 10;
@@ -63,6 +64,16 @@ public class LeLink {
 	public static String getSdkInfo() {
 		if (mSdkInfo == null) {
 			mSdkInfo = getSDKInfo();
+			if (mSdkInfo != null) {
+				JSONObject infoJson = null;
+				try {
+					infoJson = new JSONObject(mSdkInfo);
+					infoJson.put(LeCmd.K.JARVER, VERSION);
+					mSdkInfo = infoJson.toString();
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		return mSdkInfo;
 	}

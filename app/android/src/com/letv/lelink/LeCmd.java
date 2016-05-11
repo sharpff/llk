@@ -113,6 +113,8 @@ public class LeCmd {
 		public static final String VERSION = "ver";
 		public static final String URL = "url";
 		public static final String IAID = "iaId";
+		public static final String JARVER = "jarver";
+		public static final String LIBVER = "version";
 	}
 
 	public class V {
