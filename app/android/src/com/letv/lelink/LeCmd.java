@@ -55,6 +55,8 @@ public class LeCmd {
 		public static final int CLOUD_AUTH_RSP = 2;
 		public static final int CLOUD_HEARTBEAT_REQ = 1;
 		public static final int CLOUD_HEARTBEAT_RSP = 2;
+//		public static final int CLOUD_STATUS_CHANGED_REQ = 3; // 设备与云端
+//		public static final int CLOUD_STATUS_CHANGED_RSP = 4;
 
 		public static final int CLOUD_MSG_CTRL_C2R_REQ = 1;
 		public static final int CLOUD_MSG_CTRL_C2R_RSP = 2;

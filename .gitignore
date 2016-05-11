@@ -3,7 +3,7 @@
 *.class
 *~
 Debug
-dev/hal/jni/obj
-dev/hal/jni/libs
-dev/hal/android/version.h
-dev/sw/version.h
+hal/jni/obj
+hal/jni/libs
+hal/android/version.h
+sw/version.h
