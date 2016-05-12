@@ -111,6 +111,14 @@ public class LeLink {
 	}
 
 	/**
+	 * @hide
+	 */
+	public static Listener getListener()
+	{
+		return mListener;
+	}
+	
+	/**
 	 * 获得LeLink的实例接口<br>
 	 * 
 	 * @return Lelink实例
@@ -271,13 +279,14 @@ public class LeLink {
 	 * @return 详细参考上述说明
 	 */
 	public String getState(String cmdStr, String dataStr) {
-		int timeout;
 		JSONObject cmdJson;
+		int timeout, subcmd;
 		String retData = null;
 		boolean isDiscover = false;
 
 		try {
 			cmdJson = new JSONObject(cmdStr);
+			subcmd = cmdJson.getInt(LeCmd.K.SUBCMD);
 		} catch (JSONException e) {
 			e.printStackTrace();
 			return null;
@@ -317,6 +326,9 @@ public class LeLink {
 			}
 			LOGI("Wait over!");
 			if (mFindDevs.size() <= 0) {
+				if(!isDiscover && mListener != null) {
+					mListener.onGetStateBack(subcmd, mWaitGetUuid, null);
+				}
 				return null;
 			}
 			if (isDiscover) {
@@ -372,11 +384,12 @@ public class LeLink {
 	 * @return 详细参考上述说明
 	 */
 	public synchronized String ctrl(String cmdStr, String dataStr) {
-		int timeout;
+		int timeout, subcmd;
 		JSONObject cmdJson = null;
 
 		try {
 			cmdJson = new JSONObject(cmdStr);
+			subcmd = cmdJson.getInt(LeCmd.K.SUBCMD);
 			if (cmdJson.getInt(LeCmd.K.SUBCMD) == LeCmd.Sub.CTRL_DEV_CMD && cmdJson.has(LeCmd.K.ADDR)) {
 				cmdJson.put(LeCmd.K.CMD, LeCmd.CTRL_REQ);
 				cmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_CMD_REQ);
@@ -406,6 +419,9 @@ public class LeLink {
 		}
 		if (mWaitCtrlBackData == null) {
 			LOGE("Control timeout");
+			if (mListener != null) {
+				mListener.onCtrlBack(subcmd, mWaitCtrlUuid, null);
+			}
 		}
 		return mWaitCtrlBackData;
 	}
@@ -690,7 +706,7 @@ public class LeLink {
 		 * 			device uuid<br>
 		 * 
 		 * @param dataStr
-		 * 			设备的状态<br>
+		 * 			设备的状态, 超时为 null<br>
 		 * 			
 		 */
 		void onGetStateBack(int subcmd, String uuid, String dataStr);
@@ -705,7 +721,7 @@ public class LeLink {
 		 * 			device uuid<br>
 		 * 
 		 * @param dataStr
-		 * 			设备的状态<br>
+		 * 			设备的状态, 超时为 null<br>
 		 * 			
 		 */
 		void onCtrlBack(int subcmd, String uuid, String dataStr);
