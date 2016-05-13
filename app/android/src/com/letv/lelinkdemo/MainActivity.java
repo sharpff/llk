@@ -62,6 +62,8 @@ public class MainActivity extends Activity {
 				}
 			}
 			
+			Log.i(TAG, LeLink.getSdkInfo());
+			
 			/*
 			 * 设备发现 必须传入timeout
 			 * 

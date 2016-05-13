@@ -64,16 +64,6 @@ public class LeLink {
 	public static String getSdkInfo() {
 		if (mSdkInfo == null) {
 			mSdkInfo = getSDKInfo();
-			if (mSdkInfo != null) {
-				JSONObject infoJson = null;
-				try {
-					infoJson = new JSONObject(mSdkInfo);
-					infoJson.put(LeCmd.K.JARVER, VERSION);
-					mSdkInfo = infoJson.toString();
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			}
 		}
 		return mSdkInfo;
 	}
@@ -127,6 +117,16 @@ public class LeLink {
 		if (sLeLink == null) {
 			sLeLink = new LeLink(mInitInfo);
 			mSdkInfo = getSDKInfo();
+			if (mSdkInfo != null) {
+				JSONObject infoJson = null;
+				try {
+					infoJson = new JSONObject(mSdkInfo);
+					infoJson.put(LeCmd.K.JARVER, VERSION);
+					mSdkInfo = infoJson.toString();
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		return sLeLink;
 	}
@@ -155,7 +155,6 @@ public class LeLink {
 	 */
 	public String getSdkUUID() {
 		String uuid = null;
-		// LOGI(mSdkInfo);
 		try {
 			JSONObject obj = new JSONObject(mSdkInfo);
 			uuid = obj.getString(LeCmd.K.UUID);

@@ -18,11 +18,12 @@
 #include "airconfig_ctrl.h"
 
 extern "C" {
+    int getTerminalUUID(uint8_t *uuid, int len);
     int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout);
 };
 
 nativeContext_t gNativeContext = {
-    SW_VERSION " " __DATE__ " " __TIME__,
+    SW_VERSION,
     true
 };
 
@@ -33,7 +34,7 @@ int initTask(char *str)
 {
 	int ret;
 	pthread_t id;
-    AuthCfg *authCfg = &gNativeContext.authCfg;
+    AuthCfg *authCfg = &(gNativeContext.authCfg);
 
     { // AuthCfg, 初始得到 public_key, signatrue, uuid. server_addr, server_port
         std::string s;
@@ -50,6 +51,7 @@ int initTask(char *str)
         return -1;
     }
 	lelinkInit();
+    getTerminalUUID(authCfg->data.uuid, MAX_UUID);
 	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
@@ -151,7 +153,7 @@ static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo)
 	root[PJK_CMD] = cmdInfo->cmdId;
 	root[PJK_SUBCMD] = cmdInfo->subCmdId;
 	root[PJK_ADDR] = cmdInfo->ndIP;
-	root[PJK_UUID] = (char *) (cmdInfo->uuid);
+	root[PJK_UUID] = std::string((char *) (cmdInfo->uuid), 0, MAX_UUID);
 	root[PJK_SEQID] = cmdInfo->seqId;
 	root[PJK_STATUS] = cmdInfo->status;
 	if (cmdInfo->token[0]) {
