@@ -2,7 +2,7 @@
 *.bin
 *.class
 *~
-Debug
+Debug*
 hal/jni/obj
 hal/jni/libs
 hal/android/version.h
