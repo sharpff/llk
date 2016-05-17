@@ -30,16 +30,37 @@ nativeContext_t gNativeContext = {
 static void *netTaskFun(void *data);
 static jstring getJsonCmdHeaderInfo(JNIEnv *env, const CmdHeaderInfo* cmdInfo);
 
-int initTask(char *str)
+int initTask(char *json)
 {
-	int ret;
 	pthread_t id;
+	Json::Value value;
+	Json::Reader reader;
+	int i, ret, authLen;
+    std::string s, s1, s2;
     AuthCfg *authCfg = &(gNativeContext.authCfg);
 
+    s = std::string(static_cast<char *>(json));
+	if (!reader.parse(s, value)) {
+		LELOGE("initTask parse error!\n");
+		return -1;
+	}
+    s1 = value[FJK_AUTH].asString();
+    s2 = value[FJK_MAC].asString();
+    if(s1.length() <= 0 || s2.length() <= 0) {
+		LELOGE("initTask parameter error!\n");
+        return -1;
+    }
     { // AuthCfg, 初始得到 public_key, signatrue, uuid. server_addr, server_port
-        std::string s;
-        s = base64_decode(str);
-        memcpy(authCfg, s.c_str(), s.length());
+        const char *p;
+        char *mac = gNativeContext.mac;
+
+        s1 = base64_decode(s1);
+        memcpy(authCfg, s1.c_str(), s1.length());
+        p = s2.c_str();
+        for(i = 0; i < 6; i++) {
+            mac[i] = strtol(p, (char **)&p, 16);
+            p++;
+        }
     }
     { // PrivateCfg 
         PrivateCfg *privateCfg = &gNativeContext.privateCfg;

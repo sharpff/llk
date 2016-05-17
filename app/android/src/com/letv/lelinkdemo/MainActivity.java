@@ -22,12 +22,14 @@ public class MainActivity extends Activity {
 	private static boolean TEST_DISCOVER_DEV = true;
 	private static boolean TEST_GET_STATE =  true;
 	private static boolean TEST_CTRL_DEV = true;
-	private static boolean TEST_OTA_CHECK = true;
+	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
-	private static String mTestDevUUID = "10000100101000010007C80E77ABCD50";
+//	private static String mTestDevUUID = "10000100101000010007C80E77ABCD50"; // 插排
+	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
 	private static String mTestTevToken = "A9B864558E3CC920DEEDD13A6B1DE4FF"; // auto set by uuid, depend on TEST_GET_STATE
-	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 0, 0);
+//	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 0, 0); // 插排
+	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"action\":2}}"); // 窗帘
 	private static int mWifiConfigTimeout = (60 * 5);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;
@@ -38,7 +40,8 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		
 		Log.i(TAG, LeLink.getSdkInfo());
-		LeLink.setContext(getApplicationContext(), mLeLinkListener);
+		LeLink.setContext(getApplicationContext(), mLeLinkListener, "11:22:33:44:55:66");
+		Log.i(TAG, "SDKUUID: " + LeLink.getSdkUUID());
 		mLeLink = LeLink.getInstance();
 		mTestThread.start();
 	}
@@ -70,7 +73,7 @@ public class MainActivity extends Activity {
 			 * 进入该函数，首先发送一次发现包。然后等待timeout时间，最后返回大这timeout期间收到的发现回复的设备。
 			 */
 			Log.w(TAG, "Get SDK uuid");
-			sdkUUID = mLeLink.getSdkUUID();
+			sdkUUID = LeLink.getSdkUUID();
 			Log.i(TAG, "SDK UUID: " + sdkUUID);
 			
 			if (TEST_WIFI_CONFIG) {
