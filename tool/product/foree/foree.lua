@@ -78,6 +78,23 @@ function crc8(data)
 	return pec
 end
 
+-- Cluster ID:
+-- 1) 0x0000: 基本类
+-- 2) 0x0006：ON/OFF类
+-- 3) 0x0008：Level类
+-- 4) 0x0001：电源管理类
+-- 5) 0x0406：PIR，人体识别类
+-- 6) 0x0402：温度测量类
+-- 7) 0x0405：湿度测量类
+-- 8) 0x0201: 温控器类
+function getClusterFromDid(did)
+	print ("did is "..did.."\r\n")
+	if nil ~= string.find(did, "0000") then
+		return string.format('%02x%02x', 0x00, 0x06)
+	elseif nil ~= string.find(did, "0107") then
+		return string.format('%02x%02x', 0x04, 0x06)
+	end
+end
 --[[ EXTERNAL
 	s1GetVer
   ]]
@@ -348,7 +365,7 @@ function s1CvtPri2Std(bin)
 	-- print ('s1CvtPri2Std return => '..cvtType..'\r\n')
 	local dataTbl = {}
 	local strMain = ''
-	local strSubDev = '"sDev":{"pid":"%s","ept":%s,"mac":"%s"}'
+	local strSubDev = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
 	dataTbl = stringToTable(bin)
 
 	-- test only
@@ -408,12 +425,14 @@ function s1CvtPri2Std(bin)
 				local devNum = dataTbl[devNumIdx]
 				print("devNum is "..devNum.." strProId is "..strProId.."\r\n")
 				local sDevEPList = {}
+				local strCluster = '""'
 				for i = 1, devNum do
-					local strDevId = string.format("%02x%02x", dataTbl[(devNumIdx + 1) + 3*(i - 1)], dataTbl[(devNumIdx + 1) + 3*(i - 1) + 1])
+					local strDevId = string.format("%02x%02x", dataTbl[(devNumIdx + 1) + 3*(i - 1) + 1], dataTbl[(devNumIdx + 1) + 3*(i - 1)])
 					sDevEPList[#sDevEPList + 1] = {strDevId, dataTbl[(devNumIdx + 1) + 3*(i - 1) + 2]}
+					strCluster = getClusterFromDid(strDevId)
 				end
 				local ept = cjson.encode(sDevEPList)
-				strSubDev = string.format(strSubDev, strProId, ept, strMac)
+				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
 				strMain = '{"subDevGetInfo":2,'..strSubDev..'}'
 				-- print(ept.."\r\n")
 				print(strMain.."\r\n")
@@ -429,12 +448,14 @@ function s1CvtPri2Std(bin)
 				local addr = dataTbl[8]
 				local strMac = string.format("%02x%02x%02x%02x%02x%02x%02x%02x", dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16], dataTbl[17], dataTbl[18])
 				local sDevEPList = {}
+				local strCluster = '""'
 				for i = 1, 1 do
-					local strDevId = string.format("%02x%02x", dataTbl[19], dataTbl[20])
+					local strDevId = string.format("%02x%02x", dataTbl[20], dataTbl[19])
 					sDevEPList[#sDevEPList + 1] = {strDevId, 1}
+					strCluster = getClusterFromDid(strDevId)
 				end
 				local ept = cjson.encode(sDevEPList)
-				strSubDev = string.format(strSubDev, strProId, ept, strMac)
+				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
 				strMain = '{"cjoin":2,'..strSubDev..'}'
 				print(strMain.."\r\n")
 				break
@@ -444,17 +465,19 @@ function s1CvtPri2Std(bin)
 				-- (IND) sensor action ind
 				-- {"sensor":1,"sDev":{"pid":"0401","ept":[["0701",1]],"mac":"6fe34ce400a06fc0"}}
 				print ("[LUA] s1CvtPri2Std - sub devices - sensor action ind "..#dataTbl.."\r\n")
-				local strProId = string.format("%02x%02x", dataTbl[5], dataTbl[6])
+				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
 				local addr = dataTbl[10]
 				-- local strMac = s1apiGetMacFromIdx(addr)
 				local strMac = ""
 				local sDevEPList = {}
+				local strCluster = '""'
 				for i = 1, 1 do
-					local strDevId = string.format("%02x%02x", dataTbl[12], dataTbl[13])
+					local strDevId = string.format("%02x%02x", dataTbl[13], dataTbl[12])
 					sDevEPList[#sDevEPList + 1] = {strDevId, dataTbl[11]}
+					strCluster = getClusterFromDid(strDevId)
 				end
 				local ept = cjson.encode(sDevEPList)
-				strSubDev = string.format(strSubDev, strProId, ept, strMac)
+				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
 				strMain = '{"sensor":1,'..strSubDev..'}'
 				print(strMain.."\r\n")
 				break
