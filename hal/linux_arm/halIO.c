@@ -10,9 +10,7 @@ int halUartClose(void *dev) {
 }
 
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
-    uint8_t data[] = {0xa5, 0xa5, 0x5a, 0x5a, 0xb9, 0xc0, 0x04, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04};
-    memcpy(buf, data, sizeof(data));
-    return sizeof(data);
+    return 0;
 }
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
@@ -39,7 +37,6 @@ int halGPIOWrite(void *dev, int gpioId, const int val) {
     return 0;
 }
 
-
 int halFlashInit(void)
 {
     return 0;
@@ -49,7 +46,6 @@ int halFlashDeinit(void)
 {
     return 0;
 }
-
 
 static int ginMinSize = 0x1000; // 4k
 #define GET_PAGE_SIZE(l) \

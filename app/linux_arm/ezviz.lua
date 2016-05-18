@@ -1,6 +1,3 @@
---[[ INTERNAL
-	Table to string
-  ]]
 function tableToString( cmd )
 	local strcmd = ""
 	local i
@@ -11,9 +8,6 @@ function tableToString( cmd )
 	return strcmd
 end
 
---[[ INTERNAL
-	String to table
-  ]]
 function stringToTable( sta )
 	local tablesta = {}
 	local i
@@ -32,36 +26,14 @@ function LOGTBL(tblObj)
 	print ('LOGTBL '..str..'\r\n')
 end
 
---[[ MUST
-	0. UART json <-> bin
-	1. PIPE/IPC json <-> json
-]]
 function s1GetVer()
-	-- body
 	local str = '1.0'
 	return string.len(str), str
 end
 
---[[ MUST
-	whatCvtType:
-	0. UART json <-> bin
-	1. PIPE/IPC json <-> json
-]]
 function s1GetCvtType()
-
-	local whatCvtType = 0
-	-- delay time (ms) for the interval during write & read. 
-	local delay = 5
-	--[[
-		E.g."9600-8N1"
-		FORMAT [baud(9600, ...) - dataBits(8, 9, ...) parity(None:0, Odd:1, Even:2) stopBits(1, 2)]
-		refer to func(halIO.c)
-		void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
-	]] 
-	local baud = '"9600-8N1"'
-	local str = string.format('{"whatCvtType":%d,"baud":%s}', whatCvtType, baud)
-
-	return string.len(str), str, delay
+	local str = string.format('{"whatCvtType":%d,"name":\"%s\"}', 2, "lelink")
+	return string.len(str), str, 0
 end
 
 --[[ MUST
@@ -80,44 +52,17 @@ end
 ]]
 function s1GetValidKind(data)
     local reset = string.char( 0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00 )
-
-	--[[ MUST
-		wifi reset cmd
-	]]
-    --print ('start\r\n')
-    --tmpTbl = stringToTable(data)
-    --LOGTBL(tmpTbl)
-    --tmpTbl = stringToTable(reset)
-    --LOGTBL(tmpTbl)
-    --print (string.find(data, reset))
-    --print ('\r\n')
 	if nil ~= string.find(data, reset) then
 		-- print '1'
 		return 1
 	end
-
-	--[[ MUST
-		valid LOW LEVEL status cmd
-	]]
 	if 14 == #data then
 		-- print '2'
 		return 2
 	end
-
-	-- print '0'
-	-- invalid kind
 	return 0
 end
 
--- 插排
--- a5 a5 5a 5a b1 c0 01 00 03 00 00 00 00       # 查询 01 00
--- a5 a5 5a 5a b9 c0 04 00 04 00 00 00 00 04    # 返回 04 00
--- a5 a5 5a 5a c1 c0 02 00 03 00 00 0f 00       # 控制 02 00
--- a5 a5 5a 5a c8 c0 04 00 04 00 00 00 0f 04    # 返回 04 00
-
--- a5 a5 5a 5a b1 c0 01 00 03 00 00 00 00   	# query
--- a5 a5 5a 5a c1 c0 02 00 03 00 00 0f 00 		# all on
--- a5 a5 5a 5a d0 c0 02 00 03 00 00 0f 0f 		# all off
 function s1CvtStd2Pri(json)
 	local tb = cjson.decode(json)
 	local ctrl = tb["ctrl"]
@@ -149,13 +94,9 @@ function s1CvtStd2Pri(json)
 	return string.len(dataStr), dataStr
 end
 
---[[ MUST
-	return value: return 0, 0, if the input param 'bin' is not valid
-]]
 function s1CvtPri2Std(bin)
     local dataTbl = {}
     local str = '{"idx1":%d,"idx2":%d,"idx3":%d,"idx4":%d}'
-    -- print (#bin)
     dataTbl = stringToTable(bin)
     -- LOGTBL(dataTbl)
 
@@ -166,3 +107,4 @@ function s1CvtPri2Std(bin)
     end
     return string.len(str), str
 end
+
