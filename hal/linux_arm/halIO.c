@@ -10,7 +10,9 @@ int halUartClose(void *dev) {
 }
 
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
-    return len;
+    uint8_t data[] = {0xa5, 0xa5, 0x5a, 0x5a, 0xb9, 0xc0, 0x04, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04};
+    memcpy(buf, data, sizeof(data));
+    return sizeof(data);
 }
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
@@ -32,6 +34,7 @@ int halGPIOOpen(int8_t id, int8_t dir, int8_t mode) {
 int halGPIORead(void *dev, int gpioId, int *val) {
     return 0;
 }
+
 int halGPIOWrite(void *dev, int gpioId, const int val) {
     return 0;
 }
@@ -103,16 +106,22 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
     return ret;
 }
 
-int halGetMac(uint8_t *mac, int len) {
-    if (6 > len || NULL == mac) {
-        return -1;
-    }
+void *halPipeOpen(char *name) {
+    return (void *)0xffffffff;
+}
 
-    mac[0] = 0xEE;
-    mac[1] = 0xEE;
-    mac[2] = 0xEE;
-    mac[3] = 0xEE;
-    mac[4] = 0xEE;
-    mac[5] = 0xEE;
+int halPipeClose(void *dev) {
     return 0;
 }
+
+int halPipeRead(void *dev, uint8_t *buf, uint32_t len) {
+    uint8_t data[] = {0xa5, 0xa5, 0x5a, 0x5a, 0xb9, 0xc0, 0x04, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04};
+
+    memcpy(buf, data, sizeof(data));
+    return sizeof(data);
+}
+
+int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len) {
+    return len;
+}
+

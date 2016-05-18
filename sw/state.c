@@ -265,6 +265,7 @@ static int stateProcApConnecting(StateContext *cntx) {
     return ret;
 }
 
+static int s_first_heart = 1;
 static int stateProcApConnected(StateContext *cntx) {
     int ret = -1;
     int count = 3;
@@ -312,6 +313,7 @@ static int stateProcApConnected(StateContext *cntx) {
         lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     }
     LELOG("stateProcApConnected");
+    s_first_heart = 1;
     // ret = halDoApConnected(NULL, 0);
     return ret;
 }
@@ -336,6 +338,17 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         return -1;
     }
 
+    if(s_first_heart) {
+        NodeData node = {0};
+        node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
+        node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
+        if (ginCtxR2R) {
+            if (lelinkNwPostCmd(ginCtxR2R, &node)) {
+            }
+        }
+        s_first_heart = 0;
+        return 0;
+    }
     TIMEOUT_BEGIN(15000)
         NodeData node = {0};
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;

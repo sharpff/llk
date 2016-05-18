@@ -57,13 +57,17 @@ touch "$MAIN_PATH/sw/data.c"
 $MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
 pushd $PATH_SENGINE > /dev/null 2>&1
-make SUFFIX="_arm" MYXPREFIX="arm-none-linux-gnueabi-"
+#make SUFFIX="_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
+make SUFFIX="_arm" $*
 popd > /dev/null 2>&1
 
 pushd $PATH_LELINK > /dev/null 2>&1
-make SUFFIX="_arm" MYXPREFIX="arm-none-linux-gnueabi-"
+#make SUFFIX="_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
+make SUFFIX="_arm" $*
 popd > /dev/null 2>&1
 
-make SUFFIX="_arm" MYXPREFIX="arm-none-linux-gnueabi-"
+#make SUFFIX="_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
+make SUFFIX="_arm" clean
+make SUFFIX="_arm" $*
 echo done
 

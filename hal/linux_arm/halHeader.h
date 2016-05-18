@@ -17,8 +17,8 @@
 
 #define applog(_mod_name_, _fmt_, ...) \
     { \
-        const char * p = strrchr(__FILE__, '/'); \
-        printf("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__); \
+        const char * __p__ = strrchr(__FILE__, '/'); \
+        printf("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, __p__ ? (__p__ + 1) : "none", __LINE__); \
     }
 
 #define APPLOG(...) \
@@ -36,38 +36,6 @@
 #define delayMS(ms) \
     usleep(ms*1000)
 
-// test only
-// #define SELF_IP "192.168.3.109"
-#define SELF_IP "192.168.3.110"
-// #define SELF_IP "192.168.1.113"
-
-#if 0
-#define DOOYA
-// #define HONYAR
-// #define DINGDING
-// #define MYLOCAL
-
-#ifdef DOOYA
-#define UUID_BEING_CTRL "10000100091000610006C80E77ABCD40" // dooya1
-#define LOCAL_TEST_IP "192.168.3.238" // dooya1
-#elif defined HONYAR
-#define UUID_BEING_CTRL "10000100101000010007C80E77ABCD50" // honyar1
-#define LOCAL_TEST_IP "192.168.3.104" // hoyar1
-// #define LOCAL_TEST_IP "192.168.1.114" // hoyar1
-#elif defined DINGDING
-#define UUID_BEING_CTRL "10000100111000810008C80E77ABCD60" // dingding1
-#define LOCAL_TEST_IP "192.168.3.120" // dingding1
-#elif defined MYLOCAL
-#define UUID_BEING_CTRL "10000100111000810008C80E77ABCDFF" // mylocal
-#define LOCAL_TEST_IP "192.168.3.129" // mylocal
-#else
-#pragma error "no matched"
-#endif
-// #define UUID_BEING_OTA "10000100101000010007FFFFFFFFFFFF"
-#endif
-
-
-    
 #define LOCAL_TEST_PORT 59673
 
 #define BIND_DEBUG
