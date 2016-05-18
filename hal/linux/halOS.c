@@ -1,7 +1,7 @@
 #include "halHeader.h"
 static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
 
-int halLockInit(void *ptr, const char *file, int line) {
+int halLockInit(void) {
 	return 0;
 }
 
@@ -9,11 +9,11 @@ void halDeLockInit(void) {
 	
 }
 
-int halLock(void *ptr, const char *file, int line) {
+int halLock(void) {
     return pthread_mutex_lock(&ginMutex);
 }
 
-int halUnlock(void *ptr, const char *file, int line) {
+int halUnlock(void) {
     return pthread_mutex_unlock(&ginMutex);
 }
 
