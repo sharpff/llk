@@ -86,10 +86,10 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
                 // test only for trig a OTA
                 if (RSA_LEN >= sizeOTA) {
-                    type = OTA_TYPE_FW;
+                    // type = OTA_TYPE_FW;
                     // type = OTA_TYPE_FW_SCRIPT;
                     // type = OTA_TYPE_IA_SCRIPT;
-                    // type = OTA_TYPE_AUTH;
+                    type = OTA_TYPE_AUTH;
                     // type = OTA_TYPE_PRIVATE;
                     switch (type) {
                         case OTA_TYPE_FW: {

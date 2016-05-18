@@ -92,14 +92,26 @@ typedef struct {
     char mac[32];
     uint8_t status[MAX_BUF];
     int idx;
-}SDevCtx;
+}SDevNode;
 
-static SDevCtx *ginSDevArray = NULL;
 ScriptCfg *ginScriptCfg;
 ScriptCfg *ginScriptCfg2;
 static uint32_t ginDelayMS;
 static IA_CACHE ginIACache;
 static int ginCurrCvtType;
+
+static SDevNode *sdevGetArray() {
+    static SDevNode *ginArrSDev;
+    if (NULL == ginArrSDev) {
+        ginArrSDev = (SDevNode *)halCalloc(MAX_SDEV_NUM, sizeof(SDevNode));
+    }
+
+    return ginArrSDev;
+}
+
+int sdevInsert(SDevNode *arr, const char *status) {
+    return 0;
+}
 
 static IO lf_s1GetQueries_input(lua_State *L, const uint8_t *input, int inputLen) {
     // lua_pushlstring(L, (char *)input, inputLen);
@@ -501,12 +513,10 @@ int sengineInit(void) {
         return -2;
     }
     if (sengineHasDevs()) {
-        ginSDevArray = (SDevCtx *)halCalloc(MAX_SDEV_NUM, sizeof(SDevCtx));
-        if (NULL == ginSDevArray) {
-            LELOG("ginSDevArray NULL");
+        if (!sdevGetArray()) {
+            LELOGE("sdevGetArray is Failed");
             return -3;
         }
-        LELOG("ginSDevArray size[%d]", MAX_SDEV_NUM * sizeof(SDevCtx));
     }
     LELOG("sengineInit Done");
     return 0;
@@ -878,7 +888,26 @@ int senginePollingSlave(void) {
                 }
                 break;
             case WHATKIND_SUB_DEV_JOIN: {
+                    int len;
                     LELOG("WHATKIND_SUB_DEV_JOIN");
+                    SDevNode *tmpArr = sdevGetArray();
+                    if (NULL == tmpArr) {
+                        LELOGE("sdevGetArray is NULL");
+                        break;
+                    }
+                    len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
+                        bin, size, (uint8_t *)status, sizeof(status));
+                    if (0 >= len) {
+                        LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
+                        break;
+                    } else if (/*cacheIsChanged(status, len)*/0) {
+                        NodeData node = {0};
+                    }
+                    LELOGE("[%s]", status);
+                    if (0 > sdevInsert(tmpArr, status)) {
+                        LELOGE("sdevGetArray is NULL");
+                        break;
+                    }
                 }
                 break;
             case WHATKIND_SUB_DEV_LEAVE: {
