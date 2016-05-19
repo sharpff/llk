@@ -1,6 +1,7 @@
 #include "leconfig.h"
 #include "state.h"
 #include "protocol.h"
+#include "sengine.h"
 #include "io.h"
 #include "sengine.h"
 
@@ -127,6 +128,27 @@ static int changeState(int direction, StateContext *cntx, int idx) {
         }
     }
     ginStateId = E_STATE_NONE;
+    if(direction) {
+        switch(ginStateCntx.stateIdCurr)
+        {
+            case E_STATE_CONFIGURING:
+                sengineQuerySlave(QUERIETYPE_WAITCONFIG);
+                break;
+            case E_STATE_SNIFFER_GOT:
+            //case E_STATE_AP_CONNECTING:
+                sengineQuerySlave(QUERIETYPE_CONNECTING);
+                break;
+            case E_STATE_AP_CONNECTED:
+                sengineQuerySlave(QUERIETYPE_CONNECTED);
+                break;
+            case E_STATE_CLOUD_LINKED:
+            //case E_STATE_CLOUD_AUTHED:
+                sengineQuerySlave(QUERIETYPE_CLOUD);
+                break;
+            default:
+                break;
+        }
+    }
     return ret;
 }
 

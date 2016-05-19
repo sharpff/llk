@@ -799,6 +799,7 @@ int sengineQuerySlave(QuerieType_t type)
     FOR_EACH_IO_HDL_START;
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
                 (uint8_t *)&type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
+
         if (ret <= 0) {
             LELOGW("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]", ret);
             continue;

@@ -203,6 +203,10 @@ ERROR_PARAM:
 		inputParam = argv[3];
 		inputParamLen = strlen(inputParam);
 	}
+	else if (argv[2] && strstr(argv[2], S2_GET_SELFNAME)) {
+		inputParam = NULL;
+		inputParamLen = 0;        
+	}
 	else if (argv[2] && strstr(argv[2], S2_GET_RULETYPE)) {
 		inputParam = NULL;
 		inputParamLen = 0;        

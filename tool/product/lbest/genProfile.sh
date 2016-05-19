@@ -1,15 +1,15 @@
 #!/bin/bash
 MAIN_PATH="../.."
 $MAIN_PATH/lelinkTool.py \
-    -a 115.182.63.167 \
-    -p 9002 \
-    -u 10000100101000010007 \
-    -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrTxpVJHzbLoxSk7CzBaeyg4Czz7rANfqZUu7bD57C4fGbmfdaMEG4VfuMxWYw08OLW/f735FwVpP89YPOcjrRW/o/p76UfIS84KZCkMkFi/2InfNTm+ep2tuOlCpq7C6TTdX04MJsTpfbERqKnfuSBRbg12OEtpmRmcTmYqjosQIDAQAB \
-    -s hY+ZAdXoFBVNowMuqAWjhoUubQucdhDVpa8JzAFD6HTR7Jkz1cUvrvaMh/OFi8LgTBinHDaHpnZBvfDl95SFyeJBpLFM1p9G0m46ZVESkeGPjQJkxd5pjYFhzbpDSlBzMWGfYPlWrpgZNGeWJ5hVc8lu/lW2OSMrI0Z5xADMq3Q= \
+    -a 10.154.252.130 \
+    -p 5546 \
+    -u 10000100141001010012 \
+    -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCWJPxgQdYW/IkmVph6n1cPSreVDbJt+dl9ATFhcXWEh2+4586oRxn9ozC9IVzU06a9XND4BcIP5Ftm7kNykL9qQLssZn/3emNB7fOWDIICdest/bVZ7pIAB6QlEGKa1CteWHV8227EgUqVLjNLkh6eV95HePIwWb08CCLcXh9JwIDAQAB \
+    -s Zy+gtBpUaFU1lVldO0vzEb72btQ6mBePGE0KOYscUBQZFBenW/+SB0cPXxfRHb33ifB5UMcLPNY75rwDnKdt54ICibWx87MSUxxnARYStCKvEgc2sCokoIGySGiJf28KQ+FiKHRk4VHiej/tm3noN+l/FmvmDWbX7jGFVajNHlc= \
     -o ./0x1c2000.bin
 
 $MAIN_PATH/lelinkTool.py \
-    -t $MAIN_PATH/product/honyar/honyar.lua \
+    -t lbest.lua \
     -o ./0x1c3000.bin
 
 $MAIN_PATH/lelinkTool.py \
@@ -33,14 +33,3 @@ $MAIN_PATH/lelinkTool.py \
      ./cust.bin 0x7000 \
      -o ./image.bin
 
-    # 测试
-    #-a 10.154.252.130 \
-    #-p 5546 \
-
-    # 外网, 内网ip
-    #-a 10.182.192.19 \
-    #-p 9002 \
-
-    # 外网
-    #-a 115.182.63.167 \
-    #-p 9002 \

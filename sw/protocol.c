@@ -513,7 +513,7 @@ void testSengine() {
 
     tmpScriptCfg = (void *)halCalloc(1, sizeof(ScriptCfg));
     ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
-    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
+    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
     // ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
 
     senginePollingRules((char *)json2, strlen(json2));
@@ -554,6 +554,13 @@ int lelinkInit() {
 
     // ioHdl = (void **)ioGetHdl(NULL);
     ioHdl = ioGetHdlExt();
+    // test only
+    // {
+    //     #include "sengine.h"        
+    //     ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, 0);
+    //     ret = lelinkStorageWriteScriptCfg2(ginScriptCfg2);
+    // }
+
     if (NULL == ioHdl) {
         LELOGE("ioInit ioGetHdlExt[%p]", ioHdl);
         // goto failed;
@@ -1343,7 +1350,7 @@ static void cbCtrlGetStatusRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, co
 static int cbCtrlCmdLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
 
     int ret = 0, encType = -1;
-    char reqCtrlCmd[128];
+    char reqCtrlCmd[MAX_BUF] = {0};
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdLocalReq -s");
 
