@@ -103,6 +103,22 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
     return ret;
 }
 
+void *halPipeOpen(char *name) {
+    return (void *)0xffffffff;
+}
+
+int halPipeClose(void *dev) {
+    return 0;
+}
+
+int halPipeRead(void *dev, uint8_t *buf, uint32_t len) {
+    return 0;
+}
+
+int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len) {
+    return len;
+}
+
 int halGetMac(uint8_t *mac, int len) {
     if (6 > len || NULL == mac) {
         return -1;

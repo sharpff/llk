@@ -23,9 +23,9 @@ error:
 	$(error Invalid configuration, please check your inputs)
 endif
 
-SOURCEFILES := ../../hal/linux_arm/halAES.c ../../hal/linux_arm/halAirConfig.c ../../hal/linux_arm/halCallback.c ../../hal/linux_arm/halConvertor.c \
-	../../hal/linux_arm/halIO.c ../../hal/linux_arm/halMD5.c ../../hal/linux_arm/halNetwork.c ../../hal/linux_arm/halOS.c ../../hal/linux_arm/halOTA.c \
-	../../hal/linux_arm/halRSA.c main.c
+SOURCEFILES := ../../hal/$(PLATFORM)/halAES.c ../../hal/$(PLATFORM)/halAirConfig.c ../../hal/$(PLATFORM)/halCallback.c ../../hal/$(PLATFORM)/halConvertor.c \
+	../../hal/$(PLATFORM)/halIO.c ../../hal/$(PLATFORM)/halMD5.c ../../hal/$(PLATFORM)/halNetwork.c ../../hal/$(PLATFORM)/halOS.c ../../hal/$(PLATFORM)/halOTA.c \
+	../../hal/$(PLATFORM)/halRSA.c main.c
 EXTERNAL_LIBS := 
 EXTERNAL_LIBS_COPIED := $(foreach lib, $(EXTERNAL_LIBS),$(BINARYDIR)/$(notdir $(lib)))
 
@@ -167,42 +167,42 @@ $(BINARYDIR)/%.o : %.cxx $(all_make_files) |$(BINARYDIR)
 #VisualGDB: GeneratedRules				#<--- All lines below are auto-generated
 
 
-$(BINARYDIR)/halAES.o : ../../hal/linux_arm/halAES.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halAES.o : ../../hal/$(PLATFORM)/halAES.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halAirConfig.o : ../../hal/linux_arm/halAirConfig.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halAirConfig.o : ../../hal/$(PLATFORM)/halAirConfig.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halCallback.o : ../../hal/linux_arm/halCallback.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halCallback.o : ../../hal/$(PLATFORM)/halCallback.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halConvertor.o : ../../hal/linux_arm/halConvertor.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halConvertor.o : ../../hal/$(PLATFORM)/halConvertor.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halIO.o : ../../hal/linux_arm/halIO.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halIO.o : ../../hal/$(PLATFORM)/halIO.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halMD5.o : ../../hal/linux_arm/halMD5.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halMD5.o : ../../hal/$(PLATFORM)/halMD5.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halNetwork.o : ../../hal/linux_arm/halNetwork.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halNetwork.o : ../../hal/$(PLATFORM)/halNetwork.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halOS.o : ../../hal/linux_arm/halOS.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halOS.o : ../../hal/$(PLATFORM)/halOS.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halOTA.o : ../../hal/linux_arm/halOTA.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halOTA.o : ../../hal/$(PLATFORM)/halOTA.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/halRSA.o : ../../hal/linux_arm/halRSA.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/halRSA.o : ../../hal/$(PLATFORM)/halRSA.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
