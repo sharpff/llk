@@ -1113,11 +1113,11 @@ static int isNeedDelCB(CACHE_NODE_TYPE *currNode)
                 }
             }
             break;
-        case LELINK_CMD_CLOUD_GET_TARGET_REQ:
-            {
-                changeStateId(E_STATE_AP_CONNECTED);
-            }
-            break;
+        // case LELINK_CMD_CLOUD_GET_TARGET_REQ:
+        //     {
+        //         changeStateId(E_STATE_AP_CONNECTED);
+        //     }
+        //     break;
         }
         return 1;
     }
