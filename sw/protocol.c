@@ -512,7 +512,7 @@ void testSengine() {
 
     tmpScriptCfg = (void *)halCalloc(1, sizeof(ScriptCfg));
     ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
-    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
+    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
     // ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
 
     senginePollingRules((char *)json2, strlen(json2));
@@ -549,6 +549,14 @@ int lelinkInit() {
         LELOGE("sengineInit ret[%d]\r\n", ret);
         // goto failed;
     }
+
+    // test only
+    // {
+    //     #include "sengine.h"        
+    //     ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, 0);
+    //     ret = lelinkStorageWriteScriptCfg2(ginScriptCfg2);
+    // }
+
 
     ioHdl = (void **)ioGetHdl(NULL);
     if (NULL == ioHdl) {
