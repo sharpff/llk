@@ -323,3 +323,9 @@ function s1CvtPri2Std(bin)
 	-- print (str)
 	return string.len(str), str
 end
+
+
+function s1MergeCurrStatus2Action(action, currStatus)
+	local str = "abc"
+	return string.len(str), str
+end
