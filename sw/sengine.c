@@ -113,6 +113,12 @@ int sdevInsert(SDevNode *arr, const char *status) {
     return 0;
 }
 
+int sdevUpdate(SDevNode *arr, const char *status) {
+    // subDevGetList
+    // subDevGetInfo
+    return 0;
+}
+
 static IO lf_s1GetQueries_input(lua_State *L, const uint8_t *input, int inputLen) {
     // lua_pushlstring(L, (char *)input, inputLen);
     lua_Integer tmp = 0;
@@ -801,7 +807,7 @@ int sengineQuerySlave(QuerieType_t type)
                 (uint8_t *)&type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
 
         if (ret <= 0) {
-            LELOGW("sengineGetStatus sengineCall("S1_GET_QUERIES") [%d]", ret);
+            LELOGW("sengineQuerySlave sengineCall("S1_GET_QUERIES") [%d]", ret);
             continue;
         }
 
@@ -809,12 +815,47 @@ int sengineQuerySlave(QuerieType_t type)
             memcpy(&currLen, &queries.arrQueriesCounts[i], 2);
             ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &(queries.arrQueries[appendLen]), currLen);
             if (ret <= 0) {
-                LELOGW("sengineGetStatus ioWrite [%d]", ret);
+                LELOGW("sengineQuerySlave ioWrite [%d]", ret);
                 break;
             }
         }
-    FOR_EACH_IO_HDL_END;
 
+        // query for sub dev
+        if (sdevGetArray()) {
+            TIMEOUT_SECS_BEGIN(5)
+                char json[256] = {0};
+                uint8_t cmd[128] = {0};
+                strcpy(json, "{\"ctrl\":{\"subDevGetList\":1}}");
+                LELOG("json is [%s]", json);
+                ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
+                    (uint8_t *)json, strlen(json), (uint8_t *)cmd, sizeof(cmd));
+                if (ret <= 0) {
+                    LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
+                    return -1;
+                }
+                ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
+                if (0 >= ret) {
+                    LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
+                }
+
+                memset(json, 0, sizeof(json));
+                strcpy(json, "{\"ctrl\":{\"subDevGetInfo\":1}}");
+                LELOG("json is [%s]", json);
+                ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
+                    (uint8_t *)json, strlen(json), (uint8_t *)cmd, sizeof(cmd));
+                if (ret <= 0) {
+                    LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
+                    return -2;
+                }
+                ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
+                if (0 >= ret) {
+                    LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
+                }
+                LELOG("sengineQuerySlave done");
+            TIMEOUT_SECS_END
+        }
+
+    FOR_EACH_IO_HDL_END;
 
     return 0;
 }
@@ -884,14 +925,11 @@ int senginePollingSlave(void) {
                     LELOG("WHATKIND_SUB_DEV_RESET");
                 }
                 break;
-            case WHATKIND_SUB_DEV_DATA: {
-                    LELOG("WHATKIND_SUB_DEV_DATA");
-                }
-                break;
+            case WHATKIND_SUB_DEV_DATA:
             case WHATKIND_SUB_DEV_JOIN: {
                     int len;
-                    LELOG("WHATKIND_SUB_DEV_JOIN");
                     SDevNode *tmpArr = sdevGetArray();
+                    NodeData node = {0};
                     if (NULL == tmpArr) {
                         LELOGE("sdevGetArray is NULL");
                         break;
@@ -901,13 +939,17 @@ int senginePollingSlave(void) {
                     if (0 >= len) {
                         LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         break;
-                    } else if (/*cacheIsChanged(status, len)*/0) {
-                        NodeData node = {0};
                     }
-                    LELOGE("[%s]", status);
-                    if (0 > sdevInsert(tmpArr, status)) {
-                        LELOGE("sdevGetArray is NULL");
-                        break;
+
+                    LELOG("[%s]", status);
+                    if (WHATKIND_SUB_DEV_JOIN == whatKind) {
+                        LELOG("WHATKIND_SUB_DEV_JOIN");
+                        if (0 > sdevInsert(tmpArr, status)) {
+                            LELOGE("sdevGetArray is NULL");
+                            break;
+                        }
+                    } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
+                        LELOG("WHATKIND_SUB_DEV_DATA");
                     }
                 }
                 break;

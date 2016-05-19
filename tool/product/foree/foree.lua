@@ -417,10 +417,10 @@ function s1CvtPri2Std(bin)
 
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x81 and dataTbl[5] == 0x00 then
 				-- (RSP) device info rsp , rep is AA 00 04 01 00 00 00 E1
-				-- {"subDevGetInfo":2,"sDev":{"pid":"0401","ept":[["0000",1],["0000",2],["0000",3]],"mac":"7409e17e3376af60"}}
+				-- {"subDevGetInfo":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0000",1],["0000",2],["0000",3]],"mac":"7409E17E3376AF60"}}
 				print ("[LUA] s1CvtPri2Std - sub devices - device info rsp "..#dataTbl.."\r\n")
-				local strMac = string.format("%02x%02x%02x%02x%02x%02x%02x%02x", dataTbl[9], dataTbl[10], dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16])
-				local strProId = string.format("%02x%02x", dataTbl[17], dataTbl[18])
+				local strmac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", datatbl[9], datatbl[10], datatbl[11], datatbl[12], datatbl[13], datatbl[14], datatbl[15], datatbl[16])
+				local strProId = string.format("%02x%02x", dataTbl[18], dataTbl[17])
 				local devNumIdx = 26
 				local devNum = dataTbl[devNumIdx]
 				print("devNum is "..devNum.." strProId is "..strProId.."\r\n")
@@ -441,12 +441,12 @@ function s1CvtPri2Std(bin)
 
 			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x11, 0x82)) then
 				-- (IND) new device joining, rep is 0xAA, 0x00, 0x11, 0x82
-				-- {"cjoin":2,"sDev":{"pid":"0401","ept":[["0701",1]],"mac":"6fe34ce400a06fc0"}}
-				-- {"sensor":1,"sDev":{"pid":"0401","ept":[["0000",5]],"mac":"7409E17E3376AF60"}}
+				-- {"cjoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
+				-- {"sensor":1,"sDev":{"pid":"0401","clu":"0000","ept":[["0000",5]],"mac":"7409E17E3376AF60"}}
 				print("s1CvtPri2Std - sub devices - new device joining\r\n")
-				local strProId = string.format("%02x%02x", dataTbl[5], dataTbl[6])
+				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
 				local addr = dataTbl[8]
-				local strMac = string.format("%02x%02x%02x%02x%02x%02x%02x%02x", dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16], dataTbl[17], dataTbl[18])
+				local strMac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16], dataTbl[17], dataTbl[18])
 				local sDevEPList = {}
 				local strCluster = '""'
 				for i = 1, 1 do
@@ -463,7 +463,7 @@ function s1CvtPri2Std(bin)
 
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x90 then
 				-- (IND) sensor action ind
-				-- {"sensor":1,"sDev":{"pid":"0401","ept":[["0701",1]],"mac":"6fe34ce400a06fc0"}}
+				-- {"sensor":1,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
 				print ("[LUA] s1CvtPri2Std - sub devices - sensor action ind "..#dataTbl.."\r\n")
 				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
 				local addr = dataTbl[10]

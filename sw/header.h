@@ -204,7 +204,7 @@ typedef unsigned int uint32_t;
 #endif
 
 
-// #define LOG_SENGINE
+#define LOG_SENGINE
 // #define LOG_IO
 #define LOG_PROTOCOL
 #define LOG_STATE
@@ -215,6 +215,14 @@ typedef unsigned int uint32_t;
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
+
+#define TIMEOUT_SECS_BEGIN(secs) { \
+    static uint32_t ot; \
+    if ((halGetTimeStamp() - ot) > secs) {
+
+#define TIMEOUT_SECS_END \
+    ot = halGetTimeStamp(); \
+    }}
 
 // halIO
 void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
@@ -245,6 +253,7 @@ unsigned int halGetUTC(void);
 void *halCalloc(int n, size_t size);
 void halFree(void *ptr);
 int halReboot();
+
 
 #ifdef __cplusplus
 }
