@@ -1,4 +1,4 @@
-function tableToString( cmd )
+function tableToString(cmd)
 	local strcmd = ""
 	local i
 	
@@ -8,7 +8,7 @@ function tableToString( cmd )
 	return strcmd
 end
 
-function stringToTable( sta )
+function stringToTable(sta)
 	local tablesta = {}
 	local i
 	for i=1, #sta do
@@ -37,74 +37,58 @@ function s1GetCvtType()
 end
 
 --[[ MUST
-	查询设备状态。
+	查询及设备状态指令序列
 	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
+    queryType:
+            1, 查询设备状态
+            2, 设备进入配置状态
+            3, 设备进入连接AP状态
+            4, 已经连接到AP，可以本地控制
+            5, 已经正常连到云服务，可远程控制
 ]]
-function s1GetQueries()
-	local query = string.char( 0xa5, 0xa5, 0x5a, 0x5a, 0xb1, 0xc0, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00 )
-	local queryCountLen = string.char( 0x0d, 0x00 )
+function s1GetQueries(queryType)
+    local query = ""
+    local queryCountLen = string.char(0x00)
 
-	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
+    query = string.format('{"DataType":%d}', queryType)
+
+    if queryType == 1 then
+    elseif queryType == 2 then
+    elseif queryType == 3 then
+    elseif queryType == 4 then
+    elseif queryType == 5 then
+    end
+    if string.len(query) ~= 0 then
+        queryCountLen = string.char(string.len(query), 0x00)
+    end
+
+    return string.len(queryCountLen), queryCountLen, string.len(query), query
 end
 
 --[[ MUST
-	WIFI 重置命令判别
+   判断halPipeRead()得到的数据是什么类型的数据
+        0, 无效数据
+        1, 设备状态数据
+        2, wifi重置数据
 ]]
-function s1GetValidKind(data)
-    local reset = string.char( 0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00 )
-	if nil ~= string.find(data, reset) then
-		-- print '1'
-		return 1
-	end
-	if 14 == #data then
-		-- print '2'
-		return 2
-	end
-	return 0
+function s1GetValidKind(bin)
+	local tb = cjson.decode(bin) -- {"type":1, "data":"..."}
+	return tb["type"]
 end
 
-function s1CvtStd2Pri(json)
-	local tb = cjson.decode(json)
-	local ctrl = tb["ctrl"]
-	local cmdTbl = { 0xa5, 0xa5, 0x5a, 0x5a, 0x00, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00 }
-	local dataStr = ""
-    local sum = 0xbeaf
-
-    for i = 1, 4 do
-    	idx = "idx"..i
-    	print(idx, ctrl[idx])
-    	if(ctrl[idx] ~= nil) then
-			cmdTbl[12] = cmdTbl[12] | (0x01 << (i - 1))
-    		if(ctrl[idx] == 1) then
-				cmdTbl[13] = cmdTbl[13] | (0x01 << (i - 1))
-    		end
-    	end
-    end
-    
-    for i = 1, #cmdTbl do
-        sum = sum + cmdTbl[i]
-    end
-    cmdTbl[5] = sum & 0xff
-    cmdTbl[6] = (sum >> 8) & 0xff
-
-	LOGTBL(cmdTbl)
-
-	-- u have to make the bin as string for the return value
-	dataStr = tableToString(cmdTbl)
-	return string.len(dataStr), dataStr
-end
-
+--[[ 
+   可以在这里修改halPipeRead()得到的数据,再发向网络
+]]
 function s1CvtPri2Std(bin)
-    local dataTbl = {}
-    local str = '{"idx1":%d,"idx2":%d,"idx3":%d,"idx4":%d}'
-    dataTbl = stringToTable(bin)
-    -- LOGTBL(dataTbl)
-
-    if dataTbl[1] == 0xa5 and dataTbl[2] == 0xa5 and dataTbl[3] == 0x5a and dataTbl[4] == 0x5a then
-        str = string.format(str, (dataTbl[13] >> 0) & 0x1, (dataTbl[13] >> 1) & 0x1, (dataTbl[13] >> 2) & 0x1, (dataTbl[13] >> 3) & 0x1)
-    else
-        str = ""
-    end
+	local tb = cjson.decode(bin)
+    local str = cjson.encode(tb["data"])
     return string.len(str), str
+end
+
+--[[ 
+   可以在这里修改网络发来的控制数据,传给halPipeWrite()
+]]
+function s1CvtStd2Pri(json)
+	return string.len(json), json
 end
 

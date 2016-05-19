@@ -69,7 +69,7 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
     sprintf(fileName, "./0x%x.bin", startAddr);
     fd = open(fileName, O_WRONLY | O_CREAT);
     if (0 >= fd) {
-        APPLOG("WRITE FAILED [%d]\r\n", errno);
+        printf("WRITE FAILED [%d]\r\n", errno);
         return fd;
     }
 
@@ -82,7 +82,7 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
         }
     }
     close(fd);
-    APPLOG("WRITE OK [%s] size[0x%x]\r\n", fileName, ret);
+    printf("WRITE OK [%s] size[0x%x]\r\n", fileName, ret);
     return ret;
 }
 
@@ -93,31 +93,103 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
     fd = open(fileName, O_RDONLY);
     if (0 >= fd) {
         // printf("errno [%d]", errno);
-        // APPLOG("READ FAILED [%d]", errno);
         return fd;
     }
     ret = read(fd, data, len);
     close(fd);
-    // APPLOG("READ OK [%s]", fileName);
+    // printf("READ OK [%s]", fileName);
     return ret;
 }
 
+/*
+ * 测试数据，表示窗帘的状态: 开/关、百分比
+ */
+static int sStatePwr = 1; // 1, 开; 2, 关
+static int sStatePercent = 0; // %
+
+/*
+ * 功能: 打开Pipe通讯接口
+ *
+ * 参数: 
+ *      name: Pipe名称(固件脚本中配置)
+ *
+ * 返回值:
+ *      Pipe的handle
+ */
 void *halPipeOpen(char *name) {
     return (void *)0xffffffff;
 }
 
+/*
+ * 功能: 关闭Pipe通讯接口
+ *
+ * 参数:
+ *      dev: Pipe的handle
+ *      
+ * 返回值:
+ *      0 - 成功, 否则失败
+ */
 int halPipeClose(void *dev) {
     return 0;
 }
 
+/*
+ *  功能: 读取设备数据。包括2类数据(与固件脚本保持一致, 固件中判断数据类型)
+ *      1, 设备状态数据
+ *      2, wifi重置数据
+ *  
+ *  参数:
+ *      dev: Pipe的handle
+ *      buf: 数据缓冲区
+ *      len: buf缓冲区的长度
+ *
+ *  返回值:
+ *      读取到的数据
+ */
 int halPipeRead(void *dev, uint8_t *buf, uint32_t len) {
-    uint8_t data[] = {0xa5, 0xa5, 0x5a, 0x5a, 0xb9, 0xc0, 0x04, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04};
+    char data[128];
 
+    if(sStatePwr == 1 && sStatePercent < 100) {
+        sStatePercent += 10;
+    }
+    if(sStatePwr == 2 && sStatePercent > 0) {
+        sStatePercent -= 10;
+    }
+    /*snprintf(data, sizeof(data), "{\"type\":2, \"data\":{\"pwr\":%d,\"percentage\":%d}}", sStatePwr, sStatePercent);*/
+    snprintf(data, sizeof(data), "{\"type\":2, \"data\":{\"percentage\":%d}}", sStatePercent);
     memcpy(buf, data, sizeof(data));
     return sizeof(data);
 }
 
+/*
+ *  功能: 写设备数据。包括5类数据(与固件脚本保持一致, 固件中规定各类型对应的数据)
+ *      1, 查询设备状态
+ *      2, 设备进入配置状态
+ *      3, 设备进入连接AP状态
+ *      4, 已经连接到AP，可以本地控制
+ *      5, 已经正常连到云服务，可远程控制
+ *  
+ *  参数:
+ *      dev: Pipe的handle
+ *      buf: 写入数据
+ *      len: buf长度
+ *
+ *  返回值:
+ *      写入数据长度
+ *
+ *  示例数据:
+ *      1, {"DataType":1}
+ *      2, {"ctrl":{"action":1}}
+ */
 int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len) {
+    char data[128] = {0};
+
+    memcpy(data, buf, len);
+    printf("halPipeWrite(%d):%s\n", len, data);
+    if(len > 20) { // {"ctrl":{"action":1}}
+        sStatePwr = (sStatePwr + 1) % 3;
+        sStatePercent = (sStatePwr == 1) ? 0 : 100;
+    }
     return len;
 }
 

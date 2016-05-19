@@ -3,7 +3,7 @@
 
 int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len) {
     int ret = 0;
-    APPLOG("halCBLocalReq -S");
+    APPLOG("halCBLocalReq -s");
 
     switch (cmdInfo->cmdId) 
     {
@@ -40,7 +40,7 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
 }
 
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
-    int ret = 0;
+    int ret = 1;
     APPLOG("halCBRemoteReq -s");
 
     switch (cmdInfo->cmdId) {
@@ -57,6 +57,7 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
             }
             break;
     }
+    APPLOG("halCBRemoteReq -e");
 
     return ret;
 }
