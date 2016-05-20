@@ -3,6 +3,8 @@
 #USE VISUALGDB PROJECT PROPERTIES DIALOG INSTEAD
 
 BINARYDIR := Debug
+PLATFORM := linux_arm
+MYXPREFIX="arm-none-linux-gnueabi-"
 
 #Toolchain
 CC := $(MYXPATH)$(MYXPREFIX)gcc

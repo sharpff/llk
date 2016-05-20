@@ -2,6 +2,7 @@
 *.bin
 *.class
 *~
+lelink.*.sdk*
 Debug*
 hal/jni/obj
 hal/jni/libs
