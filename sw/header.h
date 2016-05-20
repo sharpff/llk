@@ -208,7 +208,7 @@ typedef unsigned int uint32_t;
 // #define LOG_IO
 #define LOG_PROTOCOL
 #define LOG_STATE
-// #define LOG_PACK
+#define LOG_PACK
 // #define LOG_AIRCONFIG_CTRL
 
         

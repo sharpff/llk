@@ -7,21 +7,23 @@ extern "C"
 #endif
 
 #define CACHE_MAX_NODE 10
-#define CACHE_NODE_TYPE NodeData
+// #define CACHE_NODE_TYPE NodeData
 
-// #define CACHE_NODE_HEAD CMD_HEADER_INFO
+#define CACHE_NODE_HEADER \
+    uint16_t flag; \
+    uint16_t nodeReserved;
 
-// typedef struct
-// {
-//     CACHE_NODE_HEAD;
-// }CACHEHead;
+typedef struct {
+	CACHE_NODE_HEADER;
+}NodeHead;
 
 typedef struct CACHE
 {
     void *pBase;
     int currsize;
-    int maxsize; 
-    unsigned short seqIdAuto;
+    int maxsize;
+    int singleSize;
+    uint16_t flagAuto;
 }CACHE, *PCACHE;
 
 typedef int (*NodeCB_t)(void *curr);

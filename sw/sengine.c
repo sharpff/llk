@@ -109,11 +109,19 @@ static SDevNode *sdevGetArray() {
     return ginArrSDev;
 }
 
-int sdevInsert(SDevNode *arr, const char *status) {
+// static int forEachNodeSDevCB(NodeData *currNode, void *uData) {
+
+//     return 0;
+// }
+
+static int sdevInsert(SDevNode *arr, const char *status) {
+    SDevNode node = {0};
+    // qForEachfromCache(arr, (int(*)(void*, void*))forEachNodeSDevCB, &node);
+
     return 0;
 }
 
-int sdevUpdate(SDevNode *arr, const char *status) {
+static int sdevUpdate(SDevNode *arr, const char *status) {
     // subDevGetList
     // subDevGetInfo
     return 0;
@@ -945,11 +953,15 @@ int senginePollingSlave(void) {
                     if (WHATKIND_SUB_DEV_JOIN == whatKind) {
                         LELOG("WHATKIND_SUB_DEV_JOIN");
                         if (0 > sdevInsert(tmpArr, status)) {
-                            LELOGE("sdevGetArray is NULL");
+                            LELOGE("sdevInsert is FAILED");
                             break;
                         }
                     } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
                         LELOG("WHATKIND_SUB_DEV_DATA");
+                        if (0 > sdevUpdate(tmpArr, status)) {
+                            LELOGE("sdevUpdate is FAILED");
+                            break;
+                        }
                     }
                 }
                 break;

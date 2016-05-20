@@ -163,12 +163,12 @@ static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
 
 
 static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHeaderInfo *cmdInfo);
-static int isNeedDelCB(CACHE_NODE_TYPE *currNode);
-static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData);
-static int forEachNodeR2RPostSendCB(CACHE_NODE_TYPE *currNode, void *uData);
-static int forEachNodeR2RFindTokenByUUID(CACHE_NODE_TYPE *currNode, void *uData);
-static int forEachNodeR2RFindTokenIP(CACHE_NODE_TYPE *currNode, void *uData);
-static int forEachNodeR2RFindNode(CACHE_NODE_TYPE *currNode, void *uData);
+static int isNeedDelCB(NodeData *currNode);
+static int forEachNodeQ2ARspCB(NodeData *currNode, void *uData);
+static int forEachNodeR2RPostSendCB(NodeData *currNode, void *uData);
+static int forEachNodeR2RFindTokenByUUID(NodeData *currNode, void *uData);
+static int forEachNodeR2RFindTokenIP(NodeData *currNode, void *uData);
+static int forEachNodeR2RFindNode(NodeData *currNode, void *uData);
 static int isFromRemote(const CommonCtx *ctx, const char *ip, uint16_t len, uint16_t port);
 // static int isCommingFromItself(const CommonCtx *ctx, const char *ip, uint16_t port);
 static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *token, int lenToken);
@@ -698,7 +698,7 @@ int lelinkDoPollingR2R(void *ctx) {
 
     CommonCtx *pCtx = COMM_CTX(ctx);
     int len = 0, isCacheEmpty = 0, isRemoteRsp = 0;
-    //CACHE_NODE_TYPE *node = NULL;
+    //NodeData *node = NULL;
     //CmdRecord *ct_p = NULL;
     char ipTmp[MAX_IPLEN] = { 0 };
     uint16_t portTmp = 0;
@@ -825,7 +825,8 @@ static int doQ2ARemoteReq(void *ctx,
 int lelinkNwPostCmd(void *ctx, const void *node)
 {
     CommonCtx *pCtx = (CommonCtx *)ctx;
-    CACHE_NODE_TYPE *node_p = (CACHE_NODE_TYPE *)node;
+    int flag = 0;
+    NodeData *node_p = (NodeData *)node;
     if (!pCtx || !node_p)
     {
         return 0;
@@ -836,6 +837,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     node_p->needReq = 1;
     node_p->needRsp = (LELINK_CMD_DISCOVER_REQ == node_p->cmdId) ? 0xFF : 1;
     node_p->randID = genRand();
+    node_p->seqId = genSeqId();
     if (!node_p->uuid[0])
         getTerminalUUID(node_p->uuid, MAX_UUID);
     node_p->timeStamp = halGetTimeStamp();
@@ -904,7 +906,7 @@ static int isFromRemote(const CommonCtx *ctx, const char *ip, uint16_t len, uint
 //     return 0;
 // }
 
-static int forEachNodeR2RFindTokenByUUID(CACHE_NODE_TYPE *currNode, void *uData) {
+static int forEachNodeR2RFindTokenByUUID(NodeData *currNode, void *uData) {
     FindToken *ft = (FindToken *)uData;
     if (0 == memcmp(currNode->uuid, ft->what, MAX_UUID)) {
         memcpy(ft->token, currNode->token, ft->lenToken);
@@ -936,7 +938,7 @@ static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *t
     return 0;
 }
 
-static int forEachNodeR2RFindTokenIP(CACHE_NODE_TYPE *currNode, void *uData) {
+static int forEachNodeR2RFindTokenIP(NodeData *currNode, void *uData) {
     FindToken *ft = (FindToken *)uData;
     // to void the invalid token
     if (currNode->token[0] && 
@@ -968,7 +970,7 @@ static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *toke
     return 0;
 }
 
-static int forEachNodeR2RFindNode(CACHE_NODE_TYPE *currNode, void *uData) {
+static int forEachNodeR2RFindNode(NodeData *currNode, void *uData) {
     CmdHeaderInfo *cmdInfo = (CmdHeaderInfo *)uData;
     if (currNode->seqId == cmdInfo->seqId) {
         if (0 < currNode->needRsp) {
@@ -1003,7 +1005,7 @@ static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHead
     return ret;
 }
 
-static int forEachNodeR2RPostSendCB(CACHE_NODE_TYPE *currNode, void *uData)
+static int forEachNodeR2RPostSendCB(NodeData *currNode, void *uData)
 {
     int len;
     CmdRecord *ct_p;
@@ -1063,7 +1065,7 @@ static int forEachNodeR2RPostSendCB(CACHE_NODE_TYPE *currNode, void *uData)
     return 0;
 }
 
-static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData)
+static int forEachNodeQ2ARspCB(NodeData *currNode, void *uData)
 {
     USED(uData);
 
@@ -1106,7 +1108,7 @@ static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData)
 
 }
 
-static int isNeedDelCB(CACHE_NODE_TYPE *currNode)
+static int isNeedDelCB(NodeData *currNode)
 {
     //return 1;
     // timeout
@@ -1158,8 +1160,8 @@ static int doQ2AProcessing(CommonCtx *pCtx, int protocolBufLen, const CmdHeaderI
     }
     else if (0 == ret)
     {
-        CACHE_NODE_TYPE node =
-        { 0 };
+        uint8_t flag = 0;
+        NodeData node = { 0 };
 
         // CmdHeaderInfo
         memcpy(&node, cmdInfo, sizeof(CmdHeaderInfo));
@@ -1173,10 +1175,9 @@ static int doQ2AProcessing(CommonCtx *pCtx, int protocolBufLen, const CmdHeaderI
         node.needRsp = 0;
         memcpy(node.ndIP, ip, MAX_IPLEN);
         node.ndPort = port;
+        node.seqId = genSeqId();
 
-        MUTEX_LOCK;
-        qEnCache(&(pCtx->cacheCmd), (void *) &node);
-        MUTEX_UNLOCK;
+        qEnCache(&(pCtx->cacheCmd), (void *)&node);
     }
     return ret;
 }
@@ -1465,7 +1466,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     }
 
     if (isNeedToRedirect(dataIn, dataLen, ip, &port)) {
-        CACHE_NODE_TYPE node = { 0 };
+        NodeData node = { 0 };
         node.cmdId = LELINK_CMD_CLOUD_AUTH_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_AUTH_REQ; 
         memcpy(node.ndIP, ip, MAX_IPLEN);
