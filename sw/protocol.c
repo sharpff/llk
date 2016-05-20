@@ -243,7 +243,7 @@ static CmdRecord tblCmdType[] = {
 // #define TEST_RSA
 // #define TEST_MD5
 // #define TEST_AES
-#define TEST_JSON
+// #define TEST_JSON
 // #define TEST_FLASH
 // #define TEST_SENGINE
 
