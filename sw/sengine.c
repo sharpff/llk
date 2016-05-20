@@ -8,6 +8,7 @@
 #include "ota.h"
 #include "state.h"
 #include "protocol.h"
+#include "cache.h"
 
 #ifndef LOG_SENGINE
 #ifdef LELOG
@@ -100,12 +101,23 @@ static uint32_t ginDelayMS;
 static IA_CACHE ginIACache;
 static int ginCurrCvtType;
 
+static PCACHE sdevGetCache() {
+    static CACHE cache;
+    return &cache;
+}
+
 static SDevNode *sdevGetArray() {
     static SDevNode *ginArrSDev;
+
     if (NULL == ginArrSDev) {
         ginArrSDev = (SDevNode *)halCalloc(MAX_SDEV_NUM, sizeof(SDevNode));
+        if (ginArrSDev) {
+            sdevGetCache()->maxsize = MAX_SDEV_NUM;
+            sdevGetCache()->singleSize = sizeof(NodeData);
+            sdevGetCache()->pBase = ginArrSDev;
+        }
     }
-
+    LELOG("[SENGINE] sdevGetArray maxsize[%d], singleSize[%d], pBase[0x%p]", sdevGetCache()->maxsize, sdevGetCache()->singleSize, sdevGetCache()->pBase);
     return ginArrSDev;
 }
 

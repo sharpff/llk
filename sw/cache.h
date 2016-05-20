@@ -20,9 +20,9 @@ typedef struct {
 typedef struct CACHE
 {
     void *pBase;
-    int currsize;
     int maxsize;
     int singleSize;
+    int currsize;
     uint16_t flagAuto;
 }CACHE, *PCACHE;
 
