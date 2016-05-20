@@ -78,6 +78,8 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
 int sengineQuerySlave(QuerieType_t type);
 int senginePollingSlave(void);
 int senginePollingRules(const char *jsonRmt, int jsonLen);
+int sengineRemoveRules(const char *name);
+
 
 
 #ifdef __cplusplus

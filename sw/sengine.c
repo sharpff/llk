@@ -1050,6 +1050,13 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     return 0;
 }
 
+int sengineRemoveRules(const char *name) {
+    LELOG("sengineRemoveRules -s ");
+    LELOG("sengineRemoveRules -e ");
+    return 0;
+}
+
+
 
 
 int test_lf_call(char *luacode, int size)

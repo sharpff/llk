@@ -26,6 +26,10 @@
 #define JSON_NAME_GPIO_TYPE         "type"
 #define JSON_NAME_GPIO_TIME_SHORT   "shortTime"
 #define JSON_NAME_GPIO_TIME_LONG    "longTime"
+#define JSON_NAME_KEY               "key"
+#define JSON_NAME_VAL               "val"
+#define JSON_NAME_NAME              "name"
+#define JSON_NAME_LOCK              "lock"
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
@@ -402,4 +406,76 @@ int getJsonOTAType(const char *json, int jsonLen, char *url, int urlLen) {
     }
 
     return type;
+}
+
+CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen, int *retLen) {
+    int ret = 0, key = 0;
+    // char strBaud[96] = {0};
+    jsontok_t jsonToken[NUM_TOKENS];
+    jobj_t jobj;
+    if (NULL == json || 0 >= jsonLen) {
+        return CLOUD_MSG_KEY_NONE;
+    }
+
+    LELOG("cloudMsgGetKey [%d][%s]", jsonLen, json);
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if (WM_SUCCESS != ret) {
+        return CLOUD_MSG_KEY_NONE;
+    }
+
+    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_KEY, &key)) {
+        return CLOUD_MSG_KEY_NONE;
+    }
+
+    *retLen = getJsonObject(json, jsonLen, JSON_NAME_VAL, val, valLen);
+    if (0 >= *retLen) {
+        return CLOUD_MSG_KEY_NONE;
+    }
+
+    return key;
+}
+
+
+int cloudMsgHandler(const char *data, int len) {
+
+    int ret = 0;
+    char buf[MAX_BUF] = {0};
+    CloudMsgKey key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
+    // SetLock();
+    switch (key) {
+        jsontok_t jsonToken[NUM_TOKENS];
+        jobj_t jobj;
+        case CLOUD_MSG_KEY_LOCK: {
+            char name[MAX_RULE_NAME] = {0};
+            int locked = 0;
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+            if (WM_SUCCESS != ret) {
+                break;
+            }
+
+            if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_LOCK, &locked)) {
+                break;
+            }
+            setLock(locked ? 1 : 0);
+        }break;
+        case CLOUD_MSG_KEY_DO_IA: {
+            char name[MAX_RULE_NAME] = {0};
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+            if (WM_SUCCESS != ret) {
+                break;
+            }
+
+            if (WM_SUCCESS != (ret = json_get_val_str(&jobj, JSON_NAME_NAME, name, sizeof(name)))) {
+                break;
+            }
+
+            // TODO: 
+            sengineRemoveRules(name);
+        }break;
+        case CLOUD_MSG_KEY_DO_SHARE: {
+
+        }break;
+    }
+    return ret;
 }

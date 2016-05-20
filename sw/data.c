@@ -50,7 +50,7 @@ extern PrivateCfg ginPrivateCfg;
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
 
-int setLock() {
+int setLock(int locked) {
     int ret = 0;
     ginPrivateCfg.data.devCfg.locked = 1;
     ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);

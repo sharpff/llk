@@ -243,7 +243,7 @@ static CmdRecord tblCmdType[] = {
 // #define TEST_RSA
 // #define TEST_MD5
 // #define TEST_AES
-// #define TEST_JSON
+#define TEST_JSON
 // #define TEST_FLASH
 // #define TEST_SENGINE
 
@@ -393,9 +393,18 @@ void testJson(void) {
         "token", token);
     LELOG("%s", out);
 
-    strcpy(status, "{\"status\":{\"action\":1},\"utc\":1457403654}");
-    genS2Json(status, sizeof(status), out, sizeof(out));
-    LELOG("%s", out);
+    // strcpy(status, "{\"status\":{\"action\":1},\"utc\":1457403654}");
+    // genS2Json(status, sizeof(status), out, sizeof(out));
+    // LELOG("%s", out);
+
+    {
+        char string1[64] = {"{\"key\":1,\"val\":{\"lock\":1}}"};
+        char string2[64] = {"{\"key\":2, \"val\":{\"name\":\"testIA\", \"act\":1}, \"info\":{}}"};
+        int ret = cloudMsgHandler(string1, strlen(string1));
+        LELOG("cloudMsgHandler [%d] string1", ret);
+        ret = cloudMsgHandler(string2, strlen(string2));
+        LELOG("cloudMsgHandler [%d] string2", ret);
+    }
 
 }
 #endif
@@ -1854,7 +1863,8 @@ static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     LELOG("cbCloudIndMsgRemoteReq -s");
     // LELOG("[%d][%s]", len, data);
     // senginePollingRules((char *)data, len);
-    ret = setLock();
+    // ret = setLock();
+    ret = cloudMsgHandler((const char *)data, len);
     LELOG("cbCloudIndMsgRemoteReq [%d] -e", ret);
     return ret;
 }
