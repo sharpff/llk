@@ -7,6 +7,7 @@
 #include "network.h"
 #include "io.h"
 #include "state.h"
+#include "misc.h"
 #include "version.h" // Auto generate by SVN
 #ifndef SW_VERSION
 #define SW_VERSION "0.9.9"
@@ -258,8 +259,19 @@ const char *getSWVer() {
 }
 
 const char *getScriptVer() {
-    // TODO: get it from script
-    return "1.0";
+    int ret;
+    static char verFWScript[16] = {0};
+    if (verFWScript[0])
+        return verFWScript;
+    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VER,
+        NULL, 0, (uint8_t *)verFWScript, sizeof(verFWScript));
+    // LELOG("sengineCall ret size [%d], verFWScript [%s]", ret, verFWScript);
+    if (0 >= ret) {
+        LELOGW("senginePollingSlave sengineCall "S1_GET_VER" [%d]", ret);
+        return "NA";
+    }
+
+    return verFWScript;
 }
 
 int getVer(char fwVer[32], int size) {
@@ -271,8 +283,14 @@ int getVer(char fwVer[32], int size) {
     return 0;
 }
 
-int setTerminalStatus(const char *status, int len) {
-    return sengineSetStatus((char *)status, len);
+void setTerminalStatus(const char *status, int len) {
+    char val[MAX_BUF];
+    int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
+    if (0 >= ret) {
+        return;
+    }
+    LELOGW("setTerminalStatus [%d][%s]", ret, val);
+    sengineSetStatus((char *)val, ret);
 }
 
 int getTerminalStatus(char *status, int len) {
@@ -285,11 +303,8 @@ int getTerminalStatus(char *status, int len) {
     strcpy(status, "{\"status\":");
     tmpLen = strlen(status);
 
-    ret = cacheGetTerminalStatus(status + tmpLen, len - strlen(status));
-    if(ret <= 0) {
-        // LELOGW("Can't get cache status");
-        strcpy(status + tmpLen, "{}");
-    }
+    sengineGetStatus(status + tmpLen, len - strlen(status));
+
     tmpLen = strlen(status);
 
     sprintf(status + tmpLen, ",\"cloud\":%d", isCloudAuthed());
@@ -334,6 +349,10 @@ void cacheSetTerminalStatus(const char *status, int len) {
     return;
 }
 int cacheGetTerminalStatus(char *status, int len) {
+    // test only
+    // strcpy(status, "{\"pwr\":1,\"mode\":2,\"temp\":27,\"speed\":1}");
+    // return strlen(status);
+
     int cachedStatusLen = strlen(ginCachedStatus);
     if (0 == ginCachedStatus[0]) {
         return 0;

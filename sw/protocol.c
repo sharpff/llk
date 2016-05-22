@@ -1385,7 +1385,7 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
-    ret = setTerminalStatus((const char *)dataIn, dataLen);
+    setTerminalStatus((const char *)dataIn, dataLen);
     LELOG("cbCtrlCmdRemoteReq [%d] -e", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);

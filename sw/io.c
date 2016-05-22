@@ -574,7 +574,7 @@ void **ioGetHdl(int *ioType) {
 
 IOHDL *ioGetHdlExt() {
     // IOHDL *ioHdl = NULL;
-    char json[2560] = {0};
+    char json[MAX_BUF] = {0};
     int ret = 0;
     // int x = 0;
     static uint8_t whatCvtType = 0x00;
@@ -585,12 +585,14 @@ IOHDL *ioGetHdlExt() {
             return NULL;
         }
         whatCvtType = getWhatCvtType(json, ret);
-        if (0 > whatCvtType) {
+        if (0 >= whatCvtType) {
+            LELOGW("ioGetHdl getWhatCvtType[%d] NO VALID TYPE !!!!!!!!! ", whatCvtType);
             return NULL;
         }
     } else {
         return ginIOHdl;
     }
+    // LELOGW("ioGetHdlExt => whatCvtType[%d]", whatCvtType);
 
     IO_INIT_START;
     IO_INIT_ITEM(IO_TYPE_UART, whatCvtType, json, ret);

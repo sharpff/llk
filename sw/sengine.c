@@ -10,25 +10,25 @@
 #include "protocol.h"
 
 #ifndef LOG_SENGINE
-// #ifdef LELOG
-// #undef LELOG
-// #define LELOG(...)
-// #endif
+#ifdef LELOG
+#undef LELOG
+#define LELOG(...)
+#endif
 
-// #ifdef LELOGW
-// #undef LELOGW
-// #define LELOGW(...)
-// #endif
+#ifdef LELOGW
+#undef LELOGW
+#define LELOGW(...)
+#endif
 
 // // #ifdef LELOGE
 // // #undef LELOGE
 // // #define LELOGE(...)
 // // #endif
 
-// #ifdef LEPRINTF
-// #undef LEPRINTF
-// #define LEPRINTF(...)
-// #endif
+#ifdef LEPRINTF
+#undef LEPRINTF
+#define LEPRINTF(...)
+#endif
 #endif
 
 // #include <stdio.h>
@@ -45,7 +45,6 @@
     int x = 0; \
     ioHdl = ioGetHdlExt(); \
     if (NULL == ioHdl) { \
-        LELOGW("ioGetHdlExt NULL"); \
         return -1; \
     } \
     for (x = 0; x < ioGetHdlCounts(); x++) { \
@@ -246,10 +245,10 @@ static IO lf_s1MergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, 
     // IO io = { 2, 2 };
     int firstLen = 0;
     int secondLen = 0;
-
+    const char *empty = "{}";
     firstLen = strlen(input);
     if (0 == firstLen) {
-        // lua_pushlstring(L, NULL, 0);
+        lua_pushlstring(L, empty, 2);
     } else {
         lua_pushlstring(L, (char *)input, firstLen);
     }
@@ -257,7 +256,7 @@ static IO lf_s1MergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, 
     firstLen += 1;
     secondLen = strlen((char *)input + firstLen);
     if (0 == secondLen) {
-        // lua_pushlstring(L, NULL, 0);
+        lua_pushlstring(L, empty, 2);
     } else {
         lua_pushlstring(L, (char *)input + firstLen, secondLen);
     }
@@ -644,7 +643,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
         if (lua_pcall(L, io_ret.param, io_ret.ret, 0))
         {
             const char *err = lua_tostring(L, -1);
-            LELOGE("[lua engine] lua error: %s", err);
+            LELOGE("[lua engine] lua error: %s => %s", err, funcName);
             lua_pop(L, 1);
             ret = -3;
         }
@@ -670,7 +669,7 @@ int sengineHasDevs(void) {
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_HAS_SUBDEVS,
             NULL, 0, (uint8_t *)&hasDevs, sizeof(hasDevs));
     if (ret <= 0) {
-        LELOGW("sengineGetStatus sengineCall("S1_HAS_SUBDEVS") [%d]", ret);
+        LELOGW("sengineHasDevs sengineCall("S1_HAS_SUBDEVS") [%d]", ret);
         return 0;
     }
     return hasDevs;
@@ -805,6 +804,9 @@ int sengineSetStatus(char *json, int jsonLen) {
     int ret = 0;
     uint8_t bin[512] = {0};
     int i = 0;
+    char jsonMerged[2*MAX_BUF] = {0};
+    // char *jsonOut = json;
+    // int jsonOutLen = jsonLen;
     // IOHDL *ioHdl = NULL;
     // int x = 0;
 
@@ -821,8 +823,25 @@ int sengineSetStatus(char *json, int jsonLen) {
     //     }
 
     FOR_EACH_IO_HDL_START;
+        memcpy(jsonMerged, json, jsonLen);
+        jsonMerged[jsonLen] = 0;
+        ret = jsonLen + 1;
+        ret = sengineGetStatus(&jsonMerged[ret], sizeof(jsonMerged) - ret); 
+        if (0 < ret) {
+            ret = jsonLen + 1 + ret;
+            /*
+             * jsonMerged includes 2 params before sengineCall. 1st is action, 2nd is current status
+             */
+            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_MERGE_ST2ACT,
+                (uint8_t *)jsonMerged, ret, jsonMerged, sizeof(jsonMerged));
+            if (0 < ret) {
+                jsonLen = ret;
+            }
+            LELOGW("sengineSetStatus sengineCall("S1_MERGE_ST2ACT") [%d] [%d][%s]", ret, jsonLen, jsonMerged);
+        }
+
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
-            (uint8_t *)json, jsonLen, bin, sizeof(bin));
+            (uint8_t *)jsonMerged, jsonLen, bin, sizeof(bin));
         if (ret <= 0) {
             LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]", ret);
             continue;
@@ -846,9 +865,21 @@ int sengineSetStatus(char *json, int jsonLen) {
     return ret;
 }
 
+int sengineGetStatus(char *status, int len) {
+    int ret;
+    ret = cacheGetTerminalStatus(status, len);
+    if(0 >= ret) {
+        // LELOGW("Can't get cache status");
+        strcpy(status, "{}");
+        ret = 2;
+    }
+    LELOG("sengineGetStatus [%d][%s]", ret, status);
+    return ret;
+}
+
+
 int sengineMergeStatus(char *inOutJson, int jsonLen, const char *oldStatus, int oldStatusLen) {
     LELOG("sengineMergeStatus ***[%d][%s], [%d][%s]", jsonLen, inOutJson, oldStatusLen, oldStatus);
-
     return 0;
 }
 
@@ -857,7 +888,7 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_CVTTYPE,
             NULL, 0, (uint8_t *)json, jsonLen);
     if (ret <= 0) {
-        LELOGW("sengineGetStatus sengineCall("S1_GET_CVTTYPE") [%d]", ret);
+        LELOGW("sengineGetTerminalProfileCvtType sengineCall("S1_GET_CVTTYPE") [%d]", ret);
         return ret;
     }
     return ret;
@@ -888,7 +919,7 @@ int sengineQuerySlave(QuerieType_t type)
         }
 
         // query for sub dev
-        if (sdevGetArray()) {
+        if (sengineHasDevs()) {
             TIMEOUT_SECS_BEGIN(5)
                 char json[256] = {0};
                 uint8_t cmd[128] = {0};
