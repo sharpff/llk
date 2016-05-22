@@ -8,6 +8,7 @@ static void setSpeed(int fd, int speed);
 static int setParity(int fd, int databits, int stopbits, int parity);
 void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
     int fd;
+    void *tmp = NULL;
     char PARITY = '\0';
     struct termios options;
     fd = open(DEVICE_ID1, O_RDWR | O_NONBLOCK);
@@ -41,23 +42,27 @@ void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl
         return NULL;  
     }
     APPLOG("halUartOpen ok [%d]", fd);
-    return (void *)fd;
+    memcpy(&tmp, &fd, sizeof(fd));
+    return tmp;
 }
 
 int halUartClose(void *dev) {
-    close((int)dev);
+    int fd;
+    memcpy(&fd, &dev, sizeof(fd));
+    close(fd);
     APPLOG("halUartClose ret");
     return 0;
 }
 
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
-    int ret = read((int)dev, buf, len);
-    int tmpLen = 0;
+    int ret = 0, tmpLen = len, fd;
+    memcpy(&fd, &dev, sizeof(fd));
+    ret = read(dev, buf, len);
     if (0 < ret) {
         do {
             tmpLen += ret;
             APPLOG("snap [%d]", ret);
-            ret = read((int)dev, buf + tmpLen, len - tmpLen);
+            ret = read(fd, buf + tmpLen, len - tmpLen);
         } while (0 < ret);
         int i = 0;
         APPLOG("halUartRead tmpLen [%d]", tmpLen);
@@ -70,7 +75,9 @@ int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
 }
 
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
-    int ret = write((int)dev, buf, len);
+    int fd, ret = len;
+    memcpy(&fd, &dev, sizeof(fd));
+    ret = write(fd, buf, len);
     APPLOG("halUartWrite ret [%d]", ret);
     return ret;
 }
