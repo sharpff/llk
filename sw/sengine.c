@@ -121,15 +121,15 @@ static SDevNode *sdevGetArray() {
     return ginArrSDev;
 }
 
-// static int forEachNodeSDevCB(NodeData *currNode, void *uData) {
-
-//     return 0;
-// }
+static int forEachNodeSDevCB(NodeData *currNode, void *uData) {
+    LELOG("[SENGINE] forEachNodeSDevCB [0x%p]", uData);
+    return 0;
+}
 
 static int sdevInsert(SDevNode *arr, const char *status) {
     SDevNode node = {0};
-    // qForEachfromCache(arr, (int(*)(void*, void*))forEachNodeSDevCB, &node);
-
+    qForEachfromCache(sdevGetCache(), (int(*)(void*, void*))forEachNodeSDevCB, NULL);
+    LELOG("[SENGINE] sdevInsert [%s]", status);
     return 0;
 }
 

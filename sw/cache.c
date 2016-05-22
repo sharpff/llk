@@ -90,6 +90,7 @@ int qForEachfromCache(PCACHE C, int (*currNodeCB)(void *curr, void *uData), void
 {
     int i = 0;
     int ret = 0;
+    LELOG("qForEachfromCache [0x%X] [%d/%d]\r\n", C, C->currsize, C->maxsize);
     for (i = 0; i < C->maxsize; i++) {
         if (0 != ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag) {
             ret = currNodeCB(&(((uint8_t*)(C->pBase))[i*C->singleSize]), uData);
