@@ -26,6 +26,7 @@ typedef struct _nativeContext {
 	jmethodID onMessage;
     AuthCfg authCfg;
     PrivateCfg privateCfg;
+    char mac[6];
 } nativeContext_t;
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0,
@@ -36,8 +37,8 @@ typedef struct _nativeContext {
 #define FJK_PASSWD		"passwd"
 #define FJK_DELAY		"delay" // ms
 #define FJK_TIMEOUT		"timeout" // sec
-#define FJK_PUBLIC_KEY	"public_key"
-#define FJK_SIGNATURE	"signature"
+#define FJK_AUTH        "auth"
+#define FJK_MAC         "mac"
 
 /* protocol's json key */
 #define PJK_STATUS		"status"
@@ -50,7 +51,7 @@ typedef struct _nativeContext {
 
 extern nativeContext_t gNativeContext;
 
-int initTask(char *str);
+int initTask(char *json);
 int airConfig(void *ptr, char *json);
 int cmdSend(void *ptr, char *json);
 

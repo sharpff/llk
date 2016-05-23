@@ -46,7 +46,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.0'
+	local str = '1.1'
 	return string.len(str), str
 end
 
@@ -57,10 +57,17 @@ end
 ]]
 function s1GetCvtType()
 
-	local whatCvtType = 0
-	local delay = 5
-	local baud = '"9600-8N1"'
-	local str = string.format('{"whatCvtType":%d,"baud":%s}', whatCvtType, baud)
+    local str = [[
+    {
+    "whatCvtType":1,
+    "uart":[
+    	{
+    		"id":1, 
+    		"baud":"9600-8N1"
+    	}
+    	]
+	}
+    ]]
 
 	return string.len(str), str, delay
 end
@@ -130,8 +137,7 @@ end
 -- 晾霸
 --{ "ctrl": { "action":0, "speaker":0, "disinfect":0,"anion":0, "dry":0, "wind":0, "light":1, "wTime":0, "hTime":0, "aTime":0 } }
 function s1CvtStd2Pri(json)
-	local tb = cjson.decode(json)
-	local ctrl = tb["ctrl"]
+	local ctrl = cjson.decode(json)
 	local cmdTbl = { 0xbb, 0xa3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44}
 	local dataStr = ""
     local sum = 0

@@ -13,8 +13,8 @@ OBJCOPY := objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG LINUX
-INCLUDE_DIRS := ../../sw ../../hal/linux ../../sw/mbedtls-2.2.0_crypto/include ../../sw/sengine
-LIBRARY_DIRS := ../../lib/lelink/Debug ../../lib/sengine/Debug
+INCLUDE_DIRS := ../../sw ../../hal/$(PLATFORM) ../../sw/mbedtls-2.2.0_crypto/include ../../sw/sengine
+LIBRARY_DIRS := ../../lib/lelink/$(BINARYDIR)-$(PLATFORM) ../../lib/sengine/$(BINARYDIR)-$(PLATFORM)
 LIBRARY_NAMES := pthread lelink sengine
 ADDITIONAL_LINKER_INPUTS := 
 MACOS_FRAMEWORKS := 

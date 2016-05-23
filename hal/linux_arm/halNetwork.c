@@ -1,5 +1,17 @@
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>	       /* See NOTES */
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 #include "halHeader.h"
-#include "halCenter.h"
+
+#define  MAXINTERFACES  5
 
 int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
 
@@ -19,16 +31,16 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
                 port += 1;
                 local_addr.sin_port = htons(port);
                 if((ret = bind(*sock, (struct sockaddr *)&local_addr, sizeof(local_addr))) != 0) {
-                    APPLOGE("rebinding... udp port[%d] fail: %d.\r\n", port, ret);
+                    APPLOGW("rebinding... udp port[%d] fail: %d.", port, ret);
                 }
             }
             #else
-            APPLOGE("Bind udp port[%d] fail: %d.\r\n", port, ret);
+            APPLOGE("Bind udp port[%d] fail: %d.", port, ret);
             close(*sock);
             return -1;
             #endif
         }
-        APPLOG("bind: sock[%d] port[%d]\r\n", *sock, port);
+        APPLOG("bind: sock[%d] port[%d]", *sock, port);
     }
 
 	fcntl(*sock, F_SETFL, O_NONBLOCK, 1);
@@ -52,29 +64,9 @@ int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int l
     to_addr.sin_port = htons(port);
     to_addr.sin_addr.s_addr = inet_addr(ip);
     ret = sendto(sock, buf, len, 0, (struct sockaddr *)&to_addr, sizeof(to_addr));
-    APPLOGW("sendto %s:%d, ret = %d", ip, port, ret);
  
     return ret;
 }
-
-// int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int lenIP, int *port) {
-//     int ret;
-//     struct sockaddr_in from_addr;
-//     socklen_t len_from = sizeof(struct sockaddr_in);
-//     ret = recvfrom(sock, buf, len, 0, (struct sockaddr *)&from_addr, (socklen_t *)&len_from);
-//     if (ret > 0)
-//     {
-//         const char *p = (const char *)inet_ntoa(from_addr.sin_addr); 
-//         int len1 = strlen(p);
-//         if (lenIP < len1)
-//         {
-//             len1 = lenIP;
-//         }
-//         *port = htons(from_addr.sin_port);
-//         strncpy(ip, p, len1);
-//     }
-//     return ret;
-// }
 
 int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint16_t *port) {
     int ret;
@@ -95,28 +87,18 @@ int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint
     return ret;
 }
 
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#define  MAXINTERFACES  5
-
-int halGetSelfAddr(char *ip, int size, int *port)
-{
+int halGetSelfAddr(char *ip, int size, int *port) {
 	int sockfd, nIf;
 	struct ifconf ifc;
+	struct ifreq buf[10];
 	char ifName[] = "wlan0", *p;
-	struct ifreq buf[MAXINTERFACES];
-	ifc.ifc_len = sizeof(buf);
-	ifc.ifc_len = sizeof(buf);
-	ifc.ifc_buf = (caddr_t) buf;
-
-	if ((sockfd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		APPLOGE("socket ERR\r\n");
-		return -1;
-	}
 
 	ip[0] = '\0';
+	ifc.ifc_len = sizeof(buf);
+	ifc.ifc_buf = (caddr_t) buf;
+	if ((sockfd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
+		return -1;
+	}
 	if (!ioctl(sockfd, SIOCGIFCONF, (char *) &ifc)) {
 		nIf = ifc.ifc_len / sizeof(struct ifreq);
 		while (nIf-- > 0)
@@ -134,12 +116,7 @@ int halGetSelfAddr(char *ip, int size, int *port)
 	return strlen(ip);
 }
 
-int halGetMac(uint8_t *mac, int len)
-{
-#if 1
-    memcpy(mac, gNativeContext.mac, sizeof(gNativeContext.mac));
-    return 0;
-#else
+int halGetMac(uint8_t *mac, int len) {
 	int sockfd;
 	struct ifreq tmp;
 	char mac_addr[30];
@@ -166,12 +143,13 @@ int halGetMac(uint8_t *mac, int len)
 	mac[4] = tmp.ifr_hwaddr.sa_data[4];
 	mac[5] = tmp.ifr_hwaddr.sa_data[5];
 	close(sockfd);
-#endif
-	return 0;
+    return 0;
 }
 
 int halGetBroadCastAddr(char *broadcastAddr, int len) {
-    const char *ip = "1.2.3.255";
+    const char *ip = "255.255.255.255";
+    // const char *ip = "192.168.0.255";
     strcpy(broadcastAddr, ip);
     return strlen(ip);
 }
+

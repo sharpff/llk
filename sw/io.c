@@ -490,7 +490,18 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             return ioHdl;
         }break;
         case IO_TYPE_PIPE: {
-
+            char name[64];
+            ret = getPipeInfo(json, jsonLen, name, sizeof(name));
+            if (0 > ret) {
+                LELOGW("ioInit getPipeInfo ret[%d]", ret);
+                return NULL;
+            }
+            ioHdl = (void *)halPipeOpen(name);
+            if (NULL == ioHdl) {
+                LELOGW("ioInit halPipeOpen[%p]", ioHdl);
+                return NULL;
+            }
+            return ioHdl;
         }break;
         case IO_TYPE_SOCKET: {
 
@@ -549,7 +560,11 @@ void **ioGetHdl(int *ioType) {
             return &ioHdl;
         }break;
         case IO_TYPE_PIPE: {
-
+            if (NULL == ioHdl) {
+                LELOG("ioGetHdl IO_TYPE_PIPE ioInit [%d]", whatCvtType);
+                ioHdl = ioInit(whatCvtType, json, ret);
+            }
+            return &ioHdl;
         }break;
         case IO_TYPE_SOCKET: {
 
@@ -636,7 +651,7 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             return dataLen;
         }break;
         case IO_TYPE_PIPE: {
-
+            return halPipeWrite(hdl, data, dataLen);
         }break;
         case IO_TYPE_SOCKET: {
 
@@ -679,7 +694,7 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             return i;
         } break;
         case IO_TYPE_PIPE: {
-
+            return halPipeRead(hdl, data, dataLen);
         }break;
         case IO_TYPE_SOCKET: {
 
@@ -740,7 +755,10 @@ void ioDeinit(int ioType, void *hdl) {
             *hdlGPIO = NULL;
         }break;
         case IO_TYPE_PIPE: {
-
+            void **hdlPipe = NULL; 
+            hdlPipe = ioGetHdl(NULL);
+            halPipeClose(hdl);
+            *hdlPipe = NULL;
         }break;
         case IO_TYPE_SOCKET: {
 

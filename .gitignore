@@ -2,7 +2,8 @@
 *.bin
 *.class
 *~
-Debug
+lelink.*.sdk*
+Debug*
 hal/jni/obj
 hal/jni/libs
 hal/android/version.h

@@ -64,16 +64,6 @@ public class LeLink {
 	public static String getSdkInfo() {
 		if (mSdkInfo == null) {
 			mSdkInfo = getSDKInfo();
-			if (mSdkInfo != null) {
-				JSONObject infoJson = null;
-				try {
-					infoJson = new JSONObject(mSdkInfo);
-					infoJson.put(LeCmd.K.JARVER, VERSION);
-					mSdkInfo = infoJson.toString();
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			}
 		}
 		return mSdkInfo;
 	}
@@ -90,23 +80,57 @@ public class LeLink {
 	 * 			  LeLink.Listener <br>
 	 * 			  SDK 状态通知监听器. <br>
 	 * 
+	 * @param macStr
+	 * 			  本机的MAC地址<br>
+	 * 
 	 * @return true - 设置正确; false - 设置失败 
 	 */
-	public static boolean setContext(Context context, Listener listener) {
+	public static boolean setContext(Context context, Listener listener, String macStr) {
+		String authStr;
+//		String macStr = "11:22:33:44:55:66";
+		JSONObject jsonObj = null;
+		
+		if (sLeLink != null) {
+			return true;
+		}
 		if (context == null) {
 			LOGE("Context null");
+			return false;
+		}
+		if(macStr == null || !macStr.matches("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")){
+			LOGE("Mac address error");
 			return false;
 		}
 		try {
 			byte buffer[] = new byte[1024 * 10];
 			InputStream in = context.getAssets().open("lelink/auth.cfg");
 			int rd = in.read(buffer);
-			mInitInfo = Base64.encodeToString(buffer, 0, rd, Base64.NO_WRAP);
+			authStr = Base64.encodeToString(buffer, 0, rd, Base64.NO_WRAP);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;
 		}
 		mListener = listener;
+		jsonObj = new JSONObject();
+		try {
+			jsonObj.put(LeCmd.K.AUTH, authStr);
+			jsonObj.put(LeCmd.K.MAC, macStr);
+		} catch (JSONException e1) {
+			e1.printStackTrace();
+			return false;
+		}
+		mInitInfo = jsonObj.toString();
+		sLeLink = new LeLink(mInitInfo);
+		mSdkInfo = getSDKInfo();
+		LOGI(mSdkInfo);
+		try {
+			jsonObj = new JSONObject(mSdkInfo);
+			jsonObj.put(LeCmd.K.JARVER, VERSION);
+			mSdkInfo = jsonObj.toString();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		LOGI(mSdkInfo);
 		return true;
 	}
 
@@ -124,10 +148,6 @@ public class LeLink {
 	 * @return Lelink实例
 	 */
 	public static LeLink getInstance() {
-		if (sLeLink == null) {
-			sLeLink = new LeLink(mInitInfo);
-			mSdkInfo = getSDKInfo();
-		}
 		return sLeLink;
 	}
 
@@ -153,9 +173,8 @@ public class LeLink {
 	 * 
 	 * @return String - SDK UUID
 	 */
-	public String getSdkUUID() {
+	public static String getSdkUUID() {
 		String uuid = null;
-		// LOGI(mSdkInfo);
 		try {
 			JSONObject obj = new JSONObject(mSdkInfo);
 			uuid = obj.getString(LeCmd.K.UUID);

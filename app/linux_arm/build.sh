@@ -41,30 +41,31 @@ if [ "$1" = "gdb" ]; then
 	    popd > /dev/null 2>&1
 	}
 
-	do_copy "$MAIN_PATH/hal/lua/" "$LinuxGDB/dev/hal/lua/"
+	do_copy "$MAIN_PATH/hal/linux/" "$LinuxGDB/dev/hal/linux/"
 	do_copy "$MAIN_PATH/sw/" "$LinuxGDB/dev/sw/"
-	cp "$MAIN_PATH/app/lua/main.c"  "$LinuxGDB/dev/app/lua"
-	# cp "$MAIN_PATH/app/lua/0x1c3000.bin"  "$LinuxGDB/dev/app/lua/Debug"
-	pushd $LinuxGDB/dev/app/lua/Debug > /dev/null 2>&1
+	cp "$MAIN_PATH/app/linux/main.c"  "$LinuxGDB/dev/app/linux"
+	cp "$MAIN_PATH/app/linux/0x1c2000.bin"  "$LinuxGDB/dev/app/linux/Debug"
+	cp "$MAIN_PATH/app/linux/0x1c3000.bin"  "$LinuxGDB/dev/app/linux/Debug"
+	pushd $LinuxGDB/dev/app/linux/Debug > /dev/null 2>&1
 	chmod 777 * -R
 	popd > /dev/null 2>&1
 
-else
-
-	touch "$MAIN_PATH/sw/data.c"
-	$MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
-
-	pushd $PATH_SENGINE > /dev/null 2>&1
-	make PLATFORM="linux" $*
-	popd > /dev/null 2>&1
-
-	pushd $PATH_LELINK > /dev/null 2>&1
-	make PLATFORM="linux" $*
-	popd > /dev/null 2>&1
-
-	make clean && make PLATFORM="linux" $*
 fi
 
+touch "$MAIN_PATH/sw/data.c"
+# $MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
+$MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
+pushd $PATH_SENGINE > /dev/null 2>&1
+make PLATFORM="linux_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
+#make PLATFORM="linux_arm" $*
+popd > /dev/null 2>&1
+
+pushd $PATH_LELINK > /dev/null 2>&1
+make PLATFORM="linux_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
+#make PLATFORM="linux_arm" $*
+popd > /dev/null 2>&1
+
+make PLATFORM="linux_arm" $*
 echo done
 
