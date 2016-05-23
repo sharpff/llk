@@ -60,17 +60,18 @@ end
 ]]
 function s1GetCvtType()
 	-- TODO: modified
-	local whatCvtType = 0x01
-	-- delay time (ms) for the interval during write & read. 
+	local str = [[
+    {
+    "whatCvtType":1,
+    "uart":[
+    	{
+    		"id":1, 
+    		"baud":"9600-8N1"
+    	}
+    	]
+	}
+    ]]
 	local delay = 5
-	--[[
-		E.g."9600-8N1"
-		FORMAT [baud(9600, ...) - dataBits(8, 9, ...) parity(None:0, Odd:1, Even:2) stopBits(1, 2)]
-		refer to func(halIO.c)
-		void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
-	]] 
-	local baud = '"9600-8N1"'
-	local str = string.format('{"whatCvtType":%d,"baud":%s}', whatCvtType, baud)
 
 	return string.len(str), str, delay
 end
@@ -117,29 +118,32 @@ end
 	鏌ヨ璁惧鐘舵€併€?
 	姣忎釜璁惧閮界害瀹氶渶瑕佷竴鏉℃垨鑰呭鏉℃寚浠ゅ彲浠ヨ幏鍙栧埌璁惧鐨勬墍鏈夌姸鎬併€?
 ]]
-function s1GetQueries()
-	--local query = string.char( 0xbb, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 )
+function s1GetQueries(queryType)
+	-- TODO: modified
+    local query = ""
+    local queryCountLen = ""
+	if queryType == 1 then
 
-	local cmdTbl = { 0xaa, 0x23, 0xac, 0x8f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 
-	                 0x41, 0x81, 0x00, 0xff, 0x03, 0xff, 0x00, 0x02, 0x00, 0x00, 
-	                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } -- the length of control pkg is 36
+		local cmdTbl = { 0xaa, 0x23, 0xac, 0x8f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 
+		                 0x41, 0x81, 0x00, 0xff, 0x03, 0xff, 0x00, 0x02, 0x00, 0x00, 
+		                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } -- the length of control pkg is 36
 
-	random_num = random_num + 1
-	if random_num == 255 then
-		random_num = 1
+		random_num = random_num + 1
+		if random_num == 255 then
+			random_num = 1
+		end
+
+		cmdTbl[34] = random_num
+		cmdTbl[35] = msGenCrc8Value(cmdTbl, 24)
+		cmdTbl[36] = msGenChksumValue(cmdTbl)
+
+		-- LOGTBL(cmdTbl)
+
+		query = tableToString(cmdTbl)
+
+		queryCountLen = string.char( 0x24, 0x00 )
 	end
-
-	cmdTbl[34] = random_num
-	cmdTbl[35] = msGenCrc8Value(cmdTbl, 24)
-	cmdTbl[36] = msGenChksumValue(cmdTbl)
-
-	-- LOGTBL(cmdTbl)
-
-	local query = tableToString(cmdTbl)
-
-	local queryCountLen = string.char( 0x24, 0x00 )
-
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
 
