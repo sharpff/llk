@@ -188,6 +188,22 @@ int halGPIOWrite(void *dev, int gpio, const int val) {
     return sizeof(val);
 }
 
+void *halPipeOpen(char *name) {
+    return (void *)0xffffffff;
+}
+
+int halPipeClose(void *dev) {
+    return 0;
+}
+
+int halPipeRead(void *dev, uint8_t *buf, uint32_t len) {
+    return 0;
+}
+
+int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len) {
+    return len;
+}
+
 int halFlashInit(void)
 {
     flash_drv_init();

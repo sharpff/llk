@@ -27,6 +27,7 @@
 #define JSON_NAME_GPIO_TYPE         "type"
 #define JSON_NAME_GPIO_TIME_SHORT   "shortTime"
 #define JSON_NAME_GPIO_TIME_LONG    "longTime"
+#define JSON_NAME_PIPE_NAME         "name"
 #define JSON_NAME_KEY               "key"
 #define JSON_NAME_VAL               "val"
 #define JSON_NAME_NAME              "name"

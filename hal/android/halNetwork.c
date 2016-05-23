@@ -1,4 +1,5 @@
 #include "halHeader.h"
+#include "halCenter.h"
 
 int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
 
@@ -131,6 +132,42 @@ int halGetSelfAddr(char *ip, int size, int *port)
 	}
 	close(sockfd);
 	return strlen(ip);
+}
+
+int halGetMac(uint8_t *mac, int len)
+{
+#if 1
+    memcpy(mac, gNativeContext.mac, sizeof(gNativeContext.mac));
+    return 0;
+#else
+	int sockfd;
+	struct ifreq tmp;
+	char mac_addr[30];
+
+	if (6 > len || NULL == mac) {
+		return -1;
+	}
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) {
+		APPLOGE("Can't get mac. socket open error\r\n");
+		return -1;
+	}
+	memset(&tmp, 0, sizeof(struct ifreq));
+	strncpy(tmp.ifr_name, "wlan0", sizeof(tmp.ifr_name) - 1);
+	if ((ioctl(sockfd, SIOCGIFHWADDR, &tmp)) < 0) {
+		APPLOGE("Can't get mac. socket open error\r\n");
+		close(sockfd);
+		return -1;
+	}
+	mac[0] = tmp.ifr_hwaddr.sa_data[0];
+	mac[1] = tmp.ifr_hwaddr.sa_data[1];
+	mac[2] = tmp.ifr_hwaddr.sa_data[2];
+	mac[3] = tmp.ifr_hwaddr.sa_data[3];
+	mac[4] = tmp.ifr_hwaddr.sa_data[4];
+	mac[5] = tmp.ifr_hwaddr.sa_data[5];
+	close(sockfd);
+#endif
+	return 0;
 }
 
 int halGetBroadCastAddr(char *broadcastAddr, int len) {
