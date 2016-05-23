@@ -78,7 +78,7 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
     int fd, ret = len;
     memcpy(&fd, &dev, sizeof(fd));
     ret = write(fd, buf, len);
-    APPLOG("halUartWrite ret [%d]", ret);
+    // APPLOG("halUartWrite ret [%d]", ret);
     return ret;
 }
 
