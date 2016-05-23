@@ -175,9 +175,31 @@ ERROR_PARAM:
 		inputParam = g_buf;
 		inputParamLen = g_bufLen;
 	}
-	else if (argv[2] && strstr(argv[2], S1_GET_QUERIES)) {
+	else if (argv[2] && strstr(argv[2], S1_HAS_SUBDEVS)) {
 		inputParam = NULL;
 		inputParamLen = 0;
+	}
+	else if (argv[2] && strstr(argv[2], S1_GET_QUERIES)) {
+		if (!argv[3]) {
+			goto ERROR_PARAM;
+		}
+		g_bufLen = hexStr2bytes(argv[3], g_buf, sizeof(g_buf));
+		inputParam = g_buf;
+		inputParamLen = g_bufLen;
+	}
+	else if (argv[2] && strstr(argv[2], S1_MERGE_ST2ACT)) {
+		if (!argv[3] || !argv[4]) {
+			goto ERROR_PARAM;
+		}
+		inputParam = argv[3];
+		inputParam2 = argv[4];
+		inputParamLen = strlen(inputParam);
+		inputParamLen2 = strlen(inputParam2);
+		strcpy(buf, inputParam);
+		buf[inputParamLen] = 0;
+		strcpy(buf + inputParamLen + 1, inputParam2);
+		inputParam = buf;
+		inputParamLen = inputParamLen + 1 + inputParamLen2;
 	}
 	else if (argv[2] && strstr(argv[2], S1_GET_VER)) {
 		inputParam = NULL;
@@ -194,6 +216,10 @@ ERROR_PARAM:
 		}
 		inputParam = argv[3];
 		inputParamLen = strlen(inputParam);
+	}
+	else if (argv[2] && strstr(argv[2], S2_GET_SELFNAME)) {
+		inputParam = NULL;
+		inputParamLen = 0;        
 	}
 	else if (argv[2] && strstr(argv[2], S2_GET_RULETYPE)) {
 		inputParam = NULL;

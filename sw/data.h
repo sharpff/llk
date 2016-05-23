@@ -21,10 +21,13 @@ void getOriRemoteServer(char *ip, int len, uint16_t *port);
 
 uint16_t getProtocolVer();
 int getVer(char *fwVer, int size);
-int setTerminalStatus(const char *status, int len);
+void setTerminalStatus(const char *status, int len);
 int getTerminalStatus(char *status, int len);
 void cacheSetTerminalStatus(const char *status, int len);
 int cacheGetTerminalStatus(char *status, int len);
+
+int setLock(int locked);
+int getlock();
 
 // test only
 #define PUBLIC_KEY_PEM \

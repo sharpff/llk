@@ -45,7 +45,11 @@ static FlashRegion ginRegion[E_FLASH_TYPE_MAX];
 static uint32_t ginStartAddr;
 static uint32_t ginTotalSize;
 static uint32_t ginMinSize;
-static gpioManager_t gpioManager;
+static gpioManager_t ginGpioManager;
+static IOHDL ginIOHdl[] = {
+    {IO_TYPE_UART, 0x0},
+    {IO_TYPE_GPIO, 0x0}
+};
 
 /*
  * modify here, in order to change the ocuppied size.
@@ -467,22 +471,22 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
         case IO_TYPE_GPIO: {
             int i;
             gpioHand_t *table;
-            gpioSetDefault(&gpioManager);
-            ret = getGPIOInfo(json, jsonLen, gpioManager.table, GPIO_MAX_ID);
+            gpioSetDefault(&ginGpioManager);
+            ret = getGPIOInfo(json, jsonLen, ginGpioManager.table, GPIO_MAX_ID);
             if (0 >= ret) {
                 LELOGW("ioInit getGPIOInfo ret[%d]", ret);
                 return NULL;
             }
-            gpioManager.num = ret;
-            if(!(gpioManager.handle = (void *)halGPIOInit())) {
+            ginGpioManager.num = ret;
+            if(!(ginGpioManager.handle = (void *)halGPIOInit())) {
                 LELOGW("ioInit halGPIOInit");
                 return NULL;
             }
-            for(i = 0, table = gpioManager.table; i < gpioManager.num; i++, table++) {
+            for(i = 0, table = ginGpioManager.table; i < ginGpioManager.num; i++, table++) {
                 table->num =  halGPIOOpen(table->id, table->dir, table->mode);
             }
-            ioHdl = &gpioManager;
-            gpioInitState(&gpioManager);
+            ioHdl = &ginGpioManager;
+            gpioInitState(&ginGpioManager);
             return ioHdl;
         }break;
         case IO_TYPE_PIPE: {
@@ -568,6 +572,60 @@ void **ioGetHdl(int *ioType) {
     }
     // halUartInit()
     return NULL;    
+}
+
+#define IO_INIT_START { \
+    int x = 0;
+
+#define IO_INIT_ITEM(i, w, j, jl) \
+    if (i == (i & w)) { \
+        ginIOHdl[x].hdl = ioInit((i & w), j, jl); \
+        ginIOHdl[x].ioType = (i & w); \
+    } \
+    x++;
+
+#define IO_INIT_END \
+    }
+
+IOHDL *ioGetHdlExt() {
+    // IOHDL *ioHdl = NULL;
+    char json[MAX_BUF] = {0};
+    int ret = 0;
+    // int x = 0;
+    static uint8_t whatCvtType = 0x00;
+    if (0x00 == whatCvtType) {
+        ret = sengineGetTerminalProfileCvtType(json, sizeof(json));
+        if (0 >= ret) {
+            LELOGW("ioGetHdl sengineGetTerminalProfileCvtType ret[%d]", ret);
+            return NULL;
+        }
+        whatCvtType = getWhatCvtType(json, ret);
+        if (0 >= whatCvtType) {
+            LELOGW("ioGetHdl getWhatCvtType[%d] NO VALID TYPE !!!!!!!!! ", whatCvtType);
+            return NULL;
+        }
+    } else {
+        return ginIOHdl;
+    }
+    // LELOGW("ioGetHdlExt => whatCvtType[%d]", whatCvtType);
+
+    IO_INIT_START;
+    IO_INIT_ITEM(IO_TYPE_UART, whatCvtType, json, ret);
+    IO_INIT_ITEM(IO_TYPE_GPIO, whatCvtType, json, ret);
+    IO_INIT_END;
+
+    // {
+    //     int i = 0;
+    //     for (i = 0; i < ioGetHdlCounts(); i++) {
+    //         LELOGE("ioType[%d], hdl[%p]", ginIOHdl[i].ioType, ginIOHdl[i].hdl);
+    //     }
+    // }
+
+    return ginIOHdl;
+}
+
+int ioGetHdlCounts() {
+    return sizeof(ginIOHdl)/sizeof(IOHDL);
 }
 
 int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {

@@ -4,30 +4,6 @@
 #include "jsgen.h"
 #include <stdarg.h>
 
-#define NUM_TOKENS 256
-
-// 
-#define JSON_NAME_REDIRECT "redirect"
-#define JSON_NAME_IP "IP"
-#define JSON_NAME_PORT "port"
-#define JSON_NAME_UTC "utc"
-#define JSON_NAME_WHATTYPE "whatCvtType"
-#define JSON_NAME_BAUD "baud"
-#define JSON_NAME_STATUS "status"
-#define JSON_NAME_UUID "uuid"
-#define JSON_NAME_URL "url"
-#define JSON_NAME_TYPE "type"
-#define JSON_NAME_GPIO_CONF         "conf"
-#define JSON_NAME_GPIO_ID           "id"
-#define JSON_NAME_GPIO_DIR          "dir"
-#define JSON_NAME_GPIO_MODE         "mode"
-#define JSON_NAME_GPIO_BLINK        "blink"
-#define JSON_NAME_GPIO_STATE        "state"
-#define JSON_NAME_GPIO_TYPE         "type"
-#define JSON_NAME_GPIO_TIME_SHORT   "shortTime"
-#define JSON_NAME_GPIO_TIME_LONG    "longTime"
-#define JSON_NAME_PIPE_NAME         "name"
-
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
     int dir = 0;
@@ -189,7 +165,7 @@ int getWhatCvtType(const char *json, int jsonLen) {
 }
 
 int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *stopBits, char *parity, int *flowCtrl) {
-    int ret = -1;
+    int ret = -1, num = 0, i = 0;
     char strBaud[96] = {0};
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
@@ -199,11 +175,19 @@ int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *st
         return -1;
     }
 
-    if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_BAUD, strBaud, sizeof(strBaud))) {
-        return -2;
-    }
+    if((ret = json_get_array_object(&jobj, JSON_NAME_UART_CONF, &num)) == WM_SUCCESS) {
+        num = num < 0 ? 0 : num;
+        for(i = 0; i < num; i++) {
+            if((ret = json_array_get_composite_object(&jobj, i)) != WM_SUCCESS) {
+                return -2;
+            }
 
-    // TODO: adption
+            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_UART_BAUD, strBaud, sizeof(strBaud))) {
+                return -3;
+            }
+        }
+    }
+    // TODO: to support multi-uart
     sscanf(strBaud, "%u-%u%c%u", baud, dataBits, parity, stopBits);
 
     return 0;
@@ -418,4 +402,76 @@ int getJsonOTAType(const char *json, int jsonLen, char *url, int urlLen) {
     }
 
     return type;
+}
+
+CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen, int *retLen) {
+    int ret = 0, key = 0;
+    // char strBaud[96] = {0};
+    jsontok_t jsonToken[NUM_TOKENS];
+    jobj_t jobj;
+    if (NULL == json || 0 >= jsonLen) {
+        return CLOUD_MSG_KEY_NONE;
+    }
+
+    LELOG("cloudMsgGetKey [%d][%s]", jsonLen, json);
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if (WM_SUCCESS != ret) {
+        return CLOUD_MSG_KEY_NONE;
+    }
+
+    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_KEY, &key)) {
+        return CLOUD_MSG_KEY_NONE;
+    }
+
+    *retLen = getJsonObject(json, jsonLen, JSON_NAME_VAL, val, valLen);
+    if (0 >= *retLen) {
+        return CLOUD_MSG_KEY_NONE;
+    }
+
+    return key;
+}
+
+
+int cloudMsgHandler(const char *data, int len) {
+
+    int ret = 0;
+    char buf[MAX_BUF] = {0};
+    CloudMsgKey key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
+    // SetLock();
+    switch (key) {
+        jsontok_t jsonToken[NUM_TOKENS];
+        jobj_t jobj;
+        case CLOUD_MSG_KEY_LOCK: {
+            char name[MAX_RULE_NAME] = {0};
+            int locked = 0;
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+            if (WM_SUCCESS != ret) {
+                break;
+            }
+
+            if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_LOCK, &locked)) {
+                break;
+            }
+            setLock(locked ? 1 : 0);
+        }break;
+        case CLOUD_MSG_KEY_DO_IA: {
+            char name[MAX_RULE_NAME] = {0};
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+            if (WM_SUCCESS != ret) {
+                break;
+            }
+
+            if (WM_SUCCESS != (ret = json_get_val_str(&jobj, JSON_NAME_NAME, name, sizeof(name)))) {
+                break;
+            }
+
+            // TODO: 
+            sengineRemoveRules(name);
+        }break;
+        case CLOUD_MSG_KEY_DO_SHARE: {
+
+        }break;
+    }
+    return ret;
 }

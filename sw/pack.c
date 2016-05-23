@@ -300,7 +300,7 @@ int doPack(void *ctx,
     int nwLen) {
 
     int ret = 0;
-    int macro = 0;
+    void *macro = NULL;
     //CommonCtx *pCtx = (CommonCtx *)ctx;
     USED(ctx);
     CommonHeader *commonHeader = NULL;

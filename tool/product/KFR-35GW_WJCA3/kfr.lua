@@ -48,7 +48,8 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.0'
+	-- TODO: modified
+	local str = '1.1'
 	return string.len(str), str
 end
 
@@ -58,8 +59,8 @@ end
 	1. PIPE/IPC json <-> json
 ]]
 function s1GetCvtType()
-
-	local whatCvtType = 0
+	-- TODO: modified
+	local whatCvtType = 0x01
 	-- delay time (ms) for the interval during write & read. 
 	local delay = 5
 	--[[
@@ -204,6 +205,53 @@ function test_ms()
 	print(str)
 end
 
+--[[ OPTIONAL
+]]
+function s1MergeCurrStatus2Action(action, currStatus)
+	print ("s1MergeCurrStatus2Action -- "..action.."\r\n")
+	print ("s1MergeCurrStatus2Action -- "..currStatus.."\r\n")
+	local tblAct = cjson.decode(action)
+	local tblSta = cjson.decode(currStatus)
+	local tblCtrlInfo = {}
+	local tblOut = {}
+	local jsonOut = ""
+
+	-- if nil == tblAct or nil == tblSta then 
+	-- 	print("s1MergeCurrStatus2Action -- ".."nil".."\r\n")
+	-- 	return 0, nil
+	-- end
+
+-- START
+	if tblAct["pwr"] then 
+		tblCtrlInfo["pwr"] = tblAct["pwr"]
+	elseif tblSta["pwr"] then
+		tblCtrlInfo["pwr"] = tblSta["pwr"]
+	end
+	if tblAct["mode"] then 
+		tblCtrlInfo["mode"] = tblAct["mode"]
+	elseif tblSta["mode"] then
+		tblCtrlInfo["mode"] = tblSta["mode"]
+	end
+	if tblAct["temp"] then 
+		tblCtrlInfo["temp"] = tblAct["temp"]
+	elseif tblSta["temp"] then
+		tblCtrlInfo["temp"] = tblSta["temp"]
+	end
+	if tblAct["speed"] then 
+		tblCtrlInfo["speed"] = tblAct["speed"]
+	elseif tblSta["speed"] then
+		tblCtrlInfo["speed"] = tblSta["speed"]
+	end
+-- END
+
+
+	tblOut = tblCtrlInfo
+	jsonOut = cjson.encode(tblOut)
+	print ("s1MergeCurrStatus2Action out is -- "..jsonOut..", tblOut "..#tblOut.."\r\n")
+
+	return string.len(jsonOut), jsonOut
+end
+
 -- 鏉滀簹绐楀笜鐢垫満
 -- bb 00 00 00 00 00 00 fa 44 涓嶆槑
 -- bb 01 00 00 00 00 00 fa 44 閫嗘椂閽?鏈夌洰鐨?
@@ -214,11 +262,12 @@ end
 
 --[[ MUST
 ]]
--- {"ctrl":{"action":1}}
--- {"ctrl":{"pwr":1, "temp":26, "mode":4, "speed":3}}
+-- {"pwr":1, "temp":26, "mode":4, "speed":3}
 function s1CvtStd2Pri(json)
-	local tb = cjson.decode(json)
-	local ctrl = tb["ctrl"]
+	-- TODO: modified
+	-- local tb = cjson.decode(json)
+	-- local ctrl = tb["ctrl"]
+	local ctrl = cjson.decode(json)
 
 	local cmdTbl = { 0xaa, 0x23, 0xac, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 
                          0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 

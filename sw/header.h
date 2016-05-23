@@ -216,6 +216,45 @@ typedef unsigned int uint32_t;
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
+#define TIMEOUT_SECS_BEGIN(secs) { \
+    static uint32_t ot; \
+    if ((halGetTimeStamp() - ot) > secs) {
+
+#define TIMEOUT_SECS_END \
+    ot = halGetTimeStamp(); \
+    }}
+
+// halIO
+void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
+int halUartClose(void *dev);
+int halUartRead(void *dev, uint8_t *buf, uint32_t len);
+int halUartWrite(void *dev, const uint8_t *buf, uint32_t len);
+void *halGPIOInit(void);
+int halGPIOClose(void *dev);
+int halGPIOOpen(int8_t id, int8_t dir, int8_t mode);
+int halGPIORead(void *dev, int gpioId, int *val);
+int halGPIOWrite(void *dev, int gpioId, const int val);
+int halFlashInit(void);
+int halFlashDeinit(void);
+void *halFlashOpen(void);
+int halFlashClose(void *dev);
+int halFlashErase(void *dev, uint32_t startAddr, uint32_t size);
+int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr);
+int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr);
+int halGetMac(uint8_t *mac, int len);
+
+// halOS
+int halLockInit(void);
+void halDeLockInit(void);
+int halLock(void);
+int halUnlock(void);
+unsigned int halGetTimeStamp(void);
+unsigned int halGetUTC(void);
+void *halCalloc(int n, size_t size);
+void halFree(void *ptr);
+int halReboot();
+
+
 #ifdef __cplusplus
 }
 #endif

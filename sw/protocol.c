@@ -19,6 +19,7 @@
 // ./Debug/linux 10000100051000710010C80E77ABCD70 192.168.3.136 \{\"ctrl\":\{\"pwr\":1\}\} \{\"ctrl\":\{\"pwr\":0}\}
 // ./Debug/linux 10000100051000710010C80E77ABCD80 192.168.3.152 \{\"ctrl\":\{\"pwr\":1,\"mode\":2,\"temp\":27,\"speed\":1\}\} \{\"ctrl\":\{\"pwr\":1,\"mode\":2\,\"temp\":27,\"speed\":2\}\}
 // ./Debug/linux 10000100111000810008C80E77ABCDFF 192.168.3.129 \{\"ctrl\":\{\"abc\":1\}\} \{\"ctrl\":\{\"abc\":2\}\}
+// ./Debug/linux 10000100111000810008EEEEEEEEEEEE 192.168.3.110 \{\"ctrl\":\{\"cjoin\":1\}\} \{\"ctrl\":\{\"cjoin\":1\}\}
 
 // {
 //     uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya
@@ -393,9 +394,18 @@ void testJson(void) {
         "token", token);
     LELOG("%s", out);
 
-    strcpy(status, "{\"status\":{\"action\":1},\"utc\":1457403654}");
-    genS2Json(status, sizeof(status), out, sizeof(out));
-    LELOG("%s", out);
+    // strcpy(status, "{\"status\":{\"action\":1},\"utc\":1457403654}");
+    // genS2Json(status, sizeof(status), out, sizeof(out));
+    // LELOG("%s", out);
+
+    {
+        char string1[64] = {"{\"key\":1,\"val\":{\"lock\":1}}"};
+        char string2[64] = {"{\"key\":2, \"val\":{\"name\":\"testIA\", \"act\":1}, \"info\":{}}"};
+        int ret = cloudMsgHandler(string1, strlen(string1));
+        LELOG("cloudMsgHandler [%d] string1", ret);
+        ret = cloudMsgHandler(string2, strlen(string2));
+        LELOG("cloudMsgHandler [%d] string2", ret);
+    }
 
 }
 #endif
@@ -512,7 +522,7 @@ void testSengine() {
 
     tmpScriptCfg = (void *)halCalloc(1, sizeof(ScriptCfg));
     ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
-    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
+    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
     // ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
 
     senginePollingRules((char *)json2, strlen(json2));
@@ -523,7 +533,8 @@ void testSengine() {
 int lelinkInit() {
     int ret = 0;
     AuthCfg authCfg;
-    void **ioHdl = NULL;
+    // void **ioHdl = NULL;
+    IOHDL *ioHdl = NULL;
     uint8_t mac[6] = {0};
 
     ret = halLockInit();
@@ -546,13 +557,21 @@ int lelinkInit() {
 
     ret = sengineInit();
     if (0 != ret) {
-        LELOGE("sengineInit ret[%d]\r\n", ret);
+        LELOGE("sengineInit ret[%d]", ret);
         // goto failed;
     }
 
-    ioHdl = (void **)ioGetHdl(NULL);
+    // ioHdl = (void **)ioGetHdl(NULL);
+    ioHdl = ioGetHdlExt();
+    // test only
+    // {
+    //     #include "sengine.h"        
+    //     ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, 0);
+    //     ret = lelinkStorageWriteScriptCfg2(ginScriptCfg2);
+    // }
+
     if (NULL == ioHdl) {
-        LELOGE("ioInit ioHdl[%p]\r\n", ioHdl);
+        LELOGE("ioInit ioGetHdlExt[%p]", ioHdl);
         // goto failed;
     }
     ret = lelinkStorageReadAuthCfg(&authCfg);
@@ -1113,11 +1132,11 @@ static int isNeedDelCB(CACHE_NODE_TYPE *currNode)
                 }
             }
             break;
-        case LELINK_CMD_CLOUD_GET_TARGET_REQ:
-            {
-                changeStateId(E_STATE_AP_CONNECTED);
-            }
-            break;
+        // case LELINK_CMD_CLOUD_GET_TARGET_REQ:
+        //     {
+        //         changeStateId(E_STATE_AP_CONNECTED);
+        //     }
+        //     break;
         }
         return 1;
     }
@@ -1366,7 +1385,7 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
-    ret = setTerminalStatus((const char *)dataIn, dataLen);
+    setTerminalStatus((const char *)dataIn, dataLen);
     LELOG("cbCtrlCmdRemoteReq [%d] -e", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);
@@ -1846,7 +1865,8 @@ static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     LELOG("cbCloudIndMsgRemoteReq -s");
     // LELOG("[%d][%s]", len, data);
     // senginePollingRules((char *)data, len);
-    ret = setLock();
+    // ret = setLock();
+    ret = cloudMsgHandler((const char *)data, len);
     LELOG("cbCloudIndMsgRemoteReq [%d] -e", ret);
     return ret;
 }

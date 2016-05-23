@@ -38,8 +38,8 @@ extern "C"
 #endif
 
 // osal
-#define MUTEX_LOCK halLock(NULL, __FILE__, __LINE__)
-#define MUTEX_UNLOCK halUnlock(NULL, __FILE__, __LINE__)
+#define MUTEX_LOCK halLock()
+#define MUTEX_UNLOCK halUnlock()
 #define lelinkCalloc halCalloc
 #define lelinkFree halFree
 

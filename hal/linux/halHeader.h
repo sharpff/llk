@@ -30,7 +30,7 @@
 #define APPLOGE(...) \
     applog("LEAPP[E]", ##__VA_ARGS__)
 
-#define LEPRINTF(...) \
+#define APPPRINTF(...) \
     printf(__VA_ARGS__)
 
 #define delayMS(ms) \
