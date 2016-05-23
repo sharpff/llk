@@ -3,13 +3,15 @@
 #USE VISUALGDB PROJECT PROPERTIES DIALOG INSTEAD
 
 BINARYDIR := Debug
+PLATFORM := linux_arm
+MYXPREFIX="arm-none-linux-gnueabi-"
 
 #Toolchain
-CC := gcc
-CXX := g++
+CC := $(MYXPATH)$(MYXPREFIX)gcc
+CXX := $(MYXPATH)$(MYXPREFIX)g++
 LD := $(CXX)
-AR := ar
-OBJCOPY := objcopy
+AR := $(MYXPATH)$(MYXPREFIX)ar
+OBJCOPY := $(MYXPATH)$(MYXPREFIX)objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG LINUX

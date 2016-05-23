@@ -8,7 +8,8 @@
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port);
 int syncUTC(const char *json, int jsonLen);
 int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *stopBits, char *parity, int *flowCtrl);
-int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n);
+int getGPIOInfo(const char *json, int jsonLen, gpioHand_t *table, int n);
+int getPipeInfo(const char *json, int jsonLen, char *name, int size);
 int getWhatCvtType(const char *json, int jsonLen);
 int getJsonUTC32(char *json, int jsonLen/*, const char *rmtJson, int rmtJsonLen*/);
 

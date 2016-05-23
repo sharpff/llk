@@ -57,13 +57,15 @@ touch "$MAIN_PATH/sw/data.c"
 $MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
 pushd $PATH_SENGINE > /dev/null 2>&1
-make PLATFORM="linux" $*
+make PLATFORM="linux_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
+#make PLATFORM="linux_arm" $*
 popd > /dev/null 2>&1
 
 pushd $PATH_LELINK > /dev/null 2>&1
-make PLATFORM="linux" $*
+make PLATFORM="linux_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
+#make PLATFORM="linux_arm" $*
 popd > /dev/null 2>&1
 
-make PLATFORM="linux" $*
+make PLATFORM="linux_arm" $*
 echo done
 

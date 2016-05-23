@@ -26,6 +26,7 @@
 #define JSON_NAME_GPIO_TYPE         "type"
 #define JSON_NAME_GPIO_TIME_SHORT   "shortTime"
 #define JSON_NAME_GPIO_TIME_LONG    "longTime"
+#define JSON_NAME_PIPE_NAME         "name"
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
@@ -272,6 +273,21 @@ int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
         // json_release_array_object(jobj);
     }
     return j;
+}
+
+int getPipeInfo(const char *json, int jsonLen, char *name, int size) {
+    jobj_t jobj;
+    int ret = -1;
+    jsontok_t jsonToken[NUM_TOKENS];
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if(WM_SUCCESS != ret) {
+        return -1;
+    }
+    if(WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_PIPE_NAME, name, size)) {
+        return -2;
+    }
+    return 0;
 }
 
 int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen) {

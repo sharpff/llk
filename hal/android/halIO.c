@@ -92,6 +92,10 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
 
 int halGetMac(uint8_t *mac, int len)
 {
+#if 1
+    memcpy(mac, gNativeContext.mac, sizeof(gNativeContext.mac));
+    return 0;
+#else
 	int sockfd;
 	struct ifreq tmp;
 	char mac_addr[30];
@@ -118,5 +122,6 @@ int halGetMac(uint8_t *mac, int len)
 	mac[4] = tmp.ifr_hwaddr.sa_data[4];
 	mac[5] = tmp.ifr_hwaddr.sa_data[5];
 	close(sockfd);
+#endif
 	return 0;
 }

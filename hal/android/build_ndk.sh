@@ -42,6 +42,6 @@ function CreateJniHeaderFileForBuildLib()
     return $IRET
 }
 
-$MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h ./version.h
+$MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h ./version.h
 CreateJniHeaderFileForBuildLib . com/letv/lelink LeLink
 ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk $*
