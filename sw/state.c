@@ -3,6 +3,7 @@
 #include "protocol.h"
 #include "sengine.h"
 #include "io.h"
+#include "sengine.h"
 
 #ifndef LOG_STATE
 #ifdef LELOG
@@ -325,7 +326,7 @@ static int stateProcCloudLinked(StateContext *cntx) {
     }
     LELOG("stateProcCloudLinked");
 
-    TIMEOUT_BEGIN(5000)
+    TIMEOUT_BEGIN(8000)
         LELOGW("stateProcCloudLinked timeout");
         return -1;
     TIMEOUT_END

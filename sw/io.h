@@ -18,10 +18,10 @@ extern "C"
 #define GET_PAGE_SIZE(currSize, SecSize) ((SecSize)*(((currSize)-1)/(SecSize) + 1)) // min erase size
 
 typedef enum {
-    IO_TYPE_UART,
-    IO_TYPE_GPIO,
-    IO_TYPE_PIPE,
-    IO_TYPE_SOCKET,
+    IO_TYPE_UART = 0x1,
+    IO_TYPE_GPIO = 0x2,
+    IO_TYPE_PIPE = 0x4,
+    IO_TYPE_SOCKET = 0x8,
 }IO_TYPE;
 
 /*
@@ -132,12 +132,19 @@ void lelinkStorageDeinit(void);
 
 
 /*
- * 1. uart
- * 2. pipe
- * . socket
+ * UART is 0x1
+ * GIPO is 0x2
  */
+// #define MAX_IO_HDL 4
+typedef struct {
+    int ioType;
+    void *hdl;
+}IOHDL;
+
 void *ioInit(int ioType, const char *json, int jsonLen);
 void **ioGetHdl(int *ioType);
+IOHDL *ioGetHdlExt();
+int ioGetHdlCounts();
 int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen);
 void ioDeinit(int ioType, void *hdl);
