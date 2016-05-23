@@ -2,8 +2,7 @@
 
 CMD_NAME=$(echo $0 | sed 's,^\(.*/\)\?\([^/]*\),\2,')
 DIR_NAME=$(basename $(pwd))
-BRANCH_NAME=$(git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/\1/")
-GIT_VERSION=$(git describe $BRANCH_NAME 2> /dev/null) # must have tag.
+GIT_VERSION=$(git describe 2> /dev/null) # must have tag.
 if [ $? != 0 ]; then
     GIT_VERSION=g$(git rev-parse --short=7 HEAD)
     if [ $? != 0 ]; then
