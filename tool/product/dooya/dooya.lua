@@ -76,7 +76,7 @@ function s1GetQueries(queryType)
     local queryCountLen = ""
 
     if queryType == 1 then
-        query = string.char(string.char( 0xbb, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 ))
+        query = string.char( 0xbb, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 )
     end
     if string.len(query) ~= 0 then
         queryCountLen = string.char(string.len(query), 0x00 )
