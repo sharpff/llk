@@ -394,9 +394,18 @@ void testJson(void) {
         "token", token);
     LELOG("%s", out);
 
-    strcpy(status, "{\"status\":{\"action\":1},\"utc\":1457403654}");
-    genS2Json(status, sizeof(status), out, sizeof(out));
-    LELOG("%s", out);
+    // strcpy(status, "{\"status\":{\"action\":1},\"utc\":1457403654}");
+    // genS2Json(status, sizeof(status), out, sizeof(out));
+    // LELOG("%s", out);
+
+    {
+        char string1[64] = {"{\"key\":1,\"val\":{\"lock\":1}}"};
+        char string2[64] = {"{\"key\":2, \"val\":{\"name\":\"testIA\", \"act\":1}, \"info\":{}}"};
+        int ret = cloudMsgHandler(string1, strlen(string1));
+        LELOG("cloudMsgHandler [%d] string1", ret);
+        ret = cloudMsgHandler(string2, strlen(string2));
+        LELOG("cloudMsgHandler [%d] string2", ret);
+    }
 
 }
 #endif
@@ -1377,7 +1386,7 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
-    ret = setTerminalStatus((const char *)dataIn, dataLen);
+    setTerminalStatus((const char *)dataIn, dataLen);
     LELOG("cbCtrlCmdRemoteReq [%d] -e", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);
@@ -1857,7 +1866,8 @@ static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     LELOG("cbCloudIndMsgRemoteReq -s");
     // LELOG("[%d][%s]", len, data);
     // senginePollingRules((char *)data, len);
-    ret = setLock();
+    // ret = setLock();
+    ret = cloudMsgHandler((const char *)data, len);
     LELOG("cbCloudIndMsgRemoteReq [%d] -e", ret);
     return ret;
 }

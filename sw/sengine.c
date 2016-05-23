@@ -21,10 +21,10 @@
 #define LELOGW(...)
 #endif
 
-// #ifdef LELOGE
-// #undef LELOGE
-// #define LELOGE(...)
-// #endif
+// // #ifdef LELOGE
+// // #undef LELOGE
+// // #define LELOGE(...)
+// // #endif
 
 #ifdef LEPRINTF
 #undef LEPRINTF
@@ -46,7 +46,6 @@
     int x = 0; \
     ioHdl = ioGetHdlExt(); \
     if (NULL == ioHdl) { \
-        LELOGW("ioGetHdlExt NULL"); \
         return -1; \
     } \
     for (x = 0; x < ioGetHdlCounts(); x++) { \
@@ -242,6 +241,66 @@ static int lf_s1GetValidKind(lua_State *L, uint8_t *output, int outputLen) {
     *((int *)output) = lua_tointeger(L, -1);
     // LEPRINTF("[SENGINE] s1GetValidKind: [%d]", *((int *)output));
     return sizeof(int);
+}
+
+static IO lf_s1MergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, int inputLen) {
+    // int firstLen = 0;
+    // int secondLen = 0;
+
+    // firstLen = strlen(input);
+    // if (0 == firstLen) {
+    //     // lua_pushlstring(L, NULL, 0);
+    // } else {
+    //     lua_pushlstring(L, (char *)input, firstLen);
+    // }
+    // LELOG("[SENGINE] lf_s1MergeCurrStatus2Action_input: firstLen[%d/%d][%s]", firstLen, inputLen, input);
+    // firstLen += 1;
+    // secondLen = strlen((char *)input + firstLen);
+    // if (0 == secondLen) {
+    //     // lua_pushlstring(L, NULL, 0);
+    // } else {
+    //     lua_pushlstring(L, (char *)input + firstLen, secondLen);
+    // }
+    // LELOG("[SENGINE] lf_s1MergeCurrStatus2Action_input: secondLen[%d/%d][%s]", secondLen, inputLen, input + firstLen);
+    // IO io = { 2, 2 };
+    int firstLen = 0;
+    int secondLen = 0;
+    const char *empty = "{}";
+    firstLen = strlen(input);
+    if (0 == firstLen) {
+        lua_pushlstring(L, empty, 2);
+    } else {
+        lua_pushlstring(L, (char *)input, firstLen);
+    }
+    LELOG("[SENGINE] lf_s1MergeCurrStatus2Action_input: firstLen[%d/%d][%s]", firstLen, inputLen, input);
+    firstLen += 1;
+    secondLen = strlen((char *)input + firstLen);
+    if (0 == secondLen) {
+        lua_pushlstring(L, empty, 2);
+    } else {
+        lua_pushlstring(L, (char *)input + firstLen, secondLen);
+    }
+    LELOG("[SENGINE] lf_s1MergeCurrStatus2Action_input: secondLen[%d/%d][%s]", secondLen, inputLen, input + firstLen);
+    IO io = { 2, 2 };
+    return io;
+}
+static int lf_s1MergeCurrStatus2Action(lua_State *L, uint8_t *output, int outputLen) {
+    /* cmd */
+    int sLen = lua_tointeger(L, -2);
+    int size = MIN(sLen, outputLen);
+    const char *tmp = (const char *)lua_tostring(L, -1);
+    if (tmp && 0 < size) {
+        memcpy(output, tmp, size);
+        LELOG("[SENGINE] lf_s1MergeCurrStatus2Action: [%d][%s]", size, output);
+    } else {
+        size = 0;
+    }
+
+    return size;
+    // *((int *)output) = lua_tointeger(L, -1);
+    // LEPRINTF("[SENGINE] s1MergeCurrStatus2Action: [%d]", *((int *)output));
+    // return sizeof(int);
+
 }
 
 static IO lf_s1GetVer_input(lua_State *L, const uint8_t *input, int inputLen) {
@@ -485,6 +544,7 @@ static FUNC_LIST func_list[] = {
     { S1_STD2PRI, { lf_s1CvtStd2Pri_input, lf_s1CvtStd2Pri } },
     { S1_PRI2STD, { lf_s1CvtPri2Std_input, lf_s1CvtPri2Std } },
     { S1_GET_VALIDKIND, { lf_s1GetValidKind_input, lf_s1GetValidKind } },
+    { S1_MERGE_ST2ACT, { lf_s1MergeCurrStatus2Action_input, lf_s1MergeCurrStatus2Action } },
     { S1_GET_VER, { lf_s1GetVer_input, lf_s1GetVer } },
     { S2_IS_VALID, { lf_s2IsValid_input, lf_s2IsValid } },
     // { S2_IS_VALID_EXT, { lf_s2IsValidExt_input, lf_s2IsValidExt } },
@@ -603,7 +663,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
         if (lua_pcall(L, io_ret.param, io_ret.ret, 0))
         {
             const char *err = lua_tostring(L, -1);
-            LELOGE("[lua engine] lua error: %s", err);
+            LELOGE("[lua engine] lua error: %s => %s", err, funcName);
             lua_pop(L, 1);
             ret = -3;
         }
@@ -629,7 +689,7 @@ int sengineHasDevs(void) {
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_HAS_SUBDEVS,
             NULL, 0, (uint8_t *)&hasDevs, sizeof(hasDevs));
     if (ret <= 0) {
-        LELOGW("sengineGetStatus sengineCall("S1_HAS_SUBDEVS") [%d]", ret);
+        LELOGW("sengineHasDevs sengineCall("S1_HAS_SUBDEVS") [%d]", ret);
         return 0;
     }
     return hasDevs;
@@ -764,6 +824,9 @@ int sengineSetStatus(char *json, int jsonLen) {
     int ret = 0;
     uint8_t bin[512] = {0};
     int i = 0;
+    char jsonMerged[2*MAX_BUF] = {0};
+    // char *jsonOut = json;
+    // int jsonOutLen = jsonLen;
     // IOHDL *ioHdl = NULL;
     // int x = 0;
 
@@ -780,8 +843,25 @@ int sengineSetStatus(char *json, int jsonLen) {
     //     }
 
     FOR_EACH_IO_HDL_START;
+        memcpy(jsonMerged, json, jsonLen);
+        jsonMerged[jsonLen] = 0;
+        ret = jsonLen + 1;
+        ret = sengineGetStatus(&jsonMerged[ret], sizeof(jsonMerged) - ret); 
+        if (0 < ret) {
+            ret = jsonLen + 1 + ret;
+            /*
+             * jsonMerged includes 2 params before sengineCall. 1st is action, 2nd is current status
+             */
+            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_MERGE_ST2ACT,
+                (uint8_t *)jsonMerged, ret, jsonMerged, sizeof(jsonMerged));
+            if (0 < ret) {
+                jsonLen = ret;
+            }
+            LELOGW("sengineSetStatus sengineCall("S1_MERGE_ST2ACT") [%d] [%d][%s]", ret, jsonLen, jsonMerged);
+        }
+
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
-            (uint8_t *)json, jsonLen, bin, sizeof(bin));
+            (uint8_t *)jsonMerged, jsonLen, bin, sizeof(bin));
         if (ret <= 0) {
             LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]", ret);
             continue;
@@ -805,12 +885,30 @@ int sengineSetStatus(char *json, int jsonLen) {
     return ret;
 }
 
+int sengineGetStatus(char *status, int len) {
+    int ret;
+    ret = cacheGetTerminalStatus(status, len);
+    if(0 >= ret) {
+        // LELOGW("Can't get cache status");
+        strcpy(status, "{}");
+        ret = 2;
+    }
+    LELOG("sengineGetStatus [%d][%s]", ret, status);
+    return ret;
+}
+
+
+int sengineMergeStatus(char *inOutJson, int jsonLen, const char *oldStatus, int oldStatusLen) {
+    LELOG("sengineMergeStatus ***[%d][%s], [%d][%s]", jsonLen, inOutJson, oldStatusLen, oldStatus);
+    return 0;
+}
+
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     int ret = 0;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_CVTTYPE,
             NULL, 0, (uint8_t *)json, jsonLen);
     if (ret <= 0) {
-        LELOGW("sengineGetStatus sengineCall("S1_GET_CVTTYPE") [%d]", ret);
+        LELOGW("sengineGetTerminalProfileCvtType sengineCall("S1_GET_CVTTYPE") [%d]", ret);
         return ret;
     }
     return ret;
@@ -841,7 +939,7 @@ int sengineQuerySlave(QuerieType_t type)
         }
 
         // query for sub dev
-        if (sdevGetArray()) {
+        if (sengineHasDevs()) {
             TIMEOUT_SECS_BEGIN(5)
                 char json[256] = {0};
                 uint8_t cmd[128] = {0};
@@ -1132,6 +1230,19 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
             continue;
         }
 
+        ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BECMD,
+            NULL, 0, (uint8_t *)&buf, sizeof(buf));
+        if (0 > ret) {
+            LELOGW("sengineS2RuleHandler sengineCall("S2_GET_BECMD") [%d]", ret);
+            continue;
+        }
+
+        // ret = sengineMergeStatus((char *)buf, ret, localJson, localJsonLen);
+        // if (0 > ret) {
+        //     LELOGW("sengineS2RuleHandler sengineMergeStatus [%d][%d][%s], [%d][%s]", ret, buf, ret, localJson, localJsonLen);
+        //     continue;
+        // }
+
         // 5. do ctrl
         ret = sengineSetStatus((char *)buf, ret);
         LELOG("sengineS2RuleHandler sengineSetStatus DONE [%d]", ret);      
@@ -1236,6 +1347,13 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
 
     return 0;
 }
+
+int sengineRemoveRules(const char *name) {
+    LELOG("sengineRemoveRules -s ");
+    LELOG("sengineRemoveRules -e ");
+    return 0;
+}
+
 
 
 

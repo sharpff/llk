@@ -21,6 +21,7 @@ extern "C"
 #define S1_STD2PRI "s1CvtStd2Pri"
 #define S1_PRI2STD "s1CvtPri2Std"
 #define S1_GET_VALIDKIND "s1GetValidKind"
+#define S1_MERGE_ST2ACT "s1MergeCurrStatus2Action"
 #define S1_GET_VER "s1GetVer"
 
 /*
@@ -85,10 +86,13 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
 int sengineHasDevs(void);
 int sengineGetStatus(char *json, int jsonLen);
 int sengineSetStatus(char *json, int jsonLen);
+int sengineMergeStatus(char *inOutJson, int jsonLen, const char *oldStatus, int oldStatusLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
 int sengineQuerySlave(QuerieType_t type);
 int senginePollingSlave(void);
 int senginePollingRules(const char *jsonRmt, int jsonLen);
+int sengineRemoveRules(const char *name);
+
 
 
 #ifdef __cplusplus
