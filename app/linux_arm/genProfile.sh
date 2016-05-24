@@ -9,12 +9,12 @@ $MAIN_PATH/lelinkTool.py \
     -o ./0x1c2000.bin
 
 $MAIN_PATH/lelinkTool.py \
-    -t ezviz.lua \
+    -t test.lua \
     -o ./0x1c3000.bin
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid Letv_lelink \
+    --ssid lelink \
     --passwd 987654321 \
     -o ./0x1c8000.bin
 

@@ -23,7 +23,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
     │       ├── 0x1c3000.bin
     │       ├── 0x1c8000.bin
     │       ├── debug.mak
-    │       ├── ezviz.lua
+    │       ├── test.lua
     │       ├── genProfile.sh
     │       ├── main.c
     │       └── Makefile
@@ -69,9 +69,9 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
 
     - 0x1c3000.bin 配置文件, 主要用于网络配置. 在每次配置完成，该文件分被程序更新。
 
-    - 0x1c8000.bin 固件脚本文件配置，由ezviz.lua配合生成。
+    - 0x1c8000.bin 固件脚本文件配置，由test.lua配合生成。
 
-    - ezviz.lua 固件脚本，使用lua编写，根据不同产品由厂家提供。
+    - test.lua 固件脚本，使用lua编写，根据不同产品由厂家提供。
 
     - genProfile.sh 生成程序运行时的配置文件(0x1c2000.bin、0x1c3000.bin、0x1c8000.bin)
 
@@ -155,7 +155,7 @@ hal/linux_arm/下的其它功能可以进一步根据系统平台优化。
 
 ### 5.1、app/linux_arm/genProfile.sh
     
-该工具会生成(0x1c2000.bin、0x1c3000.bin、0x1c8000.bin), 当固件脚本(ezviz.lua)修改后，需要执行该工具。
+该工具会生成(0x1c2000.bin、0x1c3000.bin、0x1c8000.bin), 当固件脚本(test.lua)修改后，需要执行该工具。
 
 ### 5.2 tool/linux
 
@@ -183,8 +183,8 @@ App模拟器, 要求在请在app/linux_arm/目录下启动
 
 ### 5.3 tool/luaTest
 
-固件脚本测试工具，以对app/linux_arm/ezviz.lua的测试(关于该文件的编写规则，请参考示例文件及注释)。
+固件脚本测试工具，以对app/linux_arm/test.lua的测试(关于该文件的编写规则，请参考示例文件及注释)。
 
-> 例如: too/luaTest app/linux_arm/ezviz.lua "s1GetCvtType"
+> 例如: too/luaTest app/linux_arm/test.lua "s1GetCvtType"
 
 
