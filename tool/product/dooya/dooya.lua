@@ -41,7 +41,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.0'
+	local str = '1.1'
 	return string.len(str), str
 end
 
@@ -51,18 +51,18 @@ end
 	1. PIPE/IPC json <-> json
 ]]
 function s1GetCvtType()
-
-	local whatCvtType = 0
-	-- delay time (ms) for the interval during write & read. 
+	local str = [[
+    {
+    "whatCvtType":1,
+    "uart":[
+    	{
+    		"id":1, 
+    		"baud":"9600-8N1"
+    	}
+    	]
+	}
+    ]]
 	local delay = 5
-	--[[
-		E.g."9600-8N1"
-		FORMAT [baud(9600, ...) - dataBits(8, 9, ...) parity(None:0, Odd:1, Even:2) stopBits(1, 2)]
-		refer to func(halIO.c)
-		void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
-	]] 
-	local baud = '"9600-8N1"'
-	local str = string.format('{"whatCvtType":%d,"baud":%s}', whatCvtType, baud)
 
 	return string.len(str), str, delay
 end
@@ -71,9 +71,16 @@ end
 	查询设备状态。
 	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
 ]]
-function s1GetQueries()
-	local query = string.char( 0xbb, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 )
-	local queryCountLen = string.char( 0x09, 0x00 )
+function s1GetQueries(queryType)
+    local query = ""
+    local queryCountLen = ""
+
+    if queryType == 1 then
+        query = string.char( 0xbb, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 )
+    end
+    if string.len(query) ~= 0 then
+        queryCountLen = string.char(string.len(query), 0x00 )
+    end
 
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
@@ -127,8 +134,7 @@ end
 ]]
 -- {"ctrl":{"action":1}}
 function s1CvtStd2Pri(json)
-	local tb = cjson.decode(json)
-	local ctrl = tb["ctrl"]
+	local ctrl = cjson.decode(json)
 	local cmdTbl = { 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 }
 	local dataStr = ""
 

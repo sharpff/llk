@@ -38,7 +38,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.0'
+	local str = '1.1'
 	return string.len(str), str
 end
 
@@ -51,41 +51,13 @@ function s1GetCvtType()
     -- combained uart(0x1) & gpio(0x2)
     local str = [[
     {
-    "whatCvtType":3,
+    "whatCvtType":1,
     "uart":[
     	{
     		"id":1, 
     		"baud":"9600-8N1"
     	}
-    	],
-    "gpio":[
-	        {
-	            "id":1,
-	            "dir":0,
-	            "mode":2,
-	            "type":1,
-	            "longTime":30,
-	            "shortTime":3
-	        },
-	        {
-	            "id":2,
-	            "dir":1,
-	            "mode":0,
-	            "state":1,
-	            "blink":2,
-	            "type":1,
-	            "longTime":10,
-	            "shortTime":1
-	        },
-	        {
-	            "id":3,
-	            "dir":1,
-	            "mode":0,
-	            "state":0,
-	            "blink":30,
-	            "type":0
-	        }
-	    ]
+    	]
 	}
     ]]
 	local delay = 5
@@ -97,10 +69,21 @@ end
 	查询设备状态。
 	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
 ]]
-function s1GetQueries()
-	local query = string.char( 0xa5, 0xa5, 0x5a, 0x5a, 0xb1, 0xc0, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00 )
-	local queryCountLen = string.char( 0x0d, 0x00 )
+function s1GetQueries(queryType)
+	-- TODO: modified
+    local query = ""
+    local queryCountLen = ""
 
+    if queryType == 1 then
+        query = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0xb1, 0xc0, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00)
+    end
+    if string.len(query) ~= 0 then
+        queryCountLen = string.char(string.len(query), 0x00 )
+    end
+
+    --print(string.len(queryCountLen), string.len( query ), "\n")
+    --LOGSTR(queryCountLen)
+    --LOGSTR(query)
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
 
@@ -148,8 +131,10 @@ end
 -- a5 a5 5a 5a c1 c0 02 00 03 00 00 0f 00 		# all on
 -- a5 a5 5a 5a d0 c0 02 00 03 00 00 0f 0f 		# all off
 function s1CvtStd2Pri(json)
-	local tb = cjson.decode(json)
-	local ctrl = tb["ctrl"]
+	-- TODO: modified
+	-- local tb = cjson.decode(json)
+	-- local ctrl = tb["ctrl"]
+	local ctrl = cjson.decode(json)
 	local cmdTbl = { 0xa5, 0xa5, 0x5a, 0x5a, 0x00, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00 }
 	local dataStr = ""
     local sum = 0xbeaf

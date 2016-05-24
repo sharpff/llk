@@ -73,10 +73,18 @@ end
 	查询设备状态。
 	每个设备都约定需要一条或者多条指令可以获取到设备的所有状态。
 ]]
-function s1GetQueries()
-	local query = string.char( 0xab )
-	local queryCountLen = string.char( 0x01, 0x00 )
-	-- print('hello')
+function s1GetQueries(queryType)
+    local query = ""
+    local queryCountLen = ""
+
+    if queryType == 1 then
+        query = string.char( 0xab )
+    end
+    if string.len(query) ~= 0 then
+        queryCountLen = string.char(string.len(query), 0x00 )
+    end
+
+
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
 
