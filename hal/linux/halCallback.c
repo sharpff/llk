@@ -134,6 +134,14 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 
                 APPLOG("LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ [%d][%s]", sizeOTA, ginOTAUrl + RSA_LEN);
                 ret = sizeOTA;
+            } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_TELL_SHARE_REQ == cmdInfo->subCmdId) {
+                const char *tellMgs = "{\"account\":\"user1\",\"uuid\":\"10000100051000310024223456abcdef\",\"share\":1}";
+                ret = len < strlen(tellMgs) ? len : strlen(tellMgs);
+                memcpy(data, tellMgs, ret);
+            } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_REQ == cmdInfo->subCmdId) {
+                const char *confirmMgs = "{\"account\":\"user1\",\"uuid\":\"10000100051000310024223456abcdef\",\"accepted\":1}";
+                ret = len < strlen(confirmMgs) ? len : strlen(confirmMgs);
+                memcpy(data, confirmMgs, ret);
             }
         }break;
         case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
