@@ -27,7 +27,7 @@ void cacheSetTerminalStatus(const char *status, int len);
 int cacheGetTerminalStatus(char *status, int len);
 
 int setLock(int locked);
-int getlock();
+int getLock();
 
 // test only
 #define PUBLIC_KEY_PEM \
