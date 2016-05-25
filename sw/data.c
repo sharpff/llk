@@ -53,7 +53,7 @@ extern PrivateCfg ginPrivateCfg;
 
 int setLock(int locked) {
     int ret = 0;
-    ginPrivateCfg.data.devCfg.locked = 1;
+    ginPrivateCfg.data.devCfg.locked = locked;
     ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     return 0 <= ret ? 1 : 0;
 }
