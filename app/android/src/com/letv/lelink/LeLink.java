@@ -21,13 +21,17 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口 <br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 0.1
+ * @version 0.2
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
-	private static final String VERSION = "0.1"; // 与以上的注释一致
+	/*
+	 * 0.1, 添加Listener
+	 * 0.2, 添加Listener onPushMessage()
+	 */
+	private static final String VERSION = "0.2"; // 与以上的注释一致
 	private static LeLink sLeLink = null;
 	private static final String TAG = "LeLinkJar";
 	private static final int MAX_WAIT_CMD = 10;
@@ -592,6 +596,16 @@ public class LeLink {
 					e.printStackTrace();
 					return ret;
 				}
+			} else if (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_MSG_REQ) {
+				try {
+					dataStr = new String(buf, "UTF-8");
+					if (mListener != null) {
+						mListener.onPushMessage(dataStr);
+					}
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+					return ret;
+				}
 			}
 			break;
 		case MSG_TYPE_REMOTERESPOND:
@@ -756,6 +770,15 @@ public class LeLink {
 		 * 			
 		 */
 		void onStateChange(String uuid, String dataStr);
+		
+		/**
+		 * 消息推送通知 <br>
+		 * 
+		 * @param dataStr
+		 * 			消息内容<br>
+		 * 			
+		 */
+		void onPushMessage(String dataStr);
 	}
 
 	private static void LOGD(String msg) {

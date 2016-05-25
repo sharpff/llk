@@ -19,7 +19,7 @@ public class MainActivity extends Activity {
 	private JSONObject mJsonData = null;
 	
 	private static boolean TEST_WIFI_CONFIG = false;
-	private static boolean TEST_SDK_AUTH = false;
+	private static boolean TEST_SDK_AUTH = true;
 	private static boolean TEST_DISCOVER_DEV = false;
 	private static boolean TEST_GET_STATE =  false;
 	private static boolean TEST_CTRL_DEV = true;
@@ -290,6 +290,12 @@ public class MainActivity extends Activity {
 		@Override
 		public void onCtrlBack(int subcmd, String uuid, String dataStr) {
 			String str = String.format("onCtrlBack-%d(%s):\n%s", subcmd, uuid, dataStr);
+			Log.e(TAG, str);
+		}
+
+		@Override
+		public void onPushMessage(String dataStr) {
+			String str = String.format("onPushMessage:\n%s", dataStr);
 			Log.e(TAG, str);
 		}
 	};

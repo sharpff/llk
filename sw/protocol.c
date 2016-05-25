@@ -1867,9 +1867,13 @@ static int cbCloudMsgCtrlR2TTellShareRemoteReq(void *ctx, const CmdHeaderInfo* c
 
 static int cbCloudMsgCtrlR2TTellShareLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen)
 {
+    int ret;
+
     LELOG("cbCloudMsgCtrlR2TTellShareLocalRsp -s");
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TTellShareLocalRsp -s");
-    return 0;
+
+    return ret;
 }
 
 static int cbCloudMsgCtrlC2RConfirmShareLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen)
@@ -1909,10 +1913,15 @@ static int cbCloudMsgCtrlR2TConfirmShareRemoteReq(void *ctx, const CmdHeaderInfo
 
 static int cbCloudMsgCtrlR2TConfirmShareLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen)
 {
+    int ret;
+
     LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -s");
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -s");
-    return 0;
+
+    return ret;
 }
+
 static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     // int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);  
@@ -1968,6 +1977,7 @@ static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     // LELOG("[%d][%s]", len, data);
     // senginePollingRules((char *)data, len);
     // ret = setLock();
+    halCBRemoteReq(ctx, cmdInfo, data, len);
     ret = cloudMsgHandler((const char *)data, len);
     LELOG("cbCloudIndMsgRemoteReq [%d] -e", ret);
     return ret;
