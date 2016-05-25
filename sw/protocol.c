@@ -808,7 +808,7 @@ static int doQ2ARemoteReq(void *ctx,
     
     // req from outside
     // note: the data will be sent if CBRemoteReq return true. so to prepare the data in CBLocalRsp
-    if (((CBRemoteReq) ct_p->procQ2A) && ((CBRemoteReq) ct_p->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen)) // do sth remote req
+    if (((CBRemoteReq) ct_p->procQ2A) && 0 < ((CBRemoteReq) ct_p->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen)) // do sth remote req
     {
         ct_p = getCmdRecord(cmdInfo->cmdId + 1, cmdInfo->subCmdId + 1);
         if (ct_p) {
@@ -1262,6 +1262,13 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbDiscoverRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
+    // it is not comming from simu
+    if (memcmp(cmdInfo->uuid, "d05bca44feb34aeca2dd", 20)) {
+        if (getLock()) {
+            ret = -1; // drop this req, it means no rsp
+        }
+    }
+
     LELOG("cbDiscoverRemoteReq -e");
     return ret;
 }
