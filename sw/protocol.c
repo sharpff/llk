@@ -1870,8 +1870,8 @@ static int cbCloudMsgCtrlR2TTellShareLocalRsp(void *ctx, const CmdHeaderInfo* cm
     int ret;
 
     LELOG("cbCloudMsgCtrlR2TTellShareLocalRsp -s");
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
-    LELOG("cbCloudMsgCtrlR2TTellShareLocalRsp -s");
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlR2TTellShareLocalRsp -e");
 
     return ret;
 }
@@ -1916,8 +1916,8 @@ static int cbCloudMsgCtrlR2TConfirmShareLocalRsp(void *ctx, const CmdHeaderInfo*
     int ret;
 
     LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -s");
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
-    LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -s");
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -e");
 
     return ret;
 }

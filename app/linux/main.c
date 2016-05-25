@@ -174,6 +174,37 @@ redo:
             strncpy(node.ndIP, br, ret);
             node.ndPort = LOCAL_TEST_PORT;
         }
+    case 't': {
+        node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
+        node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_TELL_SHARE_REQ;
+
+        // set peer uuid (for 1st, for cloud)
+        memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
+
+        // set peer token (for 2nd)
+        uint8_t peerToken[AES_LEN] = {0x83, 0x2d, 0x62, 0x4f, 0x28, 0x84, 0x11, 0x9c, 0x42, 0xb3, 0x83, 0x29, 0xfe, 0x9a, 0xcf, 0x53};
+        if (ginBeCtrlToken[0]) {
+            memcpy(peerToken, ginBeCtrlToken, AES_LEN);
+        }
+        memcpy(node.token, peerToken, sizeof(node.token)); 
+
+        }
+        break;
+    case 'c': {
+        node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
+        node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_REQ;
+
+        // set peer uuid (for 1st, for cloud)
+        memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
+
+        // set peer token (for 2nd)
+        uint8_t peerToken[AES_LEN] = {0x83, 0x2d, 0x62, 0x4f, 0x28, 0x84, 0x11, 0x9c, 0x42, 0xb3, 0x83, 0x29, 0xfe, 0x9a, 0xcf, 0x53};
+        if (ginBeCtrlToken[0]) {
+            memcpy(peerToken, ginBeCtrlToken, AES_LEN);
+        }
+        memcpy(node.token, peerToken, sizeof(node.token)); 
+
+        }
         break;
     }
     
