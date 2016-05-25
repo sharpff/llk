@@ -138,7 +138,7 @@ int doUnpack(void *ctx,
 
             // check for invalid unpack
             if (LELINK_CMD_CTRL_REQ == cmdHeader->cmdId) {
-                if (getLock()) {
+                if (isCloudAuthed()) {
                     if (ENC_TYPE_STRATEGY_11 == commonHeader->encType) {
                         LELOGW("INVALID unpack ENC_TYPE_STRATEGY_11, lock [%d] ", getLock());
                         return LELINK_ERR_LOGIC_ERR1;

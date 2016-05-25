@@ -1264,7 +1264,7 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
     LELOG("[%d][%s]", dataLen, dataIn);
     // it is not comming from simu
     if (memcmp(cmdInfo->uuid, "d05bca44feb34aeca2dd", 20)) {
-        if (getLock()) {
+        if (isCloudAuthed() && getLock()) {
             ret = -1; // drop this req, it means no rsp
         }
     }
