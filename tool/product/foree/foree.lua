@@ -228,8 +228,8 @@ function s1OptDoSplit(data)
 			print("break1\r\n")
 			break
 		end
-		tblDataCountLen[idx + 1] = tblData[where + 2] & 0xFF
-		tblDataCountLen[idx + 2] = (tblData[where + 2] >> 8) & 0xFF
+		tblDataCountLen[idx + 1] = (3 + tblData[where + 2] + 1) & 0xFF
+		tblDataCountLen[idx + 2] = ((3 + tblData[where + 2] + 1) >> 8) & 0xFF
 		idx = idx + 2
 		where = where + (3 + tblData[where + 2] + 1)
 	end
@@ -256,6 +256,9 @@ function s1GetValidKind(data)
 	local WHATKIND_SUB_DEV_DATA = 11
 	local WHATKIND_SUB_DEV_JOIN = 12
 	local WHATKIND_SUB_DEV_LEAVE = 13
+
+	local tmp = stringToTable(data)
+	LOGTBL(tmp)
 
 	-- test only
 	cvtType = 1
@@ -454,7 +457,7 @@ function s1CvtPri2Std(bin)
 				-- (RSP) device info rsp , rep is AA 00 04 01 00 00 00 E1
 				-- {"subDevGetInfo":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0000",1],["0000",2],["0000",3]],"mac":"7409E17E3376AF60"}}
 				print ("[LUA] s1CvtPri2Std - sub devices - device info rsp "..#dataTbl.."\r\n")
-				local strmac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", datatbl[9], datatbl[10], datatbl[11], datatbl[12], datatbl[13], datatbl[14], datatbl[15], datatbl[16])
+				local strmac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", dataTbl[9], dataTbl[10], dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16])
 				local strProId = string.format("%02x%02x", dataTbl[18], dataTbl[17])
 				local devNumIdx = 26
 				local devNum = dataTbl[devNumIdx]

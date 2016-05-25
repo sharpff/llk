@@ -1037,7 +1037,9 @@ int sengineQuerySlave(QuerieType_t type)
 int senginePollingSlave(void) {
     char status[MAX_BUF];
     uint8_t bin[128] = {0};
-    int whatKind = 0, ret = 0, size;
+    int whatKind = 0, ret = 0, size = 0, i;
+    Datas datas = {0};
+    uint16_t currLen = 0, appendLen = 0;
 
     FOR_EACH_IO_HDL_START;
         ret = ioRead(ioHdl[x].ioType, ioHdl[x].hdl, bin, sizeof(bin));
@@ -1047,98 +1049,127 @@ int senginePollingSlave(void) {
         }
         size = ret;
 
-        ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
-                bin, size, (uint8_t *)&whatKind, sizeof(whatKind));
-        LELOG("sengineCall ret size [%d], whatKind [%d]", ret, whatKind);
+        ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_DO_SPLIT,
+                bin, size, (uint8_t *)&datas, sizeof(Datas));
+        LELOG("senginePollingSlave "S1_OPT_DO_SPLIT" ret[%d], datasCountsLen[%d], datasLen[%d]", ret, datas.datasCountsLen, datas.datasLen);
         if (0 >= ret) {
-            LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
-            continue;
+            LELOGW("senginePollingSlave sengineCall "S1_OPT_DO_SPLIT" [%d]", ret);
+            datas.datasCountsLen = 1;
+            datas.arrDatasCounts[0] = size;
         }
-        switch (whatKind) {
-            case WHATKIND_MAIN_DEV_RESET: {
-                    extern int resetConfigData(void);
-                    ret = resetConfigData();
-                    LELOG("resetConfigData [%d]", ret);
-                    if (0 <= ret) {
-                        halReboot();
-                    }
-                }
-                break;
-            case WHATKIND_MAIN_DEV_DATA: {
-                    extern int lelinkNwPostCmdExt(const void *node);
-                    int len = 0;
-                    len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-                            bin, size, (uint8_t *)status, sizeof(status));
-                    // LELOGE("sengineCall len = %d. [%s]", len, status);
-                    if (len <= 0) {
-                        LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
-                    } else if (cacheIsChanged(status, len)) {
-                        NodeData node = {0};
-                        if (isCloudAuthed() && getLock()) {
-                            node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
-                            node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
-                        } else {
-                            char br[MAX_IPLEN] = {0};
-                            node.cmdId = LELINK_CMD_DISCOVER_REQ;
-                            node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;        
-                            ret = halGetBroadCastAddr(br, sizeof(br));
-                            if (0 >= ret) {
-                                strcpy(br, "255.255.255.255");
-                            } else
-                                strcpy(node.ndIP, br);
-                            node.ndPort = NW_SELF_PORT;
-                        }
-                        lelinkNwPostCmdExt(&node);
-                        cacheSetTerminalStatus(status, len);
-                        LELOG("Cache status:%s", status);
-                    }
-                }
-                break;
-            // for sub devs
-            case WHATKIND_SUB_DEV_RESET: {
-                    LELOG("WHATKIND_SUB_DEV_RESET");
-                }
-                break;
-            case WHATKIND_SUB_DEV_DATA:
-            case WHATKIND_SUB_DEV_JOIN: {
-                    int len;
-                    SDevNode *tmpArr = sdevGetArray();
-                    // NodeData node = {0};
-                    if (NULL == tmpArr) {
-                        LELOGE("sdevGetArray is NULL");
-                        break;
-                    }
-                    len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-                        bin, size, (uint8_t *)status, sizeof(status));
-                    if (0 >= len) {
-                        LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
-                        break;
-                    }
 
-                    LELOG("[%s]", status);
-                    if (WHATKIND_SUB_DEV_JOIN == whatKind) {
-                        LELOG("WHATKIND_SUB_DEV_JOIN");
-                        if (0 > sdevInsert(tmpArr, status)) {
-                            LELOGE("sdevInsert is FAILED");
-                            break;
-                        }
-                    } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
-                        LELOG("WHATKIND_SUB_DEV_DATA");
-                        if (0 > sdevUpdate(tmpArr, status)) {
-                            LELOGE("sdevUpdate is FAILED");
-                            break;
-                        }
-                    }
-                }
-                break;
-            case WHATKIND_SUB_DEV_LEAVE: {
-                    LELOG("WHATKIND_SUB_DEV_LEAVE");
-                }
-                break;
+        for (i = 0; i < datas.datasCountsLen; i += sizeof(uint16_t)) {
+            memcpy(&currLen, &datas.arrDatasCounts[i/sizeof(uint16_t)], sizeof(uint16_t));
+            LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
+            memcpy(&datas.arrDatas[appendLen], &bin[appendLen], currLen);
 
-            default:
-                LELOGW("Unknow whatKind = %d", whatKind);
+            {
+                int j = 0;
+                for (j = 0; j < currLen; j++) {
+                    LEPRINTF("%02x ", datas.arrDatas[j + appendLen]);
+                }  
+                LEPRINTF("\r\n");              
+            }
+
+            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
+                    &datas.arrDatas[appendLen], currLen, (uint8_t *)&whatKind, sizeof(whatKind));
+            LELOG("sengineCall ret size [%d], whatKind [%d]", ret, whatKind);
+            if (0 >= ret) {
+                LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
                 continue;
+            }
+            switch (whatKind) {
+                case WHATKIND_MAIN_DEV_RESET: {
+                        extern int resetConfigData(void);
+                        ret = resetConfigData();
+                        LELOG("resetConfigData [%d]", ret);
+                        if (0 <= ret) {
+                            halReboot();
+                        }
+                    }
+                    break;
+                case WHATKIND_MAIN_DEV_DATA: {
+                        extern int lelinkNwPostCmdExt(const void *node);
+                        int len = 0;
+                        len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
+                                &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
+                        // LELOGE("sengineCall len = %d. [%s]", len, status);
+                        if (len <= 0) {
+                            LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
+                        } else if (cacheIsChanged(status, len)) {
+                            NodeData node = {0};
+                            if (isCloudAuthed() && getLock()) {
+                                node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
+                                node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
+                            } else {
+                                char br[MAX_IPLEN] = {0};
+                                node.cmdId = LELINK_CMD_DISCOVER_REQ;
+                                node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;        
+                                ret = halGetBroadCastAddr(br, sizeof(br));
+                                if (0 >= ret) {
+                                    strcpy(br, "255.255.255.255");
+                                } else
+                                    strcpy(node.ndIP, br);
+                                node.ndPort = NW_SELF_PORT;
+                            }
+                            lelinkNwPostCmdExt(&node);
+                            cacheSetTerminalStatus(status, len);
+                            LELOG("Cache status:%s", status);
+                        }
+                    }
+                    break;
+                // for sub devs
+                case WHATKIND_SUB_DEV_RESET: {
+                        LELOG("WHATKIND_SUB_DEV_RESET");
+                    }
+                    break;
+                case WHATKIND_SUB_DEV_DATA:
+                case WHATKIND_SUB_DEV_JOIN: {
+                        int len;
+                        SDevNode *tmpArr = sdevGetArray();
+                        // NodeData node = {0};
+                        if (NULL == tmpArr) {
+                            LELOGE("sdevGetArray is NULL");
+                            break;
+                        }
+                        len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
+                            &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
+                        if (0 >= len) {
+                            LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
+                            break;
+                        }
+
+                        LELOG("[%s]", status);
+                        if (WHATKIND_SUB_DEV_JOIN == whatKind) {
+                            LELOG("WHATKIND_SUB_DEV_JOIN");
+                            if (0 > sdevInsert(tmpArr, status)) {
+                                LELOGE("sdevInsert is FAILED");
+                                break;
+                            }
+                        } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
+                            LELOG("WHATKIND_SUB_DEV_DATA");
+                            if (0 > sdevUpdate(tmpArr, status)) {
+                                LELOGE("sdevUpdate is FAILED");
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                case WHATKIND_SUB_DEV_LEAVE: {
+                        LELOG("WHATKIND_SUB_DEV_LEAVE");
+                    }
+                    break;
+
+                default:
+                    LELOGW("Unknow whatKind = %d", whatKind);
+                    break;
+            }
+
+            appendLen += currLen;
+            LEPRINTF("\r\n");
+        }
+        {
+            
         }
     FOR_EACH_IO_HDL_END;
     
