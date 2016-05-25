@@ -47,7 +47,7 @@ int halUartClose(void *dev) {
     return uart_drv_close((mdev_t *)dev);
 }
 
-#define TO_DO_FOR_HONYAR_BUG    1
+#define TO_DO_FOR_HONYAR_BUG    0
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
 #if TO_DO_FOR_HONYAR_BUG
     int i = 0;

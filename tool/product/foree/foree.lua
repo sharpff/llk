@@ -150,10 +150,6 @@ function s1GetCvtType()
 	return string.len(str), str, delay
 end
 
-function s1HasSubDevs()
-	return 1
-end
-
 --[[ EXTERNAL
 	s1GetQueries
   ]]
@@ -205,6 +201,46 @@ function s1GetQueries(queryType)
 	end
 
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
+end
+
+function s1OptHasSubDevs()
+	return 1
+end
+
+--[[ OPTIONAL
+	s1HowManyData
+  ]]
+function s1OptDoSplit(data)
+	local tblData = stringToTable(data)
+	local tblDataCountLen = {}
+	local strDataCountLen = ""
+	-- local strDataCountLen = string.char(string.len(data) & 0xFF, (string.len(data) >> 8) & 0xFF)
+	-- local strDataCountLen = string.char(0x19, 0x00, 0x15, 0x00)
+
+	local where = 1
+	local singleData = nil
+	local idx = 0
+	print("total is "..#tblData.."\r\n")
+	while where < #tblData do
+		print("where is "..where.."\r\n")
+		print("xxx is "..where..", 1st is "..(#tblData - where + 1)..", 2nd is "..(3 + tblData[where + 2] + 1).."\r\n")
+		if nil == tblData[where + 2] or (#tblData - where + 1) < (3 + tblData[where + 2] + 1) then
+			print("break1\r\n")
+			break
+		end
+		tblDataCountLen[idx + 1] = tblData[where + 2] & 0xFF
+		tblDataCountLen[idx + 2] = (tblData[where + 2] >> 8) & 0xFF
+		idx = idx + 2
+		where = where + (3 + tblData[where + 2] + 1)
+	end
+
+	strDataCountLen = tableToString(tblDataCountLen)
+
+	return string.len( strDataCountLen ), strDataCountLen, string.len( data ), data
+end
+
+function s1OptMergeCurrStatus2Action(action, currStatus)
+	return string.len(action), action
 end
 
 --[[ EXTERNAL
@@ -278,15 +314,15 @@ function s1GetValidKind(data)
 			return WHATKIND_MAIN_DEV_DATA
 		end
 	end
-	print ("[LUA] whatKind is "..ret.."\r\n")
+	-- print ("[LUA] whatKind is "..ret.."\r\n")
 	-- invalid kind
 	return ret
 end
 
 
 -- {"msg":"hello","sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}
--- {"ctrl":{"pwr":1},"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}
--- {"status":{"pwr":1,"switcher":1},"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}
+-- {"ctrl":{"pwr":1,"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}}
+-- {"status":{"pwr":1,"switcher":1,"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}}
 -- s1apiGetMacFromIdx()
 -- s1apiGetIdxFromMac()
 
@@ -294,7 +330,7 @@ end
 -- \{\"ctrl\":\{\"cjoin\":1\}\}
 -- \{\"ctrl\":\{\"subDevGetList\":1\}\}
 -- \{\"ctrl\":\{\"subDevGetInfo\":2\}\}
--- \{\"ctrl\":\{\"pwr\":1\},\"sDev\":\{\"pid\":\"0104\",\"did\":\"0107\",\"clu\":\"0006\",\"ept\":[1,2],\"mac\":\"7409E17E3376AF60\"\}\}
+-- \{\"ctrl\":\{\"pwr\":1,\"sDev\":\{\"pid\":\"0104\",\"did\":\"0107\",\"clu\":\"0006\",\"ept\":[1,2],\"mac\":\"7409E17E3376AF60\"\}\}\}
 
 --[[ EXTERNAL
 	s1CvtStd2Pri
@@ -302,9 +338,8 @@ end
 function s1CvtStd2Pri(json)
 	local cvtType = s1apiGetCurrCvtType()
 	print ('[LUA] s1CvtStd2Pri return => '..json..'\r\n')
-	local tb = cjson.decode(json)
-	local ctrl = tb["ctrl"]
-	local sDev = tb["sDev"]
+	local ctrl = cjson.decode(json)
+	local sDev = ctrl["sDev"]
 	local cmdTbl = {}
 	local dataStr = ""
 

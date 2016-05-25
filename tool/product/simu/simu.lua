@@ -121,7 +121,7 @@ function s1GetValidKind(data)
 
 	-- print '0'
 	-- invalid kind
-	return 2
+	return 0
 	-- return 0
 end
 

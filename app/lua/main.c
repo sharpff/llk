@@ -175,7 +175,7 @@ ERROR_PARAM:
 		inputParam = g_buf;
 		inputParamLen = g_bufLen;
 	}
-	else if (argv[2] && strstr(argv[2], S1_HAS_SUBDEVS)) {
+	else if (argv[2] && strstr(argv[2], S1_OPT_HAS_SUBDEVS)) {
 		inputParam = NULL;
 		inputParamLen = 0;
 	}
@@ -187,7 +187,15 @@ ERROR_PARAM:
 		inputParam = g_buf;
 		inputParamLen = g_bufLen;
 	}
-	else if (argv[2] && strstr(argv[2], S1_MERGE_ST2ACT)) {
+	else if (argv[2] && strstr(argv[2], S1_OPT_DO_SPLIT)) {
+		if (!argv[3]) {
+			goto ERROR_PARAM;
+		}
+		g_bufLen = hexStr2bytes(argv[3], g_buf, sizeof(g_buf));
+		inputParam = g_buf;
+		inputParamLen = g_bufLen;
+	}
+	else if (argv[2] && strstr(argv[2], S1_OPT_MERGE_ST2ACT)) {
 		if (!argv[3] || !argv[4]) {
 			goto ERROR_PARAM;
 		}

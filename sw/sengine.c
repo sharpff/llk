@@ -126,7 +126,7 @@ static int forEachNodeSDevCB(NodeData *currNode, void *uData) {
 }
 
 static int sdevInsert(SDevNode *arr, const char *status) {
-    SDevNode node = {0};
+    // SDevNode node;
     qForEachfromCache(sdevGetCache(), (int(*)(void*, void*))forEachNodeSDevCB, NULL);
     LELOG("[SENGINE] sdevInsert [%s]", status);
     return 0;
@@ -136,6 +136,58 @@ static int sdevUpdate(SDevNode *arr, const char *status) {
     // subDevGetList
     // subDevGetInfo
     return 0;
+}
+
+static IO lf_s1OptDoSplit_input(lua_State *L, const uint8_t *input, int inputLen) {
+
+    lua_pushlstring(L, (char *)input, inputLen);
+    IO io = { 1, 4 };
+    return io;
+}
+static int lf_s1OptDoSplit(lua_State *L, uint8_t *output, int outputLen) {
+    int size = 0;// i, j;
+    uint8_t *tmp = 0;
+    // uint16_t currLen = 0, appendLen = 0;
+    Datas *datas = (Datas *)output;
+
+    if (NULL == datas || sizeof(Datas) > outputLen) {
+        return 0;
+    }
+
+    datas->datasCountsLen = lua_tointeger(L, -4);
+    size = MIN(datas->datasCountsLen, outputLen);
+    tmp = (uint8_t *)lua_tostring(L, -3);
+    if (tmp && 0 < size) {
+        memcpy(datas->arrDatasCounts, tmp, size);
+    } else {
+        size = 0;
+    }
+
+    datas->datasLen = lua_tointeger(L, -2);
+    size = MIN(datas->datasLen, outputLen);
+    tmp = (uint8_t *)lua_tostring(L, -1);
+    if (tmp && 0 < size) {
+        memcpy(datas->arrDatas, tmp, size);
+    } else {
+        size = 0;
+    }
+
+    // test only
+    {
+        int currLen = 0, i = 0, j = 0, appendLen = 0;
+        LELOG("[SENGINE]_s1OptDoSplit_datasCountsLen[%d] ", datas->datasCountsLen);
+        for (i = 0; i < datas->datasCountsLen; i += sizeof(uint16_t)) {
+            memcpy(&currLen, &datas->arrDatasCounts[i/sizeof(uint16_t)], sizeof(uint16_t));
+            LEPRINTF("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
+            for (j = 0; j < currLen; j++) {
+                LEPRINTF("%02x ", datas->arrDatas[j + appendLen]);
+            }
+            appendLen += currLen;
+            LEPRINTF("\r\n");
+        }
+    }
+    
+    return sizeof(Datas);
 }
 
 static IO lf_s1GetQueries_input(lua_State *L, const uint8_t *input, int inputLen) {
@@ -177,9 +229,9 @@ static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
     // test only
     {
         int currLen = 0, i = 0, j = 0, appendLen = 0;
-        for (i = 0; i < queries->queriesCountsLen; i += 2) {
-            LEPRINTF("[SENGINE]_s1GetQueries_[%d]_cmd: ", i/2);
-            memcpy(&currLen, &queries->arrQueriesCounts[i], 2);
+        for (i = 0; i < queries->queriesCountsLen; i += sizeof(uint16_t)) {
+            LEPRINTF("[SENGINE]_s1GetQueries_[%d]_cmd: ", i/sizeof(uint16_t));
+            memcpy(&currLen, &queries->arrQueriesCounts[i/sizeof(uint16_t)], sizeof(uint16_t));
             for (j = 0; j < currLen; j++) {
                 LEPRINTF("%02x ", queries->arrQueries[j + appendLen]);
             }
@@ -243,7 +295,7 @@ static int lf_s1GetValidKind(lua_State *L, uint8_t *output, int outputLen) {
     return sizeof(int);
 }
 
-static IO lf_s1MergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, int inputLen) {
+static IO lf_s1OptMergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, int inputLen) {
     // int firstLen = 0;
     // int secondLen = 0;
 
@@ -253,7 +305,7 @@ static IO lf_s1MergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, 
     // } else {
     //     lua_pushlstring(L, (char *)input, firstLen);
     // }
-    // LELOG("[SENGINE] lf_s1MergeCurrStatus2Action_input: firstLen[%d/%d][%s]", firstLen, inputLen, input);
+    // LELOG("[SENGINE] lf_s1OptMergeCurrStatus2Action_input: firstLen[%d/%d][%s]", firstLen, inputLen, input);
     // firstLen += 1;
     // secondLen = strlen((char *)input + firstLen);
     // if (0 == secondLen) {
@@ -261,7 +313,7 @@ static IO lf_s1MergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, 
     // } else {
     //     lua_pushlstring(L, (char *)input + firstLen, secondLen);
     // }
-    // LELOG("[SENGINE] lf_s1MergeCurrStatus2Action_input: secondLen[%d/%d][%s]", secondLen, inputLen, input + firstLen);
+    // LELOG("[SENGINE] lf_s1OptMergeCurrStatus2Action_input: secondLen[%d/%d][%s]", secondLen, inputLen, input + firstLen);
     // IO io = { 2, 2 };
     int firstLen = 0;
     int secondLen = 0;
@@ -272,7 +324,7 @@ static IO lf_s1MergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, 
     } else {
         lua_pushlstring(L, (char *)input, firstLen);
     }
-    LELOG("[SENGINE] lf_s1MergeCurrStatus2Action_input: firstLen[%d/%d][%s]", firstLen, inputLen, input);
+    LELOG("[SENGINE] lf_s1OptMergeCurrStatus2Action_input: firstLen[%d/%d][%s]", firstLen, inputLen, input);
     firstLen += 1;
     secondLen = strlen((char *)input + firstLen);
     if (0 == secondLen) {
@@ -280,25 +332,25 @@ static IO lf_s1MergeCurrStatus2Action_input(lua_State *L, const uint8_t *input, 
     } else {
         lua_pushlstring(L, (char *)input + firstLen, secondLen);
     }
-    LELOG("[SENGINE] lf_s1MergeCurrStatus2Action_input: secondLen[%d/%d][%s]", secondLen, inputLen, input + firstLen);
+    LELOG("[SENGINE] lf_s1OptMergeCurrStatus2Action_input: secondLen[%d/%d][%s]", secondLen, inputLen, input + firstLen);
     IO io = { 2, 2 };
     return io;
 }
-static int lf_s1MergeCurrStatus2Action(lua_State *L, uint8_t *output, int outputLen) {
+static int lf_s1OptMergeCurrStatus2Action(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     int sLen = lua_tointeger(L, -2);
     int size = MIN(sLen, outputLen);
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        LELOG("[SENGINE] lf_s1MergeCurrStatus2Action: [%d][%s]", size, output);
+        LELOG("[SENGINE] lf_s1OptMergeCurrStatus2Action: [%d][%s]", size, output);
     } else {
         size = 0;
     }
 
     return size;
     // *((int *)output) = lua_tointeger(L, -1);
-    // LEPRINTF("[SENGINE] s1MergeCurrStatus2Action: [%d]", *((int *)output));
+    // LEPRINTF("[SENGINE] s1MergeOptCurrStatus2Action: [%d]", *((int *)output));
     // return sizeof(int);
 
 }
@@ -539,12 +591,13 @@ static int lf_s2GetSelfCtrlCmd(lua_State *L, uint8_t *output, int outputLen) {
 }
 static FUNC_LIST func_list[] = {
     { S1_GET_CVTTYPE, { lf_s1GetCvtType_input, lf_s1GetCvtType } },
-    { S1_HAS_SUBDEVS, { lf_s1HasSubDevs_input, lf_s1HasSubDevs } },
+    { S1_OPT_HAS_SUBDEVS, { lf_s1HasSubDevs_input, lf_s1HasSubDevs } },
     { S1_GET_QUERIES, { lf_s1GetQueries_input, lf_s1GetQueries } },
+    { S1_OPT_DO_SPLIT, { lf_s1OptDoSplit_input, lf_s1OptDoSplit } },
     { S1_STD2PRI, { lf_s1CvtStd2Pri_input, lf_s1CvtStd2Pri } },
     { S1_PRI2STD, { lf_s1CvtPri2Std_input, lf_s1CvtPri2Std } },
     { S1_GET_VALIDKIND, { lf_s1GetValidKind_input, lf_s1GetValidKind } },
-    { S1_MERGE_ST2ACT, { lf_s1MergeCurrStatus2Action_input, lf_s1MergeCurrStatus2Action } },
+    { S1_OPT_MERGE_ST2ACT, { lf_s1OptMergeCurrStatus2Action_input, lf_s1OptMergeCurrStatus2Action } },
     { S1_GET_VER, { lf_s1GetVer_input, lf_s1GetVer } },
     { S2_IS_VALID, { lf_s2IsValid_input, lf_s2IsValid } },
     // { S2_IS_VALID_EXT, { lf_s2IsValidExt_input, lf_s2IsValidExt } },
@@ -663,8 +716,9 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
         if (lua_pcall(L, io_ret.param, io_ret.ret, 0))
         {
             const char *err = lua_tostring(L, -1);
-            if (strcmp(S1_HAS_SUBDEVS, funcName) && 
-                strcmp(S1_MERGE_ST2ACT, funcName))
+            if (strcmp(S1_OPT_HAS_SUBDEVS, funcName) && 
+                strcmp(S1_OPT_MERGE_ST2ACT, funcName) && 
+                strcmp(S1_OPT_DO_SPLIT, funcName))
                 LELOGE("[lua engine] lua error: %s => %s", err, funcName);
             lua_pop(L, 1);
             ret = -3;
@@ -688,10 +742,10 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
 
 int sengineHasDevs(void) {
     int ret = 0, hasDevs = 0;
-    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_HAS_SUBDEVS,
+    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_HAS_SUBDEVS,
             NULL, 0, (uint8_t *)&hasDevs, sizeof(hasDevs));
     if (ret <= 0) {
-        LELOGW("sengineHasDevs sengineCall("S1_HAS_SUBDEVS") [%d]", ret);
+        LELOGW("sengineHasDevs sengineCall("S1_OPT_HAS_SUBDEVS") [%d]", ret);
         return 0;
     }
     return hasDevs;
@@ -854,12 +908,12 @@ int sengineSetStatus(char *json, int jsonLen) {
             /*
              * jsonMerged includes 2 params before sengineCall. 1st is action, 2nd is current status
              */
-            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_MERGE_ST2ACT,
-                (uint8_t *)jsonMerged, ret, jsonMerged, sizeof(jsonMerged));
+            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_MERGE_ST2ACT,
+                (uint8_t *)jsonMerged, ret, (uint8_t *)jsonMerged, sizeof(jsonMerged));
             if (0 < ret) {
                 jsonLen = ret;
             }
-            LELOGW("sengineSetStatus sengineCall("S1_MERGE_ST2ACT") [%d] [%d][%s]", ret, jsonLen, jsonMerged);
+            LELOGW("sengineSetStatus sengineCall("S1_OPT_MERGE_ST2ACT") [%d] [%d][%s]", ret, jsonLen, jsonMerged);
         }
 
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
@@ -945,7 +999,7 @@ int sengineQuerySlave(QuerieType_t type)
             TIMEOUT_SECS_BEGIN(5)
                 char json[256] = {0};
                 uint8_t cmd[128] = {0};
-                strcpy(json, "{\"ctrl\":{\"subDevGetList\":1}}");
+                strcpy(json, "{\"subDevGetList\":1}");
                 LELOG("json is [%s]", json);
                 ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
                     (uint8_t *)json, strlen(json), (uint8_t *)cmd, sizeof(cmd));
@@ -959,7 +1013,7 @@ int sengineQuerySlave(QuerieType_t type)
                 }
 
                 memset(json, 0, sizeof(json));
-                strcpy(json, "{\"ctrl\":{\"subDevGetInfo\":1}}");
+                strcpy(json, "{\"subDevGetInfo\":1}");
                 LELOG("json is [%s]", json);
                 ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
                     (uint8_t *)json, strlen(json), (uint8_t *)cmd, sizeof(cmd));
@@ -1020,7 +1074,7 @@ int senginePollingSlave(void) {
                         LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                     } else if (cacheIsChanged(status, len)) {
                         NodeData node = {0};
-                        if (isCloudAuthed()) {
+                        if (isCloudAuthed() && getLock()) {
                             node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
                             node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
                         } else {
@@ -1049,7 +1103,7 @@ int senginePollingSlave(void) {
             case WHATKIND_SUB_DEV_JOIN: {
                     int len;
                     SDevNode *tmpArr = sdevGetArray();
-                    NodeData node = {0};
+                    // NodeData node = {0};
                     if (NULL == tmpArr) {
                         LELOGE("sdevGetArray is NULL");
                         break;

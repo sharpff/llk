@@ -834,7 +834,6 @@ static int doQ2ARemoteReq(void *ctx,
 int lelinkNwPostCmd(void *ctx, const void *node)
 {
     CommonCtx *pCtx = (CommonCtx *)ctx;
-    int flag = 0;
     NodeData *node_p = (NodeData *)node;
     if (!pCtx || !node_p)
     {
@@ -1169,7 +1168,6 @@ static int doQ2AProcessing(CommonCtx *pCtx, int protocolBufLen, const CmdHeaderI
     }
     else if (0 == ret)
     {
-        uint8_t flag = 0;
         NodeData node = { 0 };
 
         // CmdHeaderInfo
