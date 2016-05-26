@@ -298,5 +298,11 @@ public class MainActivity extends Activity {
 			String str = String.format("onPushMessage:\n%s", dataStr);
 			Log.e(TAG, str);
 		}
+
+		@Override
+		public void onControl(int subcmd, String uuid, String dataStr) {
+			String str = String.format("onControl:\n%s", dataStr);
+			Log.e(TAG, str);
+		}
 	};
 }
