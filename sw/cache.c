@@ -94,13 +94,13 @@ int qForEachfromCache(PCACHE C, int (*currNodeCB)(void *curr, void *uData), void
         if (0 != ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag) {
             ret = currNodeCB(&(((uint8_t*)(C->pBase))[i*C->singleSize]), uData);
             if (ret > 0) {
-                return ret;
+                return i;
             }
         }
         //i++;
     }
 
-    return 0;
+    return -1;
 }
 
 int qCheckForClean(PCACHE C, int (*isNeedDelCB)(void *curr))

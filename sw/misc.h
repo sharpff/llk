@@ -34,6 +34,9 @@
 #define JSON_NAME_LOCK              "lock"
 #define JSON_NAME_CTRL              "ctrl"
 #define JSON_NAME_STATUS            "status"
+#define JSON_NAME_SDEV     			"sDev"
+#define JSON_NAME_SDEV_GET_LIST     "sDevGetList"
+#define JSON_NAME_SDEV_GET_INFO     "sDevGetInfo"
 
 typedef enum {
 	CLOUD_MSG_KEY_NONE = 0,

@@ -407,6 +407,16 @@ void testJson(void) {
         LELOG("cloudMsgHandler [%d] string2", ret);
     }
 
+    {
+        #include "misc.h"
+        extern int testJsonArray(const char *json, int jsonLen);
+        char json[] = "{\"sDevGetList\":[0,1,2]}";
+        char json1[] = "{\"sDevGetInfo\":2,\"sDev\":{\"pid\":\"0104\",\"clu\":\"0006\",\"ept\":[[\"0000\",1],[\"0000\",2],[\"0000\",3]],\"mac\":\"7409E17E3376AF60\"}}";
+        // testJsonArray(json, strlen(json));
+        // testJsonArray(json1, strlen(json1));
+
+    }
+
 }
 #endif
 
@@ -743,7 +753,7 @@ int lelinkDoPollingR2R(void *ctx) {
             CmdRecord *ct_p = getCmdRecord(cmdInfo.cmdId, cmdInfo.subCmdId);
             if (ct_p && !isCacheEmpty) {
                 MUTEX_LOCK;
-                if (qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindNode, (void *)&cmdInfo)) {
+                if (0 <= qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindNode, (void *)&cmdInfo)) {
                     ct_p->procR2R ?
                     ((CBRemoteRsp) ct_p->procR2R)(pCtx, &cmdInfo, COMM_CTX(pCtx)->protocolBuf, len) : 0;
                 }
@@ -935,7 +945,7 @@ static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *t
     MUTEX_LOCK;
     ret = qForEachfromCache(&(ctx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindTokenByUUID, (void *)&ft);
     MUTEX_UNLOCK;
-    if (ret) {
+    if (0 <= ret) {
         LELOG("BY UUID TOKEN GOT => ");
         for (i = 0; i < lenToken; i++) {
             LEPRINTF("%02X", token[i]);
@@ -967,7 +977,7 @@ static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *toke
     MUTEX_LOCK;
     ret = qForEachfromCache(&(ctx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindTokenIP, (void *)&ft);
     MUTEX_UNLOCK;
-    if (ret) {
+    if (0 <= ret) {
         LELOG("BY IP TOKEN GOT => ");
         for (i = 0; i < lenToken; i++) {
             LEPRINTF("%02X", token[i]);

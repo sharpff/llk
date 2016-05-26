@@ -88,7 +88,7 @@ end
 -- 7) 0x0405：湿度测量类
 -- 8) 0x0201: 温控器类
 function getClusterFromDid(did)
-	print ("did is "..did.."\r\n")
+	-- print ("did is "..did.."\r\n")
 	if nil ~= string.find(did, "0000") then
 		return string.format('%02x%02x', 0x00, 0x06)
 	elseif nil ~= string.find(did, "0107") then
@@ -208,7 +208,7 @@ function s1OptHasSubDevs()
 end
 
 --[[ OPTIONAL
-	s1HowManyData
+	s1OptDoSplit
   ]]
 function s1OptDoSplit(data)
 	local tblData = stringToTable(data)
@@ -220,12 +220,12 @@ function s1OptDoSplit(data)
 	local where = 1
 	local singleData = nil
 	local idx = 0
-	print("total is "..#tblData.."\r\n")
+	-- print("total is "..#tblData.."\r\n")
 	while where < #tblData do
-		print("where is "..where.."\r\n")
-		print("xxx is "..where..", 1st is "..(#tblData - where + 1)..", 2nd is "..(3 + tblData[where + 2] + 1).."\r\n")
+		-- print("where is "..where.."\r\n")
+		-- print("xxx is "..where..", 1st is "..(#tblData - where + 1)..", 2nd is "..(3 + tblData[where + 2] + 1).."\r\n")
 		if nil == tblData[where + 2] or (#tblData - where + 1) < (3 + tblData[where + 2] + 1) then
-			print("break1\r\n")
+			-- print("break1\r\n")
 			break
 		end
 		tblDataCountLen[idx + 1] = (3 + tblData[where + 2] + 1) & 0xFF
@@ -326,13 +326,13 @@ end
 -- {"msg":"hello","sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}
 -- {"ctrl":{"pwr":1,"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}}
 -- {"status":{"pwr":1,"switcher":1,"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}}
--- s1apiGetMacFromIdx()
--- s1apiGetIdxFromMac()
+-- s1apiSDevGetMacByUserData()
+-- s1apiSdevGetUserDataByMac()
 
 -- \{\"ctrl\":\{\"reset\":1\}\}
 -- \{\"ctrl\":\{\"cjoin\":1\}\}
--- \{\"ctrl\":\{\"subDevGetList\":1\}\}
--- \{\"ctrl\":\{\"subDevGetInfo\":2\}\}
+-- \{\"ctrl\":\{\"sDevGetList\":1\}\}
+-- \{\"ctrl\":\{\"sDevGetInfo\":2\}\}
 -- \{\"ctrl\":\{\"pwr\":1,\"sDev\":\{\"pid\":\"0104\",\"did\":\"0107\",\"clu\":\"0006\",\"ept\":[1,2],\"mac\":\"7409E17E3376AF60\"\}\}\}
 
 --[[ EXTERNAL
@@ -362,15 +362,20 @@ function s1CvtStd2Pri(json)
  				break
 			end
 
-			if ctrl["subDevGetList"] == 1 then
+			if ctrl["sDevGetList"] == 1 then
 				cmdTbl = {0xAA, 0x00, 0x02, 0x01, 0x10, 0x9D}
 				break
 			end
 
-			if ctrl["subDevGetInfo"] then
-				local idx = 0
-				-- s1apiGetIdxFromMac(ctrl["subDevGetInfo"])
+			if ctrl["sDevGetInfo"] then
+				print ('[LUA] sDevGetInfo => '..json..'\r\n')
+				local idx = ctrl["sDevGetInfo"]
+				-- idx = s1apiSdevGetUserDataByMac(string.len(ctrl["sDevGetInfo"]), ctrl["sDevGetInfo"])
 				if 0 <= idx then
+					-- local tblTmp = {0xAA, 0x00, 0x04, 0x02, 0x00, 0x00, 0x00}
+					-- local ret = crc8(tblTmp)
+					-- local str = string.format('%02x ', ret)
+					-- print ("[LUA] crc8 "..str.."\r\n")
 					cmdTbl = {0xAA, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00}
 					cmdTbl[6] = idx
 					cmdTbl[8] = crc8(cmdTbl)
@@ -424,7 +429,7 @@ function s1CvtPri2Std(bin)
 
 			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x13, 0x81, 0x10)) then
 				-- (RSP) list rsp , rep is AA 00 02 01 10 9D
-				-- {"subDevGetList":[0,1,2]}
+				-- {"sDevGetList":[0,1,2]}
 				print ("[LUA] s1CvtPri2Std - sub devices - list rsp\r\n")
 				local num = 0
 				local sDevList = {}
@@ -446,18 +451,18 @@ function s1CvtPri2Std(bin)
 				-- 	print("sDevList["..n.."] is "..sDevList[n].."\r\n")
 				-- end
 				local s = cjson.encode(sDevList)
-				strMain = '{"subDevGetList":'..s..'}'
-				-- string.format('{"subDevGetList":}', num)
-				print(strMain.."\r\n")
+				strMain = '{"sDevGetList":'..s..'}'
+				-- string.format('{"sDevGetList":}', num)
+				print("[LUA] return => "..strMain.."\r\n")
 				-- print(s.."\r\n")
 				break
 			end
 
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x81 and dataTbl[5] == 0x00 then
 				-- (RSP) device info rsp , rep is AA 00 04 01 00 00 00 E1
-				-- {"subDevGetInfo":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0000",1],["0000",2],["0000",3]],"mac":"7409E17E3376AF60"}}
+				-- {"sDevGetInfo":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0000",1],["0000",2],["0000",3]],"mac":"7409E17E3376AF60"}}
 				print ("[LUA] s1CvtPri2Std - sub devices - device info rsp "..#dataTbl.."\r\n")
-				local strmac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", dataTbl[9], dataTbl[10], dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16])
+				local strMac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", dataTbl[9], dataTbl[10], dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16])
 				local strProId = string.format("%02x%02x", dataTbl[18], dataTbl[17])
 				local devNumIdx = 26
 				local devNum = dataTbl[devNumIdx]
@@ -471,9 +476,9 @@ function s1CvtPri2Std(bin)
 				end
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				strMain = '{"subDevGetInfo":2,'..strSubDev..'}'
+				strMain = '{"sDevGetInfo":2,'..strSubDev..'}'
 				-- print(ept.."\r\n")
-				print(strMain.."\r\n")
+				print("[LUA] return => "..strMain.."\r\n")
 				break
 			end
 
@@ -495,7 +500,7 @@ function s1CvtPri2Std(bin)
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
 				strMain = '{"cjoin":2,'..strSubDev..'}'
-				print(strMain.."\r\n")
+				print("[LUA] return => "..strMain.."\r\n")
 				break
 			end
 
@@ -505,7 +510,7 @@ function s1CvtPri2Std(bin)
 				print ("[LUA] s1CvtPri2Std - sub devices - sensor action ind "..#dataTbl.."\r\n")
 				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
 				local addr = dataTbl[10]
-				-- local strMac = s1apiGetMacFromIdx(addr)
+				-- local strMac = s1apiSDevGetMacByUserData(addr)
 				local strMac = ""
 				local sDevEPList = {}
 				local strCluster = '""'
@@ -517,7 +522,7 @@ function s1CvtPri2Std(bin)
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
 				strMain = '{"sensor":1,'..strSubDev..'}'
-				print(strMain.."\r\n")
+				print("[LUA] return => "..strMain.."\r\n")
 				break
 			end
 
