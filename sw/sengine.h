@@ -23,7 +23,10 @@ extern "C"
 #define S1_GET_VALIDKIND "s1GetValidKind"
 #define S1_MERGE_ST2ACT "s1MergeCurrStatus2Action"
 #define S1_GET_VER "s1GetVer"
-
+#define S1_OPT_HAS_SUBDEVS "s1OptHasSubDevs"
+#define S1_OPT_DO_SPLIT "s1OptDoSplit"
+#define S1_OPT_MERGE_ST2ACT "s1OptMergeCurrStatus2Action"
+ 
 /*
  * ia script
  */
