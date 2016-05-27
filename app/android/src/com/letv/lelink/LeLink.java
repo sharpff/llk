@@ -18,16 +18,21 @@ import android.util.Log;
 
 /**
  * 
- * Lelink Android平台接入SDK接口 <br>
+ * Lelink Android平台接入SDK接口<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 0.1
+ * @version 0.3
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
-	private static final String VERSION = "0.1"; // 与以上的注释一致
+	/*
+	 * 0.1, 添加Listener
+	 * 0.2, 添加Listener onPushMessage()
+	 * 0.3, 添加Listener onControl()
+	 */
+	private static final String VERSION = "0.3"; // 与以上的注释一致
 	private static LeLink sLeLink = null;
 	private static final String TAG = "LeLinkJar";
 	private static final int MAX_WAIT_CMD = 10;
@@ -57,7 +62,7 @@ public class LeLink {
 	private Lock mCtrlLock = new ReentrantLock();
 
 	/**
-	 * 获得LeLink SDK的信息<br>
+	 * 获得LeLink SDK的信息.<br>
 	 * 
 	 * @return SDK信息
 	 */
@@ -69,8 +74,8 @@ public class LeLink {
 	}
 
 	/**
-	 * 设置SDK需要的基本信息, 在调用{@link #getInstance()}后不能再更改。<br>
-	 * 只有正确的设置了该信息，才能正确使用其它功能.<br>
+	 * 设置SDK需要的基本信息, 在调用{@link #getInstance()}后不能再更改.<br>
+	 * 只有正确的设置了该信息, 才能正确使用其它功能.<br>
 	 * 
 	 * @param context
 	 *            Application context<br>
@@ -143,7 +148,7 @@ public class LeLink {
 	}
 	
 	/**
-	 * 获得LeLink的实例接口<br>
+	 * 获得LeLink的实例接口.<br>
 	 * 
 	 * @return Lelink实例
 	 */
@@ -155,7 +160,7 @@ public class LeLink {
 	 * SDK与云的连接状态.<br>
 	 * 只有成功连接云才可以进行信息上报和远程控制.<br>
 	 * 
-	 * @return true - SDK成功连接到云。false - 没有成功连接到云。
+	 * @return true - SDK成功连接到云; false - 没有成功连接到云.
 	 */
 	public boolean isCloud() {
 		if (mState == ST_t.HEART && System.currentTimeMillis() - mGetCloudHeartRspTime > CLOUD_HEART_RESPOND_TIMEOUT) {
@@ -188,7 +193,7 @@ public class LeLink {
 	/**
 	 * 
 	 * WIFI配置.<br>
-	 * 必须传入参数: ssid, passwd, timeout<br>
+	 * 必须传入参数: ssid, passwd, timeout.<br>
 	 * 
 	 * @param jsonStr
 	 *            String ssid, String passwd, int timeout(sec)
@@ -236,8 +241,8 @@ public class LeLink {
 	}
 
 	/**
-	 * 设备发现 必须传入timeout<br>
-	 * 进入该函数，首先发送一次发现包。然后等待timeout时间，最后返回大这timeout期间收到的发现回复的设备。<br>
+	 * 设备发现 必须传入timeout.<br>
+	 * 进入该函数, 首先发送一次发现包. 然后等待timeout时间, 最后返回大这timeout期间收到的发现回复的设备.<br>
 	 * 
 	 * @param timeout
 	 *            timeout - 超时时间，单位秒
@@ -260,7 +265,7 @@ public class LeLink {
 	}
 
 	/**
-	 * 获得状态<br>
+	 * 获得状态.<br>
 	 * 
 	 * @param cmdStr
 	 *            详细参考下述说明
@@ -270,30 +275,31 @@ public class LeLink {
 	 * 
 	 *            cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int),
 	 *            根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
+     *
 	 *            cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
 	 *            cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br>
 	 * <br>
 	 *            1, LeCmd.K.SUBCMD == LeCmd.Sub.GET_STATE_CMD, 得到设备状态或者上报设备状态<br>
-	 *            cmdStr:<br>
-	 *            a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网得到设备状态<br>
-	 *            dataStr:<br>
-	 *            a, LeCmd.K.UUID(String), 设备的UUID<br>
-	 *            return<br>
-	 *            a, 出错返回null<br>
-	 *            b, 设备列表的Json字符串<br>
-	 *            2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_REPORT_OTA_QUERY_REQ,
-	 *            OTA查询<br>
-	 *            cmdStr:<br>
-	 *            不包括其它键值<br>
-	 *            dataStr:<br>
-	 *            a, LeCmd.K.UUID(String), 设备的UUID<br>
-	 *            b, LeCmd.K.VERSION(String), 设备的当前版本号<br>
-	 *            c, LeCmd.K.TYPE(int), 查询的类型(OTA_TYPE_FIRMWARE-固件,
-	 *            OTA_TYPE_FW_SCRIPT-固件脚本, OTA_TYPE_IA_SCRIPT-联动脚本)<br>
-	 *            d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联动脚本)的时候需要填充该值<br>
-	 *            return<br>
-	 *            a, 出错返回null<br>
-	 *            b, 查询信息列表的Json字符串, 键值有LeCmd.K.URL(String)<br>
+	 *              cmdStr:<br>
+	 *                  a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网得到设备状态<br>
+	 *              dataStr:<br>
+	 *                  a, LeCmd.K.UUID(String), 设备的UUID<br>
+	 *              return<br>
+	 *                  a, 出错返回null<br>
+	 *                  b, 设备列表的Json字符串<br>
+     *
+	 *            2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_REPORT_OTA_QUERY_REQ, OTA查询<br>
+	 *              cmdStr:<br>
+	 *                  不包括其它键值<br>
+	 *              dataStr:<br>
+	 *                  a, LeCmd.K.UUID(String), 设备的UUID<br>
+	 *                  b, LeCmd.K.VERSION(String), 设备的当前版本号<br>
+	 *                  c, LeCmd.K.TYPE(int), 查询的类型(OTA_TYPE_FIRMWARE-固件,
+	 *                     OTA_TYPE_FW_SCRIPT-固件脚本, OTA_TYPE_IA_SCRIPT-联动脚本)<br>
+	 *                  d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联动脚本)的时候需要填充该值<br>
+	 *              return<br>
+	 *                  a, 出错返回null<br>
+	 *                  b, 查询信息列表的Json字符串, 键值有LeCmd.K.URL(String)<br>
 	 * 
 	 * @return 详细参考上述说明
 	 */
@@ -367,7 +373,7 @@ public class LeLink {
 	}
 
 	/**
-	 * 控制设备<br>
+	 * 控制设备.<br>
 	 * 
 	 * @param cmdStr
 	 *            详细参考下述说明
@@ -377,29 +383,52 @@ public class LeLink {
 	 * 
 	 *            cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int),
 	 *            根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
+     *
 	 *            cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
 	 *            cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br>
 	 * <br>
 	 * 
 	 *            1, LeCmd.K.SUBCMD == LeCmd.Sub.CTRL_DEV_CMD, 控制设备<br>
-	 *            cmdStr:<br>
-	 *            a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备<br>
-	 *            b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值<br>
-	 *            dataStr:<br>
-	 *            a, 控制设备的Json字符串<br>
-	 *            return<br>
-	 *            a, 出错返回null<br>
-	 *            b, 设备列表的Json字符串<br>
-	 *            2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_REQ,
-	 *            要求设备进行OTA升级<br>
-	 *            cmdStr:<br>
-	 *            a, LeCmd.K.TOKEN(String), 设备的token<br>
-	 *            dataStr:<br>
-	 *            a, 填充由OTA查询得到的Json字符串<br>
-	 *            return<br>
-	 *            a, 成功返回字符串"ok"<br>
-	 *            b, 失败返回失败说明字符串<br>
+	 *              cmdStr:<br>
+	 *                  a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备<br>
+	 *                  b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值<br>
+	 *              dataStr:<br>
+	 *                  a, 控制设备的Json字符串<br>
+	 *              return<br>
+	 *                  a, 出错返回null<br>
+	 *                  b, 设备列表的Json字符串<br>
+	 *                  
+	 *            2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_REQ, 要求设备进行OTA升级<br>
+	 *              cmdStr:<br>
+	 *                  a, LeCmd.K.TOKEN(String), 设备的token<br>
+	 *              dataStr:<br>
+	 *                  a, 填充由OTA查询得到的Json字符串<br>
+	 *              return<br>
+	 *                  a, 成功返回字符串"ok"<br>
+	 *                  b, 失败返回失败说明字符串<br>
+	 *                  
+	 *            3, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_R2T_TELL_SHARE_REQ, 分享设备<br>
+	 *              cmdStr:<br>
+	 *                  a, LeCmd.K.TOKEN(String), 对方用户sdk的token<br>
+	 *              dataStr:<br>
+	 *              	a, LeCmd.K.ACCOUNT(String), 对方用户账号<br> 
+	 *              	b, LeCmd.K.UUID(String), 分享设备的uuid<br>
+	 *              	b, LeCmd.K.SHARE(int), 分享操作: 1 - 分享; 2 - 取消分享<br>
+	 *              return<br>
+	 *                  a, 成功返回字符串"ok"<br>
+	 *                  b, 失败返回失败说明字符串<br>
 	 * 
+	 *            4, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_REQ, 分享接受<br>
+	 *              cmdStr:<br>
+	 *                  a, LeCmd.K.TOKEN(String), 对方用户sdk的token<br>
+	 *              dataStr:<br>
+	 *              	a, LeCmd.K.ACCOUNT(String), 对方用户账号<br> 
+	 *              	b, LeCmd.K.UUID(String), 分享设备的uuid<br>
+	 *              	b, LeCmd.K.ACCEPTED(int), 接受操作: 1 - 接受<br>
+	 *              return<br>
+	 *                  a, 成功返回字符串"ok"<br>
+	 *                  b, 失败返回失败说明字符串<br>
+	 *                  
 	 * @return 详细参考上述说明
 	 */
 	public synchronized String ctrl(String cmdStr, String dataStr) {
@@ -446,7 +475,7 @@ public class LeLink {
 	}
 
 	/**
-	 * 发送数据<br>
+	 * 发送数据.<br>
 	 * 
 	 * @param cmdJson
 	 *            Json中包含值: String addr; int cmdId; int subCmdId
@@ -496,11 +525,12 @@ public class LeLink {
 	}
 
 	/**
-	 * 得到已经发送的命令的内容<br>
+	 * 得到已经发送的命令的内容.<br>
 	 * 
 	 * @param seqid
 	 * 
-	 * @return
+	 * @return 
+	 * 		命令内容
 	 * 
 	 * @hide
 	 */
@@ -564,7 +594,38 @@ public class LeLink {
 			}
 			break;
 		case MSG_TYPE_REMOTEREQUEST:
-			if (cmd == LeCmd.HELLO_REQ && subcmd == LeCmd.Sub.HELLO_REQ) {
+			if ((cmd == LeCmd.DISCOVER_REQ && subcmd == LeCmd.Sub.DISCOVER_STATUS_CHANGED_REQ)
+					|| (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_STATUS_REQ)) {
+				try {
+					dataStr = new String(buf, "UTF-8");
+					if (mListener != null) {
+						mListener.onStateChange(uuid, dataStr);
+					}
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+					return ret;
+				}
+			} else if (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_MSG_REQ) {
+				try {
+					dataStr = new String(buf, "UTF-8");
+					if (mListener != null) {
+						mListener.onPushMessage(dataStr);
+					}
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+					return ret;
+				}
+			} else if (cmd == LeCmd.CLOUD_MSG_CTRL_C2R_REQ) {
+				try {
+					dataStr = new String(buf, "UTF-8");
+					if (mListener != null) {
+						mListener.onControl(subcmd, uuid, dataStr);
+					}
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+					return ret;
+				}
+			} else if (cmd == LeCmd.HELLO_REQ && subcmd == LeCmd.Sub.HELLO_REQ) {
 				try {
 					sendCmdJson.put(LeCmd.K.CMD, LeCmd.HELLO_RSP);
 					sendCmdJson.put(LeCmd.K.SUBCMD, LeCmd.Sub.HELLO_RSP);
@@ -579,18 +640,6 @@ public class LeLink {
 				mIsGetDevHello = true;
 				if (mListener != null) {
 					mListener.onAirConfigBack(uuid);
-				}
-			}
-			if ((cmd == LeCmd.DISCOVER_REQ && subcmd == LeCmd.Sub.DISCOVER_STATUS_CHANGED_REQ)
-					|| (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_STATUS_REQ)) {
-				try {
-					dataStr = new String(buf, "UTF-8");
-					if (mListener != null) {
-						mListener.onStateChange(uuid, dataStr);
-					}
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-					return ret;
 				}
 			}
 			break;
@@ -688,7 +737,7 @@ public class LeLink {
 	public interface Listener {
 
 		/**
-		 * SDK云端接入状态变化 <br>
+		 * SDK云端接入状态变化.<br>
 		 * 
 		 * @param isCloud
 		 * 			表示是否成功连接上云服务器<br>
@@ -696,7 +745,7 @@ public class LeLink {
 		void onCloudStateChange(boolean isCloud);
 
 		/**
-		 * wifi配置时，成功配置了设备 <br>
+		 * wifi配置时, 成功配置了设备.<br>
 		 * 
 		 * @param uuid
 		 * 			device uuid<br>
@@ -704,7 +753,7 @@ public class LeLink {
 		void onAirConfigBack(String uuid);
 
 		/**
-		 * 设备发现 <br>
+		 * 设备发现.<br>
 		 * 
 		 * @param uuid
 		 * 			device uuid<br>
@@ -716,7 +765,7 @@ public class LeLink {
 		void onDiscoverBack(String uuid, String dataStr);
 
 		/**
-		 * 设备状态获取回复 <br>
+		 * 设备状态获取回复.<br>
 		 * 
 		 * @param subcmd
 		 * 			子命令类型<br>
@@ -731,7 +780,7 @@ public class LeLink {
 		void onGetStateBack(int subcmd, String uuid, String dataStr);
 
 		/**
-		 * 设备状态控制回复 <br>
+		 * 设备状态控制回复.<br>
 		 * 
 		 * @param subcmd
 		 * 			子命令类型<br>
@@ -746,7 +795,7 @@ public class LeLink {
 		void onCtrlBack(int subcmd, String uuid, String dataStr);
 
 		/**
-		 * 设备状态变化通知 <br>
+		 * 设备状态变化通知.<br>
 		 * 
 		 * @param uuid
 		 * 			device uuid<br>
@@ -756,6 +805,30 @@ public class LeLink {
 		 * 			
 		 */
 		void onStateChange(String uuid, String dataStr);
+		
+		/**
+		 * 消息推送通知.<br>
+		 * 
+		 * @param dataStr
+		 * 			消息内容<br>
+		 * 			
+		 */
+		void onPushMessage(String dataStr);
+		
+		/**
+		 * 接受到其它的控制.<br>
+		 * 
+		 * @param subcmd
+		 * 			子命令类型<br>
+		 * 
+		 * @param uuid
+		 * 			对方sdk的uuid<br>
+		 * 
+		 * @param dataStr
+		 * 			控制内容<br>
+		 * 			
+		 */
+		void onControl(int subcmd, String uuid, String dataStr);
 	}
 
 	private static void LOGD(String msg) {

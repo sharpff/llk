@@ -814,7 +814,7 @@ int softApStarted(void)
         LELOGE("New link");
         goto out;
     }
-    while(1) {
+    while(!isApConnected()) {
         LELOG("Waitting wifi configure.");
         delayms(1000);
         ret = nwUDPRecvfrom(ctx, (uint8_t *)buf, UDP_MTU, ipaddr, sizeof(ipaddr), &port);
@@ -866,7 +866,7 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout)
     void *ctx;
     uint16_t port = 4911;
     int i, ret, count, delay = 1000; // ms
-    char ipaddr[32] = "255.255.255.255";
+    char ipaddr[32] = "192.168.10.1";
     wificonfig_t wc = { WIFICONFIG_MAGIC, WIFICONFIG_VERSION, 0 };
 
     ctx  = lelinkNwNew(NULL, 0, 0, NULL);

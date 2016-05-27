@@ -4,7 +4,7 @@ RM="rm -f"
 COPY="cp -f"
 MKDIR="mkdir -p"
 MAIN_PATH="`pwd`/../.."
-PLATFORM="linux_arm"
+PLATFORM="linux_mips"
 PACK_SDK_NAME="lelink.$PLATFORM.sdk"
 PACK_SDK_PATH="`pwd`/$PACK_SDK_NAME"
 

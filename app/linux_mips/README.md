@@ -11,14 +11,14 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
 
 ## 1. 前言
 
-本文档适用于Lelink在Linux上的开发移植, 同时需要配合[Lelink开发包](./lelink.linux_arm.sdk)使用。
+本文档适用于Lelink在Linux上的开发移植, 同时需要配合[Lelink开发包](./lelink.linux_mips.sdk)使用。
 
 ## 2. Lelink开发包目录结构说明
 
 ```bash
-    lelink.linux_arm.sdk
+    lelink.linux_mips.sdk
     ├── app
-    │   └── linux_arm
+    │   └── linux_mips
     │       ├── 0x1c2000.bin
     │       ├── 0x1c3000.bin
     │       ├── 0x1c8000.bin
@@ -28,7 +28,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
     │       ├── main.c
     │       └── Makefile
     ├── hal
-    │   └── linux_arm
+    │   └── linux_mips
     │       ├── halAES.c
     │       ├── halAirConfig.c
     │       ├── halCallback.c
@@ -42,7 +42,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
     │       └── halRSA.c
     ├── lib
     │   └── lelink
-    │       └── Debug-linux_arm
+    │       └── Debug-linux_mips
     │           ├──liblelink.a
     │           └──libsengine.a
     ├── sw
@@ -61,7 +61,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
         └── luaTest
 ```
 
-* ### [app/linux_arm/](app/linux_arm/)
+* ### [app/linux_mips/](app/linux_mips/)
 
     包含Lelink启动的使用示例及编译方法, 下面对该目录下的文档简要说明:
 
@@ -80,18 +80,18 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
     - Makefile 编译参考。
 
 
-* ### [hal/linux_arm/](hal/linux_arm/)
+* ### [hal/linux_mips/](hal/linux_mips/)
 
     该目录中包含多个C文件，在做Lelink移植时主要工作即是实现这些C中的函数。
 
 
-* ### [lib/lelink/Debug-linux_arm/](lib/lelink/Debug-linux_arm/)
+* ### [lib/lelink/Debug-linux_mips/](lib/lelink/Debug-linux_mips/)
 
-    包括两个库，在编译时使用，使用的编译器是arm-none-linux-gnueabi-gcc，版本信息如下:
+    包括两个库，在编译时使用，使用的编译器是mipsel-linux-gcc，版本信息如下:
 ```bash
-    Target: arm-none-linux-gnueabi
+    Target: mipsel-linux-gcc
     Thread model: posix
-    gcc version 4.6.1 (Sourcery CodeBench Lite 2011.09-70) 
+    gcc version 3.4.2
 ```
 
 * ### [sw/](sw/)
@@ -105,7 +105,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
 
 ## 3. 示例使用说明
 
-目前的开发包中，app/linux_arm下。使用make编译，会生成ARM平台下的Debug/linux可执行文件。
+目前的开发包中，app/linux_mips下。使用make编译，会生成MIPS平台下的Debug/linux可执行文件。
 
 示例程序是一个模拟实现窗帘的功能(只是简单示例，仅供参考)。
 
@@ -116,7 +116,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
 
 ### 4.1 系统移植
 
-由于示例中已经按照linux标准实现大部分功能，所以主要工作是完成hal/linux_arm/halIO.c中的以下接口函数:
+由于示例中已经按照linux标准实现大部分功能，所以主要工作是完成hal/linux_mips/halIO.c中的以下接口函数:
 ```c
     void *halPipeOpen(char *name);
     int halPipeClose(void *dev);
@@ -130,7 +130,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
 
 要实现该部分功能，要求wifi芯片可以进入monitor模式。另外，要求wifi芯片具有模拟AP的能力。
 
-主要实现的功能代码放在hal/linux_arm/halAirConfig.c
+主要实现的功能代码放在hal/linux_mips/halAirConfig.c
 ```c
     int halDoConfig(void *ptr, int ptrLen);
     int halDoConfiguring(void *ptr, int ptrLen);
@@ -143,9 +143,9 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
 
 ### 4.3 其它
 
-hal/linux_arm/下的其它功能可以进一步根据系统平台优化。
+hal/linux_mips/下的其它功能可以进一步根据系统平台优化。
 
-另外在hal/linux_arm/halNetwork.c中，有两个函数得到网络的ip及mac。现在默认是得到"wlan0"的，如不是该名称请相应更改。
+另外在hal/linux_mips/halNetwork.c中，有两个函数得到网络的ip及mac。现在默认是得到"wlan0"的，如不是该名称请相应更改。
 ```c
     int halGetSelfAddr(char *ip, int size, int *port);
     int halGetMac(uint8_t *mac, int len);
@@ -153,13 +153,13 @@ hal/linux_arm/下的其它功能可以进一步根据系统平台优化。
 
 ## 5. 工具使用
 
-### 5.1、app/linux_arm/genProfile.sh
+### 5.1、app/linux_mips/genProfile.sh
     
 该工具会生成(0x1c2000.bin、0x1c3000.bin、0x1c8000.bin), 当固件脚本(test.lua)修改后，需要执行该工具。
 
 ### 5.2 tool/linux
 
-App模拟器, 要求在请在app/linux_arm/目录下启动
+App模拟器, 要求在请在app/linux_mips/目录下启动
 
 启动参数EXEC [target uuid] [target ip] [ctrl1] [ctrl2]
 
@@ -183,8 +183,8 @@ App模拟器, 要求在请在app/linux_arm/目录下启动
 
 ### 5.3 tool/luaTest
 
-固件脚本测试工具，以对app/linux_arm/test.lua的测试(关于该文件的编写规则，请参考示例文件及注释)。
+固件脚本测试工具，以对app/linux_mips/test.lua的测试(关于该文件的编写规则，请参考示例文件及注释)。
 
-> 例如: too/luaTest app/linux_arm/test.lua "s1GetCvtType"
+> 例如: too/luaTest app/linux_mips/test.lua "s1GetCvtType"
 
 

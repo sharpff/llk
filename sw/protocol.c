@@ -151,6 +151,15 @@ static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInf
 static void cbCloudMsgCtrlC2RDoOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
+// for share
+static int cbCloudMsgCtrlC2RTellShareLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbCloudMsgCtrlC2RTellShareRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlR2TTellShareRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlR2TTellShareLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
+static int cbCloudMsgCtrlC2RConfirmShareLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbCloudMsgCtrlC2RConfirmShareRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlR2TConfirmShareRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlR2TConfirmShareLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 
 static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
@@ -229,6 +238,15 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_RSP, cbCloudMsgCtrlC2RDoOTARemoteRsp, NULL },
     { LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_DO_OTA_REQ, NULL, cbCloudMsgCtrlR2TDoOTARemoteReq },
     { LELINK_CMD_CLOUD_MSG_CTRL_R2T_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_DO_OTA_RSP, NULL, cbCloudMsgCtrlR2TDoOTALocalRsp },
+    // for share
+    { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_TELL_SHARE_REQ, cbCloudMsgCtrlC2RTellShareLocalReq, NULL },
+    { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_TELL_SHARE_RSP, cbCloudMsgCtrlC2RTellShareRemoteRsp, NULL },
+    { LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_TELL_SHARE_REQ, NULL, cbCloudMsgCtrlR2TTellShareRemoteReq },
+    { LELINK_CMD_CLOUD_MSG_CTRL_R2T_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_TELL_SHARE_RSP, NULL, cbCloudMsgCtrlR2TTellShareLocalRsp },
+    { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_REQ, cbCloudMsgCtrlC2RConfirmShareLocalReq, NULL },
+    { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_RSP, cbCloudMsgCtrlC2RConfirmShareRemoteRsp, NULL },
+    { LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_REQ, NULL, cbCloudMsgCtrlR2TConfirmShareRemoteReq },
+    { LELINK_CMD_CLOUD_MSG_CTRL_R2T_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_RSP, NULL, cbCloudMsgCtrlR2TConfirmShareLocalRsp },
     // STATUS CHAGNED ind from cloud
     { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_STATUS_REQ, NULL, cbCloudIndStatusRemoteReq },
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_STATUS_RSP, NULL, cbCloudIndStatusLocalRsp},
@@ -1770,6 +1788,7 @@ static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdIn
     LELOG("cbCloudMsgCtrlR2TDoOTARemoteReq -e");
     return 1;
 }
+
 static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     int type = 0;
@@ -1815,6 +1834,98 @@ static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInf
     
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp [%d] -e", ret);
+    return ret;
+}
+
+static int cbCloudMsgCtrlC2RTellShareLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen)
+{
+    int ret = 0;
+    char buf[MAX_BUF] = {0};
+
+    LELOG("cbCloudMsgCtrlC2RTellShareLocalReq -s");
+    ret = halCBLocalReq(ctx, cmdInfo, buf, sizeof(buf));
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)buf, ret, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlC2RTellShareLocalReq -e");
+
+    return ret;
+}
+
+static void cbCloudMsgCtrlC2RTellShareRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen)
+{
+    LELOG("cbCloudMsgCtrlC2RTellShareRemoteRsp -s");
+    if (0 < dataLen) {
+        LELOG("[%d][%s]", dataLen, (char *)dataIn);
+    }
+    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    LELOG("cbCloudMsgCtrlC2RTellShareRemoteRsp -e");
+    return;
+}
+
+static int cbCloudMsgCtrlR2TTellShareRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen)
+{
+    LELOG("cbCloudMsgCtrlR2TTellShareRemoteReq -s");
+    if (0 < dataLen) {
+        LELOG("[%d][%s]", dataLen, (char *)dataIn);
+    }
+    halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
+    LELOG("cbCloudMsgCtrlR2TTellShareRemoteReq -e");
+    return 1;
+}
+
+static int cbCloudMsgCtrlR2TTellShareLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen)
+{
+    int ret;
+
+    LELOG("cbCloudMsgCtrlR2TTellShareLocalRsp -s");
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlR2TTellShareLocalRsp -e");
+
+    return ret;
+}
+
+static int cbCloudMsgCtrlC2RConfirmShareLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen)
+{
+    int ret = 0;
+    char buf[MAX_BUF] = {0};
+
+    LELOG("cbCloudMsgCtrlC2RConfirmShareLocalReq -s");
+    ret = halCBLocalReq(ctx, cmdInfo, buf, sizeof(buf));
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)buf, ret, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlC2RConfirmShareLocalReq -e");
+
+    return ret;
+}
+
+static void cbCloudMsgCtrlC2RConfirmShareRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen)
+{
+    LELOG("cbCloudMsgCtrlC2RConfirmShareRemoteRsp -s");
+    if (0 < dataLen) {
+        LELOG("[%d][%s]", dataLen, (char *)dataIn);
+    }
+    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    LELOG("cbCloudMsgCtrlC2RConfirmShareRemoteRsp -e");
+    return;
+}
+
+static int cbCloudMsgCtrlR2TConfirmShareRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen)
+{
+    LELOG("cbCloudMsgCtrlR2TConfirmShareRemoteReq -s");
+    if (0 < dataLen) {
+        LELOG("[%d][%s]", dataLen, (char *)dataIn);
+    }
+    halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
+    LELOG("cbCloudMsgCtrlR2TConfirmShareRemoteReq -e");
+    return 1;
+}
+
+static int cbCloudMsgCtrlR2TConfirmShareLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen)
+{
+    int ret;
+
+    LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -s");
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -e");
+
     return ret;
 }
 
@@ -1873,6 +1984,7 @@ static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     // LELOG("[%d][%s]", len, data);
     // senginePollingRules((char *)data, len);
     // ret = setLock();
+    halCBRemoteReq(ctx, cmdInfo, data, len);
     ret = cloudMsgHandler((const char *)data, len);
     LELOG("cbCloudIndMsgRemoteReq [%d] -e", ret);
     return ret;

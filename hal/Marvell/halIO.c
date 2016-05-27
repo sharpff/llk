@@ -164,7 +164,8 @@ int halGPIOClose(void *dev) {
     if(!dev) {
         return -1;
     }
-    return gpio_drv_close(dev);
+    gpio_drv_close(dev);
+    return 0;
 }
 
 int halGPIORead(void *dev, int gpio, int *val) {
@@ -178,13 +179,10 @@ int halGPIORead(void *dev, int gpio, int *val) {
 }
 
 int halGPIOWrite(void *dev, int gpio, const int val) {
-    int ret, v;
+    int v;
 
     v = (val ==  GPIO_STATE_LOW) ? GPIO_IO_LOW : GPIO_IO_HIGH;
-    ret = gpio_drv_write((mdev_t *)dev, gpio, v);
-    if (0 > ret) {
-        return -1;
-    }    
+    gpio_drv_write((mdev_t *)dev, gpio, v);
     return sizeof(val);
 }
 
