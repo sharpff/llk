@@ -37,6 +37,7 @@
 #define JSON_NAME_SDEV     			"sDev"
 #define JSON_NAME_SDEV_GET_LIST     "sDevGetList"
 #define JSON_NAME_SDEV_GET_INFO     "sDevGetInfo"
+#define JSON_NAME_SDEV_MAC		    "mac"
 
 typedef enum {
 	CLOUD_MSG_KEY_NONE = 0,

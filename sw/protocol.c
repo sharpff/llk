@@ -19,7 +19,7 @@
 // ./Debug/linux 10000100051000710010C80E77ABCD70 192.168.3.136 \{\"ctrl\":\{\"pwr\":1\}\} \{\"ctrl\":\{\"pwr\":0}\}
 // ./Debug/linux 10000100051000710010C80E77ABCD80 192.168.3.152 \{\"ctrl\":\{\"pwr\":1,\"mode\":2,\"temp\":27,\"speed\":1\}\} \{\"ctrl\":\{\"pwr\":1,\"mode\":2\,\"temp\":27,\"speed\":2\}\}
 // ./Debug/linux 10000100111000810008C80E77ABCDFF 192.168.3.129 \{\"ctrl\":\{\"abc\":1\}\} \{\"ctrl\":\{\"abc\":2\}\}
-// ./Debug/linux 10000100111000810008EEEEEEEEEEEE 192.168.3.110 \{\"ctrl\":\{\"cjoin\":1\}\} \{\"ctrl\":\{\"cjoin\":1\}\}
+// ./Debug/linux 10000100111000810008EEEEEEEEEEEE 192.168.3.110 \{\"ctrl\":\{\"sDevJoin\":1\}\} \{\"ctrl\":\{\"sDevJoin\":1\}\}
 
 // {
 //     uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya
@@ -408,12 +408,12 @@ void testJson(void) {
     }
 
     {
-        #include "misc.h"
+        // #include "misc.h"
         extern int testJsonArray(const char *json, int jsonLen);
         char json[] = "{\"sDevGetList\":[0,1,2]}";
         char json1[] = "{\"sDevGetInfo\":2,\"sDev\":{\"pid\":\"0104\",\"clu\":\"0006\",\"ept\":[[\"0000\",1],[\"0000\",2],[\"0000\",3]],\"mac\":\"7409E17E3376AF60\"}}";
-        // testJsonArray(json, strlen(json));
-        // testJsonArray(json1, strlen(json1));
+        // testJsonArray(json, strlen(json))
+;        testJsonArray(json1, strlen(json1));
 
     }
 

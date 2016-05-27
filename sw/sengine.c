@@ -116,9 +116,11 @@ SDevNode *sdevArray() {
             sdevCache()->maxsize = MAX_SDEV_NUM;
             sdevCache()->singleSize = sizeof(NodeData);
             sdevCache()->pBase = ginArrSDev;
+        } else {
+            LELOGE("Heap is not enough!!!");
         }
     }
-    LELOG("[SENGINE] sdevArray size[%d/%d], singleSize[%d], pBase[0x%p]", sdevCache()->currsize, sdevCache()->maxsize, sdevCache()->singleSize, sdevCache()->pBase);
+    // LELOG("[SENGINE] sdevArray size[%d/%d], singleSize[%d], pBase[0x%p]", sdevCache()->currsize, sdevCache()->maxsize, sdevCache()->singleSize, sdevCache()->pBase);
     return ginArrSDev;
 }
 
@@ -127,54 +129,30 @@ static void sdevArraySet(int index, const SDevNode *node) {
         0 > index) {
         return;
     }
-    if (0 == sdevArray()[index].occupied) {
+    if (!sdevArray()[index].occupied) {
         sdevCache()->currsize++;
-        memcpy(&(sdevArray()[index]), node, sizeof(SDevNode));
     }
+    memcpy(&(sdevArray()[index]), node, sizeof(SDevNode));
 }
 
-int testJsonArray(const char *json, int jsonLen) {
-    jobj_t jobj;
-    jsontok_t jsonToken[NUM_TOKENS];
-    // char name[MAX_RULE_NAME] = {0};
-    int ret = 0;
-    int sDevIdx = 0, num = 0, i = 0;
-    char sDev[128] = {0};
-    SDevNode node;
-
-    memset(&node, 0, sizeof(SDevNode));
-    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
-    if (WM_SUCCESS != ret) {
+static int sdevArrayGet(int index, SDevNode *node) {
+    if (0 > index && !node) {
         return -1;
     }
-    LELOG("testJsonArray START ****************************");
-    if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV_GET_LIST, &num)) == WM_SUCCESS) {
-        num = num < 0 ? 0 : num;
-        for(i = 0; i < num; i++) {
-            if((ret = json_array_get_int(&jobj, i, &sDevIdx)) != WM_SUCCESS) {
-                continue;
-            }
-            // TODO: update the list
-            LELOG("sDev get list for idx[%d]", sDevIdx);
-            node.occupied = 1;
-            sdevArraySet(sDevIdx, &node);
-            // qEnCache(sdevCache(), &node);
-        }
-    }
-
-    ret = getJsonObject(json, jsonLen, JSON_NAME_SDEV, sDev, sizeof(sDev));
-    if (0 < ret) {
-        // TODO: update the sDev info
-        LELOG("sDev is [%s]", sDev);
-    }
-    // if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV_GET_INFO, &num)) == WM_SUCCESS) {
-    //     if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV, &num)) == WM_SUCCESS) {
-
-    //     }
+    // if (!sdevArray()[index].occupied) {
+    //     return -2;
     // }
-    LELOG("testJsonArray END ****************************");
-    return 0;
 
+    memcpy(node, &(sdevArray()[index]), sizeof(SDevNode));
+    return index;
+}
+
+static void sdevArrayReset() {
+    SDevNode *arr = sdevArray();
+    if (arr) {
+        sdevCache()->currsize = 0;
+        memset(arr, 0, MAX_SDEV_NUM*sizeof(SDevNode));
+    }
 }
 
 static int forEachNodeSDevInsertCB(SDevNode *currNode, void *uData) {
@@ -194,9 +172,85 @@ static int sdevInsert(SDevNode *arr, const char *status, int len) {
 
 static int sdevUpdate(SDevNode *arr, const char *status, int len) {
     // {"subDevGetList":[0,1,2]}
-    testJsonArray(status, len);
+    jobj_t jobj;
+    jsontok_t jsonToken[NUM_TOKENS];
+    // char name[MAX_RULE_NAME] = {0};
+    int ret = 0;
+    int sDevIdx = 0, num = 0, i = 0;
+    char sDev[MAX_BUF] = {0};
+    SDevNode node;
 
+    memset(&node, 0, sizeof(SDevNode));
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)status, len);
+    if (WM_SUCCESS != ret) {
+        return -1;
+    }
+    // for sub dev list rsp
+    if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV_GET_LIST, &num)) == WM_SUCCESS) {
+        LELOG("sdevUpdate list START ****************************");
+        num = num < 0 ? 0 : num;
+        // refresh the array
+        if (num < sdevCache()->currsize) {
+            LELOG("sdevArrayReset.......................num [%d], array currsize[%d]", num, sdevCache()->currsize);
+            sdevArrayReset();
+        }
+        for(i = 0; i < num; i++) {
+            if((ret = json_array_get_int(&jobj, i, &sDevIdx)) != WM_SUCCESS) {
+                continue;
+            }
+            // TODO: update the list
+            // LELOG("sDev get list for idx[%d]", sDevIdx);
+            if (0 <= sdevArrayGet(sDevIdx, &node) && !(node.occupied)) {
+                node.occupied = 1;
+                sdevArraySet(sDevIdx, &node);                
+            }
 
+            // qEnCache(sdevCache(), &node);
+        }
+        LELOG("sdevUpdate list END ****************************");
+        return 0;
+    }
+
+    LELOG("sdevUpdate info START ****************************");
+    // for sub dev info rsp
+    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_SDEV_GET_INFO, &sDevIdx)) {
+        LELOGE("json_get_val_int [%s] FAILED", JSON_NAME_SDEV_GET_INFO);
+        return -2;
+    }
+    // if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV, sDev, sizeof(sDev))) {
+    //     LELOGE("json_get_val_str [%s] FAILED", JSON_NAME_SDEV);
+    //     return -3;
+    // }
+    if (0 > getJsonObject(status, len, JSON_NAME_SDEV, sDev, sizeof(sDev))) {
+        LELOGE("getJsonObject [%s] FAILED", JSON_NAME_SDEV);
+        return -3;
+    }
+
+    // ret = getJsonObject(json, jsonLen, JSON_NAME_SDEV, sDev, sizeof(sDev));
+    // if (0 < ret) {
+    ret = json_get_composite_object(&jobj, JSON_NAME_SDEV);
+    if (0 == ret) {
+        if (0 <= sdevArrayGet(sDevIdx, &node) && node.occupied) {
+            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAC, node.mac, sizeof(node.mac))) {
+                LELOGE("json_get_val_str [%s] FAILED", JSON_NAME_SDEV_MAC);
+                return -4;
+            }
+
+            strcpy(node.status, sDev);
+            LELOG("sDevIdx[%d] mac[%s] status[%s]", sDevIdx, node.mac, node.status);
+            sdevArraySet(sDevIdx, &node);            
+        } else {
+            LELOGE("unexpect ....");
+        }
+        // qEnCache(sdevCache(), &node);
+
+    }
+    // if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV_GET_INFO, &num)) == WM_SUCCESS) {
+    //     if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV, &num)) == WM_SUCCESS) {
+
+    //     }
+    // }
+    LELOG("sdevUpdate info END ****************************");
     return 0;
 }
 
@@ -289,18 +343,18 @@ static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
     }
 
     // test only
-    {
-        int currLen = 0, i = 0, j = 0, appendLen = 0;
-        for (i = 0; i < queries->queriesCountsLen; i += sizeof(uint16_t)) {
-            LEPRINTF("[SENGINE]_s1GetQueries_[%d]_cmd: ", i/sizeof(uint16_t));
-            memcpy(&currLen, &queries->arrQueriesCounts[i/sizeof(uint16_t)], sizeof(uint16_t));
-            for (j = 0; j < currLen; j++) {
-                LEPRINTF("%02x ", queries->arrQueries[j + appendLen]);
-            }
-            appendLen += currLen;
-            LEPRINTF("\r\n");
-        }
-    }
+    // {
+    //     int currLen = 0, i = 0, j = 0, appendLen = 0;
+    //     for (i = 0; i < queries->queriesCountsLen; i += sizeof(uint16_t)) {
+    //         LEPRINTF("[SENGINE]_s1GetQueries_[%d]_cmd: ", i/sizeof(uint16_t));
+    //         memcpy(&currLen, &queries->arrQueriesCounts[i/sizeof(uint16_t)], sizeof(uint16_t));
+    //         for (j = 0; j < currLen; j++) {
+    //             LEPRINTF("%02x ", queries->arrQueries[j + appendLen]);
+    //         }
+    //         appendLen += currLen;
+    //         LEPRINTF("\r\n");
+    //     }
+    // }
     
     return sizeof(Queries);
 }
@@ -852,34 +906,53 @@ int s1apiSdevGetUserDataByMac(lua_State *L) {
     return 1;
 }
 
-static int forEachNodeSDevThruUserDataCB(SDevNode *currNode, void *uData) {
-    LELOG("[SENGINE] forEachNodeSDevThruUserDataCB [0x%p]", uData);
-    if (0 == strcmp(currNode->mac, (char *)uData)) {
-        return 1;
-    }
-    return 0;
-}
-
 int s1apiSDevGetMacByUserData(lua_State *L) {
     char *strMac = NULL;
-    int lenMac = 0, ret = 0;
-    lenMac = lua_tointeger(L, 1);
-    if (0 >= lenMac) {
+    int lenMac = 0;
+    SDevNode *arr = sdevArray();
+    int userData = lua_tointeger(L, 1);
+    if (0 > userData) {
         LELOGE("s1apiSDevGetMacByUserData -e1");
         return 0;
     }
-    strMac = (char *)lua_tostring(L, 2);
-    if (NULL == strMac) {
+
+    // test only
+    // {
+    //     arr[userData].occupied = 1;
+    //     strcpy(arr[userData].mac, "asdfasdf");
+    // }
+
+    LELOG("userData[%d] occupied[%d]", userData, arr[userData].occupied);
+
+    if (0 == arr[userData].occupied) {
         LELOGE("s1apiSDevGetMacByUserData -e2");
         return 0;
     }
 
-    ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevThruUserDataCB, strMac);
-    LELOG("ret[%d] mac[%d][%s]", ret, lenMac, strMac);
+    {
+        int i = 0, tmpNum = 0;
+        SDevNode *arr = sdevArray();
+        for (i = 0; i < sdevCache()->maxsize && tmpNum < sdevCache()->currsize; i++) {
+            if (arr[i].occupied) {
+                LELOG("i[%d] mac[%s] status[%s]", i, arr[i].mac, arr[i].status);
+                tmpNum++;
+            }
+        }
+    }
 
-    lua_pushinteger(L, ret);
-    return 1;
-    return 1;
+    lenMac = MIN(strlen(arr[userData].mac), sizeof(arr[userData].mac));
+    strMac = arr[userData].mac;
+
+    LELOG("lenMac[%d] strMac[%s]", lenMac, strMac);
+
+    if (0 < lenMac && NULL != strMac) {        
+        lua_pushinteger(L, lenMac);
+        lua_pushstring(L, strMac);
+        return 2;
+    }
+
+    LELOGE("s1apiSDevGetMacByUserData -e2");
+    return 0;
 }
 
 int s2apiSetCurrStatus(lua_State *L) {
@@ -1210,7 +1283,7 @@ int senginePollingSlave(void) {
 
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     &datas.arrDatas[appendLen], currLen, (uint8_t *)&whatKind, sizeof(whatKind));
-            LELOG("sengineCall ret size [%d], whatKind [%d]", ret, whatKind);
+            LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
             if (0 >= ret) {
                 LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
                 continue;
