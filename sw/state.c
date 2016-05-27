@@ -375,6 +375,7 @@ int resetConfigData(void) {
     if (0 <= ret) {
         ginPrivateCfg.data.nwCfg.configStatus = 0;
         ginConfigStatus = 0;
+        ginPrivateCfg.data.devCfg.locked = 1;
         ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     }
     return ret; 

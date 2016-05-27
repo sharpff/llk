@@ -54,7 +54,7 @@ function s1GetCvtType()
     -- combained uart(0x1) & gpio(0x2)
     local str = [[
     {
-    "whatCvtType":1,
+    "whatCvtType":0,
     "uart":[
     	{
     		"id":1, 

@@ -112,6 +112,7 @@ int doUnpack(void *ctx,
                     memcpy(key, (void *)getTerminalToken(), AES_LEN);
                 }
             }
+
             {
                 int i = 0;
                 LEPRINTF("unpack encType [%d] :", commonHeader->encType);
@@ -120,6 +121,7 @@ int doUnpack(void *ctx,
                 }
                 LEPRINTF("\r\n");
             }
+
             ret = aes(iv, 
                 key, 
                 tmpBuf + sizeof(CommonHeader),
@@ -130,6 +132,7 @@ int doUnpack(void *ctx,
                 LELOGW("LELINK_ERR_DEC1_ERR [%d] ", LELINK_ERR_DEC1_ERR);
                 return LELINK_ERR_DEC1_ERR;
             }
+
             // cmdHeader = (CmdHeader *)(tmpBuf + sizeof(CommonHeader));
             PACK_GET_CMD_HEADER(cmdHeader, tmpBuf);
 
@@ -137,14 +140,17 @@ int doUnpack(void *ctx,
             if (LELINK_CMD_CTRL_REQ == cmdHeader->cmdId) {
                 if (isCloudAuthed()) {
                     if (ENC_TYPE_STRATEGY_11 == commonHeader->encType) {
+                        LELOGW("INVALID unpack ENC_TYPE_STRATEGY_11, lock [%d] ", getLock());
                         return LELINK_ERR_LOGIC_ERR1;
                     }
                 } else {
                     if (ENC_TYPE_STRATEGY_13 == commonHeader->encType) {
+                        LELOGW("INVALID unpack ENC_TYPE_STRATEGY_13, lock [%d] ", getLock());
                         return LELINK_ERR_LOGIC_ERR2;
                     }
                 }
             }
+
             // payloadHeader = (PayloadHeader *)(tmpBuf + sizeof(CommonHeader) + sizeof(CmdHeader));
             PACK_GET_PAYLOAD_HEADER(payloadHeader, tmpBuf, sizeof(CmdHeader));
             payloadLen = encLen - sizeof(CmdHeader);

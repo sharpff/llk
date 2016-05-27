@@ -53,12 +53,12 @@ extern PrivateCfg ginPrivateCfg;
 
 int setLock(int locked) {
     int ret = 0;
-    ginPrivateCfg.data.devCfg.locked = 1;
+    ginPrivateCfg.data.devCfg.locked = locked;
     ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     return 0 <= ret ? 1 : 0;
 }
 
-int getlock() {
+int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
 }
 
@@ -319,7 +319,7 @@ int getTerminalStatus(char *status, int len) {
     strcpy(status + tmpLen, "\",\"ver\":\""); tmpLen = strlen(status);
     getVer(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
 
-    sprintf(status + tmpLen, "\",\"lock\":%d", getlock());
+    sprintf(status + tmpLen, "\",\"lock\":%d", getLock());
     tmpLen = strlen(status);
 
     // status[tmpLen] = '"'; 
