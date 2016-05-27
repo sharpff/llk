@@ -1,6 +1,7 @@
 #include "leconfig.h"
 #include "utility.h"
 #include "airconfig_ctrl.h"
+#include "protocol.h"
 
 #ifndef LOG_AIRCONFIG_CTRL
 #ifdef LELOG
@@ -52,7 +53,7 @@ static int inner_new_multicast(airconfig_ctx_t *ctx) {
     
     ctx->address.sin_family = AF_INET;
     ctx->address.sin_addr.s_addr = inet_addr("239.101.1.1");
-    ctx->address.sin_port = htons((u_short)1234);
+    ctx->address.sin_port = htons((u_short)NW_SELF_PORT);
     
     return sock;
 }
@@ -82,7 +83,7 @@ static int inner_new_broadcast(airconfig_ctx_t *ctx) {
     
     ctx->address.sin_family = AF_INET;
     ctx->address.sin_addr.s_addr = inet_addr(br);
-    ctx->address.sin_port = htons((u_short)1234);
+    ctx->address.sin_port = htons((u_short)NW_SELF_PORT);
     
     return sock;
 }
@@ -146,7 +147,6 @@ static int inner_airconfig_do_config_sync(airconfig_ctx_t *ctx) {
     if (!ctx) {
         return 0;
     }
-    
     while (count--) {
         inner_airconfig_sendto(ctx, gin_base + count % 4 + 1);
         delayms(ctx->delay);
