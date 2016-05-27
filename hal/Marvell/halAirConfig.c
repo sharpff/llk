@@ -17,13 +17,12 @@ int halDoConfig(void *ptr, int ptrLen) {
 
 #if ENABLE_WIFI_SOFT_AP
     ret = !startApListen();
-#else
+#endif
     if (gin_airconfig_sniffer_got) {
         gin_airconfig_sniffer_got = 0;
         app_sta_stop();
     }
 	ret = airconfig_start(NULL, NULL, 0);
-#endif
     APPLOG("halDoConfig in hal [%d]", ret);
 	return ret;
 }

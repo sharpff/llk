@@ -97,6 +97,11 @@ StateRecord ginStateTbl[] = {
 };
 
 
+int isApConnected(void)
+{
+    return ginPrivateCfg.data.nwCfg.configStatus > 1;
+}
+
 int isCloudAuthed(void)
 {
     return (ginStateCntx.stateIdCurr == E_STATE_CLOUD_AUTHED);
