@@ -787,6 +787,15 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
 }
 
 #include "network.h"
+/*
+ * 功能: 在softap模式下，接收AP的配置信息
+ *
+ * 返回值: 
+ *      0 表示成功接收到AP的信息
+ *
+ * 注: 该函数返回条件是 1, 接收到AP信息; 2, 通过其它配置完成了AP配置
+ *
+ */
 int softApStarted(void)
 {
     int ret;
