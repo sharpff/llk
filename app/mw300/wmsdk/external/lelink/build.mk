@@ -2,7 +2,7 @@
 
 libs-y += liblelink
 
-RELATIVE_PATH=../..
+RELATIVE_PATH=../../../../..
 MAIN_PATH=$(d)/$(RELATIVE_PATH)
 
 liblelink-cflags-y := \

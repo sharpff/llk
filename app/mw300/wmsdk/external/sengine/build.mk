@@ -2,7 +2,7 @@
 
 libs-y += libsengine
 
-RELATIVE_PATH=../..
+RELATIVE_PATH=../../../../..
 MAIN_PATH=$(d)/$(RELATIVE_PATH)
 
 libsengine-cflags-y := \
