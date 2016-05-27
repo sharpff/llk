@@ -389,22 +389,22 @@ function s1CvtStd2Pri(json)
 end
 
 function genStatus(eptList, len, data)
-	for strDid, pt in ipairs(eptList) do
-		print("strDid is "..strDid.."\r\n")
+	local status = "{}"
+	for _, dept in ipairs(eptList) do
+		-- print("did "..dept[1]..", ept "..dept[2].."\r\n")
+		if nil ~= string.find(dept[1], "0000") then 
+			status = string.format('{"switcher":%d}', data[4])
+		elseif nil ~= string.find(dept[1], "0107") then
+			status = string.format('{"detector":%d}', data[4])
+		end
 	end
-	-- if nil ~= string.find(did, "0000") then
-	-- 	return string.format('%02x%02x', 0x00, 0x06)
-	-- elseif nil ~= string.find(did, "0107") then
-	-- 	return string.format('%02x%02x', 0x04, 0x06)
-	-- end
-	return '{}'
+	return status
 end
 --[[ EXTERNAL
 	s1CvtPri2Std
   ]]
 function s1CvtPri2Std(bin)
 	local cvtType = s1apiGetCurrCvtType()
-	-- print ('s1CvtPri2Std return => '..cvtType..'\r\n')
 	local dataTbl = {}
 	local strMain = ''
 	local strSubDev = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
@@ -412,8 +412,6 @@ function s1CvtPri2Std(bin)
 
 	-- test only
 	cvtType = 1
-
-	-- TODO: crc checking & multi-bin
 
 	for i = 1, 1 do
 		-- UART
@@ -522,12 +520,11 @@ function s1CvtPri2Std(bin)
 				end
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				-- strMain = '{"sDevStatus":1,'..strSubDev..'}'
-				local stData = {}
-				for i = 15, dataTbl[14] do
-					stData[#dtData + 1] = dataTbl[i]
+				local tblStatusData = {}
+				for i = 15, (dataTbl[14] + 15) do
+					tblStatusData[#tblStatusData + 1] = dataTbl[i]
 				end
-				strMain = '{"sDevStatus":'..genStatus(sDevEPList, dataTbl[14], stData)..','..strSubDev..'}'
+				strMain = '{"sDevStatus":'..genStatus(sDevEPList, dataTbl[14], tblStatusData)..','..strSubDev..'}'
 				print("[LUA] return => "..strMain.."\r\n")
 				break
 			end

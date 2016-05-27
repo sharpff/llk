@@ -18,7 +18,7 @@
 #define applog(_mod_name_, _fmt_, ...) \
     { \
         const char * p = strrchr(__FILE__, '/'); \
-        printf("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__); \
+        printf("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : __FILE__, __LINE__); \
     }
 
 #define APPLOG(...) \
