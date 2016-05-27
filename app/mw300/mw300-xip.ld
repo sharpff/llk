@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2008-2014, Marvell International Ltd.
  * All Rights Reserved.
+ *
+ * The same linkers script is used for both C and C++. C++ specific sections
+ * are harmless for C linking.
  */
 
 /* Entry Point */
@@ -74,6 +77,7 @@ SECTIONS
 	_heap_start = .;
 	. = _keystore_start;
 	_heap_end = .;
+	PROVIDE (end = .);
 
 	.keystore _keystore_start :
 	{
@@ -87,10 +91,66 @@ SECTIONS
 		*(.text.Reset_IRQHandler)
 		*(.text .text.* .gnu.linkonce.t.*)
 		*(.rodata .rodata.* .gnu.linkonce.r.*)
+		. = ALIGN(4);
+		/* C++: DWARF Exception Header. */
+		*(.eh_frame_hdr)
+		/* C++: Exception Frames */
+		*(.eh_frame)
 
 		. = ALIGN(4);
+		KEEP(*(.init))
+
+		. = ALIGN(4);
+		/* Constructor and Destructor startup and tear down code. */
+		__preinit_array_start = .;
+		KEEP (*(.preinit_array))
+		__preinit_array_end = .;
+
+		. = ALIGN(4);
+		__init_array_start = .;
+		KEEP (*(SORT(.init_array.*)))
+		KEEP (*(.init_array))
+		__init_array_end = .;
+
+		. = ALIGN(0x4);
+		KEEP (*crtbegin.o(.ctors))
+		KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+		KEEP (*(SORT(.ctors.*)))
+		KEEP (*crtend.o(.ctors))
+
+		. = ALIGN(4);
+		KEEP(*(.fini))
+
+		. = ALIGN(4);
+		__fini_array_start = .;
+		KEEP (*(.fini_array))
+		KEEP (*(SORT(.fini_array.*)))
+		__fini_array_end = .;
+
+		KEEP (*crtbegin.o(.dtors))
+		KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+		KEEP (*(SORT(.dtors.*)))
+		KEEP (*crtend.o(.dtors))
+
+		. = ALIGN(8);
 		_etext = .;
 	}
+
+	/* Contains information for unwinding the stack */
+	.ARM.exidx (_etext)   :
+	 {
+		. = ALIGN(4);
+		__exidx_start = .;
+		 *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+		__exidx_end = .;
+	 }
+
+	/* Contains exception unwinding information */
+	 .ARM.extab (__exidx_end) :
+         {
+             . = ALIGN(4);
+	     *(.ARM.extab* .gnu.linkonce.armextab.*)
+	 }
 
 	.rom_data (NOLOAD) :
 	{

@@ -34,26 +34,24 @@ int board_main_osc()
 	return -WM_FAIL;
 }
 
-int board_cpu_freq()
+WEAK int board_cpu_freq()
 {
 	return 200000000;
 }
 
-int board_32k_xtal()
+WEAK int board_32k_xtal()
 {
 	return false;
 }
 
-int board_32k_osc()
+WEAK int board_32k_osc()
 {
 	return false;
 }
 
-int board_rc32k_calib()
+WEAK int board_rc32k_calib()
 {
-    // hipad(baoming) make it as true
-    // return true;
-    return false;
+	return false;
 }
 
 void board_sdio_pdn()
@@ -84,7 +82,7 @@ int board_sdio_pdn_support()
 	return true;
 }
 
-int board_button_pressed(int pin)
+WEAK int board_button_pressed(int pin)
 {
 	if (pin < 0)
 		return false;
@@ -96,7 +94,7 @@ int board_button_pressed(int pin)
 	return false;
 }
 
-void board_gpio_power_on()
+WEAK void board_gpio_power_on()
 {
 	/* RF_CTRL pins */
 	GPIO_PinMuxFun(GPIO_44, PINMUX_FUNCTION_7);
@@ -106,26 +104,26 @@ void board_gpio_power_on()
 	PMU_ConfigWakeupPin(PMU_GPIO23_INT, PMU_WAKEUP_LEVEL_LOW);
 }
 
-void board_uart_pin_config(int id)
+WEAK void board_uart_pin_config(int id)
 {
 	switch (id) {
 	case UART0_ID:
 		GPIO_PinMuxFun(GPIO_2, GPIO2_UART0_TXD);
 		GPIO_PinMuxFun(GPIO_3, GPIO3_UART0_RXD);
-	break;
+		break;
 	case UART1_ID:
-        // GPIO_PinMuxFun(GPIO_46, GPIO46_UART1_CTSn);
-        // GPIO_PinMuxFun(GPIO_47, GPIO47_UART1_RTSn);
+		//GPIO_PinMuxFun(GPIO_13, GPIO13_UART1_TXD);
+		//GPIO_PinMuxFun(GPIO_14, GPIO14_UART1_RXD);
         GPIO_PinMuxFun(GPIO_44, GPIO44_UART1_TXD);
         GPIO_PinMuxFun(GPIO_45, GPIO45_UART1_RXD);
-    break;
+        break;
 	case UART2_ID:
 		/* Not implemented yet */
 		break;
 	}
 }
 
-void board_i2c_pin_config(int id)
+WEAK void board_i2c_pin_config(int id)
 {
 	switch (id) {
 	case I2C0_PORT:
@@ -139,12 +137,12 @@ void board_i2c_pin_config(int id)
 	}
 }
 
-void board_usb_pin_config()
+WEAK void board_usb_pin_config()
 {
 	GPIO_PinMuxFun(GPIO_27, GPIO27_DRVVBUS);
 }
 
-void board_ssp_pin_config(int id, bool cs)
+WEAK void board_ssp_pin_config(int id, bool cs)
 {
 	/* To do */
 	switch (id) {
@@ -159,6 +157,10 @@ void board_ssp_pin_config(int id, bool cs)
 		GPIO_PinMuxFun(GPIO_11, GPIO11_SSP1_CLK);
 		if (cs)
 			GPIO_PinMuxFun(GPIO_12, GPIO12_SSP1_FRM);
+		else {
+			GPIO_PinMuxFun(GPIO_12, GPIO12_GPIO12);
+			GPIO_SetPinDir(GPIO_12, GPIO_INPUT);
+		}
 		GPIO_PinMuxFun(GPIO_13, GPIO13_SSP1_TXD);
 		GPIO_PinMuxFun(GPIO_14, GPIO14_SSP1_RXD);
 		break;
@@ -167,7 +169,7 @@ void board_ssp_pin_config(int id, bool cs)
 	}
 }
 
-output_gpio_cfg_t board_led_1()
+WEAK output_gpio_cfg_t board_led_1()
 {
 	output_gpio_cfg_t gcfg = {
 		.gpio = GPIO_40,
@@ -177,7 +179,7 @@ output_gpio_cfg_t board_led_1()
 	return gcfg;
 }
 
-output_gpio_cfg_t board_led_2()
+WEAK output_gpio_cfg_t board_led_2()
 {
 	output_gpio_cfg_t gcfg = {
 		.gpio = GPIO_41,
@@ -187,7 +189,7 @@ output_gpio_cfg_t board_led_2()
 	return gcfg;
 }
 
-output_gpio_cfg_t board_led_3()
+WEAK output_gpio_cfg_t board_led_3()
 {
 	output_gpio_cfg_t gcfg = {
 		.gpio = -1,
@@ -196,7 +198,7 @@ output_gpio_cfg_t board_led_3()
 	return gcfg;
 }
 
-output_gpio_cfg_t board_led_4()
+WEAK output_gpio_cfg_t board_led_4()
 {
 	output_gpio_cfg_t gcfg = {
 		.gpio = -1,
@@ -205,41 +207,19 @@ output_gpio_cfg_t board_led_4()
 	return gcfg;
 }
 
-void board_led_on(int pin)
-{
-	if (pin < 0)
-		return;
-
-	/* Set the direction of GPIO pin
-	 * Note : All GPIOs are in INPUT by default
-	 */
-	GPIO_SetPinDir(pin, GPIO_OUTPUT);
-	GPIO_WritePinOutput(pin, GPIO_IO_LOW);
-
-}
-
-void board_led_off(int pin)
-{
-	if (pin < 0)
-		return;
-
-	GPIO_SetPinDir(pin, GPIO_OUTPUT);
-	GPIO_WritePinOutput(pin, GPIO_IO_HIGH);
-}
-
-int board_button_1()
+WEAK int board_button_1()
 {
 	GPIO_PinMuxFun(GPIO_26, GPIO26_GPIO26);
 	return GPIO_26;
 }
 
-int board_button_2()
+WEAK int board_button_2()
 {
 	GPIO_PinMuxFun(GPIO_24, GPIO24_GPIO24);
 	return GPIO_24;
 }
 
-int board_button_3()
+WEAK int board_button_3()
 {
 	return -WM_FAIL;
 }
@@ -257,4 +237,9 @@ int board_wakeup0_functional()
 int board_wakeup1_functional()
 {
 	return true;
+}
+
+unsigned int board_antenna_select()
+{
+	return 1;
 }

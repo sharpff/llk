@@ -14,7 +14,7 @@ extern "C"
 #endif /* __LE_SDK__ */
 
 
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32) && !defined(WMSDK3_3)
 #define memset hal_memset
 #define memcpy hal_memcpy
 #define memcmp hal_memcmp

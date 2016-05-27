@@ -53,6 +53,7 @@
 #define malloc(s) pvPortMalloc(s)
 #define realloc(p, s) pvPortReAlloc(p, s)
 #define free(p) vPortFree(p)
+#ifndef WMSDK3_3
 #define memset hal_memset
 #define memcpy hal_memcpy
 #define memcmp hal_memcmp
@@ -67,6 +68,7 @@
 #define vsnprintf hal_vsnprintf
 #define strcoll hal_strcoll
 #define abort hal_abort
+#endif
 
 #define leslog(_mod_name_, _fmt_, ...) \
     wmprintf("[%s] "_fmt_"\r\n", _mod_name_, ##__VA_ARGS__)

@@ -10,6 +10,7 @@ extern "C"
 #ifdef __MRVL_MW300__
 #define PF_VAL 1
 // #pragma message("__MRVL_MW300__")
+#include <stdarg.h>
 #include <sys/types.h>
 #include <wmlog.h>
 #include <wm_os.h>
