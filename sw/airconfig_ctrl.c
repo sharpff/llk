@@ -1,6 +1,7 @@
 #include "leconfig.h"
 #include "utility.h"
 #include "airconfig_ctrl.h"
+#include "protocol.h"
 
 #ifndef LOG_AIRCONFIG_CTRL
 #ifdef LELOG
@@ -23,6 +24,9 @@
 #define LEPRINTF(...)
 #endif
 #endif
+
+#define LECONFIG_MCAST_ADDR "239.101.1.1"
+#define LECONFIG_PORT 59678
 
 typedef struct {
     char ssid[32];
@@ -51,8 +55,8 @@ static int inner_new_multicast(airconfig_ctx_t *ctx) {
     }
     
     ctx->address.sin_family = AF_INET;
-    ctx->address.sin_addr.s_addr = inet_addr("239.101.1.1");
-    ctx->address.sin_port = htons((u_short)1234);
+    ctx->address.sin_addr.s_addr = inet_addr(LECONFIG_MCAST_ADDR);
+    ctx->address.sin_port = htons((u_short)LECONFIG_PORT);
     
     return sock;
 }
@@ -82,7 +86,7 @@ static int inner_new_broadcast(airconfig_ctx_t *ctx) {
     
     ctx->address.sin_family = AF_INET;
     ctx->address.sin_addr.s_addr = inet_addr(br);
-    ctx->address.sin_port = htons((u_short)1234);
+    ctx->address.sin_port = htons((u_short)LECONFIG_PORT);
     
     return sock;
 }
@@ -276,7 +280,7 @@ static int inner_airconfig_do_config_data(airconfig_ctx_t *ctx) {
 void *airconfig_new(const char *param) {
     int type = 0, sock = -1;
     char str_aes[33] = { 0 };
-    
+    char br[MAX_IPLEN] = {0};
     int ret = sscanf(param,
         "SSID=%[^,],PASSWD=%[^,],AES=%[^,],TYPE=%d,DELAY=%d", 
         gin_airconfig_ctx.ssid,
@@ -298,6 +302,16 @@ void *airconfig_new(const char *param) {
     LELOG("sscanf TYPE[%d]", type);
     LELOG("sscanf DELAY[%d]", gin_airconfig_ctx.delay);
     
+    ret = halGetBroadCastAddr(br, sizeof(br));
+    if (0 >= ret) {
+        strcpy(br, "255.255.255.255");
+    }
+    ret = halCastProbing(LECONFIG_MCAST_ADDR, br, LECONFIG_PORT);
+    if (0 >= ret) {
+        LELOGW("inner_new_multicast halCastProbing [%d]", ret);
+        return NULL;
+    }
+
     switch (type) {
     case 1: {
             sock = inner_new_multicast(&gin_airconfig_ctx);
@@ -318,7 +332,6 @@ void *airconfig_new(const char *param) {
     default:
         break;
     }
-    
     
     return &gin_airconfig_ctx;
 }
@@ -347,6 +360,7 @@ int airconfig_do_config(void *context) {
 
 
 void airconfig_delete(void *context) {
+    close(gin_airconfig_ctx.sock);
     memset(&gin_airconfig_ctx, 0, sizeof(gin_airconfig_ctx));
     return;
 }

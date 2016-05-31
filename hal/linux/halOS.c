@@ -1,4 +1,5 @@
 #include "halHeader.h"
+#include <stdlib.h>
 static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
 
 int halLockInit(void) {
@@ -42,4 +43,15 @@ void halFree(void *ptr) {
 
 int halReboot() {
     return 0;
+}
+
+uint16_t halRand() {
+    static uint8_t flag = 0;
+    uint16_t val = 0;
+    if (!flag) {
+        srand((int)time(0));
+        flag = 1;
+    }
+    val = 0xFFFF & rand();
+    return val;
 }

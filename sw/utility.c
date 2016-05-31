@@ -88,7 +88,7 @@ int hexStr2bytes(const char *hexStr, uint8_t *buf, int bufLen) {
 }
 
 uint16_t genRand() {
-    return 123;
+	return halRand();
 }
 
 uint16_t genSeqId() {
