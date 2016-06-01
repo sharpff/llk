@@ -52,3 +52,7 @@ int halReboot(void) {
     app_reboot(REASON_USER_REBOOT);
     return 0;
 }
+
+uint16_t halRand() {
+    return 0;
+}

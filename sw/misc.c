@@ -443,7 +443,6 @@ int cloudMsgHandler(const char *data, int len) {
         jsontok_t jsonToken[NUM_TOKENS];
         jobj_t jobj;
         case CLOUD_MSG_KEY_LOCK: {
-            char name[MAX_RULE_NAME] = {0};
             int locked = 0;
             ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
@@ -472,6 +471,8 @@ int cloudMsgHandler(const char *data, int len) {
         case CLOUD_MSG_KEY_DO_SHARE: {
 
         }break;
+        default:
+        break;
     }
     return ret;
 }
