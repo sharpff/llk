@@ -129,7 +129,7 @@ static int inner_airconfig_sendto(const airconfig_ctx_t *ctx, int data) {
                     inet_ntop(AF_INET, (void *)&ctx->address.sin_addr, ip, sizeof(ip));
                     USED(ip);
                     USED(port);
-	                LELOG("sendto [%s:%d] [%d][0x%02x] [0x%02x]", ip, port, ret, ret, ret-gin_base);
+	                LELOG("sendto [%s:%d] [%d][0x%02x] [0x%02x] [%c]", ip, port, ret, ret, ret-gin_base, ret-gin_base);
                 }
             }
         }break;
@@ -140,7 +140,7 @@ static int inner_airconfig_sendto(const airconfig_ctx_t *ctx, int data) {
 static int inner_airconfig_do_config_sync(airconfig_ctx_t *ctx) {
     // int time = 0x7fffffff; //300 * 14 * 2; // 300ms X 14 channel X twice
 #ifdef DEBUG_AIR_CONFIG
-     int time = 300; // 300ms X 14 channel X twice
+     int time = 400; // 300ms X 14 channel X twice
 #else
      // int time = 300 * 14 * 2; // 300ms X 14 channel X twice
      int time = 300 * 11 * 2; // 300ms X 14 channel X twice
@@ -175,13 +175,7 @@ static int inner_airconfig_do_config_head(airconfig_ctx_t *ctx) {
     uint8_t hdata = 0;
     uint8_t passwd_len = strlen(ctx->passwd);
     uint8_t passwd_crc = 0x7F & crc8((uint8_t *)ctx->passwd, passwd_len);
-    // uint8_t ssid_len = strlen(ctx->ssid) < 16 ? 128 + strlen(ctx->ssid) : strlen(ctx->ssid);
     uint8_t ssid_len = strlen(ctx->ssid);
-    // TODO: why ssid len is the total  in airkiss?
-#define AIRKISS
-#ifdef AIRKISS
-    ssid_len += passwd_len + 1;
-#endif
     uint8_t ssid_crc = 0x7F & crc8((uint8_t *)ctx->ssid, ssid_len);
 
     for (i = 0; i < repeat; i++) {
@@ -234,25 +228,28 @@ static int inner_airconfig_do_config_data(airconfig_ctx_t *ctx) {
 #endif
     int passwd_len = strlen(ctx->passwd);
     int ssid_len = strlen(ctx->ssid);
-    int total_bytes = passwd_len + 1 + ssid_len;
+    int total_bytes = 1 + passwd_len + 1 + ssid_len;
     int total_blocks = (total_bytes - 1)/4 + 1;
     int last_bytes = total_bytes%4 ? total_bytes%4 : 4;
     int i, j, tmp;
-    uint8_t buf[32 + 32 + 1] = {0};
+    uint8_t buf[1 + 32 + 32 + 1] = {0};
     if (!ctx) {
         return 0;
     }
 
-    memcpy(buf, ctx->passwd, passwd_len);
+    memcpy(&buf[1], ctx->passwd, passwd_len);
     
-    // encrypt
+    // TODO: encrypt
     // for (i = 0; i < passwd_len; i++) {
 
     // }
 
-    buf[passwd_len] = '$'; // TODO: rand it
-    memcpy(buf + passwd_len + 1, ctx->ssid, ssid_len);
+    (buf + 1)[passwd_len] = 0xFF & genRand();
+    memcpy((buf + 1) + passwd_len + 1, ctx->ssid, ssid_len);
+    buf[0] = crc8((buf + 1), passwd_len + 1 + ssid_len);
     while (repeat--) {
+        LELOG("====================>");
+        delayms(ctx->delay);
         for (i = 0; i < total_blocks; i++) {
             int bytes = (i+1) == total_blocks ? last_bytes : 4;
             uint16_t data = 0;
@@ -272,6 +269,8 @@ static int inner_airconfig_do_config_data(airconfig_ctx_t *ctx) {
                 }
             }
         }
+        LELOG("<====================");
+
     }
 
     return 1;
@@ -295,6 +294,9 @@ void *airconfig_new(const char *param) {
         }
     }
     USED(ret);
+    if (0 == strcmp("nill", gin_airconfig_ctx.passwd)) {
+        memset(gin_airconfig_ctx.passwd, 0, sizeof(gin_airconfig_ctx.passwd));
+    }
     LELOG("sscanf ret[%d]", ret);
     LELOG("sscanf SSID[%s]", gin_airconfig_ctx.ssid);
     LELOG("sscanf PASSWD[%s]", gin_airconfig_ctx.passwd);
