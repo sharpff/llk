@@ -9,7 +9,7 @@ $MAIN_PATH/lelinkTool.py \
     -o ./0x1c2000.bin
 
 $MAIN_PATH/lelinkTool.py \
-    -t $MAIN_PATH/product/lexiaobao/lexiaobao.lua \
+    -t $MAIN_PATH/product/leyi/lexiaobao.lua \
     -o ./0x1c3000.bin
 
 $MAIN_PATH/lelinkTool.py \
