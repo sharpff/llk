@@ -32,7 +32,7 @@ function s1GetVer()
 end
 
 function s1GetCvtType()
-	local str = string.format('{"whatCvtType":%d,"name":\"%s\"}', 2, "lelink")
+	local str = string.format('{"whatCvtType":%d,"name":\"%s\"}', 4, "lelink")
 	return string.len(str), str, 0
 end
 
