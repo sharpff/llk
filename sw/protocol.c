@@ -2056,7 +2056,8 @@ int lelinkDoConfig(const char *configInfo) {
 
     context = airconfig_new(configInfo);
     if (NULL == context) {
-        return -2;
+        ts = 0;
+        return 0;
     }
     while (1) {
         if (airconfig_do_config(context)) {

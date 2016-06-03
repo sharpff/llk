@@ -11,7 +11,6 @@ extern "C"
 #include "leconfig.h"
 #define MAX_IPLEN 32
 #define NW_SELF_PORT 59673
-// #define NW_SELF_PORT 0
 
 
 enum

@@ -602,7 +602,7 @@ IOHDL *ioGetHdlExt() {
         }
         whatCvtType = getWhatCvtType(json, ret);
         if (0 >= whatCvtType) {
-            LELOGW("ioGetHdl getWhatCvtType[%d] NO VALID TYPE !!!!!!!!! ", whatCvtType);
+            // LELOGW("ioGetHdl getWhatCvtType[%d] NO VALID TYPE !!!!!!!!! ", whatCvtType);
             return NULL;
         }
     } else {

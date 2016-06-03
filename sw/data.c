@@ -294,7 +294,7 @@ void setTerminalStatus(const char *status, int len) {
 }
 
 int getTerminalStatus(char *status, int len) {
-    int ret = 0, tmpLen = 0;
+    int tmpLen = 0;
 
     //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
 

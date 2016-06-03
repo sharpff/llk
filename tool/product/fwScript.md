@@ -1,18 +1,21 @@
-[this is a description for fw script.](www.baidu.com)
+## this is a description for fw script.
 
-function: s1GetCvtType()
-description:
+```function:```
+s1GetCvtType()
+```description:```
 the function is for customer to config their IO. it support multiple IO.
 0x01 - UART, refer to IO_TYPE_UART
 0x02 - GPIO, refer to IO_TYPE_GPIO
 0x04 - PIPE, refer to IO_TYPE_PIPE
 0x08 - SOCKET, refer to IO_TYPE_SOCKET
 param: none
-return: json string, descripts what kind of convertion types it supports.
+```return:```
+json string, descripts what kind of convertion types it supports.
 -- whatCvtType: it is a mask for IO type.
 -- id:
     for UART, XXX
     for GPIO, refer to the halIO.c.
+```
 E.g. 
 *for single type: only for UART, the "whatCvtType" is 0x01.
  {
@@ -54,10 +57,11 @@ E.g.
         }
     ]
 }
+```
 
-
-function s1GetQueries(queryType)
-description: 
+```function:```
+s1GetQueries(queryType)
+```description:``` 
 it is only for the ENGINE to retrive the cmd for it's INTERNAL logic.
 param: queryType, identified what exactly type is in querying.
 it is a var in 4 bytes. it likes 0xFFFFFFFF.
@@ -65,25 +69,37 @@ it is a var in 4 bytes. it likes 0xFFFFFFFF.
 0x0000XX00 is used for status of device itself.
 0x00XX0000 is used for status of sub device. In the most of time, the cmd should be sent by remote, but comming from the IO.
 0xXX000000 is RESERVED
-return: json, it descripts what kind of convertion types it supports
-E.g. 
+```return:```
+json, it descripts what kind of convertion types it supports
 
 
-function s1GetValidKind(data)
-description:
+```function:```
+s1GetValidKind(data)
+```description:```
 get the valid data kind for ENGINE from the data that comes from IO.
+WHATKIND_MAIN_DEV_RESET = 1
+WHATKIND_MAIN_DEV_DATA = 2
+WHATKIND_SUB_DEV_RESET = 10
+WHATKIND_SUB_DEV_DATA = 11
+WHATKIND_SUB_DEV_JOIN = 12
+WHATKIND_SUB_DEV_LEAVE = 13
 param: data, is a bin array, read from the IO.
-return: integer. less than 0(included 0) means invalid, otherwise engine will follow the next sequence(s1CvtPri2Std).
+```return:```
+integer. less than 0(included 0) means invalid, otherwise engine will follow the next sequence(s1CvtPri2Std).
 
-function s1CvtStd2Pri(json)
-description:
+```function:```
+s1CvtStd2Pri(json)
+```description:```
 it converts the standard lelink cmd to the individual data for IO.
 param: json, is a standard lelink string(json as normal).
-return: individual data 
+```return:```
+individual data 
 
-function s1CvtPri2Std(bin)
-description:
+```function:```
+s1CvtPri2Std(bin)
+```description:```
 it converts the individual data to the standard lelink info.
 param: bin, is an individual data from IO
-return: standard lelink string
+```return:```
+standard lelink string
 
