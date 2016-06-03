@@ -19,7 +19,7 @@
 // ./Debug/linux 10000100051000710010C80E77ABCD70 192.168.3.136 \{\"ctrl\":\{\"pwr\":1\}\} \{\"ctrl\":\{\"pwr\":0}\}
 // ./Debug/linux 10000100051000710010C80E77ABCD80 192.168.3.152 \{\"ctrl\":\{\"pwr\":1,\"mode\":2,\"temp\":27,\"speed\":1\}\} \{\"ctrl\":\{\"pwr\":1,\"mode\":2\,\"temp\":27,\"speed\":2\}\}
 // ./Debug/linux 10000100111000810008C80E77ABCDFF 192.168.3.129 \{\"ctrl\":\{\"abc\":1\}\} \{\"ctrl\":\{\"abc\":2\}\}
-// ./Debug/linux 10000100111000810008EEEEEEEEEEEE 192.168.3.110 \{\"ctrl\":\{\"sDevJoin\":1\}\} \{\"ctrl\":\{\"sDevJoin\":1\}\}
+// ./Debug/linux 10000100131000910011C80E77ABCD90 192.168.3.110 \{\"ctrl\":\{\"sDevJoin\":1\}\} \{\"ctrl\":\{\"sDevJoin\":1\}\}
 
 // {
 //     uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya

@@ -41,6 +41,8 @@
 #define MAX_SDEV_NUM 64
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
+#define SDEV_MAX_INFO MAX_BUF/4
+#define SDEV_MAX_STATUS MAX_BUF/4*3
 
 
 #define FOR_EACH_IO_HDL_START \
@@ -90,9 +92,16 @@ typedef struct {
     // char buf[1024*10];
 }IA_CACHE;
 
+typedef enum {
+    SDEV_BUF_TYPE_NONE,
+    SDEV_BUF_TYPE_STATUS,
+    SDEV_BUF_TYPE_INFO
+}SDEV_BUF_TYPE;
+
 typedef struct {
     char mac[32];
-    uint8_t status[MAX_BUF];
+    char sdevStatus[SDEV_MAX_STATUS];
+    char sdevInfo[SDEV_MAX_INFO];
     int occupied;
 }SDevNode;
 
@@ -114,7 +123,7 @@ SDevNode *sdevArray() {
         ginArrSDev = (SDevNode *)halCalloc(MAX_SDEV_NUM, sizeof(SDevNode));
         if (ginArrSDev) {
             sdevCache()->maxsize = MAX_SDEV_NUM;
-            sdevCache()->singleSize = sizeof(NodeData);
+            sdevCache()->singleSize = sizeof(SDevNode);
             sdevCache()->pBase = ginArrSDev;
         } else {
             LELOGE("Heap is not enough!!!");
@@ -124,15 +133,27 @@ SDevNode *sdevArray() {
     return ginArrSDev;
 }
 
-static void sdevArraySet(int index, const SDevNode *node) {
+static void sdevArraySet(int index, const SDevNode *node, SDEV_BUF_TYPE bufType) {
     if (sdevCache()->currsize == sdevCache()->maxsize || 
         0 > index) {
         return;
     }
     if (!sdevArray()[index].occupied) {
         sdevCache()->currsize++;
+        sdevArray()[index].occupied = 1;
     }
-    memcpy(&(sdevArray()[index]), node, sizeof(SDevNode));
+    switch (bufType) {
+        case SDEV_BUF_TYPE_INFO: {
+                memcpy(&sdevArray()[index].mac, node->mac, sizeof(node->mac));
+                memcpy(&(sdevArray()[index]).sdevInfo, node->sdevInfo, sizeof(node->sdevInfo));
+            }break;
+        case SDEV_BUF_TYPE_STATUS: {
+                memcpy(&(sdevArray()[index]).sdevStatus, node->sdevStatus, sizeof(node->sdevStatus));
+            }break;
+        default: 
+            // LELOGE("NO MATCHED BUF TYPE FOR SDEV");
+            break;
+    }
 }
 
 static int sdevArrayGet(int index, SDevNode *node) {
@@ -156,7 +177,7 @@ static void sdevArrayReset() {
 }
 
 static int forEachNodeSDevInsertCB(SDevNode *currNode, void *uData) {
-    LELOG("[SENGINE] forEachNodeSDevInsertCB [0x%p]", uData);
+    LELOG("[SENGINE] forEachNodeSDevInsertCB currNode->mac[%s] uData[%s]", currNode->mac, uData);
     if (0 == strcmp(currNode->mac, (char *)uData)) {
         return 1;
     }
@@ -164,9 +185,51 @@ static int forEachNodeSDevInsertCB(SDevNode *currNode, void *uData) {
 }
 
 static int sdevInsert(SDevNode *arr, const char *status, int len) {
-    // SDevNode node;
-    qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevInsertCB, NULL);
-    LELOG("[SENGINE] sdevInsert [%s]", status);
+    int valJoin = 0, index = 0, ret = 0;
+    jobj_t jobj;
+    jsontok_t jsonToken[NUM_TOKENS];
+    char sDev[MAX_BUF] = {0};
+    SDevNode node;
+
+    memset(&node, 0, sizeof(SDevNode));
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)status, len);
+    if (WM_SUCCESS != ret) {
+        return -1;
+    }
+
+    // for sub dev join ind
+    if (WM_SUCCESS == json_get_val_int(&jobj, JSON_NAME_SDEV_JOIN, &valJoin)) {
+        LELOG("sdevInsert join START ****************************");
+        if (2 != valJoin) {
+            return -2;
+        }
+
+        if (0 > getJsonObject(status, len, JSON_NAME_SDEV, sDev, sizeof(sDev))) {
+            LELOGE("sdevInsert getJsonObject [%s] FAILED", JSON_NAME_SDEV);
+            return -3;
+        }
+
+        ret = json_get_composite_object(&jobj, JSON_NAME_SDEV);
+        if (0 == ret) {
+
+            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAC, node.mac, sizeof(node.mac))) {
+                LELOGE("sdevInsert json_get_val_str [%s] FAILED", JSON_NAME_SDEV_MAC);
+                return -4;
+            }
+
+            index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevInsertCB, node.mac);
+            if (0 <= index) {
+                LELOG("sdevInsert qForEachfromCache already EXIST [%d]", index);
+                return 0;                
+            }
+            strcpy(node.sdevInfo, sDev);
+            LELOG("sdevInsert index[%d] mac[%s] sdevInfo[%s]", index, node.mac, node.sdevInfo);
+            node.occupied = 1;
+            sdevArraySet(index, &node, SDEV_BUF_TYPE_INFO);
+            // TODO: send HELLO for sdev
+        }
+        LELOG("sdevInsert join END ****************************");
+    }
     return 0;
 }
 
@@ -177,7 +240,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
     // char name[MAX_RULE_NAME] = {0};
     int ret = 0;
     int sDevIdx = 0, num = 0, i = 0;
-    char sDev[MAX_BUF] = {0};
+    char buf[MAX_BUF] = {0};
     SDevNode node;
 
     memset(&node, 0, sizeof(SDevNode));
@@ -185,6 +248,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
     if (WM_SUCCESS != ret) {
         return -1;
     }
+
     // for sub dev list rsp
     if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV_GET_LIST, &num)) == WM_SUCCESS) {
         LELOG("sdevUpdate list START ****************************");
@@ -202,7 +266,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
             // LELOG("sDev get list for idx[%d]", sDevIdx);
             if (0 <= sdevArrayGet(sDevIdx, &node) && !(node.occupied)) {
                 node.occupied = 1;
-                sdevArraySet(sDevIdx, &node);                
+                sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_NONE);             
             }
 
             // qEnCache(sdevCache(), &node);
@@ -211,46 +275,59 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
         return 0;
     }
 
-    LELOG("sdevUpdate info START ****************************");
     // for sub dev info rsp
-    if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_SDEV_GET_INFO, &sDevIdx)) {
-        LELOGE("json_get_val_int [%s] FAILED", JSON_NAME_SDEV_GET_INFO);
-        return -2;
-    }
-    // if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV, sDev, sizeof(sDev))) {
-    //     LELOGE("json_get_val_str [%s] FAILED", JSON_NAME_SDEV);
-    //     return -3;
-    // }
-    if (0 > getJsonObject(status, len, JSON_NAME_SDEV, sDev, sizeof(sDev))) {
-        LELOGE("getJsonObject [%s] FAILED", JSON_NAME_SDEV);
-        return -3;
-    }
+    if (WM_SUCCESS == json_get_val_int(&jobj, JSON_NAME_SDEV_GET_INFO, &sDevIdx)) {
+        LELOG("sdevUpdate info START ****************************");
+        if (0 > getJsonObject(status, len, JSON_NAME_SDEV, buf, sizeof(buf))) {
+            LELOGE("getJsonObject [%s] FAILED", JSON_NAME_SDEV);
+            return -2;
+        }
 
-    // ret = getJsonObject(json, jsonLen, JSON_NAME_SDEV, sDev, sizeof(sDev));
-    // if (0 < ret) {
-    ret = json_get_composite_object(&jobj, JSON_NAME_SDEV);
-    if (0 == ret) {
-        if (0 <= sdevArrayGet(sDevIdx, &node) && node.occupied) {
-            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAC, node.mac, sizeof(node.mac))) {
-                LELOGE("json_get_val_str [%s] FAILED", JSON_NAME_SDEV_MAC);
+        // ret = getJsonObject(json, jsonLen, JSON_NAME_SDEV, buf, sizeof(buf));
+        // if (0 < ret) {
+        ret = json_get_composite_object(&jobj, JSON_NAME_SDEV);
+        if (0 == ret) {
+            if (0 <= sdevArrayGet(sDevIdx, &node) && node.occupied) {
+                if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAC, node.mac, sizeof(node.mac))) {
+                    LELOGE("json_get_val_str [%s] FAILED", JSON_NAME_SDEV_MAC);
+                    return -3;
+                }
+
+                strcpy(node.sdevInfo, buf);
+                LELOG("=> sDevIdx[%d] mac[%s] sdevInfo[%s] sdevStatus[%s]", sDevIdx, node.mac, node.sdevInfo, node.sdevStatus);
+                sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_INFO);            
+            } else {
+                LELOGE("unexpect ....");
                 return -4;
             }
+            // qEnCache(sdevCache(), &node);
 
-            strcpy(node.status, sDev);
-            LELOG("sDevIdx[%d] mac[%s] status[%s]", sDevIdx, node.mac, node.status);
-            sdevArraySet(sDevIdx, &node);            
-        } else {
-            LELOGE("unexpect ....");
         }
-        // qEnCache(sdevCache(), &node);
-
+        LELOG("sdevUpdate info END ****************************");
     }
-    // if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV_GET_INFO, &num)) == WM_SUCCESS) {
-    //     if((ret = json_get_array_object(&jobj, JSON_NAME_SDEV, &num)) == WM_SUCCESS) {
 
-    //     }
-    // }
-    LELOG("sdevUpdate info END ****************************");
+        // for sub dev status ind
+    if (0 < getJsonObject(status, len, JSON_NAME_SDEV_STATUS, buf, sizeof(buf))) {
+        LELOG("sdevUpdate sdevStatus START ****************************");
+        ret = json_get_composite_object(&jobj, JSON_NAME_SDEV);
+        if (0 == ret) {
+            if (0 <= sdevArrayGet(sDevIdx, &node) && node.occupied) {
+                if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAC, node.mac, sizeof(node.mac))) {
+                    LELOGE("json_get_val_str [%s] FAILED", JSON_NAME_SDEV_MAC);
+                    return -5;
+                }
+                LELOG("mac is [%s]", node.mac);
+                sDevIdx = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevInsertCB, node.mac);
+                if (0 <= sDevIdx) {
+                    strcpy(node.sdevStatus, buf);
+                    sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_STATUS);  
+                    LELOG("=> sDevIdx[%d] mac[%s] sdevInfo[%s] sdevStatus[%s]", sDevIdx, node.mac, node.sdevInfo, node.sdevStatus);               
+                }
+            }
+        }
+        LELOG("sdevUpdate sdevStatus END ****************************");
+    }
+
     return 0;
 }
 
@@ -934,7 +1011,7 @@ int s1apiSDevGetMacByUserData(lua_State *L) {
         SDevNode *arr = sdevArray();
         for (i = 0; i < sdevCache()->maxsize && tmpNum < sdevCache()->currsize; i++) {
             if (arr[i].occupied) {
-                LELOG("i[%d] mac[%s] status[%s]", i, arr[i].mac, arr[i].status);
+                LELOG("i[%d] mac[%s] sdevStatus[%s]", i, arr[i].mac, arr[i].sdevStatus);
                 tmpNum++;
             }
         }

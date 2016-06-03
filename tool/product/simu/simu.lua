@@ -1,5 +1,5 @@
 --[[ 
-	THIS IS FW SCRIPT
+	THIS IS FW SCRIPT for simu.lua
   ]]
 --[[ INTERNAL
 	Table to string
