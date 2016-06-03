@@ -48,7 +48,8 @@ static uint32_t ginMinSize;
 static gpioManager_t ginGpioManager;
 static IOHDL ginIOHdl[] = {
     {IO_TYPE_UART, 0x0},
-    {IO_TYPE_GPIO, 0x0}
+    {IO_TYPE_GPIO, 0x0},
+    {IO_TYPE_PIPE, 0x0},
 };
 
 /*
@@ -612,6 +613,7 @@ IOHDL *ioGetHdlExt() {
     IO_INIT_START;
     IO_INIT_ITEM(IO_TYPE_UART, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_GPIO, whatCvtType, json, ret);
+    IO_INIT_ITEM(IO_TYPE_PIPE, whatCvtType, json, ret);
     IO_INIT_END;
 
     // {

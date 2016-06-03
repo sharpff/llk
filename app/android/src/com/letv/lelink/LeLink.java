@@ -615,7 +615,7 @@ public class LeLink {
 					e.printStackTrace();
 					return ret;
 				}
-			} else if (cmd == LeCmd.CLOUD_MSG_CTRL_C2R_REQ) {
+			} else if (cmd == LeCmd.CLOUD_MSG_CTRL_R2T_REQ) {
 				try {
 					dataStr = new String(buf, "UTF-8");
 					if (mListener != null) {
@@ -653,7 +653,10 @@ public class LeLink {
 						break;
 					}
 					uuid = mWaitCtrlUuid;
-					if (cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP && subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_RSP) {
+					if (cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP && 
+							(subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_RSP || 
+							subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_TELL_SHARE_RSP || 
+							subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_RSP)) {
 						mWaitCtrlBackData = (buf.length == 0) ? "ok" : dataStr;
 					} else {
 						mWaitCtrlBackData = dataStr;
@@ -819,13 +822,15 @@ public class LeLink {
 		 * 接受到其它的控制.<br>
 		 * 
 		 * @param subcmd
-		 * 			子命令类型<br>
+		 * 			子命令类型, 目前有:<br>
+		 * 			分享通知-> LeCmd.Sub.CLOUD_MSG_CTRL_C2R_TELL_SHARE_REQ<br>
+		 * 			确认分享-> LeCmd.Sub.CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_REQ<br>
 		 * 
 		 * @param uuid
 		 * 			对方sdk的uuid<br>
 		 * 
 		 * @param dataStr
-		 * 			控制内容<br>
+		 * 			控制内容(详见协议说明文档)<br>
 		 * 			
 		 */
 		void onControl(int subcmd, String uuid, String dataStr);

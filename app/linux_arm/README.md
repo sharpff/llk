@@ -1,8 +1,6 @@
 ## Lelink SDK 使用说明
 
-Lelink SDK for Linux 
-
-Version: 0.1
+Version: 0.2
 
 Author: feiguoyou@le.com
 
@@ -139,7 +137,79 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
     int halSoftApStart(char *ssid, char *wpa2_passphrase);
     int halSoftApStop(void);
 ```
-以上函数的实现说请参考文件中的注释部分。
+**注: 以上函数的实现说请参考文件中的注释部分, 另外halDoConfig()调用后，需要另起线程处理monitor数据的监控及处理开启softap接收数据，
+其中用到的函数的详细说明如下(其它未说明的函数使用请按照示例代码使用):**
+* airconfig_do_sync()
+```c
+/*
+ * 功能: 收集monitor模式下收到的802.11的数据信息
+ *
+ * 参数:
+ *      item: target_item_t数据，即收到的一帧802.11数据的信息，详细参考数据结构target_item_t
+ *      channel: 指示item的信息是来源于哪个802.11信道
+ *      channel_locked: 配置过程中，用于收集信道的。当锁定完成后，该数组的结果中表示锁定了哪几个信道
+ *      base: 用于返回基准值，用于下一步函数 airconfig_get_info()
+ *
+ * 返回值:
+ *      1 - 表示锁定成功，下一步使用 airconfig_get_info() 进一步收集数据信息
+ *
+ * 注: 
+ *      1, 调用该函数前，确保wifi数据信息是在monitor模式下收集到的
+ *      2, 要求wifi收集数据的信道要在1-14之前，以约30ms的间隔切换
+ *       
+ */
+int airconfig_do_sync(const target_item_t *item, int channel, 
+                       int channel_locked[MAX_CHANNEL_CARE], uint16_t *base);
+```
+* airconfig_get_info()
+```c
+/*
+ * 功能: 在成功使用 airconfig_do_sync() 锁定信道的前提下，进一步收集802.11数据信息
+ *
+ * 参数: 
+ *      len: 收到802.11信息的DATA数据长度
+ *      base: 由airconfig_do_sync()得到的基准值
+ *      account: 在成功配置时，返回AP的信息，详细参考数据结构ap_passport_t 
+ *      ssid: 如果通过知道该802.11的DATA数据来源的SSID, 则通过该参数传入，否则传入NULL
+ *      len_ssid: ssid的字节长度
+ *
+ * 返回值:
+ *      1 - 表示成功得到AP的信息，并将信息保存在account中
+ *      2 - 注意处理超时，如果在该数据多次调用约2分钟后仍未成功，则应该回退到 airconfig_do_sync() 再次处理
+ *
+ * 注: 在调用该函数前，要求wifi信道的切换在锁定的几个间切换
+
+ */
+int airconfig_get_info(int len, int base, ap_passport_t *account, 
+                        const char *ssid, int len_ssid);
+```
+* airconfig_reset()
+```c
+/*
+ * 功能: 重置配置
+ *
+ * 返回值:
+ *      0 - 重置成功，目前不会有失败的情况
+ *
+ * 注: 在结束一次配置后使用
+ *
+ */
+int airconfig_reset(void);
+```
+
+* softApStarted(void);
+```c
+/*
+ * 功能: 在softap模式下，接收AP的配置信息
+ *
+ * 返回值: 
+ *      0 表示成功接收到AP的信息
+ *
+ * 注: 该函数返回条件是 1, 接收到AP信息; 2, 通过其它配置完成了AP配置
+ *
+ */
+int softApStarted(void);
+```
 
 ### 4.3 其它
 
