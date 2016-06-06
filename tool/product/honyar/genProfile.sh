@@ -14,8 +14,8 @@ $MAIN_PATH/lelinkTool.py \
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid Letv_lelink \
-    --passwd 987654321 \
+    --ssid ff \
+    --passwd fengfeng2qiqi \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \
