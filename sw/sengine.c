@@ -643,10 +643,10 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
         if (lua_pcall(L, io_ret.param, io_ret.ret, 0))
         {
             const char *err = lua_tostring(L, -1);
-            if (strcmp(S1_OPT_HAS_SUBDEVS, funcName) && 
+            if (strcmp(S1_HAS_SUBDEVS, funcName) && 
                 strcmp(S1_OPT_MERGE_ST2ACT, funcName) && 
                 strcmp(S1_OPT_DO_SPLIT, funcName))
-                //LELOGE("[lua engine] lua error: %s => %s", err, funcName);
+                LELOGE("[lua engine] lua error: %s => %s", err, funcName);
             lua_pop(L, 1);
             ret = -3;
         }
