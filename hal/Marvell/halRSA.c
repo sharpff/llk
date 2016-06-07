@@ -1,16 +1,27 @@
 #include "halHeader.h"
 
 #if !defined(MBEDTLS_CONFIG_FILE)
+#if defined(__MRVL_SDK3_3__)
+#include "mbedtls-2.2.0_crypto/include/mbedtls/config.h"
+#else
 #include <lelink/sw/mbedtls-2.2.0_crypto/include/mbedtls/config.h>
+#endif
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
 
 #if defined(MBEDTLS_PLATFORM_C)
+#if defined(__MRVL_SDK3_3__)
+#include "mbedtls-2.2.0_crypto/include/mbedtls/platform.h"
+#include "mbedtls-2.2.0_crypto/include/mbedtls/ctr_drbg.h"
+#include "mbedtls-2.2.0_crypto/include/mbedtls/pk.h"
+#include "mbedtls-2.2.0_crypto/include/mbedtls/entropy.h"
+#else
 #include <lelink/sw/mbedtls-2.2.0_crypto/include/mbedtls/platform.h>
 #include <lelink/sw/mbedtls-2.2.0_crypto/include/mbedtls/ctr_drbg.h>
 #include <lelink/sw/mbedtls-2.2.0_crypto/include/mbedtls/pk.h>
 #include <lelink/sw/mbedtls-2.2.0_crypto/include/mbedtls/entropy.h>
+#endif
 #else
 #include <stdio.h>
 #define mbedtls_printf     printf

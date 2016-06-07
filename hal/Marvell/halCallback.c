@@ -1,5 +1,9 @@
 #include "halHeader.h"
+#if defined(__MRVL_SDK3_3__)
+#include "protocol.h"
+#else
 #include <lelink/sw/protocol.h>
+#endif
 
 // static uint8_t ginUUID[32];
 

@@ -10,6 +10,7 @@ le_demo-cflags-y := \
 	-D WM_IOT_PLATFORM=TRUE \
 	-D HAVE_CONFIG_H \
 	-D __MRVL_MW300__ \
+	-D __MRVL_SDK3_3__ \
 	-DWMSDK3_3
 
 le_demo-cflags-y += -Wno-implicit-function-declaration -Wno-comment -Wno-pointer-sign -Wno-format

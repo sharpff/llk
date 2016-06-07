@@ -1,7 +1,10 @@
 #include "halHeader.h"
 #include <mdev_aes.h>
+#if defined(__MRVL_SDK3_3__)
+#include "protocol.h"
+#else
 #include <lelink/sw/protocol.h>
-
+#endif
 
 static int lelinkPadding(uint8_t *data, uint32_t len, uint32_t maxLen, int isPKCS5)
 {
