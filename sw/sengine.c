@@ -1030,7 +1030,7 @@ int senginePollingSlave(void) {
             case WHATKIND_SUB_DEV_JOIN: {
                     int len;
                     SDevNode *tmpArr = sdevGetArray();
-                    NodeData node = {0};
+                    // NodeData node = {0};
                     if (NULL == tmpArr) {
                         LELOGE("sdevGetArray is NULL");
                         break;
