@@ -13,7 +13,9 @@ if [ ! -n "$WMSDK33" ]; then
     exit -1
 fi
 
+# rm $WMSDK33/bin/mw300_defconfig/board/*.bin
 touch "$MAIN_PATH/sw/data.c"
+touch "$MAIN_PATH/app/mw300/sample_apps/le_demo/src/app/mw300/main.c"
 $MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
 pushd $WMSDK33 > /dev/null 2>&1
