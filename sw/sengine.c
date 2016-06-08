@@ -1001,7 +1001,7 @@ int senginePollingSlave(void) {
                         LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                     } else if (cacheIsChanged(status, len)) {
                         NodeData node = {0};
-                        if (isCloudAuthed()) {
+                        if (isCloudAuthed() && getLock()) {
                             node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
                             node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
                         } else {
