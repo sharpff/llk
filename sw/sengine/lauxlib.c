@@ -565,7 +565,7 @@ LUALIB_API void luaL_unref (lua_State *L, int t, int ref) {
  ** =======================================================
  */
  
-#ifdef WIN32
+#if defined(WIN32) || defined (LINUX)
  typedef struct LoadF {
    int n;  /* number of pre-read characters */
    FILE *f;  /* file being read */

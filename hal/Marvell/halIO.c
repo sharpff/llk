@@ -4,7 +4,11 @@
 #include <rfget.h>
 #include <httpc.h>
 #include <mw300_uart.h>
+#if defined(__MRVL_SDK3_3__)
+#include "io.h"
+#else
 #include <lelink/sw/io.h>
+#endif
 
 void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
     int ret = 0;

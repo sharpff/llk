@@ -37,7 +37,7 @@ int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t
 int syncUTC(const char *json, int jsonLen) {
     int ret = 0;
     int64_t utc = 0;
-    int32_t redirect = 0;
+    int redirect = 0;
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
     // json_string_t jretobj = {0};

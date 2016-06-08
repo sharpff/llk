@@ -1,6 +1,11 @@
 #include "halHeader.h"
+#if defined(__MRVL_SDK3_3__)
+#include "io.h"
+#include "airconfig.h"
+#else
 #include <lelink/sw/io.h>
 #include <lelink/sw/airconfig.h>
+#endif
 
 extern int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 extern int airconfig_stop();

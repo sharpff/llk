@@ -1,7 +1,10 @@
 #include "halHeader.h"
 #include "md5.h"
+#if defined(__MRVL_SDK3_3__)
+#include "mbedtls-2.2.0_crypto/include/mbedtls/md.h"
+#else
 #include <lelink/sw/mbedtls-2.2.0_crypto/include/mbedtls/md.h>
-
+#endif
 
 void halMD5(unsigned char *input, unsigned int inputlen, unsigned char output[16])
 {

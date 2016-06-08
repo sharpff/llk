@@ -11,8 +11,7 @@ liblelink-cflags-y := \
 	-DCONFIG_WLAN_KNOWN_NETWORKS=5 \
 	-D__LE_SDK__ \
 	-D__MRVL_MW300__ \
-	-DAPPCONFIG_DEBUG_ENABLE=1 \
-	-DWMSDK3_3
+	-DAPPCONFIG_DEBUG_ENABLE=1
 
 liblelink-cflags-y += -Wno-implicit-function-declaration -Wno-comment -Wno-pointer-sign -Wno-format
 

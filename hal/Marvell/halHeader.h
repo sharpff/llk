@@ -35,7 +35,6 @@
 #define APPPRINTF(...)
 #endif /* ! DEBUG_APP */
 
-#ifndef WMSDK3_3
 inline void* hal_memset(void *buf, int i, unsigned int len);
 inline void* hal_memcpy(void *dst, const void *src, unsigned int len);
 inline int hal_memcmp(const void *buf1, const void *buf2, unsigned int len);
@@ -50,6 +49,5 @@ inline int hal_snprintf(char *buf, size_t size, const char *fmt, ...);
 inline int hal_vsnprintf(char *buffer, size_t n, const char *format, va_list ap);
 inline int hal_strcoll(const char *l, const char *r);
 inline void hal_abort();
-#endif
 
 #endif

@@ -46,6 +46,15 @@
 #include <wifidirectutl.h>
 #include <nw_utils.h>
 
+#if defined(__MRVL_SDK3_3__)
+#include "leconfig.h"
+#include "airconfig.h"
+#include "protocol.h"
+#include "state.h"
+#include "data.h"
+#include "io.h"
+#include "ota.h"
+#else
 #include <lelink/sw/leconfig.h>
 #include <lelink/sw/airconfig.h>
 #include <lelink/sw/protocol.h>
@@ -53,7 +62,7 @@
 #include <lelink/sw/data.h>
 #include <lelink/sw/io.h>
 #include <lelink/sw/ota.h>
-
+#endif
 
 static uint8_t gin_airconfig_running;
 static uint8_t gin_airconfig_channel_locked;

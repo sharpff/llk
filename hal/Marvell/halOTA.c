@@ -1,7 +1,12 @@
 #include <rfget.h>
 #include <httpc.h>
+#if defined(__MRVL_SDK3_3__)
+#include "leconfig.h"
+#include "ota.h"
+#else
 #include <lelink/sw/leconfig.h>
 #include <lelink/sw/ota.h>
+#endif
 
 static size_t httpFetchData(void *priv, void *buf, size_t max_len);
 
