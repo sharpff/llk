@@ -705,7 +705,15 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
     return 0;
 }
 
-static uint8_t s_resetLevel = 0;
+static RLED_STATE_t s_resetLevel = RLED_STATE_FREE;
+RLED_STATE_t setResetLed(RLED_STATE_t st)
+{
+    if(st >= RLED_STATE_FREE && st <= RLED_STATE_ZIGBEE) {
+        s_resetLevel = st;
+    }
+    return s_resetLevel;
+}
+
 static void gpioCheckState(gpioManager_t *mgr, int index)
 {
     gpioHand_t *p = &mgr->table[index];
@@ -713,13 +721,13 @@ static void gpioCheckState(gpioManager_t *mgr, int index)
     if(p->type) {
         if(p->dir == GPIO_DIR_INPUT) {
             if(p->type == GPIO_TYPE_INPUT_RESET) {
-                if(s_resetLevel < 2 && p->gpiostate == GPIO_STATE_HIGH && p->keepHighTimes > p->shortTime) {
-                    s_resetLevel = (p->keepHighTimes > p->longTime) ? 2 : 1;
+                if(s_resetLevel < RLED_STATE_ZIGBEE && p->gpiostate == GPIO_STATE_HIGH && p->keepHighTimes > p->shortTime) {
+                    s_resetLevel = (p->keepHighTimes > p->longTime) ? RLED_STATE_ZIGBEE : RLED_STATE_WIFI;
                 }
             }
         } else {
             if(p->type == GPIO_TYPE_OUTPUT_RESET) {
-                p->state = s_resetLevel ? GPIO_STATE_BLINK : p->freestate;
+                p->state = (s_resetLevel == RLED_STATE_FREE) ? p->freestate : GPIO_STATE_BLINK;
             }
         }
     } 
@@ -732,8 +740,8 @@ static void gpioCheckState(gpioManager_t *mgr, int index)
             uint8_t kt = p->blink;
             uint8_t times = (p->gpiostate == GPIO_STATE_LOW) ? p->keepLowTimes : p->keepHighTimes;
 
-            if(p->type == GPIO_TYPE_OUTPUT_RESET && s_resetLevel > 0) {
-                kt = (s_resetLevel == 1) ? p->longTime : p->shortTime;
+            if(p->type == GPIO_TYPE_OUTPUT_RESET && s_resetLevel > RLED_STATE_FREE) {
+                kt = (s_resetLevel == RLED_STATE_WIFI) ? p->longTime : p->shortTime;
             }
             if(kt > 0 && times > kt) {
                 halGPIOWrite(mgr->handle, p->num, !p->gpiostate);

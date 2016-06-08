@@ -138,13 +138,16 @@ static int changeState(int direction, StateContext *cntx, int idx) {
         {
             case E_STATE_CONFIGURING:
                 sengineQuerySlave(QUERIETYPE_WAITCONFIG);
+                setResetLed(RLED_STATE_WIFI);
                 break;
             case E_STATE_SNIFFER_GOT:
             //case E_STATE_AP_CONNECTING:
                 sengineQuerySlave(QUERIETYPE_CONNECTING);
+                setResetLed(RLED_STATE_ZIGBEE);
                 break;
             case E_STATE_AP_CONNECTED:
                 sengineQuerySlave(QUERIETYPE_CONNECTED);
+                setResetLed(RLED_STATE_FREE);
                 break;
             case E_STATE_CLOUD_LINKED:
             //case E_STATE_CLOUD_AUTHED:

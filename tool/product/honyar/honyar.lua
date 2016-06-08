@@ -51,13 +51,26 @@ function s1GetCvtType()
     -- combained uart(0x1) & gpio(0x2)
     local str = [[
     {
-    "whatCvtType":1,
+    "whatCvtType":3,
     "uart":[
     	{
     		"id":1, 
     		"baud":"9600-8N1"
     	}
-    	]
+    	]        
+    "gpio":[
+        {
+            "id":1,
+            "dir":1,
+            "mode":0,
+            "state":1,
+            "blink":2,
+            "type":1,
+
+            "longTime":10,
+            "shortTime":1,
+        }
+        ]
 	}
     ]]
 	local delay = 5
