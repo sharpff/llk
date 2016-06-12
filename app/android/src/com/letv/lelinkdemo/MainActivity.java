@@ -18,16 +18,16 @@ public class MainActivity extends Activity {
 	private JSONObject mJsonCmd = null;
 	private JSONObject mJsonData = null;
 	
-	private static boolean TEST_WIFI_CONFIG = false;
-	private static boolean TEST_SDK_AUTH = true;
+	private static boolean TEST_WIFI_CONFIG = true;
+	private static boolean TEST_SDK_AUTH = false;
 	private static boolean TEST_DISCOVER_DEV = false;
-	private static boolean TEST_GET_STATE =  true;
+	private static boolean TEST_GET_STATE =  false;
 	private static boolean TEST_CTRL_DEV = false;
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
-	private static boolean TEST_SHARE_DEV = true;
-	private static boolean TEST_ACCEPT_DEV = true;
+	private static boolean TEST_SHARE_DEV = false;
+	private static boolean TEST_ACCEPT_DEV = false;
 //	private static String mTestDevUUID = "10000100101000010007C80E77ABCD50"; // 插排
 //	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
 	private static String mTestDevUUID = "f1b312fd6f7b427f8306111111111111"; // SDK
@@ -91,8 +91,8 @@ public class MainActivity extends Activity {
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
-					mJsonCmd.put(LeCmd.K.SSID, "Letv_lelink");
-					mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
+					mJsonCmd.put(LeCmd.K.SSID, "ff");
+					mJsonCmd.put(LeCmd.K.PASSWD, "fengfeng2qiqi");
 					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
 				} catch (JSONException e) {
 					e.printStackTrace();
