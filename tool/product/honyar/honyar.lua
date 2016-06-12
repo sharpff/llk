@@ -65,8 +65,8 @@ function s1GetCvtType()
             "mode":0,
             "state":1,
             "blink":2,
+            
             "type":1,
-
             "longTime":10,
             "shortTime":1,
         }
