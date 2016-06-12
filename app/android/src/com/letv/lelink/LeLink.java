@@ -543,7 +543,7 @@ public class LeLink {
 	 */
 	private int onMessage(int type, String jsonStr, byte buf[]) {
 		int ret = 0;
-		int cmd, subcmd, seqId;
+		int cmd, subcmd, seqId, status;
 		String addr, uuid, dataStr;
 		JSONObject cmdJson, sendCmdJson, dataJson;
 
@@ -554,6 +554,7 @@ public class LeLink {
 			addr = cmdJson.getString(LeCmd.K.ADDR);
 			uuid = cmdJson.getString(LeCmd.K.UUID);
 			seqId = cmdJson.getInt(LeCmd.K.SEQID);
+			status = cmdJson.getInt(LeCmd.K.STATUS);
 		} catch (JSONException e) {
 			LOGE("Json error");
 			e.printStackTrace();
@@ -655,6 +656,8 @@ public class LeLink {
 					// LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
 					uuid = dataJson.getString(LeCmd.K.UUID);
+					dataJson.put(LeCmd.K.MSGSTATUS, status);
+					dataStr = dataJson.toString();
 					if (mWaitGetUuid != null) {
 						if (uuid.indexOf(mWaitGetUuid) >= 0) {
 							mFindDevs.clear();
