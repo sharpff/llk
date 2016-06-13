@@ -175,7 +175,7 @@ ERROR_PARAM:
 		inputParam = g_buf;
 		inputParamLen = g_bufLen;
 	}
-	else if (argv[2] && strstr(argv[2], S1_HAS_SUBDEVS)) {
+	else if (argv[2] && strstr(argv[2], S1_OPT_HAS_SUBDEVS)) {
 		inputParam = NULL;
 		inputParamLen = 0;
 	}

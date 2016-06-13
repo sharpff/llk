@@ -211,9 +211,9 @@ end
 
 --[[ OPTIONAL
 ]]
-function s1MergeCurrStatus2Action(action, currStatus)
-	print ("s1MergeCurrStatus2Action -- "..action.."\r\n")
-	print ("s1MergeCurrStatus2Action -- "..currStatus.."\r\n")
+function s1OptMergeCurrStatus2Action(action, currStatus)
+	print ("s1OptMergeCurrStatus2Action -- "..action.."\r\n")
+	print ("s1OptMergeCurrStatus2Action -- "..currStatus.."\r\n")
 	local tblAct = cjson.decode(action)
 	local tblSta = cjson.decode(currStatus)
 	local tblCtrlInfo = {}
@@ -221,7 +221,7 @@ function s1MergeCurrStatus2Action(action, currStatus)
 	local jsonOut = ""
 
 	-- if nil == tblAct or nil == tblSta then 
-	-- 	print("s1MergeCurrStatus2Action -- ".."nil".."\r\n")
+	-- 	print("s1OptMergeCurrStatus2Action -- ".."nil".."\r\n")
 	-- 	return 0, nil
 	-- end
 
@@ -251,7 +251,7 @@ function s1MergeCurrStatus2Action(action, currStatus)
 
 	tblOut = tblCtrlInfo
 	jsonOut = cjson.encode(tblOut)
-	print ("s1MergeCurrStatus2Action out is -- "..jsonOut..", tblOut "..#tblOut.."\r\n")
+	print ("s1OptMergeCurrStatus2Action out is -- "..jsonOut..", tblOut "..#tblOut.."\r\n")
 
 	return string.len(jsonOut), jsonOut
 end

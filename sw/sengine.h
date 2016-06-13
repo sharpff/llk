@@ -16,12 +16,10 @@ extern "C"
  * fw script
  */
 #define S1_GET_CVTTYPE "s1GetCvtType"
-#define S1_HAS_SUBDEVS "s1HasSubDevs"
 #define S1_GET_QUERIES "s1GetQueries"
 #define S1_STD2PRI "s1CvtStd2Pri"
 #define S1_PRI2STD "s1CvtPri2Std"
 #define S1_GET_VALIDKIND "s1GetValidKind"
-#define S1_MERGE_ST2ACT "s1MergeCurrStatus2Action"
 #define S1_GET_VER "s1GetVer"
 #define S1_OPT_HAS_SUBDEVS "s1OptHasSubDevs"
 #define S1_OPT_DO_SPLIT "s1OptDoSplit"
