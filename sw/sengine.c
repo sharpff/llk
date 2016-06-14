@@ -41,8 +41,6 @@
 #define MAX_SDEV_NUM 64
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
-#define SDEV_MAX_INFO MAX_BUF/4
-#define SDEV_MAX_STATUS MAX_BUF/4*3
 
 
 #define FOR_EACH_IO_HDL_START \
@@ -98,20 +96,13 @@ typedef enum {
     SDEV_BUF_TYPE_INFO
 }SDEV_BUF_TYPE;
 
-typedef struct {
-    char mac[32];
-    char sdevStatus[SDEV_MAX_STATUS];
-    char sdevInfo[SDEV_MAX_INFO];
-    int occupied;
-}SDevNode;
-
 ScriptCfg *ginScriptCfg;
 ScriptCfg *ginScriptCfg2;
 static uint32_t ginDelayMS;
 static IA_CACHE ginIACache;
 static int ginCurrCvtType;
 
-static PCACHE sdevCache() {
+PCACHE sdevCache() {
     static CACHE cache;
     return &cache;
 }
@@ -176,8 +167,8 @@ static void sdevArrayReset() {
     }
 }
 
-static int forEachNodeSDevInsertCB(SDevNode *currNode, void *uData) {
-    LELOG("[SENGINE] forEachNodeSDevInsertCB currNode->mac[%s] uData[%s]", currNode->mac, uData);
+static int forEachNodeSDevCB(SDevNode *currNode, void *uData) {
+    LELOG("[SENGINE] forEachNodeSDevCB currNode->mac[%s] uData[%s]", currNode->mac, uData);
     if (0 == strcmp(currNode->mac, (char *)uData)) {
         return 1;
     }
@@ -217,13 +208,13 @@ static int sdevInsert(SDevNode *arr, const char *status, int len) {
                 return -4;
             }
 
-            index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevInsertCB, node.mac);
+            index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevCB, node.mac);
             if (0 <= index) {
                 LELOG("sdevInsert qForEachfromCache already EXIST [%d]", index);
                 return 0;                
             }
             strcpy(node.sdevInfo, sDev);
-            LELOG("sdevInsert index[%d] mac[%s] sdevInfo[%s]", index, node.mac, node.sdevInfo);
+            LELOG("sdevInsert index[%d] mac[%s] sdev[%s]", index, node.mac, node.sdevInfo);
             node.occupied = 1;
             sdevArraySet(index, &node, SDEV_BUF_TYPE_INFO);
             // TODO: send HELLO for sdev
@@ -294,7 +285,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
                 }
 
                 strcpy(node.sdevInfo, buf);
-                LELOG("=> sDevIdx[%d] mac[%s] sdevInfo[%s] sdevStatus[%s]", sDevIdx, node.mac, node.sdevInfo, node.sdevStatus);
+                LELOG("=> sDevIdx[%d] mac[%s] sdev[%s] sdevStatus[%s]", sDevIdx, node.mac, node.sdevInfo, node.sdevStatus);
                 sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_INFO);            
             } else {
                 LELOGE("unexpect ....");
@@ -317,11 +308,11 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
                     return -5;
                 }
                 LELOG("mac is [%s]", node.mac);
-                sDevIdx = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevInsertCB, node.mac);
+                sDevIdx = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevCB, node.mac);
                 if (0 <= sDevIdx) {
                     strcpy(node.sdevStatus, buf);
                     sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_STATUS);  
-                    LELOG("=> sDevIdx[%d] mac[%s] sdevInfo[%s] sdevStatus[%s]", sDevIdx, node.mac, node.sdevInfo, node.sdevStatus);               
+                    LELOG("=> sDevIdx[%d] mac[%s] sdev[%s] sdevStatus[%s]", sDevIdx, node.mac, node.sdevInfo, node.sdevStatus);               
                 }
             }
         }
@@ -464,12 +455,12 @@ static int lf_s1GetCvtType(lua_State *L, uint8_t *output, int outputLen) {
     return size;
 }
 
-static IO lf_s1HasSubDevs_input(lua_State *L, const uint8_t *input, int inputLen) {
+static IO lf_s1OptHasSubDevs_input(lua_State *L, const uint8_t *input, int inputLen) {
     // lua_pushlstring(L, (char *)input, inputLen);
     IO io = { 0, 1 };
     return io;
 }
-static int lf_s1HasSubDevs(lua_State *L, uint8_t *output, int outputLen) {
+static int lf_s1OptHasSubDevs(lua_State *L, uint8_t *output, int outputLen) {
     // int i = 0;
     *((int*)output) = lua_tointeger(L, -1);
     // LELOG("[SENGINE] s1HasSubDevs [%d]", *((int*)output));
@@ -784,7 +775,7 @@ static int lf_s2GetSelfCtrlCmd(lua_State *L, uint8_t *output, int outputLen) {
 }
 static FUNC_LIST func_list[] = {
     { S1_GET_CVTTYPE, { lf_s1GetCvtType_input, lf_s1GetCvtType } },
-    { S1_OPT_HAS_SUBDEVS, { lf_s1HasSubDevs_input, lf_s1HasSubDevs } },
+    { S1_OPT_HAS_SUBDEVS, { lf_s1OptHasSubDevs_input, lf_s1OptHasSubDevs } },
     { S1_GET_QUERIES, { lf_s1GetQueries_input, lf_s1GetQueries } },
     { S1_OPT_DO_SPLIT, { lf_s1OptDoSplit_input, lf_s1OptDoSplit } },
     { S1_STD2PRI, { lf_s1CvtStd2Pri_input, lf_s1CvtStd2Pri } },
@@ -1011,7 +1002,7 @@ int s1apiSDevGetMacByUserData(lua_State *L) {
         SDevNode *arr = sdevArray();
         for (i = 0; i < sdevCache()->maxsize && tmpNum < sdevCache()->currsize; i++) {
             if (arr[i].occupied) {
-                LELOG("i[%d] mac[%s] sdevStatus[%s]", i, arr[i].mac, arr[i].sdevStatus);
+                LELOG("i[%d] mac[%s] sdev[%s] sdevStatus[%s]", i, arr[i].mac, arr[i].sdevInfo, arr[i].sdevStatus);
                 tmpNum++;
             }
         }

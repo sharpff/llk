@@ -450,7 +450,7 @@ int cloudMsgHandler(const char *data, int len) {
                 break;
             }
 
-            if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_LOCK, &locked)) {
+            if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_LOCK, &locked))) {
                 break;
             }
             setLock(locked ? 1 : 0);
@@ -475,6 +475,6 @@ int cloudMsgHandler(const char *data, int len) {
         default:
         break;
     }
-    return ret;
+    return ret == WM_SUCCESS ? 1 : ret;
 }
 

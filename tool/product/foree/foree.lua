@@ -122,27 +122,7 @@ function s1GetCvtType()
 			"id":1, 
 			"baud":"115200-8N1"
 		}
-    	],
-    "gpio":[
-	        {
-	            "id":1,
-	            "dir":0,
-	            "mode":2,
-	            "type":1,
-	            "longTime":10,
-	            "shortTime":3
-	        },
-	        {
-	            "id":2,
-	            "dir":1,
-	            "mode":0,
-	            "state":1,
-	            "blink":2,
-	            "type":1,
-	            "longTime":10,
-	            "shortTime":1
-	        }
-	    ]
+    	]
 	}
     ]]
 	local delay = 5
@@ -157,9 +137,6 @@ function s1GetQueries(queryType)
 	local cvtType = s1apiGetCurrCvtType()
 	local query = ''
 	local queryCountLen = ''
-	local tmpType = 0
-	-- test only
-	cvtType = 1
 
 	-- print ("[LUA] s1GetQueries cvtType is " .. cvtType .. ", queryType is " .. queryType .."\r\n")
 
@@ -257,9 +234,6 @@ function s1GetValidKind(data)
 	local tmp = stringToTable(data)
 	LOGTBL(tmp)
 
-	-- test only
-	cvtType = 1
-
 	for i = 1, 1 do
 		-- UART
 		if 0x01 == cvtType then
@@ -327,7 +301,8 @@ end
 -- \{\"ctrl\":\{\"reset\":1\}\}
 -- \{\"ctrl\":\{\"sDevJoin\":1\}\}
 -- \{\"ctrl\":\{\"sDevGetList\":1\}\}
--- \{\"ctrl\":\{\"sDevGetInfo\":2\}\}
+-- \{\"ctrl\":\{\"sDevGetInfo\":0\}\}
+-- \{\"ctrl\":\{\"sDevGetInfo\":1\}\}
 -- \{\"ctrl\":\{\"pwr\":1,\"sDev\":\{\"pid\":\"0104\",\"did\":\"0107\",\"clu\":\"0006\",\"ept\":[1,2],\"mac\":\"7409E17E3376AF60\"\}\}\}
 
 --[[ EXTERNAL
@@ -340,9 +315,6 @@ function s1CvtStd2Pri(json)
 	-- local sDev = ctrl["sDev"]
 	local cmdTbl = {}
 	local dataStr = ""
-
-	-- test only
-	cvtType = 1
 
 	for i = 1, 1 do
 		-- UART
@@ -409,9 +381,6 @@ function s1CvtPri2Std(bin)
 	local strMain = ''
 	local strSubDev = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
 	dataTbl = stringToTable(bin)
-
-	-- test only
-	cvtType = 1
 
 	for i = 1, 1 do
 		-- UART

@@ -54,6 +54,8 @@ extern "C"
 #if (MD5_LEN > AES_LEN)
     #pragma error "MD5_LEN > AES_LEN"
 #endif
+#define MAX_BUF (1024+256)
+
 
 #define USED(a) ((void)a)
 

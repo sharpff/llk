@@ -39,6 +39,10 @@ extern "C"
 #define MAX_IA_BUF 64
 #define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
 
+#define SDEV_MAX_INFO MAX_BUF/4
+#define SDEV_MAX_STATUS MAX_BUF/4*3
+
+
 enum {
 	WHATKIND_MAIN_DEV_RESET = 1,
 	WHATKIND_MAIN_DEV_DATA,
@@ -85,6 +89,13 @@ typedef struct {
     uint8_t arrDatas[MAX_ALL_QUERYS];
     uint16_t arrDatasCounts[MAX_QUERY_COUNTS];
 }Datas;
+
+typedef struct {
+    char mac[MAX_UUID];
+    char sdevStatus[SDEV_MAX_STATUS]; // as json object "sDevStatus"
+    char sdevInfo[SDEV_MAX_INFO]; // as json object "sDev"
+    int occupied;
+}SDevNode;
 
 extern ScriptCfg *ginScriptCfg;
 extern ScriptCfg *ginScriptCfg2;
