@@ -135,7 +135,6 @@ function s1GetValidKind(data)
 end
 
 -- 晾霸
---{ "ctrl": { "action":0, "speaker":0, "disinfect":0,"anion":0, "dry":0, "wind":0, "light":1, "wTime":0, "hTime":0, "aTime":0 } }
 function s1CvtStd2Pri(json)
 	local ctrl = cjson.decode(json)
 	local cmdTbl = { 0xbb, 0xa3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44}
@@ -146,12 +145,12 @@ function s1CvtStd2Pri(json)
     cmdTbl[4] = cmdTbl[4] | ((ctrl["speaker"] & 0x1 ) << 5)
     cmdTbl[4] = cmdTbl[4] | ((ctrl["disinfect"] &0x1 ) << 4)
     cmdTbl[4] = cmdTbl[4] | ((ctrl["anion"] & 0x1 ) << 3)
-    cmdTbl[4] = cmdTbl[4] | ((ctrl["dry"] & 0x1 ) << 2)
+    cmdTbl[4] = cmdTbl[4] | ((ctrl["bake"] & 0x1 ) << 2)
     cmdTbl[4] = cmdTbl[4] | ((ctrl["wind"] & 0x1 ) << 1)
     cmdTbl[4] = cmdTbl[4] | ((ctrl["light"] & 0x1 ) << 0)
-    cmdTbl[5] = ctrl["wTime"]
-    cmdTbl[6] = ctrl["hTime"]
-    cmdTbl[7] = ctrl["aTime"]
+    cmdTbl[5] = ctrl["WTS"]
+    cmdTbl[6] = ctrl["BTS"]
+    cmdTbl[7] = ctrl["DTS"]
 
     for i = 2, #cmdTbl - 3 do
         sum = sum + cmdTbl[i]
@@ -159,9 +158,9 @@ function s1CvtStd2Pri(json)
     cmdTbl[10] = (sum >> 8) & 0xff
     cmdTbl[11] = sum & 0xff
 
-	--LOGTBL(cmdTbl)
+    LOGTBL(cmdTbl)
 	dataStr = tableToString(cmdTbl)
-    --LOGSTR(dataStr);
+    LOGSTR(dataStr);
 	return string.len(dataStr), dataStr
 end
 
@@ -172,7 +171,7 @@ end
 function s1CvtPri2Std(bin)
     local str = ""
     local dataTbl = {}
-    local fmtstr = "{ \"action\":%d, \"speaker\":%d, \"disinfect\":%d, \"anion\":%d, \"dry\":%d, \"wind\":%d, \"light\":%d, \"wTime\":%d, \"hTime\":%d, \"aTime\":%d, \"pos\":%d }"
+    local fmtstr = "{\"action\":%d, \"speaker\":%d, \"disinfect\":%d, \"anion\":%d, \"bake\":%d, \"wind\":%d, \"light\":%d, \"WTL\":%d, \"BTL\":%d, \"DTL\":%d, \"pos\":%d}"
 
     dataTbl = stringToTable(bin)
     --LOGTBL(dataTbl)
