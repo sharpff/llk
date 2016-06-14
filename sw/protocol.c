@@ -1343,13 +1343,15 @@ static int cbDiscoverStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdIn
     // char token[2*AES_LEN + 1] = {0};
     LELOG("cbDiscoverStatusChangedLocalReq -s");
 
-    // getTerminalTokenStr(token, sizeof(token));
-    ret = getTerminalStatus(status, sizeof(status));
-    if (0 > ret) {
-        ret = 0;
-        // getTerminalTokenStr(token, sizeof(token));
-        // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    } 
+    if (!cmdInfo->reserved) {
+        ret = getTerminalStatus(status, sizeof(status));
+        if (0 > ret) {
+            ret = 0;
+        } 
+    } else {
+        ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
+    }
+
     LELOG("NO need token[%d][%s]", ret, status);
     // test only
     // static int mm = 0;
@@ -1634,11 +1636,15 @@ static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo,
     // CmdHeaderInfo cmdInfo = {0};
     LELOG("cbCloudStatusChangedLocalReq -s");
 
-    // getTerminalTokenStr(token, sizeof(token));
-    ret = getTerminalStatus(status, sizeof(status));
-    if (0 > ret) {
-        ret = 0;
+    if (!cmdInfo->reserved) {
+        ret = getTerminalStatus(status, sizeof(status));
+        if (0 > ret) {
+            ret = 0;
+        }
+    } else {
+        ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
     }
+
     // if (0 < ret) {
     //     getTerminalTokenStr(token, sizeof(token));
     //     sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);

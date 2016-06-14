@@ -175,6 +175,27 @@ static int forEachNodeSDevCB(SDevNode *currNode, void *uData) {
     return 0;
 }
 
+static void postStatusChanged(int plusIdx) {
+    int ret = 0;
+    NodeData node = {0};
+    node.reserved = plusIdx;
+    if (isCloudAuthed() && getLock()) {
+        node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
+        node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
+    } else {
+        char br[MAX_IPLEN] = {0};
+        node.cmdId = LELINK_CMD_DISCOVER_REQ;
+        node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;        
+        ret = halGetBroadCastAddr(br, sizeof(br));
+        if (0 >= ret) {
+            strcpy(br, "255.255.255.255");
+        } else
+        strcpy(node.ndIP, br);
+        node.ndPort = NW_SELF_PORT;
+    }
+    lelinkNwPostCmdExt(&node);
+}
+
 static int sdevInsert(SDevNode *arr, const char *status, int len) {
     int valJoin = 0, index = 0, ret = 0;
     jobj_t jobj;
@@ -310,6 +331,11 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
                 LELOG("mac is [%s]", node.mac);
                 sDevIdx = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevCB, node.mac);
                 if (0 <= sDevIdx) {
+                    LELOG("old[%s] new[%s]", node.sdevStatus, buf);
+                    if (0 != memcmp(node.sdevStatus, buf, strlen(buf))) {
+                        postStatusChanged(sDevIdx + 1);
+                    }
+                    memset(node.sdevStatus, 0, sizeof(node.sdevStatus));
                     strcpy(node.sdevStatus, buf);
                     sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_STATUS);  
                     LELOG("=> sDevIdx[%d] mac[%s] sdev[%s] sdevStatus[%s]", sDevIdx, node.mac, node.sdevInfo, node.sdevStatus);               
@@ -321,6 +347,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
 
     return 0;
 }
+
 
 static IO lf_s1OptDoSplit_input(lua_State *L, const uint8_t *input, int inputLen) {
 
@@ -1375,22 +1402,7 @@ int senginePollingSlave(void) {
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else if (cacheIsChanged(status, len)) {
-                            NodeData node = {0};
-                            if (isCloudAuthed() && getLock()) {
-                                node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
-                                node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
-                            } else {
-                                char br[MAX_IPLEN] = {0};
-                                node.cmdId = LELINK_CMD_DISCOVER_REQ;
-                                node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;        
-                                ret = halGetBroadCastAddr(br, sizeof(br));
-                                if (0 >= ret) {
-                                    strcpy(br, "255.255.255.255");
-                                } else
-                                    strcpy(node.ndIP, br);
-                                node.ndPort = NW_SELF_PORT;
-                            }
-                            lelinkNwPostCmdExt(&node);
+                            postStatusChanged(0);
                             cacheSetTerminalStatus(status, len);
                             LELOG("Cache status:%s", status);
                         }
