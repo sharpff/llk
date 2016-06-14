@@ -134,6 +134,62 @@ function s1GetValidKind(data)
 	return 0
 end
 
+function s1MergeCurrStatus2Action(action, currStatus)
+	local tblAct = cjson.decode(action)
+	local tblSta = cjson.decode(currStatus)
+	local tblCtrlInfo = {}
+	local tblOut = {}
+	local jsonOut = ""
+
+-- START
+	if tblAct["action"] then 
+		tblCtrlInfo["action"] = tblAct["action"]
+	else
+		tblCtrlInfo["action"] = tblSta["action"]
+	end
+	if tblAct["speaker"] then 
+		tblCtrlInfo["speaker"] = tblAct["speaker"]
+	else
+		tblCtrlInfo["speaker"] = tblSta["speaker"]
+	end
+	if tblAct["disinfect"] then 
+		tblCtrlInfo["disinfect"] = tblAct["disinfect"]
+        tblCtrlInfo["DTS"] = tblAct["DTS"]
+	else
+		tblCtrlInfo["disinfect"] = tblSta["disinfect"]
+        tblCtrlInfo["DTS"] = tblSta["DTL"]
+	end
+	if tblAct["anion"] then 
+		tblCtrlInfo["anion"] = tblAct["anion"]
+	else
+		tblCtrlInfo["anion"] = tblSta["anion"]
+	end
+	if tblAct["bake"] then 
+		tblCtrlInfo["bake"] = tblAct["bake"]
+        tblCtrlInfo["BTS"] = tblAct["BTS"]
+	else
+		tblCtrlInfo["bake"] = tblSta["bake"]
+        tblCtrlInfo["BTS"] = tblSta["BTL"]
+	end
+	if tblAct["wind"] then 
+		tblCtrlInfo["wind"] = tblAct["wind"]
+        tblCtrlInfo["WTS"] = tblAct["WTS"]
+	else
+		tblCtrlInfo["wind"] = tblSta["wind"]
+        tblCtrlInfo["WTS"] = tblSta["WTL"]
+	end
+	if tblAct["light"] then 
+		tblCtrlInfo["light"] = tblAct["light"]
+	else
+		tblCtrlInfo["light"] = tblSta["light"]
+	end
+-- END
+	tblOut = tblCtrlInfo
+	jsonOut = cjson.encode(tblOut)
+	print ("s1MergeCurrStatus2Action out is -- "..jsonOut..", tblOut "..#tblOut.."\r\n")
+	return string.len(jsonOut), jsonOut
+end
+
 -- 晾霸
 function s1CvtStd2Pri(json)
 	local ctrl = cjson.decode(json)
