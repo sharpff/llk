@@ -43,3 +43,7 @@ void halFree(void *ptr) {
 int halReboot() {
     return 0;
 }
+
+uint16_t halRand() {
+    return 0;
+}
