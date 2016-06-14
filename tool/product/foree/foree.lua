@@ -88,7 +88,7 @@ end
 -- 7) 0x0405：湿度测量类
 -- 8) 0x0201: 温控器类
 function getClusterFromDid(did)
-	print ("did is "..did.."\r\n")
+	-- print ("did is "..did.."\r\n")
 	if nil ~= string.find(did, "0000") then
 		return string.format('%02x%02x', 0x00, 0x06)
 	elseif nil ~= string.find(did, "0107") then
@@ -122,36 +122,12 @@ function s1GetCvtType()
 			"id":1, 
 			"baud":"115200-8N1"
 		}
-    	],
-    "gpio":[
-	        {
-	            "id":1,
-	            "dir":0,
-	            "mode":2,
-	            "type":1,
-	            "longTime":10,
-	            "shortTime":3
-	        },
-	        {
-	            "id":2,
-	            "dir":1,
-	            "mode":0,
-	            "state":1,
-	            "blink":2,
-	            "type":1,
-	            "longTime":10,
-	            "shortTime":1
-	        }
-	    ]
+    	]
 	}
     ]]
 	local delay = 5
 
 	return string.len(str), str, delay
-end
-
-function s1HasSubDevs()
-	return 1
 end
 
 --[[ EXTERNAL
@@ -161,9 +137,6 @@ function s1GetQueries(queryType)
 	local cvtType = s1apiGetCurrCvtType()
 	local query = ''
 	local queryCountLen = ''
-	local tmpType = 0
-	-- test only
-	cvtType = 1
 
 	-- print ("[LUA] s1GetQueries cvtType is " .. cvtType .. ", queryType is " .. queryType .."\r\n")
 
@@ -207,6 +180,43 @@ function s1GetQueries(queryType)
 	return string.len( queryCountLen ), queryCountLen, string.len( query ), query
 end
 
+function s1OptHasSubDevs()
+	return 1
+end
+
+--[[ OPTIONAL
+	s1OptDoSplit
+  ]]
+function s1OptDoSplit(data)
+	local tblData = stringToTable(data)
+	local tblDataCountLen = {}
+	local strDataCountLen = ""
+	local where = 1
+	local singleData = nil
+	local idx = 0
+	-- print("total is "..#tblData.."\r\n")
+	while where < #tblData do
+		-- print("where is "..where.."\r\n")
+		-- print("xxx is "..where..", 1st is "..(#tblData - where + 1)..", 2nd is "..(3 + tblData[where + 2] + 1).."\r\n")
+		if nil == tblData[where + 2] or (#tblData - where + 1) < (3 + tblData[where + 2] + 1) then
+			-- print("break1\r\n")
+			break
+		end
+		tblDataCountLen[idx + 1] = (3 + tblData[where + 2] + 1) & 0xFF
+		tblDataCountLen[idx + 2] = ((3 + tblData[where + 2] + 1) >> 8) & 0xFF
+		idx = idx + 2
+		where = where + (3 + tblData[where + 2] + 1)
+	end
+
+	strDataCountLen = tableToString(tblDataCountLen)
+
+	return string.len( strDataCountLen ), strDataCountLen, string.len( data ), data
+end
+
+function s1OptMergeCurrStatus2Action(action, currStatus)
+	return string.len(action), action
+end
+
 --[[ EXTERNAL
 	s1GetValidKind
   ]]
@@ -221,8 +231,8 @@ function s1GetValidKind(data)
 	local WHATKIND_SUB_DEV_JOIN = 12
 	local WHATKIND_SUB_DEV_LEAVE = 13
 
-	-- test only
-	cvtType = 1
+	local tmp = stringToTable(data)
+	LOGTBL(tmp)
 
 	for i = 1, 1 do
 		-- UART
@@ -265,8 +275,8 @@ function s1GetValidKind(data)
 			end
 
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x90 then
-				-- (IND) sensor action ind
-				print ("[LUA] s1GetValidKind - sub devices - sensor action ind "..#dataTbl.."\r\n")
+				-- (IND) sDevStatus action ind
+				print ("[LUA] s1GetValidKind - sub devices - sDevStatus action ind "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
 			end
@@ -278,23 +288,22 @@ function s1GetValidKind(data)
 			return WHATKIND_MAIN_DEV_DATA
 		end
 	end
-	print ("[LUA] whatKind is "..ret.."\r\n")
 	-- invalid kind
 	return ret
 end
 
-
 -- {"msg":"hello","sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}
--- {"ctrl":{"pwr":1},"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}
--- {"status":{"pwr":1,"switcher":1},"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}
--- s1apiGetMacFromIdx()
--- s1apiGetIdxFromMac()
+-- {"ctrl":{"pwr":1,"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}}
+-- {"status":{"pwr":1,"switcher":1,"sDev":{"pid":"0104","did":"0107","clu":"0006","ept":[1, 2],"mac":"7409E17E3376AF60"}}}
+-- s1apiSDevGetMacByUserData()
+-- s1apiSdevGetUserDataByMac()
 
 -- \{\"ctrl\":\{\"reset\":1\}\}
--- \{\"ctrl\":\{\"cjoin\":1\}\}
--- \{\"ctrl\":\{\"subDevGetList\":1\}\}
--- \{\"ctrl\":\{\"subDevGetInfo\":2\}\}
--- \{\"ctrl\":\{\"pwr\":1\},\"sDev\":\{\"pid\":\"0104\",\"did\":\"0107\",\"clu\":\"0006\",\"ept\":[1,2],\"mac\":\"7409E17E3376AF60\"\}\}
+-- \{\"ctrl\":\{\"sDevJoin\":1\}\}
+-- \{\"ctrl\":\{\"sDevGetList\":1\}\}
+-- \{\"ctrl\":\{\"sDevGetInfo\":0\}\}
+-- \{\"ctrl\":\{\"sDevGetInfo\":1\}\}
+-- \{\"ctrl\":\{\"pwr\":1,\"sDev\":\{\"pid\":\"0104\",\"did\":\"0107\",\"clu\":\"0006\",\"ept\":[1,2],\"mac\":\"7409E17E3376AF60\"\}\}\}
 
 --[[ EXTERNAL
 	s1CvtStd2Pri
@@ -302,14 +311,10 @@ end
 function s1CvtStd2Pri(json)
 	local cvtType = s1apiGetCurrCvtType()
 	print ('[LUA] s1CvtStd2Pri return => '..json..'\r\n')
-	local tb = cjson.decode(json)
-	local ctrl = tb["ctrl"]
-	local sDev = tb["sDev"]
+	local ctrl = cjson.decode(json)
+	-- local sDev = ctrl["sDev"]
 	local cmdTbl = {}
 	local dataStr = ""
-
-	-- test only
-	cvtType = 1
 
 	for i = 1, 1 do
 		-- UART
@@ -319,19 +324,20 @@ function s1CvtStd2Pri(json)
 				break
 			end
 
-			if ctrl["cjoin"] == 1 then
+			if ctrl["sDevJoin"] == 1 then
 				cmdTbl = {0xAA, 0x00, 0x0D, 0x02, 0x04, 0x01, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7B}
  				break
 			end
 
-			if ctrl["subDevGetList"] == 1 then
+			if ctrl["sDevGetList"] == 1 then
 				cmdTbl = {0xAA, 0x00, 0x02, 0x01, 0x10, 0x9D}
 				break
 			end
 
-			if ctrl["subDevGetInfo"] then
-				local idx = 0
-				-- s1apiGetIdxFromMac(ctrl["subDevGetInfo"])
+			if ctrl["sDevGetInfo"] then
+				print ('[LUA] sDevGetInfo => '..json..'\r\n')
+				local idx = ctrl["sDevGetInfo"]
+				-- idx = s1apiSdevGetUserDataByMac(string.len(ctrl["sDevGetInfo"]), ctrl["sDevGetInfo"])
 				if 0 <= idx then
 					cmdTbl = {0xAA, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00}
 					cmdTbl[6] = idx
@@ -339,39 +345,42 @@ function s1CvtStd2Pri(json)
 				end
 				break
 			end
-
 			-- TODO: ctrl the sub dev.
 			if sDev then 
 				print("TODO: ctrl the sub dev. \r\n")
 			end
 		end
-
 		-- GPIO
 		if 0x02 == cvtType then
 		end
 	end
 
 	LOGTBL(cmdTbl)
-	-- u have to make the bin as string for the return value
 	dataStr = tableToString(cmdTbl)
 	return string.len(dataStr), dataStr
 end
 
+function genStatus(eptList, len, data)
+	local status = "{}"
+	for _, dept in ipairs(eptList) do
+		-- print("did "..dept[1]..", ept "..dept[2].."\r\n")
+		if nil ~= string.find(dept[1], "0000") then 
+			status = string.format('{"switcher":%d}', data[4])
+		elseif nil ~= string.find(dept[1], "0107") then
+			status = string.format('{"detector":%d}', data[4])
+		end
+	end
+	return status
+end
 --[[ EXTERNAL
 	s1CvtPri2Std
   ]]
 function s1CvtPri2Std(bin)
 	local cvtType = s1apiGetCurrCvtType()
-	-- print ('s1CvtPri2Std return => '..cvtType..'\r\n')
 	local dataTbl = {}
 	local strMain = ''
 	local strSubDev = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
 	dataTbl = stringToTable(bin)
-
-	-- test only
-	cvtType = 1
-
-	-- TODO: crc checking & multi-bin
 
 	for i = 1, 1 do
 		-- UART
@@ -380,13 +389,13 @@ function s1CvtPri2Std(bin)
 			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x05, 0x82, 0x04, 0x01, 0x41, 0x00, 0xCC)) then
 				-- (RSP) join permition rsp , rep is AA 00 0D 02 04 01 41 00 00 00 00 00 00 00 00 00 7B
 				print ("[LUA] s1CvtPri2Std - sub devices - join permition rsp\r\n")
-				strMain = string.format('{"cjoin":%d}', 2)
+				strMain = string.format('{"sDevJoin":%d}', 2)
 				break
 			end
 
 			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x13, 0x81, 0x10)) then
 				-- (RSP) list rsp , rep is AA 00 02 01 10 9D
-				-- {"subDevGetList":[0,1,2]}
+				-- {"sDevGetList":[0,1,2]}
 				print ("[LUA] s1CvtPri2Std - sub devices - list rsp\r\n")
 				local num = 0
 				local sDevList = {}
@@ -408,18 +417,18 @@ function s1CvtPri2Std(bin)
 				-- 	print("sDevList["..n.."] is "..sDevList[n].."\r\n")
 				-- end
 				local s = cjson.encode(sDevList)
-				strMain = '{"subDevGetList":'..s..'}'
-				-- string.format('{"subDevGetList":}', num)
-				print(strMain.."\r\n")
+				strMain = '{"sDevGetList":'..s..'}'
+				-- string.format('{"sDevGetList":}', num)
+				print("[LUA] return => "..strMain.."\r\n")
 				-- print(s.."\r\n")
 				break
 			end
 
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x81 and dataTbl[5] == 0x00 then
 				-- (RSP) device info rsp , rep is AA 00 04 01 00 00 00 E1
-				-- {"subDevGetInfo":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0000",1],["0000",2],["0000",3]],"mac":"7409E17E3376AF60"}}
+				-- {"sDevGetInfo":indexVal,"sDev":{"pid":"0401","clu":"0107","ept":[["0000",1],["0000",2],["0000",3]],"mac":"7409E17E3376AF60"}}
 				print ("[LUA] s1CvtPri2Std - sub devices - device info rsp "..#dataTbl.."\r\n")
-				local strmac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", datatbl[9], datatbl[10], datatbl[11], datatbl[12], datatbl[13], datatbl[14], datatbl[15], datatbl[16])
+				local strMac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", dataTbl[9], dataTbl[10], dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16])
 				local strProId = string.format("%02x%02x", dataTbl[18], dataTbl[17])
 				local devNumIdx = 26
 				local devNum = dataTbl[devNumIdx]
@@ -433,16 +442,15 @@ function s1CvtPri2Std(bin)
 				end
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				strMain = '{"subDevGetInfo":2,'..strSubDev..'}'
+				strMain = '{"sDevGetInfo":'..dataTbl[6]..','..strSubDev..'}'
 				-- print(ept.."\r\n")
-				print(strMain.."\r\n")
+				print("[LUA] return =====> "..strMain.."\r\n")
 				break
 			end
 
 			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x11, 0x82)) then
 				-- (IND) new device joining, rep is 0xAA, 0x00, 0x11, 0x82
-				-- {"cjoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
-				-- {"sensor":1,"sDev":{"pid":"0401","clu":"0000","ept":[["0000",5]],"mac":"7409E17E3376AF60"}}
+				-- {"sDevJoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
 				print("s1CvtPri2Std - sub devices - new device joining\r\n")
 				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
 				local addr = dataTbl[8]
@@ -456,19 +464,22 @@ function s1CvtPri2Std(bin)
 				end
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				strMain = '{"cjoin":2,'..strSubDev..'}'
-				print(strMain.."\r\n")
+				strMain = '{"sDevJoin":2,'..strSubDev..'}'
+				print("[LUA] return => "..strMain.."\r\n")
 				break
 			end
 
 			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x90 then
-				-- (IND) sensor action ind
-				-- {"sensor":1,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
-				print ("[LUA] s1CvtPri2Std - sub devices - sensor action ind "..#dataTbl.."\r\n")
+				-- (IND) sDevStatus action ind
+				-- {"sDevStatus":{"btn":1},"sDev":{"pid":"0401","clu":"0000","ept":[["0000",5]],"mac":"7409E17E3376AF60"}}
+				-- {"sDevStatus":{"act":1},"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
+				print ("[LUA] s1CvtPri2Std - sub devices - sDevStatus action ind "..#dataTbl.."\r\n")
 				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
 				local addr = dataTbl[10]
-				-- local strMac = s1apiGetMacFromIdx(addr)
-				local strMac = ""
+				-- local lenMac = 0
+				-- local strMac = ""
+				local lenMac, strMac = s1apiSDevGetMacByUserData(addr)
+				-- print("[LUA] lenMac is "..lenMac..", strMac is "..strMac.."\r\n")
 				local sDevEPList = {}
 				local strCluster = '""'
 				for i = 1, 1 do
@@ -478,8 +489,12 @@ function s1CvtPri2Std(bin)
 				end
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				strMain = '{"sensor":1,'..strSubDev..'}'
-				print(strMain.."\r\n")
+				local tblStatusData = {}
+				for i = 15, (dataTbl[14] + 15) do
+					tblStatusData[#tblStatusData + 1] = dataTbl[i]
+				end
+				strMain = '{"sDevStatus":'..genStatus(sDevEPList, dataTbl[14], tblStatusData)..','..strSubDev..'}'
+				print("[LUA] return => "..strMain.."\r\n")
 				break
 			end
 
@@ -490,9 +505,5 @@ function s1CvtPri2Std(bin)
 			return WHATKIND_MAIN_DEV_DATA
 		end
 	end
-
-
-	-- strMain = string.format(strMain, 100 - dataTbl[3])
-
 	return string.len(strMain), strMain
 end

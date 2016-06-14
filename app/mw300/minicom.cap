@@ -1,0 +1,302 @@
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#233
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#233
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#233
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#233
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#233
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#233
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#233
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#233
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#233
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#233
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#233
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#233
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#233
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#234
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#234
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#234
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#234
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#234
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#234
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#234
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#234
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#234
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#234
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#234
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#234
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#234
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#234
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#234
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#235
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#235
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#235
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#235
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#235
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#235
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#235
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#235
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#235
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#235
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#235
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#235
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#235
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#235
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#235
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#235
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#235
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#236
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#236
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#236
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#236
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#236
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#236
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#236
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#236
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#236
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#236
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#236
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#236
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#236
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#236
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#236
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#236
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#237
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#237
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#237
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#237
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#237
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#237
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#237
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#237
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#237
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#237
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#237
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#237
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#237
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#237
+[LE] nwUDPRecvfrom [192.168.3.100:52078][90] @network.c:149#237
+[LE] lelinkDoPollingQ2A doUnpack [15-1] @protocol.c:709#237
+[LE] POST getCmdRecord cmdId[15] subCmdId[1] @protocol.c:2040#237
+[LE] cbCtrlCmdRemoteReq -s @protocol.c:1411#237
+[LE] [23][{"ctrl":{"sDevJoin":1}}] @protocol.c:1412#237
+[LE[W]] setTerminalStatus [14][{"sDevJoin":1}] @data.c:292#237
+[LE] sengineGetStatus [2][{}] @sengine.c:879#237
+[LE] [SENGINE] lf_s1MergeCurrStatus2Action_input: firstLen[14/17][{"sDevJoin":1}] @sengine.c:255#237
+[LE] [SENGINE] lf_s1MergeCurrStatus2Action_input: secondLen[2/17][{}] @sengine.c:263#237
+[LE[E]] [lua engine] lua error: attempt to call a nil value => s1MergeCurrStatus2Action @sengine.c:649#237
+[LE[W]] sengineSetStatus sengineCall(s1MergeCurrStatus2Action) [-3] [14][{"sDevJoin":1}] @sengine.c:843#237
+[LUA] s1CvtStd2Pri return => {"sDevJoin":1}
+LOGTBL aa 00 0d 02 04 01 41 00 00 00 00 00 00 00 00 00 7b 
+[SENGINE]_s1CvtStd2Pri_[17]_cmd: aa 00 0d 02 04 01 41 00 00 00 00 00 00 00 00 00 7b 
+[LE] bin[0] = aa @sengine.c:855#237
+[LE] bin[1] = 00 @sengine.c:855#237
+[LE] bin[2] = 0d @sengine.c:855#237
+[LE] bin[3] = 02 @sengine.c:855#237
+[LE] bin[4] = 04 @sengine.c:855#237
+[LE] bin[5] = 01 @sengine.c:855#237
+[LE] bin[6] = 41 @sengine.c:855#237
+[LE] bin[7] = 00 @sengine.c:855#237
+[LE] bin[8] = 00 @sengine.c:855#237
+[LE] bin[9] = 00 @sengine.c:855#237
+[LE] bin[10] = 00 @sengine.c:855#237
+[LE] bin[11] = 00 @sengine.c:855#237
+[LE] bin[12] = 00 @sengine.c:855#237
+[LE] bin[13] = 00 @sengine.c:855#237
+[LE] bin[14] = 00 @sengine.c:855#237
+[LE] bin[15] = 00 @sengine.c:855#237
+[LE] bin[16] = 7b @sengine.c:855#237
+[APPLOG] ---------------------------------------------------------
+[APPLOG] uart_drv_write [17] 
+aa 00 0d 02 04 01 41 00 00 00 00 00 00 00 00 00 7b 
+[APPLOG] ---------------------------------------------------------
+
+[LE] cbCtrlCmdRemoteReq [1] -e @protocol.c:1414#238
+[LE] cbCtrlCmdLocalRsp -s @protocol.c:1427#238
+[LE] sengineGetStatus [2][{}] @sengine.c:879#238
+[LE] cbCtrlCmdLocalRsp -e @protocol.c:1431#238
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#238
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#238
+[LE] lelinkDoPollingQ2A nwUDPSendto [192.168.3.100:52078][202] @protocol.c:1178#238
+[LE] socket[1] nwUDPSendto [192.168.3.100:52078][202] @network.c:129#238
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#238
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#238
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#238
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#238
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#238
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#238
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#238
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#238
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#238
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#238
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#238
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#238
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#238
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#238
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#239
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#239
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#239
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#239
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#239
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#239
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#239
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#239
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#239
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#239
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#239
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#239
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#239
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#239
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#239
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#239
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#240
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#240
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#240
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#240
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#240
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#240
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#240
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#240
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#240
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#240
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#240
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#240
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#240
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#240
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#240
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#240
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#240
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#241
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#241
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#241
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#241
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#241
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#241
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#241
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#241
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#241
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#241
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#241
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#241
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#241
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#241
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#241
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#241
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#242
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#242
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#242
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#242
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#242
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#242
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#242
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#242
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#242
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#242
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#242
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#242
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#242
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#242
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#242
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#242
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#243
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#243
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#243
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#243
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#243
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#243
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#243
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#243
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#243
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#243
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#243
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#243
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#243
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#243
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#243
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#244
+[LE[W]] sengineHasDevs sengineCall(s1HasSubDevs) [-3] @sengine.c:675#244
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#244
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#244
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#244
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#244
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret s LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#403
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#403
+LOGTBL 00 00 00 00 00 00 00 00 00 00 
+[LE] sengineCall ret size [4], whatKind [0] @sengine.c:979#403
+[LE[W]] Unknow whatKind = 0 @sengine.c:1063#403

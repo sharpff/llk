@@ -150,7 +150,6 @@ static int inner_airconfig_do_config_sync(airconfig_ctx_t *ctx) {
     if (!ctx) {
         return 0;
     }
-    
     while (count--) {
         inner_airconfig_sendto(ctx, gin_base + count % 4 + 1);
         delayms(ctx->delay);

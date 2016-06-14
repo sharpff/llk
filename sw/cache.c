@@ -38,30 +38,30 @@ int qEnCache(PCACHE C, void *val)
 {
     int i = 0;
     //int bFind = 0;
-    CACHE_NODE_TYPE *tmp = (CACHE_NODE_TYPE *) val;
+    NodeHead *tmp = (NodeHead *) val;
 
     if (qFullCache(C))
         return 0;
     else
     {
-        if (!tmp->seqId) // invalid seq id, it will only be used as Cache for send
+        if (!tmp->flag) // invalid seq id, it will only be used as Cache for send
         {
-            if (0 == C->seqIdAuto)
+            if (0 == C->flagAuto)
 
             {
-                C->seqIdAuto = 1;
+                C->flagAuto = 1;
             }
             else
             {
-                C->seqIdAuto++;
+                C->flagAuto++;
             }
-            tmp->seqId = C->seqIdAuto;
+            tmp->flag = C->flagAuto;
         }
         // else  // it will only be used as Cache for remote req
         // {
         //     for (i = 0; i < C->maxsize; i++)
         //     {
-        //         if (tmp->seqId == ((CACHE_NODE_TYPE*) (C->pBase))[i].seqId)
+        //         if (tmp->flag == ((NodeHead*) (C->pBase))[i*C->singleSize].flag)
         //         {
         //             // already in Cache
         //             return 0;
@@ -73,14 +73,12 @@ int qEnCache(PCACHE C, void *val)
         for (i = 0; i < C->maxsize; i++)
         {
             // the current not has not been ocupied.
-            if (0 == ((CACHE_NODE_TYPE*) (C->pBase))[i].seqId)
+            if (0 == ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag)
             {
-                memcpy(&((CACHE_NODE_TYPE*) (C->pBase))[i], val,
-                        sizeof(CACHE_NODE_TYPE));
-                ((CACHE_NODE_TYPE*) (C->pBase))[i].seqId = tmp->seqId;
-
+                memcpy(&(((uint8_t*)(C->pBase))[i*C->singleSize]), val, C->singleSize);
+                ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag = tmp->flag;
                 C->currsize++;
-                return 1;
+                return tmp->flag;
             }
         }
     }
@@ -92,19 +90,17 @@ int qForEachfromCache(PCACHE C, int (*currNodeCB)(void *curr, void *uData), void
 {
     int i = 0;
     int ret = 0;
-    for (i = 0; i < C->maxsize; i++)
-    {
-        if (0 != ((CACHE_NODE_TYPE*) (C->pBase))[i].seqId)
-        {
-            ret = currNodeCB(&((CACHE_NODE_TYPE*) (C->pBase))[i], uData);
+    for (i = 0; i < C->maxsize; i++) {
+        if (0 != ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag) {
+            ret = currNodeCB(&(((uint8_t*)(C->pBase))[i*C->singleSize]), uData);
             if (ret > 0) {
-                return ret;
+                return i;
             }
         }
         //i++;
     }
 
-    return 0;
+    return -1;
 }
 
 int qCheckForClean(PCACHE C, int (*isNeedDelCB)(void *curr))
@@ -112,12 +108,11 @@ int qCheckForClean(PCACHE C, int (*isNeedDelCB)(void *curr))
     int i = 0;
     for (i = 0; i < C->maxsize; i++)
     {
-        if (0 != ((CACHE_NODE_TYPE*) (C->pBase))[i].seqId)
+        if (0 != ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag)
         {
-            if (isNeedDelCB(&((CACHE_NODE_TYPE*) (C->pBase))[i]))
+            if (isNeedDelCB(&(((uint8_t*)(C->pBase))[i*C->singleSize])))
             {
-                memset(&((CACHE_NODE_TYPE*) (C->pBase))[i], 0,
-                        sizeof(CACHE_NODE_TYPE));
+                memset(&(((uint8_t*)(C->pBase))[i*C->singleSize]), 0, C->singleSize);
                 C->currsize--;
             }
         }

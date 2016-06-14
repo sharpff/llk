@@ -29,6 +29,23 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
             #endif
         }
         APPLOG("bind: sock[%d] port[%d]", *sock, port);
+        // test only
+        if (0)
+        {
+            struct ip_mreq mreq; 
+            struct sockaddr_in ia;  
+            bzero(&mreq, sizeof (struct ip_mreq)); 
+            inet_pton(AF_INET,"239.101.1.1",&ia.sin_addr);
+            /* 设置组地址 */ 
+            bcopy (&ia.sin_addr.s_addr, &mreq.imr_multiaddr.s_addr, sizeof (struct in_addr)); 
+            /* 设置发送组播消息的源主机的地址信息 */ 
+            mreq.imr_interface.s_addr = htonl (INADDR_ANY);  
+            if (setsockopt(*sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq,sizeof (struct ip_mreq)) == -1)
+            {     
+                APPLOGE("setsockopt() IP_ADD_MEMBERSHIP failed!");
+                return -2;   
+            }
+        }
     }
 
 	fcntl(*sock, F_SETFL, O_NONBLOCK, 1);

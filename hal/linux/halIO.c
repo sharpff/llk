@@ -55,7 +55,7 @@ int halUartClose(void *dev) {
 }
 
 int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
-    int ret = 0, tmpLen = len, fd;
+    int ret = 0, tmpLen = 0, fd;
     memcpy(&fd, &dev, sizeof(fd));
     ret = read(dev, buf, len);
     if (0 < ret) {

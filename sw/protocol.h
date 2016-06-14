@@ -188,7 +188,10 @@ typedef enum
 }E_LELINK_SUBCMD;
 
 
-
+#define CACHE_NODE_HEADER \
+    uint16_t flag; \
+    uint16_t nodeReserved;
+    
 #define CMD_HEADER_INFO_1ST \
     int16_t status; \
     uint16_t cmdId; \
@@ -200,7 +203,7 @@ typedef enum
     uint8_t reserved2; \
     uint8_t uuid[MAX_UUID]
 
-#define CMD_HEADER_INFO \
+#define CMD_INFO_HEADER \
     CMD_HEADER_INFO_1ST; \
     uint16_t subCmdId; \
     uint16_t reserved3; \
@@ -209,12 +212,13 @@ typedef enum
 
 
 typedef struct {
-    CMD_HEADER_INFO;
+    CACHE_NODE_HEADER;
+    CMD_INFO_HEADER;
 }CmdHeaderInfo;
 
-typedef struct
-{
-    CMD_HEADER_INFO;
+typedef struct {
+    CACHE_NODE_HEADER;
+    CMD_INFO_HEADER;
     void *pCtx; // belong to which contex
     uint32_t timeStamp;
     uint32_t timeoutRef;

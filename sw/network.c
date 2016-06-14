@@ -8,7 +8,7 @@ typedef struct
 {
     int alloced;
     CommonCtx ctx;
-    CACHE_NODE_TYPE q[CACHE_MAX_NODE];
+    NodeData q[CACHE_MAX_NODE];
 }PoolCommonCtx;
 
 static PoolCommonCtx poolCommonCtx[MAX_CTX_SIZE];
@@ -22,6 +22,7 @@ static CommonCtx *newCtx()
         {
             memset(&(poolCommonCtx[i]), 0, sizeof(PoolCommonCtx));
             poolCommonCtx[i].ctx.cacheCmd.maxsize = CACHE_MAX_NODE;
+            poolCommonCtx[i].ctx.cacheCmd.singleSize = sizeof(NodeData);
             poolCommonCtx[i].ctx.cacheCmd.pBase = poolCommonCtx[i].q;
             poolCommonCtx[i].alloced = 1;
             return &(poolCommonCtx[i].ctx);

@@ -1,5 +1,5 @@
 --[[ 
-	THIS IS FW SCRIPT
+	THIS IS FW SCRIPT for simu.lua
   ]]
 --[[ INTERNAL
 	Table to string
@@ -121,7 +121,7 @@ function s1GetValidKind(data)
 
 	-- print '0'
 	-- invalid kind
-	return 2
+	return 0
 	-- return 0
 end
 

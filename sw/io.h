@@ -14,7 +14,6 @@ extern "C"
 #define MAX_REMOTE 64
 #define MAX_IA 4
 #define MAX_RULE_NAME 64
-#define MAX_BUF (1024+256)
 #define GET_PAGE_SIZE(currSize, SecSize) ((SecSize)*(((currSize)-1)/(SecSize) + 1)) // min erase size
 
 typedef enum {

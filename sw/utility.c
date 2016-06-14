@@ -92,7 +92,7 @@ uint16_t genRand() {
 }
 
 uint16_t genSeqId() {
-    static uint8_t seq;
+    static uint16_t seq;
     if (0 == seq) {
         seq++;
     }
