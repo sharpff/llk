@@ -1365,6 +1365,7 @@ int senginePollingSlave(void) {
             // LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
             memcpy(&datas.arrDatas[appendLen], &bin[appendLen], currLen);
 
+            /*
             {
                 int j = 0;
                 for (j = 0; j < currLen; j++) {
@@ -1372,6 +1373,7 @@ int senginePollingSlave(void) {
                 }  
                 LEPRINTF("\r\n");              
             }
+            */
 
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     &datas.arrDatas[appendLen], currLen, (uint8_t *)&whatKind, sizeof(whatKind));
@@ -1448,12 +1450,12 @@ int senginePollingSlave(void) {
                     break;
 
                 default:
-                    LELOGW("Unknow whatKind = %d", whatKind);
+                    //LELOGW("Unknow whatKind = %d", whatKind);
                     break;
             }
 
             appendLen += currLen;
-            LEPRINTF("\r\n");
+            //LEPRINTF("\r\n");
         }
         {
             
