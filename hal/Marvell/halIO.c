@@ -61,7 +61,7 @@ int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     if (0 < ret) {
         do {
             tmpLen += ret;
-            APPLOG("snap [%d]", ret);
+            //APPLOG("snap [%d]", ret);
             ret = uart_drv_read((mdev_t *)dev, buf + tmpLen, len - tmpLen);
         } while (0 < ret);
 #if TO_DO_FOR_HONYAR_BUG
