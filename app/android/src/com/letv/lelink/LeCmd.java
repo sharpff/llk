@@ -103,6 +103,7 @@ public class LeCmd {
 		public static final String TIMEOUT = "timeout"; // sec
 		public static final String REMOTE_ADDR = "remoteIP";
 		public static final String STATUS = "status";
+		public static final String MSGSTATUS = "msgstatus";
 		public static final String ADDR = "addr";
 		public static final String UUID = "uuid";
 		public static final String CMD = "cmdId";

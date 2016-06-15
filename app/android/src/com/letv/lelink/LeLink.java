@@ -21,18 +21,19 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 0.3
+ * @version 0.4
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
 	/*
-	 * 0.1, 添加Listener
-	 * 0.2, 添加Listener onPushMessage()
+	 * 0.4, 优化wifi配置
 	 * 0.3, 添加Listener onControl()
+	 * 0.2, 添加Listener onPushMessage()
+	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "0.3"; // 与以上的注释一致
+	private static final String VERSION = "0.4"; // 与以上的注释一致
 	private static LeLink sLeLink = null;
 	private static final String TAG = "LeLinkJar";
 	private static final int MAX_WAIT_CMD = 10;
@@ -407,28 +408,6 @@ public class LeLink {
 	 *                  a, 成功返回字符串"ok"<br>
 	 *                  b, 失败返回失败说明字符串<br>
 	 *                  
-	 *            3, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_R2T_TELL_SHARE_REQ, 分享设备<br>
-	 *              cmdStr:<br>
-	 *                  a, LeCmd.K.TOKEN(String), 对方用户sdk的token<br>
-	 *              dataStr:<br>
-	 *              	a, LeCmd.K.ACCOUNT(String), 对方用户账号<br> 
-	 *              	b, LeCmd.K.UUID(String), 分享设备的uuid<br>
-	 *              	b, LeCmd.K.SHARE(int), 分享操作: 1 - 分享; 2 - 取消分享<br>
-	 *              return<br>
-	 *                  a, 成功返回字符串"ok"<br>
-	 *                  b, 失败返回失败说明字符串<br>
-	 * 
-	 *            4, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_REQ, 分享接受<br>
-	 *              cmdStr:<br>
-	 *                  a, LeCmd.K.TOKEN(String), 对方用户sdk的token<br>
-	 *              dataStr:<br>
-	 *              	a, LeCmd.K.ACCOUNT(String), 对方用户账号<br> 
-	 *              	b, LeCmd.K.UUID(String), 分享设备的uuid<br>
-	 *              	b, LeCmd.K.ACCEPTED(int), 接受操作: 1 - 接受<br>
-	 *              return<br>
-	 *                  a, 成功返回字符串"ok"<br>
-	 *                  b, 失败返回失败说明字符串<br>
-	 *                  
 	 * @return 详细参考上述说明
 	 */
 	public synchronized String ctrl(String cmdStr, String dataStr) {
@@ -564,7 +543,7 @@ public class LeLink {
 	 */
 	private int onMessage(int type, String jsonStr, byte buf[]) {
 		int ret = 0;
-		int cmd, subcmd, seqId;
+		int cmd, subcmd, seqId, status;
 		String addr, uuid, dataStr;
 		JSONObject cmdJson, sendCmdJson, dataJson;
 
@@ -575,6 +554,7 @@ public class LeLink {
 			addr = cmdJson.getString(LeCmd.K.ADDR);
 			uuid = cmdJson.getString(LeCmd.K.UUID);
 			seqId = cmdJson.getInt(LeCmd.K.SEQID);
+			status = cmdJson.getInt(LeCmd.K.STATUS);
 		} catch (JSONException e) {
 			LOGE("Json error");
 			e.printStackTrace();
@@ -616,15 +596,15 @@ public class LeLink {
 					return ret;
 				}
 			} else if (cmd == LeCmd.CLOUD_MSG_CTRL_R2T_REQ) {
-				try {
-					dataStr = new String(buf, "UTF-8");
-					if (mListener != null) {
-						mListener.onControl(subcmd, uuid, dataStr);
-					}
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-					return ret;
-				}
+//				try {
+//					dataStr = new String(buf, "UTF-8");
+//					if (mListener != null) {
+//						mListener.onControl(subcmd, uuid, dataStr);
+//					}
+//				} catch (UnsupportedEncodingException e) {
+//					e.printStackTrace();
+//					return ret;
+//				}
 			} else if (cmd == LeCmd.HELLO_REQ && subcmd == LeCmd.Sub.HELLO_REQ) {
 				try {
 					sendCmdJson.put(LeCmd.K.CMD, LeCmd.HELLO_RSP);
@@ -676,6 +656,8 @@ public class LeLink {
 					// LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
 					uuid = dataJson.getString(LeCmd.K.UUID);
+					dataJson.put(LeCmd.K.MSGSTATUS, status);
+					dataStr = dataJson.toString();
 					if (mWaitGetUuid != null) {
 						if (uuid.indexOf(mWaitGetUuid) >= 0) {
 							mFindDevs.clear();
@@ -818,22 +800,22 @@ public class LeLink {
 		 */
 		void onPushMessage(String dataStr);
 		
-		/**
-		 * 接受到其它的控制.<br>
-		 * 
-		 * @param subcmd
-		 * 			子命令类型, 目前有:<br>
-		 * 			分享通知-> LeCmd.Sub.CLOUD_MSG_CTRL_C2R_TELL_SHARE_REQ<br>
-		 * 			确认分享-> LeCmd.Sub.CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_REQ<br>
-		 * 
-		 * @param uuid
-		 * 			对方sdk的uuid<br>
-		 * 
-		 * @param dataStr
-		 * 			控制内容(详见协议说明文档)<br>
-		 * 			
-		 */
-		void onControl(int subcmd, String uuid, String dataStr);
+//		/**
+//		 * 接受到其它的控制.<br>
+//		 * 
+//		 * @param subcmd
+//		 * 			子命令类型, 目前有:<br>
+//		 * 			分享通知-> LeCmd.Sub.CLOUD_MSG_CTRL_C2R_TELL_SHARE_REQ<br>
+//		 * 			确认分享-> LeCmd.Sub.CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_REQ<br>
+//		 * 
+//		 * @param uuid
+//		 * 			对方sdk的uuid<br>
+//		 * 
+//		 * @param dataStr
+//		 * 			控制内容(详见协议说明文档)<br>
+//		 * 			
+//		 */
+//		void onControl(int subcmd, String uuid, String dataStr);
 	}
 
 	private static void LOGD(String msg) {

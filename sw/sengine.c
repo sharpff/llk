@@ -402,9 +402,7 @@ static int lf_s1OptDoSplit(lua_State *L, uint8_t *output, int outputLen) {
 }
 
 static IO lf_s1GetQueries_input(lua_State *L, const uint8_t *input, int inputLen) {
-    // lua_pushlstring(L, (char *)input, inputLen);
-    lua_Integer tmp = 0;
-    memcpy(&tmp, input, sizeof(lua_Integer));
+    lua_Integer tmp = *(uint8_t *)input;
     lua_pushinteger(L, tmp);
     IO io = { 1, 4 };
     return io;
@@ -1341,7 +1339,7 @@ int sengineQuerySlave(QuerieType_t type)
 
 int senginePollingSlave(void) {
     char status[MAX_BUF];
-    uint8_t bin[128] = {0};
+    uint8_t bin[MAX_BUF] = {0};
     int whatKind = 0, ret = 0, size = 0, i;
     Datas datas = {0};
     uint16_t currLen = 0, appendLen = 0;

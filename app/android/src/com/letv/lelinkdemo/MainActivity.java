@@ -20,21 +20,18 @@ public class MainActivity extends Activity {
 	
 	private static boolean TEST_WIFI_CONFIG = false;
 	private static boolean TEST_SDK_AUTH = true;
-	private static boolean TEST_DISCOVER_DEV = false;
+	private static boolean TEST_DISCOVER_DEV = true;
 	private static boolean TEST_GET_STATE =  true;
-	private static boolean TEST_CTRL_DEV = false;
+	private static boolean TEST_CTRL_DEV = true;
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
-	private static boolean TEST_SHARE_DEV = true;
-	private static boolean TEST_ACCEPT_DEV = true;
-//	private static String mTestDevUUID = "10000100101000010007C80E77ABCD50"; // 插排
+	private static String mTestDevUUID = "10000100101000010007C80E77ABCD5A"; // 插排
 //	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
-	private static String mTestDevUUID = "f1b312fd6f7b427f8306111111111111"; // SDK
 //	private static String mTestTevToken = "A9B864558E3CC920DEEDD13A6B1DE4FF"; // auto set by uuid, depend on TEST_GET_STATE
 	private static String mTestTevToken = null; // auto set by uuid, depend on TEST_GET_STATE
-//	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 0, 0); // 插排
-	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"action\":1}}"); // 窗帘
+	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
+//	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"action\":1}}"); // 窗帘
 	private static int mWifiConfigTimeout = (60 * 5);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;
@@ -91,8 +88,8 @@ public class MainActivity extends Activity {
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
-					mJsonCmd.put(LeCmd.K.SSID, "Letv_lelink");
-					mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
+					mJsonCmd.put(LeCmd.K.SSID, "ff");
+					mJsonCmd.put(LeCmd.K.PASSWD, "fengfeng2qiqi");
 					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
 				} catch (JSONException e) {
 					e.printStackTrace();
@@ -191,7 +188,7 @@ public class MainActivity extends Activity {
 					mJsonCmd.put(LeCmd.K.UUID, mTestDevUUID);
 					mJsonCmd.put(LeCmd.K.TOKEN, mTestTevToken);
 					mJsonCmd.put(LeCmd.K.TIMEOUT, mOtherTimeout);
-					mJsonCmd.put(LeCmd.K.ADDR, "192.168.3.238");
+//					mJsonCmd.put(LeCmd.K.ADDR, "192.168.3.238");
 				} catch (JSONException e) {
 					e.printStackTrace();
 					return;
@@ -256,50 +253,6 @@ public class MainActivity extends Activity {
 				retData = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
 				Log.e(TAG, "Do OTA: " + retData);
 			}
-			
-			if (TEST_SHARE_DEV) {
-				/*
-				 * 分享设备 必须传入subcmd, uuid, token, timeout
-				 */
-				Log.e(TAG, "Tell share device ...\n");
-				try {
-					mJsonCmd = new JSONObject();
-					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_MSG_CTRL_R2T_TELL_SHARE_REQ);
-					mJsonCmd.put(LeCmd.K.UUID, mTestDevUUID); // 对方用户的uuid
-					mJsonCmd.put(LeCmd.K.TOKEN, mTestTevToken); // 对方用户的token
-					mJsonCmd.put(LeCmd.K.TIMEOUT, mOtherTimeout);
-					mJsonData.put(LeCmd.K.UUID, mTestDevUUID); // 要分享设备的uuid
-					mJsonData.put(LeCmd.K.ACCOUNT, "13612345678"); // 当前用户账号
-					mJsonData.put(LeCmd.K.SHARE, 1); // 分享操作: 1 - 分享; 2 - 取消分享
-				} catch (JSONException e) {
-					e.printStackTrace();
-					return;
-				}
-				retData = mLeLink.ctrl(mJsonCmd.toString(), mJsonData.toString());
-				Log.e(TAG, "Tell share: " + retData);
-			}
-			
-			if (TEST_ACCEPT_DEV) {
-				/*
-				 * 接受分享设备 必须传入subcmd, uuid, token, timeout
-				 */
-				Log.e(TAG, "Accept share device ...\n");
-				try {
-					mJsonCmd = new JSONObject();
-					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_REQ);
-					mJsonCmd.put(LeCmd.K.UUID, mTestDevUUID); // 对方用户的uuid
-					mJsonCmd.put(LeCmd.K.TOKEN, mTestTevToken); // 对方用户的token
-					mJsonCmd.put(LeCmd.K.TIMEOUT, mOtherTimeout);
-					mJsonData.put(LeCmd.K.UUID, mTestDevUUID); // 分享设备的uuid
-					mJsonData.put(LeCmd.K.ACCOUNT, "13612345678"); // 当前用户账号
-					mJsonData.put(LeCmd.K.ACCEPTED, 1); // 接受操作: 1 - 接受
-				} catch (JSONException e) {
-					e.printStackTrace();
-					return;
-				}
-				retData = mLeLink.ctrl(mJsonCmd.toString(), mJsonData.toString());
-				Log.e(TAG, "Accept share: " + retData);
-			}
 		}
 	});
 	
@@ -343,12 +296,6 @@ public class MainActivity extends Activity {
 		@Override
 		public void onPushMessage(String dataStr) {
 			String str = String.format("onPushMessage:\n%s", dataStr);
-			Log.e(TAG, str);
-		}
-
-		@Override
-		public void onControl(int subcmd, String uuid, String dataStr) {
-			String str = String.format("onControl-%d(%s):\n%s", subcmd, uuid, dataStr);
 			Log.e(TAG, str);
 		}
 	};
