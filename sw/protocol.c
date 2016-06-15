@@ -1321,7 +1321,7 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
     // it is not comming from simu
     if (memcmp(cmdInfo->uuid, "d05bca44feb34aeca2dd", 20)) {
         if (isCloudAuthed() && getLock()) {
-            ret = -1; // drop this req, it means no rsp
+            return -1; // drop this req, it means no rsp
         }
     }
 
