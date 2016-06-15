@@ -8,24 +8,6 @@ static int ginOTAType = OTA_TYPE_NONE;
 static char ginOTAUrl[MAX_BUF];
 static uint8_t ginOTASig[RSA_LEN];
 
-// OTA_SET_INFO(type, url, lenUrl, sig) {\
-//     extern int ginOTAType;
-//     extern char ginOTAUrl[MAX_BUF];
-//     extern char ginOTASig[RSA_LEN];
-
-// }
-
-// OTA_GET_INFO(type, url, lenUrl, sig) {\
-//     extern int ginOTAType;
-//     extern char ginOTAUrl[MAX_BUF];
-//     extern char ginOTASig[RSA_LEN];
-//     type = ginOTAType;
-//     if (url) {
-//         memcpy()
-//     } else {
-//         memset(url, 0, )
-//     }
-// }
 
 const char *otaGetLatestUrl() {
     return ginOTAUrl[0] ? ginOTAUrl : NULL;

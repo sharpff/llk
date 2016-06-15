@@ -741,7 +741,7 @@ static void gpioCheckState(gpioManager_t *mgr, int index)
             uint8_t times = (p->gpiostate == GPIO_STATE_LOW) ? p->keepLowTimes : p->keepHighTimes;
 
             if(p->type == GPIO_TYPE_OUTPUT_RESET && s_resetLevel > RLED_STATE_FREE) {
-                kt = (s_resetLevel == RLED_STATE_WIFI) ? p->longTime : p->shortTime;
+                kt = (s_resetLevel == RLED_STATE_WIFI) ? p->shortTime : p->longTime;
             }
             if(kt > 0 && times > kt) {
                 halGPIOWrite(mgr->handle, p->num, !p->gpiostate);

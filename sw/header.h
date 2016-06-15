@@ -205,11 +205,11 @@ typedef unsigned int uint32_t;
 #endif
 
 
-// #define LOG_SENGINE
-// #define LOG_IO
+#define LOG_SENGINE
+#define LOG_IO
 #define LOG_PROTOCOL
 #define LOG_STATE
-// #define LOG_PACK
+#define LOG_PACK
 // #define LOG_AIRCONFIG_CTRL
 
 
@@ -244,6 +244,10 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size);
 int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr);
 int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr);
 int halGetMac(uint8_t *mac, int len);
+void *halPipeOpen(char *name);
+int halPipeClose(void *dev);
+int halPipeRead(void *dev, uint8_t *buf, uint32_t len);
+int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len);
 
 // halOS
 int halLockInit(void);
@@ -255,6 +259,8 @@ unsigned int halGetUTC(void);
 void *halCalloc(int n, size_t size);
 void halFree(void *ptr);
 int halReboot();
+
+
 
 
 #ifdef __cplusplus

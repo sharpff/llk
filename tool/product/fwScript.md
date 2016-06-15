@@ -11,14 +11,49 @@ the function is for customer to config their IO. it support multiple IO.
 param: none
 ```return:```
 json string, descripts what kind of convertion types it supports.
--- whatCvtType: it is a mask for IO type.
--- id:
-    for UART, XXX
-    for GPIO, refer to the halIO.c.
+
+### params description.
+"whatCvtType":
+>it is a mask for IO type.
+
+"id":
+>for UART, it is used for figure out the diff uart.
+>for GPIO, refer to the halIO.c.
+
+"uart":
+
+"baud": 
+>E.g. "baud":"115200-8N1" means Speed - 115200; Data Bits - 8; Parity - N; Stop Bits - 1
+
+"gpio":
+
+"dir": [0-1]
+>0 - input; 1 - output
+
+"state" [0-2]
+>idle state. 0 - low; 1 - high; 2 - blink
+
+"mode": [0-2]
+>GPIO pin mode configuration. 0 - default; 1 - pullup; 2 - pulldown
+
+"blink": [1-+]
+>frequency of blinking, the smallest unit of the polling interval.
+>E.g. the "blink" is 3 and the polling interval is 300ms. so, the interval is equal to 3*300.
+
+"type": [0-1]
+>0 - stdio; 1 - reset output/input
+
+"longTime": [1-+]
+>valid only in "type" is 1, the value should be lagger than "shortTime".
+
+"shortTime": [1-+]
+>valid only in "type" is 1, the value should be less than "longTime".
+
+
 ```
 E.g. 
-*for single type: only for UART, the "whatCvtType" is 0x01.
- {
+for single type: only for UART, the "whatCvtType" is 0x01.
+{
 "whatCvtType":1,
 "uart":[
     {
@@ -27,7 +62,7 @@ E.g.
     }
     ]
 }
-*for multiple type: uart(0x1) & gpio(0x2), the "whatCvtType" is 0x03(0x01 | 0x02).
+for multiple type: uart(0x1) & gpio(0x2), the "whatCvtType" is 0x03(0x01 | 0x02).
 {
 "whatCvtType":1,
 "uart":[

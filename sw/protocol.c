@@ -9,6 +9,8 @@
 #include "state.h"
 #include "utility.h"
 #include "airconfig_ctrl.h"
+#include "sengine.h"
+#include "misc.h"
 
 // lftp letv:1q2w3e4r@115.182.63.167:21
 // 115.182.94.173 <=> 10.204.28.134
@@ -19,7 +21,7 @@
 // ./Debug/linux 10000100051000710010C80E77ABCD70 192.168.3.136 \{\"ctrl\":\{\"pwr\":1\}\} \{\"ctrl\":\{\"pwr\":0}\}
 // ./Debug/linux 10000100051000710010C80E77ABCD80 192.168.3.152 \{\"ctrl\":\{\"pwr\":1,\"mode\":2,\"temp\":27,\"speed\":1\}\} \{\"ctrl\":\{\"pwr\":1,\"mode\":2\,\"temp\":27,\"speed\":2\}\}
 // ./Debug/linux 10000100111000810008C80E77ABCDFF 192.168.3.129 \{\"ctrl\":\{\"abc\":1\}\} \{\"ctrl\":\{\"abc\":2\}\}
-// ./Debug/linux 10000100111000810008EEEEEEEEEEEE 192.168.3.110 \{\"ctrl\":\{\"cjoin\":1\}\} \{\"ctrl\":\{\"cjoin\":1\}\}
+// ./Debug/linux 10000100131000910011C80E77ABCD90 192.168.3.110 \{\"ctrl\":\{\"sDevJoin\":1\}\} \{\"ctrl\":\{\"sDevJoin\":1\}\}
 
 // {
 //     uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya
@@ -82,6 +84,9 @@ extern const uint8_t *otaGetLatestSig();
 extern void otaSetLatestSig(const uint8_t *sig);
 extern int otaGetLatestType();
 extern void otaSetLatestType(int type);
+
+extern PCACHE sdevCache();
+extern SDevNode *sdevArray();
 
 typedef int (*CBLocalReq)(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len);
 typedef void (*CBRemoteRsp)(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
@@ -172,12 +177,12 @@ static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
 
 
 static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHeaderInfo *cmdInfo);
-static int isNeedDelCB(CACHE_NODE_TYPE *currNode);
-static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData);
-static int forEachNodeR2RPostSendCB(CACHE_NODE_TYPE *currNode, void *uData);
-static int forEachNodeR2RFindTokenByUUID(CACHE_NODE_TYPE *currNode, void *uData);
-static int forEachNodeR2RFindTokenIP(CACHE_NODE_TYPE *currNode, void *uData);
-static int forEachNodeR2RFindNode(CACHE_NODE_TYPE *currNode, void *uData);
+static int isNeedDelCB(NodeData *currNode);
+static int forEachNodeQ2ARspCB(NodeData *currNode, void *uData);
+static int forEachNodeR2RPostSendCB(NodeData *currNode, void *uData);
+static int forEachNodeR2RFindTokenByUUID(NodeData *currNode, void *uData);
+static int forEachNodeR2RFindTokenIP(NodeData *currNode, void *uData);
+static int forEachNodeR2RFindNode(NodeData *currNode, void *uData);
 static int isFromRemote(const CommonCtx *ctx, const char *ip, uint16_t len, uint16_t port);
 // static int isCommingFromItself(const CommonCtx *ctx, const char *ip, uint16_t port);
 static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *token, int lenToken);
@@ -188,7 +193,8 @@ static int doQ2ARemoteReq(void *ctx,
     const uint8_t *protocolBuf,
     int pbLen,
     uint8_t *nwBufOut,
-    int nwBufLen);
+    int nwBufLen,
+    int *isRepeat);
 static int doQ2AProcessing(CommonCtx *pCtx, 
     int protocolBufLen, 
     const CmdHeaderInfo *cmdInfo, 
@@ -425,6 +431,16 @@ void testJson(void) {
         LELOG("cloudMsgHandler [%d] string2", ret);
     }
 
+    {
+        // #include "misc.h"
+        extern int testJsonArray(const char *json, int jsonLen);
+        char json[] = "{\"sDevGetList\":[0,1,2]}";
+        char json1[] = "{\"sDevGetInfo\":2,\"sDev\":{\"pid\":\"0104\",\"clu\":\"0006\",\"ept\":[[\"0000\",1],[\"0000\",2],[\"0000\",3]],\"mac\":\"7409E17E3376AF60\"}}";
+        // testJsonArray(json, strlen(json))
+;        testJsonArray(json1, strlen(json1));
+
+    }
+
 }
 #endif
 
@@ -635,6 +651,20 @@ failed:
     return ret;
 }
 
+int getSDevStatus(int index, char *sdevStatus, int len) {
+    SDevNode *arr = sdevArray();
+    PCACHE cache = sdevCache(); 
+    if (arr && cache) {
+        uint8_t uuid[MAX_UUID+1] = {0};
+        getTerminalUUID(uuid, MAX_UUID);
+        sprintf(sdevStatus, "{\"%s\":\"%s\",\"%s\":%s,\"%s\":%s}", JSON_NAME_UUID, uuid, JSON_NAME_SDEV, arr[index].sdevInfo, 
+            JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}");
+    } else {
+        return 0;
+    }
+    return strlen(sdevStatus);
+}
+
 void lelinkDeinit() {
     halDeLockInit();
     halDeAESInit();
@@ -725,7 +755,7 @@ int lelinkDoPollingR2R(void *ctx) {
 
     CommonCtx *pCtx = COMM_CTX(ctx);
     int len = 0, isCacheEmpty = 0, isRemoteRsp = 0;
-    //CACHE_NODE_TYPE *node = NULL;
+    //NodeData *node = NULL;
     //CmdRecord *ct_p = NULL;
     char ipTmp[MAX_IPLEN] = { 0 };
     uint16_t portTmp = 0;
@@ -761,7 +791,7 @@ int lelinkDoPollingR2R(void *ctx) {
             CmdRecord *ct_p = getCmdRecord(cmdInfo.cmdId, cmdInfo.subCmdId);
             if (ct_p && !isCacheEmpty) {
                 MUTEX_LOCK;
-                if (qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindNode, (void *)&cmdInfo)) {
+                if (0 <= qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindNode, (void *)&cmdInfo)) {
                     ct_p->procR2R ?
                     ((CBRemoteRsp) ct_p->procR2R)(pCtx, &cmdInfo, COMM_CTX(pCtx)->protocolBuf, len) : 0;
                 }
@@ -801,14 +831,15 @@ static int doQ2ARemoteReq(void *ctx,
     const uint8_t *protocolBuf,
     int pbLen,
     uint8_t *nwBufOut,
-    int nwBufLen) {
+    int nwBufLen,
+    int *isRepeat) {
 
-    int ret = -1;
+    int ret = -1, repeat = 0;
     // CommonCtx *cmdInfo = COMM_CTX(ctx);
-    CmdRecord *ct_p;
+    CmdRecord *remoteReqPtr, *localRspPtr = NULL;
 //    UINT32 tmpType = 0;
-    ct_p = getCmdRecord(cmdInfo->cmdId, cmdInfo->subCmdId);
-    if (NULL == ct_p)
+    remoteReqPtr = getCmdRecord(cmdInfo->cmdId, cmdInfo->subCmdId);
+    if (NULL == remoteReqPtr)
     {
         return ret;
     }
@@ -818,28 +849,31 @@ static int doQ2ARemoteReq(void *ctx,
     {
         // no need to response
         // LELOGE("R2R??? it should not be here");
-        // ct_p->procR2R ?
-        //         ((CBRemoteRsp) ct_p->procR2R)(ctx, cmdInfo, protocolBuf, pbLen) :
+        // remoteReqPtr->procR2R ?
+        //         ((CBRemoteRsp) remoteReqPtr->procR2R)(ctx, cmdInfo, protocolBuf, pbLen) :
         //         0;
         return -0xE;
     }
     
     // req from outside
     // note: the data will be sent if CBRemoteReq return true. so to prepare the data in CBLocalRsp
-    if (((CBRemoteReq) ct_p->procQ2A) && 0 < ((CBRemoteReq) ct_p->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen)) // do sth remote req
-    {
-        ct_p = getCmdRecord(cmdInfo->cmdId + 1, cmdInfo->subCmdId + 1);
-        if (ct_p) {
-            // TODO: change cmdInfo to local. [why?]
-            // memset((void *)(cmdInfo->uuid), 0, sizeof(cmdInfo->uuid));
-            // getTerminalUUID((uint8_t *)(cmdInfo->uuid), MAX_UUID);
+    if ((CBRemoteReq) remoteReqPtr->procQ2A) {
+        localRspPtr = getCmdRecord(cmdInfo->cmdId + 1, cmdInfo->subCmdId + 1);
+        repeat = ((CBRemoteReq) remoteReqPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen);
+        if (localRspPtr) {
             ((CmdHeaderInfo *)cmdInfo)->cmdId++;
             ((CmdHeaderInfo *)cmdInfo)->subCmdId++;
-            ret = ((CBLocalRsp) ct_p->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen, nwBufOut, nwBufLen); // do sth local rsp
-            if (0 == ret) {
+            ret = ((CBLocalRsp) localRspPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen, nwBufOut, nwBufLen); // do sth local rsp
+            if (0 >= ret) {
                 LELOGE("CBLocalRsp ret 0, it is impossible");
-                // ret = strlen(DEF_JSON);
-                // memcpy(nwBufOut, DEF_JSON, ret);
+                return -0xF;
+            }
+            if (repeat > 1) {
+                ((CmdHeaderInfo *)cmdInfo)->cmdId--;
+                ((CmdHeaderInfo *)cmdInfo)->subCmdId--;
+                *isRepeat = repeat - 1;
+            } else {
+                *isRepeat = 0;
             }
         }
         else 
@@ -852,7 +886,7 @@ static int doQ2ARemoteReq(void *ctx,
 int lelinkNwPostCmd(void *ctx, const void *node)
 {
     CommonCtx *pCtx = (CommonCtx *)ctx;
-    CACHE_NODE_TYPE *node_p = (CACHE_NODE_TYPE *)node;
+    NodeData *node_p = (NodeData *)node;
     if (!pCtx || !node_p)
     {
         return 0;
@@ -863,6 +897,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     node_p->needReq = 1;
     node_p->needRsp = (LELINK_CMD_DISCOVER_REQ == node_p->cmdId) ? 0xFF : 1;
     node_p->randID = genRand();
+    node_p->seqId = genSeqId();
     if (!node_p->uuid[0])
         getTerminalUUID(node_p->uuid, MAX_UUID);
     node_p->timeStamp = halGetTimeStamp();
@@ -931,7 +966,7 @@ static int isFromRemote(const CommonCtx *ctx, const char *ip, uint16_t len, uint
 //     return 0;
 // }
 
-static int forEachNodeR2RFindTokenByUUID(CACHE_NODE_TYPE *currNode, void *uData) {
+static int forEachNodeR2RFindTokenByUUID(NodeData *currNode, void *uData) {
     FindToken *ft = (FindToken *)uData;
     if (0 == memcmp(currNode->uuid, ft->what, MAX_UUID)) {
         memcpy(ft->token, currNode->token, ft->lenToken);
@@ -952,7 +987,7 @@ static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *t
     MUTEX_LOCK;
     ret = qForEachfromCache(&(ctx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindTokenByUUID, (void *)&ft);
     MUTEX_UNLOCK;
-    if (ret) {
+    if (0 <= ret) {
         LELOG("BY UUID TOKEN GOT => ");
         for (i = 0; i < lenToken; i++) {
             LEPRINTF("%02X", token[i]);
@@ -963,7 +998,7 @@ static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *t
     return 0;
 }
 
-static int forEachNodeR2RFindTokenIP(CACHE_NODE_TYPE *currNode, void *uData) {
+static int forEachNodeR2RFindTokenIP(NodeData *currNode, void *uData) {
     FindToken *ft = (FindToken *)uData;
     // to void the invalid token
     if (currNode->token[0] && 
@@ -984,7 +1019,7 @@ static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *toke
     MUTEX_LOCK;
     ret = qForEachfromCache(&(ctx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindTokenIP, (void *)&ft);
     MUTEX_UNLOCK;
-    if (ret) {
+    if (0 <= ret) {
         LELOG("BY IP TOKEN GOT => ");
         for (i = 0; i < lenToken; i++) {
             LEPRINTF("%02X", token[i]);
@@ -995,7 +1030,7 @@ static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *toke
     return 0;
 }
 
-static int forEachNodeR2RFindNode(CACHE_NODE_TYPE *currNode, void *uData) {
+static int forEachNodeR2RFindNode(NodeData *currNode, void *uData) {
     CmdHeaderInfo *cmdInfo = (CmdHeaderInfo *)uData;
     if (currNode->seqId == cmdInfo->seqId) {
         if (0 < currNode->needRsp) {
@@ -1030,7 +1065,7 @@ static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHead
     return ret;
 }
 
-static int forEachNodeR2RPostSendCB(CACHE_NODE_TYPE *currNode, void *uData)
+static int forEachNodeR2RPostSendCB(NodeData *currNode, void *uData)
 {
     int len;
     CmdRecord *ct_p;
@@ -1090,7 +1125,7 @@ static int forEachNodeR2RPostSendCB(CACHE_NODE_TYPE *currNode, void *uData)
     return 0;
 }
 
-static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData)
+static int forEachNodeQ2ARspCB(NodeData *currNode, void *uData)
 {
     USED(uData);
 
@@ -1100,7 +1135,7 @@ static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData)
     //int isReq;
     CmdRecord *ct_p;
     uint8_t nwBuf[UDP_MTU] = { 0 };
-    int nwLen = 0, ret;
+    int nwLen = 0, ret, isRepeat = 0;
     ct_p = getCmdRecord(currNode->cmdId, currNode->subCmdId);
     if (NULL == ct_p)
     {
@@ -1118,7 +1153,7 @@ static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData)
     // processing again, the original req data from remote is NULL.
     // 1. req handler & req response
     // 2. pack data respectively
-    if (0 < (nwLen = doQ2ARemoteReq(currNode->pCtx, (CmdHeaderInfo *)currNode, NULL, 0, nwBuf, UDP_MTU)))
+    if (0 < (nwLen = doQ2ARemoteReq(currNode->pCtx, (CmdHeaderInfo *)currNode, NULL, 0, nwBuf, UDP_MTU, &isRepeat)))
     {
         // QA send from second time
         ret = nwUDPSendto(currNode->pCtx, currNode->ndIP, currNode->ndPort, nwBuf, nwLen);
@@ -1133,7 +1168,7 @@ static int forEachNodeQ2ARspCB(CACHE_NODE_TYPE *currNode, void *uData)
 
 }
 
-static int isNeedDelCB(CACHE_NODE_TYPE *currNode)
+static int isNeedDelCB(NodeData *currNode)
 {
     //return 1;
     // timeout
@@ -1170,8 +1205,9 @@ static int isNeedDelCB(CACHE_NODE_TYPE *currNode)
 }
 
 static int doQ2AProcessing(CommonCtx *pCtx, int protocolBufLen, const CmdHeaderInfo *cmdInfo, char ip[MAX_IPLEN], uint16_t port) {
-    int ret = 0;
-    ret = doQ2ARemoteReq(pCtx, cmdInfo, pCtx->protocolBuf, protocolBufLen, pCtx->nwBuf, UDP_MTU);
+    int ret = 0, isRepeat = 0;
+MULTI_LOCAL_RSP:
+    ret = doQ2ARemoteReq(pCtx, cmdInfo, pCtx->protocolBuf, protocolBufLen, pCtx->nwBuf, UDP_MTU, &isRepeat);
     if (ret > 0)
     {
         int nwLen = ret;
@@ -1182,11 +1218,13 @@ static int doQ2AProcessing(CommonCtx *pCtx, int protocolBufLen, const CmdHeaderI
         {
             LELOGW("lelinkDoPollingQ2A nwUDPSendto [%s:%d][%d]", ip, port, ret);
         }
+        if (isRepeat) {
+            goto MULTI_LOCAL_RSP;
+        }
     }
     else if (0 == ret)
     {
-        CACHE_NODE_TYPE node =
-        { 0 };
+        NodeData node = { 0 };
 
         // CmdHeaderInfo
         memcpy(&node, cmdInfo, sizeof(CmdHeaderInfo));
@@ -1200,10 +1238,9 @@ static int doQ2AProcessing(CommonCtx *pCtx, int protocolBufLen, const CmdHeaderI
         node.needRsp = 0;
         memcpy(node.ndIP, ip, MAX_IPLEN);
         node.ndPort = port;
+        node.seqId = genSeqId();
 
-        MUTEX_LOCK;
-        qEnCache(&(pCtx->cacheCmd), (void *) &node);
-        MUTEX_UNLOCK;
+        qEnCache(&(pCtx->cacheCmd), (void *)&node);
     }
     return ret;
 }
@@ -1236,7 +1273,7 @@ static int cbHelloRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8
     LELOG("[%d][%s]", dataLen, dataIn);
     LELOG("cbHelloRemoteReq -e");
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
-	return ret;
+	return ret > 0 ? 1 : -1;
 }
 
 static int cbHelloLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
@@ -1275,6 +1312,7 @@ static void cbDiscoverRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const u
     LELOG("cbDiscoverRemoteRsp -e");
 }
 
+static int ginSDevCountsInDiscovery;
 static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
@@ -1287,8 +1325,8 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
         }
     }
 
-    LELOG("cbDiscoverRemoteReq -e");
-    return ret;
+    LELOG("cbDiscoverRemoteReq [%d] -e", ret + ginSDevCountsInDiscovery);
+    return ret + ginSDevCountsInDiscovery;
 }
 
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
@@ -1296,14 +1334,24 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char rspDiscover[MAX_BUF] = {0};
     LELOG("cbDiscoverLocalRsp -s");
+
     // gen status
-    ret = getTerminalStatus(rspDiscover, sizeof(rspDiscover));
-    if (0 >= ret) {
-        ret = 0;
+    if (0 == ginSDevCountsInDiscovery) {
+        ret = getTerminalStatus(rspDiscover, sizeof(rspDiscover));
+        if (0 >= ret) {
+            ret = 0;
+        }
+    }
+    else {
+        ret = getSDevStatus(ginSDevCountsInDiscovery-1, rspDiscover, sizeof(rspDiscover));
     }
 
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rspDiscover, strlen(rspDiscover), dataOut, dataLen);
-    LELOG("cbDiscoverLocalRsp -e");
+	ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rspDiscover, ret, dataOut, dataLen);
+    LELOG("cbDiscoverLocalRsp ******ret[%d] [%d] -e", ret, ginSDevCountsInDiscovery);
+
+    if (0 == ginSDevCountsInDiscovery--) {
+        ginSDevCountsInDiscovery = sdevCache()->currsize;
+    }
     return ret;
 }
 
@@ -1313,13 +1361,15 @@ static int cbDiscoverStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdIn
     // char token[2*AES_LEN + 1] = {0};
     LELOG("cbDiscoverStatusChangedLocalReq -s");
 
-    // getTerminalTokenStr(token, sizeof(token));
-    ret = getTerminalStatus(status, sizeof(status));
-    if (0 > ret) {
-        ret = 0;
-        // getTerminalTokenStr(token, sizeof(token));
-        // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    } 
+    if (!cmdInfo->reserved) {
+        ret = getTerminalStatus(status, sizeof(status));
+        if (0 > ret) {
+            ret = 0;
+        } 
+    } else {
+        ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
+    }
+
     LELOG("NO need token[%d][%s]", ret, status);
     // test only
     // static int mm = 0;
@@ -1498,8 +1548,8 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         return;
     }
 
-    if (isNeedToRedirect(dataIn, dataLen, ip, &port)) {
-        CACHE_NODE_TYPE node = { 0 };
+    if (isNeedToRedirect((const char *)dataIn, dataLen, ip, &port)) {
+        NodeData node = { 0 };
         node.cmdId = LELINK_CMD_CLOUD_AUTH_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_AUTH_REQ; 
         memcpy(node.ndIP, ip, MAX_IPLEN);
@@ -1508,7 +1558,7 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
         changeStateId(E_STATE_CLOUD_LINKED);
     } else {
         // auth done
-        syncUTC(dataIn + RSA_LEN, dataLen - RSA_LEN);
+        syncUTC((const char *)dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
         halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
         changeStateId(E_STATE_CLOUD_AUTHED);
@@ -1552,7 +1602,7 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
     if (0 > cmdInfo->status) {
         changeStateId(E_STATE_AP_CONNECTED);
     } else {
-        syncUTC(dataIn + RSA_LEN, dataLen - RSA_LEN);
+        syncUTC((const char *)dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
         halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
         changeStateId(E_STATE_CLOUD_AUTHED);
@@ -1569,14 +1619,17 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     LELOG("cbCloudHeartBeatLocalReq -s");
 
     getTerminalTokenStr(token, sizeof(token));
-    ret = getTerminalStatus(status, sizeof(status));
-
-    ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    LELOG("appended token [%s]", status);
+    if (!cmdInfo->reserved) {
+        ret = getTerminalStatus(status, sizeof(status));
+        ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    } else {
+        ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
+    }
+    LELOG("appended token [%d][%d] [%s]", ret, strlen(status), status);
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     
-    LELOG("cbCloudHeartBeatLocalReq [%d] -e", ret);
+    LELOG("cbCloudHeartBeatLocalReq [%d] reserved[%d] -e", ret, cmdInfo->reserved);
     return ret;
 }
 
@@ -1601,11 +1654,15 @@ static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo,
     // CmdHeaderInfo cmdInfo = {0};
     LELOG("cbCloudStatusChangedLocalReq -s");
 
-    // getTerminalTokenStr(token, sizeof(token));
-    ret = getTerminalStatus(status, sizeof(status));
-    if (0 > ret) {
-        ret = 0;
+    if (!cmdInfo->reserved) {
+        ret = getTerminalStatus(status, sizeof(status));
+        if (0 > ret) {
+            ret = 0;
+        }
+    } else {
+        ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
     }
+
     // if (0 < ret) {
     //     getTerminalTokenStr(token, sizeof(token));
     //     sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
@@ -1682,7 +1739,7 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     setTerminalStatus((const char *)dataIn, dataLen);
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
-    return ret;
+    return ret > 0 ? 1 : -1;
 }
 
 static int cbCloudMsgCtrlR2TLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
@@ -1987,7 +2044,7 @@ static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     halCBRemoteReq(ctx, cmdInfo, data, len);
     ret = cloudMsgHandler((const char *)data, len);
     LELOG("cbCloudIndMsgRemoteReq [%d] -e", ret);
-    return ret;
+    return ret > 0 ? 1 : -1;
 }
 static int cbCloudIndMsgLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret;

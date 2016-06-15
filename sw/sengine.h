@@ -16,17 +16,15 @@ extern "C"
  * fw script
  */
 #define S1_GET_CVTTYPE "s1GetCvtType"
-#define S1_HAS_SUBDEVS "s1HasSubDevs"
 #define S1_GET_QUERIES "s1GetQueries"
 #define S1_STD2PRI "s1CvtStd2Pri"
 #define S1_PRI2STD "s1CvtPri2Std"
 #define S1_GET_VALIDKIND "s1GetValidKind"
-#define S1_MERGE_ST2ACT "s1MergeCurrStatus2Action"
 #define S1_GET_VER "s1GetVer"
 #define S1_OPT_HAS_SUBDEVS "s1OptHasSubDevs"
 #define S1_OPT_DO_SPLIT "s1OptDoSplit"
 #define S1_OPT_MERGE_ST2ACT "s1OptMergeCurrStatus2Action"
- 
+
 /*
  * ia script
  */
@@ -40,6 +38,10 @@ extern "C"
 #define S2_GET_BECMD "s2GetSelfCtrlCmd"
 #define MAX_IA_BUF 64
 #define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
+
+#define SDEV_MAX_INFO MAX_BUF/4
+#define SDEV_MAX_STATUS MAX_BUF/4*3
+
 
 enum {
 	WHATKIND_MAIN_DEV_RESET = 1,
@@ -80,6 +82,20 @@ typedef struct {
     uint8_t arrQueries[MAX_ALL_QUERYS];
     uint16_t arrQueriesCounts[MAX_QUERY_COUNTS];
 }Queries;
+
+typedef struct {
+    uint16_t datasLen;
+    uint16_t datasCountsLen;
+    uint8_t arrDatas[MAX_ALL_QUERYS];
+    uint16_t arrDatasCounts[MAX_QUERY_COUNTS];
+}Datas;
+
+typedef struct {
+    char mac[MAX_UUID];
+    char sdevStatus[SDEV_MAX_STATUS]; // as json object "sDevStatus"
+    char sdevInfo[SDEV_MAX_INFO]; // as json object "sDev"
+    int occupied;
+}SDevNode;
 
 extern ScriptCfg *ginScriptCfg;
 extern ScriptCfg *ginScriptCfg2;
