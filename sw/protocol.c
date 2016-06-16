@@ -852,7 +852,7 @@ static int doQ2ARemoteReq(void *ctx,
         // remoteReqPtr->procR2R ?
         //         ((CBRemoteRsp) remoteReqPtr->procR2R)(ctx, cmdInfo, protocolBuf, pbLen) :
         //         0;
-        return -0xE;
+        return -0xA;
     }
     
     // req from outside
@@ -860,24 +860,25 @@ static int doQ2ARemoteReq(void *ctx,
     if ((CBRemoteReq) remoteReqPtr->procQ2A) {
         localRspPtr = getCmdRecord(cmdInfo->cmdId + 1, cmdInfo->subCmdId + 1);
         repeat = ((CBRemoteReq) remoteReqPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen);
-        if (localRspPtr) {
-            ((CmdHeaderInfo *)cmdInfo)->cmdId++;
-            ((CmdHeaderInfo *)cmdInfo)->subCmdId++;
-            ret = ((CBLocalRsp) localRspPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen, nwBufOut, nwBufLen); // do sth local rsp
-            if (0 >= ret) {
-                LELOGE("CBLocalRsp ret 0, it is impossible");
-                return -0xF;
-            }
-            if (repeat > 1) {
-                ((CmdHeaderInfo *)cmdInfo)->cmdId--;
-                ((CmdHeaderInfo *)cmdInfo)->subCmdId--;
-                *isRepeat = repeat - 1;
-            } else {
-                *isRepeat = 0;
-            }
+        if (!localRspPtr || 0 > repeat) {
+            return -0xB;
         }
-        else 
-            ret = 0;
+        ((CmdHeaderInfo *)cmdInfo)->cmdId++;
+        ((CmdHeaderInfo *)cmdInfo)->subCmdId++;
+        ret = ((CBLocalRsp) localRspPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen, nwBufOut, nwBufLen); // do sth local rsp
+        if (0 >= ret) {
+            LELOGE("CBLocalRsp ret 0, it is impossible");
+            return -0xC;
+        }
+        if (repeat > 1) {
+            ((CmdHeaderInfo *)cmdInfo)->cmdId--;
+            ((CmdHeaderInfo *)cmdInfo)->subCmdId--;
+            *isRepeat = repeat - 1;
+        } else {
+            *isRepeat = 0;
+        }
+
+
     }
     return ret;
 }
