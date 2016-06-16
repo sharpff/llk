@@ -46,6 +46,8 @@ enum
     LELINK_ERR_RECV_DATA_ERR            = -1003,             /*接收到的数据有误*/
     LELINK_ERR_CANCEL_ERR               = -1004,            /*用户取消操作*/
     LELINK_ERR_BUSY_ERR                 = -1005,            /*in processing*/
+    LELINK_ERR_IA_DELETE                = -1006,            /*IA delete error, it means IA has not been deleted*/
+    LELINK_ERR_LOCK_UNLOCK              = -1008,            /*lock OR unlock failed*/
 };
 
 typedef enum

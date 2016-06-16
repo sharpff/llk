@@ -86,8 +86,8 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
                 // test only for trig a OTA
                 if (RSA_LEN >= sizeOTA) {
-                    // type = OTA_TYPE_FW;
-                    type = OTA_TYPE_FW_SCRIPT;
+                    type = OTA_TYPE_FW;
+                    // type = OTA_TYPE_FW_SCRIPT;
                     // type = OTA_TYPE_IA_SCRIPT;
                     // type = OTA_TYPE_AUTH;
                     // type = OTA_TYPE_PRIVATE;
@@ -97,7 +97,8 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/le_demo.bin", type, 35);
                         } break;
                         case OTA_TYPE_FW_SCRIPT: {
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.lua", type, 35);
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.bin", type, 35);
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.lua", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar.lua", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar2.lua", type, 35);
@@ -159,6 +160,8 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
             if (LELINK_SUBCMD_CLOUD_REPORT_REQ == cmdInfo->subCmdId) {
                 strcpy(uuid, ginCtrlUUID);
                 ret = sprintf(data, "{\"uuid\":\"%s\"}", uuid);
+                // ret = sprintf(data, "{\"uuid\":\"%s\",\"mac\":\"3B9A011A0477DFF8\"}", uuid);
+                ret = strlen(data);
             } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ == cmdInfo->subCmdId) {
                 // int type = OTA_TYPE_FW;
                 // int type = OTA_TYPE_FW_SCRIPT;
@@ -171,7 +174,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
         }break;
 
     }
-    APPLOG("halCBLocalReq [%d] -e", ret);
+    APPLOG("halCBLocalReq [%d][%s] -e", ret, data);
 
     a = ~a;
 
@@ -262,7 +265,9 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
  */
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
     int ret = 1;
+    char tmp[MAX_BUF] = {0};
     APPLOG("halCBRemoteReq -s");
+
     // APPLOG("halCBRemoteReq status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \
     //     passThru[%d] uuid[%s]", 
     //     cmdInfo->status, 
@@ -272,7 +277,8 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
     //     cmdInfo->randID, 
     //     cmdInfo->passThru, 
     //     cmdInfo->uuid);
-    APPLOG("halCBRemoteReq len[%d][%s]", len, payloadBody);
+    memcpy(tmp, payloadBody, len);
+    APPLOG("halCBRemoteReq len[%d][%s]", len, tmp);
 
     switch (cmdInfo->cmdId) {
         case LELINK_CMD_HELLO_REQ: {

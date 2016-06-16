@@ -1245,12 +1245,6 @@ int sengineGetStatus(char *status, int len) {
     return ret;
 }
 
-
-int sengineMergeStatus(char *inOutJson, int jsonLen, const char *oldStatus, int oldStatusLen) {
-    LELOG("sengineMergeStatus ***[%d][%s], [%d][%s]", jsonLen, inOutJson, oldStatusLen, oldStatus);
-    return 0;
-}
-
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     int ret = 0;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_CVTTYPE,
@@ -1606,19 +1600,6 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
             continue;
         }
 
-        ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BECMD,
-            NULL, 0, (uint8_t *)&buf, sizeof(buf));
-        if (0 > ret) {
-            LELOGW("sengineS2RuleHandler sengineCall("S2_GET_BECMD") [%d]", ret);
-            continue;
-        }
-
-        // ret = sengineMergeStatus((char *)buf, ret, localJson, localJsonLen);
-        // if (0 > ret) {
-        //     LELOGW("sengineS2RuleHandler sengineMergeStatus [%d][%d][%s], [%d][%s]", ret, buf, ret, localJson, localJsonLen);
-        //     continue;
-        // }
-
         // 5. do ctrl
         ret = sengineSetStatus((char *)buf, ret);
         LELOG("sengineS2RuleHandler sengineSetStatus DONE [%d]", ret);      
@@ -1724,9 +1705,47 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     return 0;
 }
 
+int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSelfRuleName, int *whereToPut) {
+    int i = 0, found = 0;
+    *whereToPut = -1;
+    for (i = MAX_IA - 1; i > -1; i--) {
+        if (0 < privCfg->data.iaCfg.arrIA[i]) {
+            if (0 == memcmp(strSelfRuleName, privCfg->data.iaCfg.arrIAName[i], lenSelfRuleName)) {
+                *whereToPut = i;
+                found = 1;
+                break;
+            }
+        } else {
+            *whereToPut = i;
+            found = 0;
+        }
+    }
+
+    return found;
+}
+
 int sengineRemoveRules(const char *name) {
+    int ret = 0, whereToPut = -1, found = 0;
+    PrivateCfg privCfg;
     LELOG("sengineRemoveRules -s ");
-    LELOG("sengineRemoveRules -e ");
+    if (NULL == name) {
+        LELOGE("sengineRemoveRules name NULL");
+        return -1;
+    }
+    ret = lelinkStorageReadPrivateCfg(&privCfg);
+    if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+        LELOGE("sengineRemoveRules lelinkStorageWriteScriptCfg2 csum FAILED");
+        return -2;
+    }
+    found = findPosForIAName(&privCfg, name, strlen(name), &whereToPut);
+    if (found) {
+        privCfg.data.iaCfg.arrIA[whereToPut] = -1;
+        privCfg.data.iaCfg.num--;
+        lelinkStorageWritePrivateCfg(&privCfg);
+        return found;
+    }    
+
+    LELOG("sengineRemoveRules found[%d] whereToPut[%d] -e ", found, whereToPut);
     return 0;
 }
 
