@@ -40,6 +40,7 @@
 
 
 extern void *halFlashOpen(void);
+extern int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSelfRuleName, int *whereToPut);
 
 static FlashRegion ginRegion[E_FLASH_TYPE_MAX];
 static uint32_t ginStartAddr;
@@ -262,6 +263,7 @@ int lelinkStorageWriteScriptCfg(const void *scriptCfg, int flashType, int idx) {
 
     return ret;
 }
+
 int lelinkStorageReadScriptCfg(void *scriptCfg, int flashType, int idx){
     int ret = 0;
 
@@ -278,7 +280,7 @@ int lelinkStorageReadScriptCfg(void *scriptCfg, int flashType, int idx){
 }
 
 int lelinkStorageWriteScriptCfg2(const ScriptCfg *scriptCfg) {
-    int i = 0, ret = 0, lenSelfRuleName = 0, whereToPut = -1, isNew = 0;
+    int ret = 0, lenSelfRuleName = 0, whereToPut = -1, found = 0;
     PrivateCfg privCfg;
     char strSelfRuleName[MAX_RULE_NAME] = {0};
     LELOG("lelinkStorageWriteScriptCfg2 -s ");
@@ -296,26 +298,16 @@ int lelinkStorageWriteScriptCfg2(const ScriptCfg *scriptCfg) {
         return -2;
     }
 
-    for (i = MAX_IA - 1; i > -1; i--) {
-        if (0 < privCfg.data.iaCfg.arrIA[i]) {
-            if (0 == memcmp(strSelfRuleName, privCfg.data.iaCfg.arrIAName[i], lenSelfRuleName)) {
-                whereToPut = i;
-                isNew = 0;
-                break;
-            }
-        } else {
-            whereToPut = i;
-            isNew = 1;
-        }
-    }
 
-    if (-1 == i && !isNew) {
+    found = findPosForIAName(&privCfg, strSelfRuleName, lenSelfRuleName, &whereToPut);
+
+    if (!found && 0 > whereToPut) {
         LELOGW("lelinkStorageWriteScriptCfg2 IA(s) are FULL");
         return -3;
     }
 
     // comming a new ia item
-    if (isNew) {
+    if (!found && 0 <= whereToPut) {
         privCfg.data.iaCfg.arrIA[whereToPut] = 1;
         if (0 > privCfg.data.iaCfg.num)
             privCfg.data.iaCfg.num = 1;
@@ -331,7 +323,8 @@ int lelinkStorageWriteScriptCfg2(const ScriptCfg *scriptCfg) {
 
     ret = lelinkStorageWriteScriptCfg(scriptCfg, E_FLASH_TYPE_SCRIPT2, whereToPut);
     if (0 > ret) {
-        if (isNew) {
+        // a new ia item
+        if (!found && 0 <= whereToPut) {
             privCfg.data.iaCfg.arrIA[whereToPut] = -1;
             privCfg.data.iaCfg.num--;
             lelinkStorageWritePrivateCfg(&privCfg);
@@ -339,7 +332,7 @@ int lelinkStorageWriteScriptCfg2(const ScriptCfg *scriptCfg) {
         LELOGW("lelinkStorageWriteScriptCfg2 lelinkStorageWriteScriptCfg FAILED [%d]", ret);
         return -5;
     }
-    LELOG("lelinkStorageWriteScriptCfg2 isNew[%d] where[%d/%d]-e ", isNew, whereToPut, privCfg.data.iaCfg.num);
+    LELOG("lelinkStorageWriteScriptCfg2 found[%d] where[%d/%d]-e ", found, whereToPut, privCfg.data.iaCfg.num);
     return 0;
 }
 

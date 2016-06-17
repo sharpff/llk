@@ -105,7 +105,6 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
 int sengineHasDevs(void);
 int sengineGetStatus(char *json, int jsonLen);
 int sengineSetStatus(char *json, int jsonLen);
-int sengineMergeStatus(char *inOutJson, int jsonLen, const char *oldStatus, int oldStatusLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
 int sengineQuerySlave(QuerieType_t type);
 int senginePollingSlave(void);

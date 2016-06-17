@@ -413,7 +413,7 @@ CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen,
         return CLOUD_MSG_KEY_NONE;
     }
 
-    LELOG("cloudMsgGetKey [%d][%s]", jsonLen, json);
+    // LELOG("cloudMsgGetKey [%d][%s]", jsonLen, json);
 
     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
     if (WM_SUCCESS != ret) {
@@ -435,7 +435,7 @@ CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen,
 
 int cloudMsgHandler(const char *data, int len) {
 
-    int ret = 0;
+    int ret = WM_SUCCESS;
     char buf[MAX_BUF] = {0};
     CloudMsgKey key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
     // SetLock();
@@ -446,10 +446,12 @@ int cloudMsgHandler(const char *data, int len) {
             int locked = 0;
             ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
+                ret = LELINK_ERR_LOCK_UNLOCK;
                 break;
             }
 
             if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_LOCK, &locked))) {
+                ret = LELINK_ERR_LOCK_UNLOCK;
                 break;
             }
             setLock(locked ? 1 : 0);
@@ -458,15 +460,17 @@ int cloudMsgHandler(const char *data, int len) {
             char name[MAX_RULE_NAME] = {0};
             ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
+                ret = LELINK_ERR_IA_DELETE;
                 break;
             }
 
             if (WM_SUCCESS != (ret = json_get_val_str(&jobj, JSON_NAME_NAME, name, sizeof(name)))) {
+                ret = LELINK_ERR_IA_DELETE;
                 break;
             }
-
-            // TODO: 
-            sengineRemoveRules(name);
+            if (0 >= sengineRemoveRules(name)) {
+                ret = LELINK_ERR_IA_DELETE;
+            }
         }break;
         case CLOUD_MSG_KEY_DO_SHARE: {
 

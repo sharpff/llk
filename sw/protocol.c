@@ -2037,28 +2037,28 @@ static int cbCloudIndStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, con
 }
 
 static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len) {
-    int ret = 0;
+    int ret = 1;
     LELOG("cbCloudIndMsgRemoteReq -s");
     // LELOG("[%d][%s]", len, data);
     // senginePollingRules((char *)data, len);
     // ret = setLock();
     halCBRemoteReq(ctx, cmdInfo, data, len);
-    ret = cloudMsgHandler((const char *)data, len);
     LELOG("cbCloudIndMsgRemoteReq [%d] -e", ret);
-    return ret > 0 ? 1 : -1;
+    return ret;
 }
 static int cbCloudIndMsgLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret;
+    CmdHeaderInfo* tmpCmdInfo = (CmdHeaderInfo *)cmdInfo;
     LELOG("cbCloudIndMsgLocalRsp -s");
     // halCBLocalRsp(ctx, cmdInfo, dataIn, dataLen);
+    ret = cloudMsgHandler((const char *)data, len);
+    if (0 > ret) {
+        tmpCmdInfo->status = ret;
+    }
+
     ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
+
     LELOG("cbCloudIndMsgLocalRsp [%d] -e", ret);
-
-    //char rspHello[] = "{ \"msg\":\"i know u got it.\" }";
-    // CommonCtx *pCtx = COMM_CTX(ctx);
-    // LELOG("cbHelloLocalRsp -s");
-    // LELOG("cbHelloLocalRsp -e");
-
     return ret;
 }
 
