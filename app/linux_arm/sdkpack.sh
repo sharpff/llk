@@ -56,6 +56,8 @@ $COPY $MAIN_PATH/sw/ota.h $PACK_SDK_PATH/sw/
 $COPY $MAIN_PATH/sw/protocol.h $PACK_SDK_PATH/sw/
 $COPY $MAIN_PATH/sw/state.h $PACK_SDK_PATH/sw/
 do_copy $MAIN_PATH/sw/mbedtls-2.2.0_crypto/include/mbedtls/ $PACK_SDK_PATH/sw/mbedtls-2.2.0_crypto/include/mbedtls/
+$MKDIR $PACK_SDK_PATH/tool/
+$COPY $MAIN_PATH/tool/lelinkTool.py $PACK_SDK_PATH/tool/
 
 #tar cvjf $PACK_SDK_NAME\(`date +"%Y%m%d"`\).tar.bz2 $PACK_SDK_NAME
 
