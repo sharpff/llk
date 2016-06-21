@@ -154,7 +154,11 @@ function s1MergeCurrStatus2Action(action, currStatus)
 	end
 	if tblAct["disinfect"] then 
 		tblCtrlInfo["disinfect"] = tblAct["disinfect"]
-        tblCtrlInfo["DTS"] = tblAct["DTS"]
+        if tblAct["disinfect"] == 1 then 
+            tblCtrlInfo["DTS"] = tblAct["DTS"]
+        else
+            tblCtrlInfo["DTS"] = 0 
+        end
 	else
 		tblCtrlInfo["disinfect"] = tblSta["disinfect"]
         tblCtrlInfo["DTS"] = tblSta["DTL"]
@@ -166,14 +170,22 @@ function s1MergeCurrStatus2Action(action, currStatus)
 	end
 	if tblAct["bake"] then 
 		tblCtrlInfo["bake"] = tblAct["bake"]
-        tblCtrlInfo["BTS"] = tblAct["BTS"]
+        if tblAct["bake"] == 1 then 
+            tblCtrlInfo["BTS"] = tblAct["BTS"]
+        else
+            tblCtrlInfo["BTS"] = 0
+        end
 	else
 		tblCtrlInfo["bake"] = tblSta["bake"]
         tblCtrlInfo["BTS"] = tblSta["BTL"]
 	end
 	if tblAct["wind"] then 
 		tblCtrlInfo["wind"] = tblAct["wind"]
-        tblCtrlInfo["WTS"] = tblAct["WTS"]
+        if tblAct["wind"] == 1 then 
+            tblCtrlInfo["WTS"] = tblAct["WTS"]
+        else
+            tblCtrlInfo["WTS"] = 0
+        end
 	else
 		tblCtrlInfo["wind"] = tblSta["wind"]
         tblCtrlInfo["WTS"] = tblSta["WTL"]

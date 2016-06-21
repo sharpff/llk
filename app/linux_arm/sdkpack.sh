@@ -43,6 +43,7 @@ $COPY $MAIN_PATH/app/$PLATFORM/*.bin $PACK_SDK_PATH/app/$PLATFORM/
 $COPY $MAIN_PATH/app/$PLATFORM/*.lua $PACK_SDK_PATH/app/$PLATFORM/
 $COPY $MAIN_PATH/app/$PLATFORM/debug.mak $PACK_SDK_PATH/app/$PLATFORM/
 $COPY $MAIN_PATH/app/$PLATFORM/Makefile $PACK_SDK_PATH/app/$PLATFORM/
+$COPY $MAIN_PATH/app/$PLATFORM/genProfile.sh $PACK_SDK_PATH/app/$PLATFORM/
 do_copy $MAIN_PATH/hal/$PLATFORM/ $PACK_SDK_PATH/hal/$PLATFORM/
 $MKDIR $PACK_SDK_PATH/lib/lelink/Debug-$PLATFORM/
 $COPY $MAIN_PATH/lib/lelink/Debug-$PLATFORM/lib*.a $PACK_SDK_PATH/lib/lelink/Debug-$PLATFORM/
@@ -55,6 +56,8 @@ $COPY $MAIN_PATH/sw/ota.h $PACK_SDK_PATH/sw/
 $COPY $MAIN_PATH/sw/protocol.h $PACK_SDK_PATH/sw/
 $COPY $MAIN_PATH/sw/state.h $PACK_SDK_PATH/sw/
 do_copy $MAIN_PATH/sw/mbedtls-2.2.0_crypto/include/mbedtls/ $PACK_SDK_PATH/sw/mbedtls-2.2.0_crypto/include/mbedtls/
+$MKDIR $PACK_SDK_PATH/tool/
+$COPY $MAIN_PATH/tool/lelinkTool.py $PACK_SDK_PATH/tool/
 
 #tar cvjf $PACK_SDK_NAME\(`date +"%Y%m%d"`\).tar.bz2 $PACK_SDK_NAME
 
