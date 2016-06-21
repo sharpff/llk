@@ -339,7 +339,7 @@ function s1CvtPri2Std(bin)
 
 	local str = '{}'
 	if #dataTbl < 14 then
-		return string.len(str), str
+		return 0, nil
 	end
 	
 	print ("s1CvtPri2Std\r\n")
