@@ -1628,7 +1628,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
 
     // LELOG("senginePollingRules -s ");
     ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
         LELOGW("senginePollingRules lelinkStorageReadPrivateCfg csum FAILED");
         return -1;
     }
@@ -1733,7 +1733,7 @@ int sengineRemoveRules(const char *name) {
         return -1;
     }
     ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
         LELOGE("sengineRemoveRules lelinkStorageWriteScriptCfg2 csum FAILED");
         return -2;
     }
