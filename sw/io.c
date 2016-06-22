@@ -293,7 +293,7 @@ int lelinkStorageWriteScriptCfg2(const ScriptCfg *scriptCfg) {
     }
 
     ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
         LELOGW("lelinkStorageWriteScriptCfg2 csum FAILED");
         return -2;
     }
