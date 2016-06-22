@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_BUF 1024
 #define MAX_STATUS 64
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
