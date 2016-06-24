@@ -179,6 +179,7 @@ static void postStatusChanged(int plusIdx) {
     int ret = 0;
     NodeData node = {0};
     node.reserved = plusIdx;
+    TIMEOUT_SECS_BEGIN(1)
     if (isCloudAuthed() && getLock()) {
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
@@ -194,6 +195,7 @@ static void postStatusChanged(int plusIdx) {
         node.ndPort = NW_SELF_PORT;
     }
     lelinkNwPostCmdExt(&node);
+    TIMEOUT_SECS_END
 }
 
 static int sdevInsert(SDevNode *arr, const char *status, int len) {
