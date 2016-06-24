@@ -9,16 +9,14 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
 
 ## 1. 前言
 
-本文档适用于Lelink在Linux上的开发移植, 同时需要配合**Lelink**开发包使用。
-
-另外，下文中提到的 **PLATFORM** 代表linux运行的硬件平台，如arm、mips等。
+本文档适用于Lelink在PLATFORM上的开发移植, 同时需要配合**Lelink**开发包使用。
 
 
 ## 2. Lelink开发包目录结构说明
 
-    lelink.linux_PLATFORM.sdk
+    lelink.PLATFORM.sdk
     ├── app
-    │   └── linux_PLATFORM
+    │   └── PLATFORM
     │       ├── 0x1c2000.bin
     │       ├── 0x1c3000.bin
     │       ├── 0x1c8000.bin
@@ -28,7 +26,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
     │       ├── main.c
     │       └── Makefile
     ├── hal
-    │   └── linux_PLATFORM
+    │   └── PLATFORM
     │       ├── halAES.c
     │       ├── halAirConfig.c
     │       ├── halCallback.c
@@ -42,7 +40,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
     │       └── halRSA.c
     ├── lib
     │   └── lelink
-    │       └── Debug-linux_PLATFORM
+    │       └── Debug-PLATFORM
     │           ├──liblelink.a
     │           └──libsengine.a
     ├── sw
@@ -61,7 +59,7 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
         └── luaTest
 
 
-### app/linux_PLATFORM/
+### app/PLATFORM/
 
 包含Lelink启动的使用示例及编译方法, 下面对该目录下的文档简要说明:
 
@@ -80,12 +78,12 @@ Copyright © 2004-2016 乐视网（letv.com）All rights reserved.
 - Makefile 编译参考。
 
 
-### hal/linux_PLATFORM/
+### hal/PLATFORM/
 
 该目录中包含多个C文件，在做Lelink移植时主要工作即是实现这些C中的函数。
 
 
-### lib/lelink/Debug-linux_PLATFORM/
+### lib/lelink/Debug-PLATFORM/
 
 包括两个库(liblelink.a libsengine.a)，在编译时使用。
 
@@ -221,9 +219,9 @@ int softApStarted(void);
 
 ### 4.3 其它
 
-hal/linux_PLATFORM/下的其它功能可以进一步根据系统平台优化。
+hal/PLATFORM/下的其它功能可以进一步根据系统平台优化。
 
-另外在hal/linux_PLATFORM/halNetwork.c中，有两个函数得到网络的ip及mac。现在默认是得到"wlan0"的，如不是该名称请相应更改。
+另外在hal/PLATFORM/halNetwork.c中，有两个函数得到网络的ip及mac。现在默认是得到"wlan0"的，如不是该名称请相应更改。
 ```c
     int halGetSelfAddr(char *ip, int size, int *port);
     int halGetMac(uint8_t *mac, int len);
@@ -233,14 +231,14 @@ hal/linux_PLATFORM/下的其它功能可以进一步根据系统平台优化。
 ## 5. 工具使用
 
 
-### 5.1、app/linux_PLATFORM/genProfile.sh
+### 5.1、app/PLATFORM/genProfile.sh
     
 该工具会生成(0x1c2000.bin、0x1c3000.bin、0x1c8000.bin), 当固件脚本(test.lua)修改后，需要执行该工具。
 
 
 ### 5.2 tool/linux
 
-App模拟器, 要求在请在app/linux_PLATFORM/目录下启动
+App模拟器, 要求在请在app/PLATFORM/目录下启动
 
 启动参数EXEC [target uuid] [target ip] [ctrl1] [ctrl2]
 
@@ -264,8 +262,8 @@ ctrl1, ctrl2作为控制命令，根据模拟器的控制指令交替发出。
 
 ### 5.3 tool/luaTest
 
-固件脚本测试工具，以对app/linux_PLATFORM/test.lua的测试(关于该文件的编写规则，请参考示例文件及注释)。
+固件脚本测试工具，以对app/PLATFORM/test.lua的测试(关于该文件的编写规则，请参考示例文件及注释)。
 
-例如: too/luaTest app/linux_PLATFORM/test.lua "s1GetCvtType"
+例如: too/luaTest app/PLATFORM/test.lua "s1GetCvtType"
 
 
