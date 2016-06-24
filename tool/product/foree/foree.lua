@@ -196,19 +196,29 @@ function s1OptDoSplit(data)
 	local idx = 0
 	-- print("total is "..#tblData.."\r\n")
 	while where < #tblData do
-		-- print("where is "..where.."\r\n")
-		-- print("xxx is "..where..", 1st is "..(#tblData - where + 1)..", 2nd is "..(3 + tblData[where + 2] + 1).."\r\n")
-		if nil == tblData[where + 2] or (#tblData - where + 1) < (3 + tblData[where + 2] + 1) then
+		-- print("span is "..where..":"..(where + 3 + tblData[where + 2] + 1).."\r\n")
+		local tmpString = string.sub(data, where, (where + 3 + tblData[where + 2] - 1))
+		local tmpTbl = stringToTable(tmpString)
+		-- local cmp = crc8(tmpTbl)
+		-- print ("crc8 => "..cmp..", tblData => "..tblData[(where + 3 + tblData[where + 2])].."\r\n")
+		if nil == tblData[where + 2] or (#tblData - where + 1) < (3 + tblData[where + 2] + 1) or 
+			crc8(tmpTbl) ~= tblData[(where + 3 + tblData[where + 2])]then
 			-- print("break1\r\n")
 			break
 		end
+		-- print("xxx is "..where..", 1st is "..(#tblData - where + 1)..", 2nd is "..(3 + tblData[where + 2] + 1).." => ")
+		-- LOGTBL(tmpTbl)
 		tblDataCountLen[idx + 1] = (3 + tblData[where + 2] + 1) & 0xFF
-		tblDataCountLen[idx + 2] = ((3 + tblData[where + 2] + 1) >> 8) & 0xFF
+		-- tblDataCountLen[idx + 2] = ((3 + tblData[where + 2] + 1) >> 8) & 0xFF
+		tblDataCountLen[idx + 2] = 0x00
 		idx = idx + 2
 		where = where + (3 + tblData[where + 2] + 1)
 	end
 
 	strDataCountLen = tableToString(tblDataCountLen)
+	-- LOGTBL(tblDataCountLen)
+
+	-- print(string.format('count [%d] ', string.len( strDataCountLen)) .. LOGTBL(stringToTable(strDataCountLen)))
 
 	return string.len( strDataCountLen ), strDataCountLen, string.len( data ), data
 end

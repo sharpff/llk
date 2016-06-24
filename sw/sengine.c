@@ -366,7 +366,7 @@ static int lf_s1OptDoSplit(lua_State *L, uint8_t *output, int outputLen) {
     }
 
     datas->datasCountsLen = lua_tointeger(L, -4);
-    size = MIN(datas->datasCountsLen, outputLen);
+    size = MIN(datas->datasCountsLen, sizeof(datas->arrDatasCounts));
     tmp = (uint8_t *)lua_tostring(L, -3);
     if (tmp && 0 < size) {
         memcpy(datas->arrDatasCounts, tmp, size);
@@ -375,7 +375,7 @@ static int lf_s1OptDoSplit(lua_State *L, uint8_t *output, int outputLen) {
     }
 
     datas->datasLen = lua_tointeger(L, -2);
-    size = MIN(datas->datasLen, outputLen);
+    size = MIN(datas->datasLen, sizeof(datas->arrDatas));
     tmp = (uint8_t *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(datas->arrDatas, tmp, size);
@@ -621,7 +621,7 @@ static int lf_s1CvtPri2Std(lua_State *L, uint8_t *output, int outputLen) {
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        // LEPRINTF("[SENGINE] s1CvtPri2Std: [%d][%s]", size, output);
+        // LELOGW("[SENGINE] s1CvtPri2Std: [%d][%s]", size, output);
     } else {
         size = 0;
     }
@@ -1628,7 +1628,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
 
     // LELOG("senginePollingRules -s ");
     ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
         LELOGW("senginePollingRules lelinkStorageReadPrivateCfg csum FAILED");
         return -1;
     }
@@ -1725,7 +1725,7 @@ int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSe
 }
 
 int sengineRemoveRules(const char *name) {
-    int ret = 0, whereToPut = -1, found = 0;
+    int ret, whereToPut = -1, found = 0;
     PrivateCfg privCfg;
     LELOG("sengineRemoveRules -s ");
     if (NULL == name) {
@@ -1733,7 +1733,7 @@ int sengineRemoveRules(const char *name) {
         return -1;
     }
     ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
         LELOGE("sengineRemoveRules lelinkStorageWriteScriptCfg2 csum FAILED");
         return -2;
     }

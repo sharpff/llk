@@ -140,10 +140,10 @@ function s1CvtStd2Pri(json)
 
 	-- 打开
 	if (ctrl["action"] == 1) then
-		cmdTbl[2] = 0x02
+		cmdTbl[2] = 0x01
 	-- 关闭
 	elseif (ctrl["action"] == 2) then
-		cmdTbl[2] = 0x01
+		cmdTbl[2] = 0x02
 	-- 暂停
 	elseif (ctrl["action"] == 3) then
 		cmdTbl[2] = 0x03
@@ -170,7 +170,7 @@ function s1CvtPri2Std(bin)
 	-- end
 	-- LOGTBL(dataTbl)
 
-	str = string.format(str, 100 - dataTbl[3])
+	str = string.format(str, dataTbl[3])
 	-- str = string.format(str, #dataTbl)
 	-- print (str)
 	return string.len(str), str
