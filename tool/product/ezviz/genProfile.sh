@@ -1,0 +1,30 @@
+#!/bin/bash
+MAIN_PATH="../.."
+$MAIN_PATH/lelinkTool.py \
+    -a 115.182.63.167 \
+    -p 9002 \
+    -u 10000100021000410015 \
+    -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCPnsgdmZAPFCUU1PgJTTzetkU/dcKY7bryvvTxouo3vHtYWyr5k332E6Px7dgdiapxdbFc4oVIYc7dRV+wxdDKp7+TrWcFCPdc2jVEhiwM3QII81TtT+rWwXHtQ1G56I8ES89tlwXapgdgQhpWSDyYqzyUErJ5mkv5zD4L6yBmxQIDAQAB \
+    -s OFiOU0IKcEST2+QMiH+pxEupixHegRw+QwUAiM2Pvu+/gXZ8pU3xJhKZ0DuWJvTyulN1yEpezjyE5PqidZxH292gVC/Y4z7GobeYao1ljDV2WWT932fBH4MCTuvTrMMlxSEUSDRfmzgnXZdPwaTy0dUO7xLvd+zOIh5Joodjhe4= \
+    -o ./0x1c2000.bin
+
+$MAIN_PATH/lelinkTool.py \
+    -t $MAIN_PATH/product/test.lua \
+    -o ./0x1c3000.bin
+
+$MAIN_PATH/lelinkTool.py \
+    --genpriv \
+    --ssid lelink \
+    --passwd 987654321 \
+    -o ./0x1c8000.bin
+
+##Dev
+#-u 10000100021000410015 \
+#-k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCPnsgdmZAPFCUU1PgJTTzetkU/dcKY7bryvvTxouo3vHtYWyr5k332E6Px7dgdiapxdbFc4oVIYc7dRV+wxdDKp7+TrWcFCPdc2jVEhiwM3QII81TtT+rWwXHtQ1G56I8ES89tlwXapgdgQhpWSDyYqzyUErJ5mkv5zD4L6yBmxQIDAQAB \
+#-s OFiOU0IKcEST2+QMiH+pxEupixHegRw+QwUAiM2Pvu+/gXZ8pU3xJhKZ0DuWJvTyulN1yEpezjyE5PqidZxH292gVC/Y4z7GobeYao1ljDV2WWT932fBH4MCTuvTrMMlxSEUSDRfmzgnXZdPwaTy0dUO7xLvd+zOIh5Joodjhe4= \
+
+##APP 
+#-u 43aa79db5d014672b268 \
+#-k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCDsaHFz9iATeM7C9e15t8TND+LMWhIAF2Ft/vi4Ly7bHAaiC8mrU1zzeQIiUBSrTIm4aokLoIyXVkfElmYVMBN5DeE5TC4f1VDGTaOb3aEHV7lvZp28qPBsfFLj1R5JzEakVElB7FU1IcYUnRE7wrl1BGABYycccWk1lWqL1L95QIDAQAB \
+#-s VHEcMZcl0LH5iG3+TqevvnBKLBHCQJ+rq8n81jF2xSjAyKgu9/R6tsNCJpJnO+udnG9VlRhqIsmZgzAjgUYNcj7QIN6CdsxPlUNI5VwEaHBo6IXBUQJ2wH7C+fvylhQUZF7meIoeEncEbN6SU9d0UY7aezCtxsA+9g1FCgwpWsw= \
+

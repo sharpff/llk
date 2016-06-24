@@ -1332,11 +1332,11 @@ int sengineQuerySlave(QuerieType_t type)
 }
 
 int senginePollingSlave(void) {
+    Datas datas = {0};
     char status[MAX_BUF];
     uint8_t bin[MAX_BUF] = {0};
-    int whatKind = 0, ret = 0, size = 0, i;
-    Datas datas = {0};
     uint16_t currLen = 0, appendLen = 0;
+    int whatKind = 0, ret = 0, size = 0, i;
 
     FOR_EACH_IO_HDL_START;
         ret = ioRead(ioHdl[x].ioType, ioHdl[x].hdl, bin, sizeof(bin));
