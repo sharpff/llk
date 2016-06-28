@@ -169,7 +169,17 @@ function s1CvtPri2Std(bin)
 	-- 		 (bin[i])
 	-- end
 	-- LOGTBL(dataTbl)
-
+	if dataTbl[3] > 0 and dataTbl[3] < 20 then
+		dataTbl[3] = 10
+	elseif dataTbl[3] > 20 and dataTbl[3] < 40 then
+		dataTbl[3] = 30
+	elseif dataTbl[3] > 40 and dataTbl[3] < 60 then
+		dataTbl[3] = 50
+	elseif dataTbl[3] > 60 and dataTbl[3] < 80 then
+		dataTbl[3] = 70
+	elseif dataTbl[3] > 80 and dataTbl[3] < 100 then
+		dataTbl[3] = 90
+	end
 	str = string.format(str, dataTbl[3])
 	-- str = string.format(str, #dataTbl)
 	-- print (str)

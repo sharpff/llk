@@ -75,9 +75,11 @@ int qEnCache(PCACHE C, void *val)
             // the current not has not been ocupied.
             if (0 == ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag)
             {
+                MUTEX_LOCK;
                 memcpy(&(((uint8_t*)(C->pBase))[i*C->singleSize]), val, C->singleSize);
                 ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag = tmp->flag;
                 C->currsize++;
+                MUTEX_UNLOCK;
                 return tmp->flag;
             }
         }
@@ -112,8 +114,10 @@ int qCheckForClean(PCACHE C, int (*isNeedDelCB)(void *curr))
         {
             if (isNeedDelCB(&(((uint8_t*)(C->pBase))[i*C->singleSize])))
             {
+                MUTEX_LOCK;
                 memset(&(((uint8_t*)(C->pBase))[i*C->singleSize]), 0, C->singleSize);
                 C->currsize--;
+                MUTEX_UNLOCK;
             }
         }
     }

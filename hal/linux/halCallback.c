@@ -86,10 +86,10 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
                 // test only for trig a OTA
                 if (RSA_LEN >= sizeOTA) {
-                    type = OTA_TYPE_FW;
+                    // type = OTA_TYPE_FW;
                     // type = OTA_TYPE_FW_SCRIPT;
                     // type = OTA_TYPE_IA_SCRIPT;
-                    // type = OTA_TYPE_AUTH;
+                    type = OTA_TYPE_AUTH;
                     // type = OTA_TYPE_PRIVATE;
                     switch (type) {
                         case OTA_TYPE_FW: {
@@ -97,9 +97,9 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/le_demo.bin", type, 35);
                         } break;
                         case OTA_TYPE_FW_SCRIPT: {
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.bin", type, 35);
+                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.bin", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
+                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar.lua", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar2.lua", type, 35);
                             // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/vanst86.lua", type, 35);
@@ -160,6 +160,8 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
             if (LELINK_SUBCMD_CLOUD_REPORT_REQ == cmdInfo->subCmdId) {
                 strcpy(uuid, ginCtrlUUID);
                 ret = sprintf(data, "{\"uuid\":\"%s\"}", uuid);
+                // ret = sprintf(data, "{\"uuid\":\"%s\",\"userData\":{\"bind\":0,\"terType\":\"1\"}}", uuid);
+                
                 // ret = sprintf(data, "{\"uuid\":\"%s\",\"mac\":\"3B9A011A0477DFF8\"}", uuid);
                 ret = strlen(data);
             } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ == cmdInfo->subCmdId) {
