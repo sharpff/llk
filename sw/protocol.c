@@ -73,6 +73,7 @@ typedef struct
 }FindToken;
 
 #define DEF_JSON "{\"def\":\"nothing\"}"
+#define RETRY_TIMES 2
 
 // for state
 extern int8_t ginStateCloudLinked;
@@ -682,13 +683,9 @@ int lelinkDoPollingQ2A(void *ctx) {
     CmdHeaderInfo cmdInfo = {0};
 
     // do response if postphone
-    MUTEX_LOCK;
     qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeQ2ARspCB, NULL);
-    MUTEX_UNLOCK;
 
-    MUTEX_LOCK;
 	qCheckForClean(&(pCtx->cacheCmd), (int(*)(void*))isNeedDelCB);
-    MUTEX_UNLOCK;
 /*
     if (pCtx->cacheCmd.currsize)
         LELOG("lelinkDoPollingQ2A cache[%d/%d]", pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
@@ -790,12 +787,10 @@ int lelinkDoPollingR2R(void *ctx) {
         if (isRemoteRsp) {
             CmdRecord *ct_p = getCmdRecord(cmdInfo.cmdId, cmdInfo.subCmdId);
             if (ct_p && !isCacheEmpty) {
-                MUTEX_LOCK;
                 if (0 <= qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindNode, (void *)&cmdInfo)) {
                     ct_p->procR2R ?
                     ((CBRemoteRsp) ct_p->procR2R)(pCtx, &cmdInfo, COMM_CTX(pCtx)->protocolBuf, len) : 0;
                 }
-                MUTEX_UNLOCK;
             }
         }
     }
@@ -803,23 +798,15 @@ int lelinkDoPollingR2R(void *ctx) {
     /*
      * 2. POST sending
      */
-     MUTEX_LOCK;
      isCacheEmpty = qEmptyCache(&(pCtx->cacheCmd));
-     MUTEX_UNLOCK;
      if (!isCacheEmpty) {
         // handle post send
-        MUTEX_LOCK;
         qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RPostSendCB, NULL);
-        MUTEX_UNLOCK;
 
         // TODO: do Q2A's response if postphone, BUT it should got R2R's request. so remote RemoteReq should no postphone
-        // MUTEX_LOCK;
         // qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeQ2ARspCB, NULL);
-        // MUTEX_UNLOCK;
 
-        MUTEX_LOCK;
         qCheckForClean(&(pCtx->cacheCmd), (int(*)(void*))isNeedDelCB);
-        MUTEX_UNLOCK;
     }
 
     
@@ -898,12 +885,16 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     node_p->needReq = 1;
     node_p->needRsp = (LELINK_CMD_DISCOVER_REQ == node_p->cmdId) ? 0xFF : 1;
     node_p->randID = genRand();
-    node_p->seqId = genSeqId();
+    node_p->seqId = node_p->seqId ? node_p->seqId : genSeqId();
     if (!node_p->uuid[0])
         getTerminalUUID(node_p->uuid, MAX_UUID);
     node_p->timeStamp = halGetTimeStamp();
     if (4 > node_p->timeoutRef) {
         node_p->timeoutRef = 4;
+    }
+    if (LELINK_CMD_DISCOVER_REQ == node_p->cmdId && 
+        LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == node_p->subCmdId) {
+        node_p->timeoutRef = 1;
     }
     LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort);
 
@@ -935,13 +926,10 @@ int lelinkNwPostCmd(void *ctx, const void *node)
 
 
     
-    MUTEX_LOCK;
     if (qEnCache(&(pCtx->cacheCmd), (void *)node))
     {
-        MUTEX_UNLOCK;
         return 1;
     }
-    MUTEX_UNLOCK;
 
     return 0;
 }
@@ -985,9 +973,7 @@ static int findTokenByUUID(CommonCtx *ctx, const char uuid[MAX_UUID], uint8_t *t
     ft.token = token;
     ft.lenToken = lenToken;
 
-    MUTEX_LOCK;
     ret = qForEachfromCache(&(ctx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindTokenByUUID, (void *)&ft);
-    MUTEX_UNLOCK;
     if (0 <= ret) {
         LELOG("BY UUID TOKEN GOT => ");
         for (i = 0; i < lenToken; i++) {
@@ -1017,9 +1003,7 @@ static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *toke
     ft.what = (void *)ip;
     ft.token = token;
     ft.lenToken = lenToken;
-    MUTEX_LOCK;
     ret = qForEachfromCache(&(ctx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindTokenIP, (void *)&ft);
-    MUTEX_UNLOCK;
     if (0 <= ret) {
         LELOG("BY IP TOKEN GOT => ");
         for (i = 0; i < lenToken; i++) {
@@ -1179,13 +1163,43 @@ static int isNeedDelCB(NodeData *currNode)
             currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->needRsp);
 
         switch (currNode->cmdId) {
-        case LELINK_CMD_CLOUD_HEARTBEAT_REQ:
-            {
-                if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ) {
-                    changeStateId(E_STATE_AP_CONNECTED);
+        case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
+            if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ) {
+                changeStateId(E_STATE_AP_CONNECTED);
+            }
+        }
+        break;
+        case LELINK_CMD_DISCOVER_REQ: {
+            if (currNode->subCmdId == LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ) {
+                static uint8_t retry = RETRY_TIMES;
+                NodeData node = {0};
+                int ret;
+                char br[MAX_IPLEN] = {0};
+                if (!retry) {
+                    retry = RETRY_TIMES;
+                    LELOG("isNeedDelCB ******* 1");
+                    break;
+                }
+                if (0xFF > currNode->needRsp) {
+                    retry = RETRY_TIMES;
+                    LELOG("isNeedDelCB ******* 2");
+                    break;
+                } else {
+                    node.cmdId = LELINK_CMD_DISCOVER_REQ;
+                    node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;    
+                    node.seqId = currNode->seqId;    
+                    ret = halGetBroadCastAddr(br, sizeof(br));
+                    if (0 >= ret) {
+                        strcpy(br, "255.255.255.255");
+                    } else
+                        strcpy(node.ndIP, br);
+                    node.ndPort = NW_SELF_PORT;
+                    lelinkNwPostCmdExt(&node);
+                    retry--;
+                    LELOG("isNeedDelCB ******* retry [%d]", retry);
                 }
             }
-            break;
+        }
         // case LELINK_CMD_CLOUD_GET_TARGET_REQ:
         //     {
         //         changeStateId(E_STATE_AP_CONNECTED);
@@ -1239,7 +1253,7 @@ MULTI_LOCAL_RSP:
         node.needRsp = 0;
         memcpy(node.ndIP, ip, MAX_IPLEN);
         node.ndPort = port;
-        node.seqId = genSeqId();
+        node.seqId = cmdInfo->seqId;
 
         qEnCache(&(pCtx->cacheCmd), (void *)&node);
     }
@@ -1395,7 +1409,7 @@ static void cbDiscoverStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmd
 static int cbDiscoverStatusChangedRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbDiscoverStatusChangedRemoteReq -s");
+    LELOG("======> cbDiscoverStatusChangedRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
     senginePollingRules((char *)dataIn, dataLen);
     halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);

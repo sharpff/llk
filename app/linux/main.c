@@ -206,6 +206,20 @@ redo:
 
         }
         break;
+    case 'd': {
+        char br[MAX_IPLEN] = {0};
+        int ret = 0;
+        node.cmdId = LELINK_CMD_DISCOVER_REQ; 
+        node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;
+
+        ret = halGetBroadCastAddr(br, sizeof(br));
+        if (0 >= ret) {
+            APPLOGE("halGetBroadCastAddr error\r\n");
+            return;
+        }
+        strncpy(node.ndIP, br, ret);
+        node.ndPort = LOCAL_TEST_PORT;
+        }break;
     }
     
     // MUTEX_LOCK;

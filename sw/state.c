@@ -182,7 +182,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     }
     ginMSDelay = msDelay;
     
-    TIMEOUT_BEGIN(100)
+    TIMEOUT_BEGIN(200)
     senginePollingSlave();
     TIMEOUT_END
 
