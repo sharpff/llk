@@ -535,6 +535,22 @@ void printOutBytes(const uint8_t buf[], int len) {
     APPPRINTF("\n"); 
 }
 
+
+void printForFac(void) {
+    char fwVer[64] = {0};
+    char mac[MLAN_MAC_ADDR_LENGTH] = {0};
+    getVer(fwVer, sizeof(fwVer));
+    wmprintf("firmware: %s\r\n", fwVer);
+    wlan_get_mac_address(mac);
+    wmprintf("mac: %02x:%02x:%02x:%02x:%02x:%02x\r\n", 
+        mac[0], 
+        mac[1], 
+        mac[2], 
+        mac[3], 
+        mac[4], 
+        mac[5]);
+}
+
 /*
  * Handler invoked when WLAN subsystem is ready.
  *
@@ -560,6 +576,7 @@ void event_wlan_init_done(void *data)
     if (ret != WM_SUCCESS) {
 		APPLOGE("Error: wlan_iw_init failed");
     }
+    printForFac();
     os_dump_mem_stats();
     // sector 0x1000(512pcs), block 0x10000(32pcs)
     ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000);
@@ -607,12 +624,12 @@ int common_event_handler(int event, void *data)
 	return 0;
 }
 
-extern int getVer(char fwVer[32], int size);
+extern int getVer(char fwVer[64], int size);
 extern int halUpdateImage(int type, const char *url, const char *sig);
 void le_ota(int argc, char **argv)
 {
     int c;
-    char fwVer[32] = {0};
+    char fwVer[64] = {0};
     bool optflag = false, startflag = false;
     static int type = 2;
     // static const char *sig = NULL;
@@ -744,10 +761,12 @@ static void modules_init()
 	return;
 }
 
+
 int main()
 {
     modules_init();
 
+    if (1)
     {
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x50}; // honyar
