@@ -274,11 +274,11 @@ const char *getScriptVer() {
     return verFWScript;
 }
 
-int getVer(char fwVer[32], int size) {
-    if (32 > size || !fwVer) {
+int getVer(char fwVer[64], int size) {
+    if (64 > size || !fwVer) {
         return -1;
     }
-    memset(fwVer, 0, 32);
+    memset(fwVer, 0, 64);
     sprintf(fwVer, "%d-%s-%d-%s", PF_VAL, getSWVer(), getProtocolVer(), getScriptVer());
     return 0;
 }
