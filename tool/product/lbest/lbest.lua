@@ -134,7 +134,8 @@ function s1GetValidKind(data)
 	return 0
 end
 
-function s1MergeCurrStatus2Action(action, currStatus)
+         
+function s1OptMergeCurrStatus2Action(action, currStatus)
 	local tblAct = cjson.decode(action)
 	local tblSta = cjson.decode(currStatus)
 	local tblCtrlInfo = {}
