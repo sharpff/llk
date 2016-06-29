@@ -152,7 +152,7 @@ static os_thread_t thread_lelink;
 static os_timer_t timer_airconfig;
 static os_timer_t timer_timeout;
 static os_thread_stack_define(thread_stack_airconfig, 1024);
-static os_thread_stack_define(thread_stack_lelink, 2048*6);
+static os_thread_stack_define(thread_stack_lelink, 1024 * 16);
 static os_semaphore_t sem_airconfig;
 
 // static uint16_t g_airconfig_base = 0x0000;

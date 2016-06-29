@@ -77,29 +77,16 @@ typedef struct
     LF_IMPL lf_impl;
 }FUNC_LIST;
 
-typedef struct {
-    int beingReservedNum;
-    char ruleName[MAX_RULE_NAME];
-    char beingReservedStatus[MAX_RSV_NUM][MAX_BUF];
-    uint8_t beingReservedUUID[MAX_RSV_NUM][MAX_UUID];
-}IA_CACHE_INT;
-
-typedef struct {
-    IACfg cfg;
-    IA_CACHE_INT cache[MAX_IA];
-    // char buf[1024*10];
-}IA_CACHE;
-
 typedef enum {
     SDEV_BUF_TYPE_NONE,
     SDEV_BUF_TYPE_STATUS,
     SDEV_BUF_TYPE_INFO
 }SDEV_BUF_TYPE;
 
+IA_CACHE ginIACache;
 ScriptCfg *ginScriptCfg;
 ScriptCfg *ginScriptCfg2;
 static uint32_t ginDelayMS;
-static IA_CACHE ginIACache;
 static int ginCurrCvtType;
 
 PCACHE sdevCache() {
@@ -1605,6 +1592,13 @@ int sengineS2RuleHandler(const ScriptCfg *scriptCfg2,
         // 5. do ctrl
         ret = sengineSetStatus((char *)buf, ret);
         LELOG("sengineS2RuleHandler sengineSetStatus DONE [%d]", ret);      
+        if (isCloudAuthed()) {
+            NodeData node = {0};
+            node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
+            node.subCmdId = LELINK_SUBCMD_CLOUD_IA_EXE_NOTIFY_REQ;
+            node.reserved = cacheInt - ginIACache.cache;
+            lelinkNwPostCmdExt(&node);
+        }
     }
 
     LELOG("sengineS2RuleHandler condition -e ");
@@ -1699,7 +1693,6 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
 
             sengineS2RuleHandler(ginScriptCfg2, tmpLocalJson, tmpLocalJsonLen, 
                 tmpRmtJsonLen > 0 ? tmpRmtJson : NULL, tmpRmtJsonLen, &(ginIACache.cache[i]));
-
         }
     }
     LELOG("senginePollingRules -e ");
