@@ -7,6 +7,7 @@ extern "C"
 #endif
 
 #include "ota.h"
+#include "io.h"
 
 #define MAX_SCRIPT_SIZE MAX_PROFILE_SIZE
 #define MAX_QUERY_COUNTS 16
@@ -97,6 +98,20 @@ typedef struct {
     int occupied;
 }SDevNode;
 
+typedef struct {
+    int beingReservedNum;
+    char ruleName[MAX_RULE_NAME];
+    char beingReservedStatus[MAX_RSV_NUM][MAX_BUF];
+    uint8_t beingReservedUUID[MAX_RSV_NUM][MAX_UUID];
+}IA_CACHE_INT;
+
+typedef struct {
+    IACfg cfg;
+    IA_CACHE_INT cache[MAX_IA];
+    // char buf[1024*10];
+}IA_CACHE;
+
+extern IA_CACHE ginIACache;
 extern ScriptCfg *ginScriptCfg;
 extern ScriptCfg *ginScriptCfg2;
 

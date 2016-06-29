@@ -137,6 +137,9 @@ static void cbCloudHeartBeatRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
 static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 
+static int cbCloudIAExeNotifyLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbCloudIAExeNotifyRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+
 static int cbCloudMsgCtrlC2RLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudMsgCtrlC2RRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 // static int cbCloudMsgCtrlC2RRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen); // test only
@@ -224,6 +227,9 @@ static CmdRecord tblCmdType[] = {
     // STATUS CHAGNED req from node (REMOTE)
     { LELINK_CMD_CLOUD_HEARTBEAT_REQ, LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ, cbCloudStatusChangedLocalReq, NULL },
     { LELINK_CMD_CLOUD_HEARTBEAT_RSP, LELINK_SUBCMD_CLOUD_STATUS_CHANGED_RSP, cbCloudStatusChangedRemoteRsp, NULL },
+    // IA execute
+    { LELINK_CMD_CLOUD_HEARTBEAT_REQ, LELINK_SUBCMD_CLOUD_IA_EXE_NOTIFY_REQ, cbCloudIAExeNotifyLocalReq, NULL },
+    { LELINK_CMD_CLOUD_HEARTBEAT_RSP, LELINK_SUBCMD_CLOUD_IA_EXE_NOTIFY_RSP, cbCloudIAExeNotifyRemoteRsp, NULL },
     // remote ctrl
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ, cbCloudMsgCtrlC2RLocalReq, NULL },
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_RSP, cbCloudMsgCtrlC2RRemoteRsp, NULL },
@@ -1698,6 +1704,21 @@ static void cbCloudStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInf
     LELOG("cbCloudStatusChangedRemoteRsp -e");
 }
 
+static int cbCloudIAExeNotifyLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
+    LELOG("cbCloudIAExeNotifyLocalReq -s")
+    if(cmdInfo->reserved >= MAX_IA) {
+        LELOGE("Error IA index(%d)", cmdInfo->reserved);
+        return -1;
+    }
+    snprintf(dataOut, dataLen, "{\"name\": \"%s\"}", ginIACache.cache[cmdInfo->reserved].ruleName);
+    LELOG("cbCloudIAExeNotifyLocalReq -e")
+    return strlen(dataOut);
+}
+
+static void cbCloudIAExeNotifyRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    LELOG("cbCloudIAExeNotifyRemoteRsp -s")
+    LELOG("cbCloudIAExeNotifyRemoteRsp -e")
+}
 
 static int cbCloudMsgCtrlC2RLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0, len = 0;
