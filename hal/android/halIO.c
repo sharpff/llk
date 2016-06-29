@@ -106,3 +106,6 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
     return ret;
 }
 
+void halPrint(const char *log) {
+    printf(log);
+}

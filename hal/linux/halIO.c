@@ -311,3 +311,7 @@ static int setParity(int fd, int databits, int stopbits, int parity)
     options.c_oflag  &= ~OPOST;   /*Output*/  
     return (1);    
 }
+
+void halPrint(const char *log) {
+    printf(log);
+}

@@ -285,7 +285,7 @@ ERROR_PARAM:
 			inputParamLen,
 			(uint8_t *)json,
 			sizeof(json));
-
+		APPLOG("sengineCall [%d]", ret);
 		// {
 		// 	fp = fopen("./abc.lua", "wb");
 		// 	fwrite(ginScriptCfg->data.script, ginScriptCfg->data.size, 1, fp);

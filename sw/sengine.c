@@ -1173,7 +1173,6 @@ int s2apiGetLatestStatus(lua_State *L) {
 int sengineSetStatus(char *json, int jsonLen) {
     int ret = 0;
     uint8_t bin[512] = {0};
-    int i = 0;
     char jsonMerged[2*MAX_BUF] = {0};
     // char *jsonOut = json;
     // int jsonOutLen = jsonLen;
@@ -1218,9 +1217,10 @@ int sengineSetStatus(char *json, int jsonLen) {
         }
 
         {
-            for(i = 0; i < ret; i++) {
-                LELOG("bin[%d] = %02x", i, bin[i]);
-            }
+            extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
+            char hexStr[96] = {0};
+            bytes2hexStr(bin, ret, hexStr, sizeof(hexStr));
+            LELOG("bin[%s]", hexStr);
         }
 
         ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, bin, ret);

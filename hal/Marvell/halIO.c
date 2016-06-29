@@ -265,3 +265,6 @@ int halGetMac(uint8_t *mac, int len) {
     return 0;
 }
 
+void halPrint(const char *log) {
+    wmprintf(log);
+}

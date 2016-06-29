@@ -193,3 +193,6 @@ int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len) {
     return len;
 }
 
+void halPrint(const char *log) {
+    printf(log);
+}
