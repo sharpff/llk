@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # UDP log master -  logMaster.py
-# remote ctrl cmd: {"key":5,"val":{"log2M":1,"IP":"192.168.3.100","port":1234}}
+# remote ctrl cmd: {"key":6,"val":{"log2M":1,"IP":"192.168.3.100","port":1234}}
 # IP & port is for log master
 import socket, traceback
 

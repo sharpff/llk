@@ -47,7 +47,9 @@ typedef enum {
 	CLOUD_MSG_KEY_LOCK,
 	CLOUD_MSG_KEY_DO_IA,
 	CLOUD_MSG_KEY_DO_SHARE,
-	CLOUD_MSG_KEY_LOG2MASTER = 5
+	CLOUD_MSG_KEY_DO_IA_OK,
+	CLOUD_MSG_KEY_DO_STATUS_CHANGED,
+	CLOUD_MSG_KEY_LOG2MASTER
 }CloudMsgKey;
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port);
