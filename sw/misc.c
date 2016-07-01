@@ -410,22 +410,26 @@ CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen,
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
     if (NULL == json || 0 >= jsonLen) {
+        LELOG("cloudMsgGetKey -e1");
         return CLOUD_MSG_KEY_NONE;
     }
 
-    // LELOG("cloudMsgGetKey [%d][%s]", jsonLen, json);
+    LELOG("cloudMsgGetKey [%d][%s]", jsonLen, json);
 
     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
     if (WM_SUCCESS != ret) {
+        LELOG("cloudMsgGetKey -e2");
         return CLOUD_MSG_KEY_NONE;
     }
 
     if (WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_KEY, &key)) {
+        LELOG("cloudMsgGetKey -e3");
         return CLOUD_MSG_KEY_NONE;
     }
 
     *retLen = getJsonObject(json, jsonLen, JSON_NAME_VAL, val, valLen);
     if (0 >= *retLen) {
+        LELOG("cloudMsgGetKey -e4");
         return CLOUD_MSG_KEY_NONE;
     }
 
@@ -481,3 +485,83 @@ int cloudMsgHandler(const char *data, int len) {
     return ret == WM_SUCCESS ? 1 : ret;
 }
 
+
+static int ginDir;
+static int ginLogSock;
+static char ginIP[MAX_IPLEN];
+static int ginPort;
+void setLogDir(int dir) {
+    ginDir = dir;
+}
+
+int getLogDir(void) {
+    return ginDir;
+}
+
+int enableLogForMaster(const char *data, int len) {
+    int ret = 0, dir = 0;
+    int broadcastEnable = 1;
+    jsontok_t jsonToken[NUM_TOKENS];
+    jobj_t jobj;
+    char buf[MAX_BUF] = {0};
+    CloudMsgKey key;
+    LELOG("enableLogForMaster -s");
+    if (!ginLogSock) {
+        ret = halNwNew(0, 0, &ginLogSock, &broadcastEnable);
+        if (ret) {
+            LELOGW("halNwNew [%d]", ret);
+            return -1;
+        }        
+    }
+
+    key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
+    LELOG("enableLogForMaster key[%d] [%s]", key, data);
+    if (CLOUD_MSG_KEY_LOG2MASTER != key) {
+        LELOG("enableLogForMaster -e2");
+        return -2;
+    }
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+    if (WM_SUCCESS != ret) {
+        LELOG("enableLogForMaster -e3");
+        return -3;
+    }
+
+    if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_LOG2MASTER, &dir))) {
+        LELOG("enableLogForMaster -e4");
+        return -4;
+    }
+
+    if (dir) {
+        memset(ginIP, 0, sizeof(ginIP));
+        if (WM_SUCCESS != (ret = json_get_val_str(&jobj, JSON_NAME_IP, ginIP, sizeof(ginIP)))) {
+            LELOG("enableLogForMaster -e5");
+            return -5;
+        }
+        if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_PORT, &ginPort))) {
+            LELOG("enableLogForMaster -e6");
+            return -6;
+        }
+    }
+    
+    setLogDir(dir);
+    LELOG("enableLogForMaster -e");
+    return 0;
+}
+
+void logToMaster(const char *log) {
+    halNwUDPSendto(ginLogSock, ginIP, ginPort, log, strlen(log));
+}
+
+int printOut(const char *fmt, ...) {
+    char buf[MAX_BUF] = {0};
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+    if (getLogDir()) {
+        logToMaster(buf);
+    } else {
+        halPrint(buf);
+    }
+    return 0;
+}

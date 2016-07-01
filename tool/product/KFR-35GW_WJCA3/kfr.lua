@@ -338,7 +338,7 @@ function s1CvtPri2Std(bin)
 --]]
 
 	local str = '{}'
-	if #dataTbl < 14 then
+	if #dataTbl < 14 or not dataTbl[12] or not dataTbl[13] or not dataTbl[22] then
 		return 0, nil
 	end
 	

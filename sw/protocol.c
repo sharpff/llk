@@ -1705,14 +1705,17 @@ static void cbCloudStatusChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInf
 }
 
 static int cbCloudIAExeNotifyLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
-    LELOG("cbCloudIAExeNotifyLocalReq -s")
+    int ret = 0;
+    char status[128] = {0};
+    LELOG("cbCloudIAExeNotifyLocalReq -s");
     if(cmdInfo->reserved >= MAX_IA) {
         LELOGE("Error IA index(%d)", cmdInfo->reserved);
         return -1;
     }
-    snprintf(dataOut, dataLen, "{\"name\": \"%s\"}", ginIACache.cache[cmdInfo->reserved].ruleName);
-    LELOG("cbCloudIAExeNotifyLocalReq -e")
-    return strlen(dataOut);
+    snprintf(status, sizeof(status), "{\"name\": \"%s\"}", ginIACache.cache[cmdInfo->reserved].ruleName);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    LELOG("cbCloudIAExeNotifyLocalReq -e");
+    return ret;
 }
 
 static void cbCloudIAExeNotifyRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {

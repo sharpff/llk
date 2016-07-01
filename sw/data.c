@@ -287,6 +287,7 @@ void setTerminalStatus(const char *status, int len) {
     char val[MAX_BUF];
     int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
     if (0 >= ret) {
+        enableLogForMaster(status, len);
         return;
     }
     LELOGW("setTerminalStatus [%d][%s]", ret, val);
@@ -351,6 +352,7 @@ void cacheSetTerminalStatus(const char *status, int len) {
 int cacheGetTerminalStatus(char *status, int len) {
     // test only
     // strcpy(status, "{\"pwr\":1,\"mode\":2,\"temp\":27,\"speed\":1}");
+    // strcpy(status, "{\"pwr\":1,\"temp\":26,\"mode\":1,\"speed\":4,\"envTemp\":21}");
     // return strlen(status);
 
     int cachedStatusLen = strlen(ginCachedStatus);
