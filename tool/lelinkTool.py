@@ -186,6 +186,7 @@ class PrivateInfo(object):
         self.passwd = passwd
         if len(self.ssid) > 0:
             self.config = 1
+
     def pack(self):
        self.content = ''
        self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE)
@@ -195,6 +196,16 @@ class PrivateInfo(object):
        self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.ssid) - 1)
        self.content += struct.pack("<%ds" % (len(self.passwd) + 1), self.passwd)
        self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.passwd) - 1)
+
+       # pad for     
+        # uint32_t ipaddr;
+        # uint32_t mask;
+        # uint32_t gateway;
+        # uint32_t dns1;
+        # uint32_t dns2;
+       self.content += packPad(self.PACK_PAD, 4*5);
+       self.content += struct.pack("<B", len(self.ssid))
+       self.content += struct.pack("<B", len(self.passwd))
 
        self.content += packPad(self.PACK_PAD, (self.DEV_CFG_SIZE + self.NET_CFG_SIZE + self.IA_CFG_SIZE - len(self.content)))
        self.content += struct.pack("<B", strCrc(self.content))
