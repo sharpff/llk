@@ -305,7 +305,7 @@ void setTerminalStatus(const char *status, int len) {
     char val[MAX_BUF];
     int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
     if (0 >= ret) {
-        enableLogForMaster(status, len);
+        cloudMsgHandler(status, len);
         return;
     }
     LELOGW("setTerminalStatus [%d][%s]", ret, val);
