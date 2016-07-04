@@ -135,6 +135,7 @@ s1CvtPri2Std(bin)
 ```description:```
 it converts the individual data to the standard lelink info.
 param: bin, is an individual data from IO
+it needs to be explain more for GPIO case. the param(bin) is a byte type. it has been seperated as 2 parts. 0xF0 & bin[1] is 'id', refer to GPIO's id. 0x0F & bin[1] is its value for the id of GPIO.
 ```return:```
 standard lelink string
 
