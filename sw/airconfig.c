@@ -773,8 +773,8 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
                     cfg.data.nwCfg.config.psk, 
                     cfg.data.nwCfg.configStatus);
                 // if (0 != cfg.data.nwCfg.configStatus) {
-                    strcpy(cfg.data.nwCfg.config.ssid, passport->ssid);
-                    strcpy(cfg.data.nwCfg.config.psk, passport->psk);
+                    strcpy(cfg.data.nwCfg.config.ssid, passport->ssid); cfg.data.nwCfg.config.ssid_len = strlen(passport->ssid);
+                    strcpy(cfg.data.nwCfg.config.psk, passport->psk); cfg.data.nwCfg.config.psk_len = strlen(passport->psk);
                     cfg.data.nwCfg.configStatus = 1;
                     ret = lelinkStorageWritePrivateCfg(&cfg);
                     LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);

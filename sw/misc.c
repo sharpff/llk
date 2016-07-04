@@ -437,9 +437,25 @@ CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen,
 }
 
 
+static int ginDir;
+static int ginLogSock;
+static char ginIP[MAX_IPLEN];
+static int ginPort;
+void setLogDir(int dir) {
+    ginDir = dir;
+}
+
+int getLogDir(void) {
+    return ginDir;
+}
+
+void logToMaster(const char *log) {
+    halNwUDPSendto(ginLogSock, ginIP, ginPort, log, strlen(log));
+}
+
 int cloudMsgHandler(const char *data, int len) {
 
-    int ret = WM_SUCCESS;
+    int ret = WM_SUCCESS, dir = 0;
     char buf[MAX_BUF] = {0};
     CloudMsgKey key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
     // SetLock();
@@ -476,80 +492,56 @@ int cloudMsgHandler(const char *data, int len) {
                 ret = LELINK_ERR_IA_DELETE;
             }
         }break;
-        case CLOUD_MSG_KEY_DO_SHARE: {
+        case CLOUD_MSG_KEY_LOG2MASTER: {
+            int broadcastEnable = 1;
+            if (!ginLogSock) {
+                ret = halNwNew(0, 0, &ginLogSock, &broadcastEnable);
+                if (ret) {
+                    LELOGW("halNwNew [%d]", ret);
+                    ret = -1;
+                    break;
+                }        
+            }
 
+            key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
+            LELOG("CLOUD_MSG_KEY_LOG2MASTER key[%d] [%s]", key, data);
+            if (CLOUD_MSG_KEY_LOG2MASTER != key) {
+                LELOG("CLOUD_MSG_KEY_LOG2MASTER -e2");
+                ret = -2;
+                break;
+            }
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+            if (WM_SUCCESS != ret) {
+                LELOG("CLOUD_MSG_KEY_LOG2MASTER -e3");
+                ret = -3;
+                break;
+            }
+
+            if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_LOG2MASTER, &dir))) {
+                LELOG("CLOUD_MSG_KEY_LOG2MASTER -e4");
+                ret = -4;
+                break;
+            }
+
+            if (dir) {
+                memset(ginIP, 0, sizeof(ginIP));
+                if (WM_SUCCESS != (ret = json_get_val_str(&jobj, JSON_NAME_IP, ginIP, sizeof(ginIP)))) {
+                    LELOG("CLOUD_MSG_KEY_LOG2MASTER -e5");
+                    break;
+                }
+                if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_PORT, &ginPort))) {
+                    LELOG("CLOUD_MSG_KEY_LOG2MASTER -e6");
+                    break;
+                }
+            }
+
+            setLogDir(dir);
+            LELOG("CLOUD_MSG_KEY_LOG2MASTER -e");
         }break;
         default:
         break;
     }
     return ret == WM_SUCCESS ? 1 : ret;
-}
-
-
-static int ginDir;
-static int ginLogSock;
-static char ginIP[MAX_IPLEN];
-static int ginPort;
-void setLogDir(int dir) {
-    ginDir = dir;
-}
-
-int getLogDir(void) {
-    return ginDir;
-}
-
-int enableLogForMaster(const char *data, int len) {
-    int ret = 0, dir = 0;
-    int broadcastEnable = 1;
-    jsontok_t jsonToken[NUM_TOKENS];
-    jobj_t jobj;
-    char buf[MAX_BUF] = {0};
-    CloudMsgKey key;
-    LELOG("enableLogForMaster -s");
-    if (!ginLogSock) {
-        ret = halNwNew(0, 0, &ginLogSock, &broadcastEnable);
-        if (ret) {
-            LELOGW("halNwNew [%d]", ret);
-            return -1;
-        }        
-    }
-
-    key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
-    LELOG("enableLogForMaster key[%d] [%s]", key, data);
-    if (CLOUD_MSG_KEY_LOG2MASTER != key) {
-        LELOG("enableLogForMaster -e2");
-        return -2;
-    }
-    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
-    if (WM_SUCCESS != ret) {
-        LELOG("enableLogForMaster -e3");
-        return -3;
-    }
-
-    if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_LOG2MASTER, &dir))) {
-        LELOG("enableLogForMaster -e4");
-        return -4;
-    }
-
-    if (dir) {
-        memset(ginIP, 0, sizeof(ginIP));
-        if (WM_SUCCESS != (ret = json_get_val_str(&jobj, JSON_NAME_IP, ginIP, sizeof(ginIP)))) {
-            LELOG("enableLogForMaster -e5");
-            return -5;
-        }
-        if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_PORT, &ginPort))) {
-            LELOG("enableLogForMaster -e6");
-            return -6;
-        }
-    }
-    
-    setLogDir(dir);
-    LELOG("enableLogForMaster -e");
-    return 0;
-}
-
-void logToMaster(const char *log) {
-    halNwUDPSendto(ginLogSock, ginIP, ginPort, log, strlen(log));
 }
 
 int printOut(const char *fmt, ...) {

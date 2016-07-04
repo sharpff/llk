@@ -252,6 +252,7 @@ static int stateProcSnifferGot(StateContext *cntx) {
     }
 
     if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
+        setSSID(ginPrivateCfg.data.nwCfg.config.ssid, ginPrivateCfg.data.nwCfg.config.ssid_len);
         ret = halDoApConnect(&ginPrivateCfg, sizeof(PrivateCfg));
     } else {
         ret = halDoApConnect(NULL, 0);

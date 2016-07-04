@@ -47,7 +47,9 @@ static char ginCachedStatus[UDP_MTU];
 static char ginRemoteIP[MAX_REMOTE];
 static uint16_t ginRemotePort;
 static uint32_t ginBaseSecs;
+static uint8_t ginSSID[MAX_STR_LEN];
 extern PrivateCfg ginPrivateCfg;
+
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
 
@@ -283,11 +285,27 @@ int getVer(char fwVer[64], int size) {
     return 0;
 }
 
+void setSSID(const char *ssid, int ssidLen) {
+    if (NULL == ssid || MAX_STR_LEN <= ssidLen) {
+        return;
+    }
+    memcpy(ginSSID, ssid, ssidLen);
+    ginSSID[ssidLen] = '\0';
+}
+
+int getSSID(char *ssid, int ssidLen) {
+    if (NULL == ssid || MAX_STR_LEN > ssidLen) {
+        return 0;
+    }
+    strcpy(ssid, ginSSID);
+    return strlen(ginSSID);
+}
+
 void setTerminalStatus(const char *status, int len) {
     char val[MAX_BUF];
     int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
     if (0 >= ret) {
-        enableLogForMaster(status, len);
+        cloudMsgHandler(status, len);
         return;
     }
     LELOGW("setTerminalStatus [%d][%s]", ret, val);
@@ -319,6 +337,9 @@ int getTerminalStatus(char *status, int len) {
 
     strcpy(status + tmpLen, "\",\"ver\":\""); tmpLen = strlen(status);
     getVer(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
+
+    strcpy(status + tmpLen, "\",\"ssid\":\""); tmpLen = strlen(status);
+    getSSID(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
 
     sprintf(status + tmpLen, "\",\"lock\":%d", getLock());
     tmpLen = strlen(status);
