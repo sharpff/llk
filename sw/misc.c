@@ -438,12 +438,12 @@ CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen,
 
 
 static int ginLogSock;
-// static int ginDir;
-// static char ginIP[MAX_IPLEN];
-// static int ginPort;
-static int ginDir = 1;
-static char ginIP[MAX_IPLEN] = {"192.168.3.100"};
-static int ginPort = 1234;
+static int ginDir;
+static char ginIP[MAX_IPLEN];
+static int ginPort;
+// static int ginDir = 1;
+// static char ginIP[MAX_IPLEN] = {"192.168.3.100"};
+// static int ginPort = 1234;
 
 void setLogDir(int dir) {
     ginDir = dir;
