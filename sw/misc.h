@@ -49,7 +49,8 @@ typedef enum {
 	CLOUD_MSG_KEY_DO_SHARE, // reserved for business
 	CLOUD_MSG_KEY_DO_IA_OK, // reserved for app sdk
 	CLOUD_MSG_KEY_DO_STATUS_CHANGED, // reserved for app sdk
-	CLOUD_MSG_KEY_LOG2MASTER
+	CLOUD_MSG_KEY_LOG2MASTER,
+	CLOUD_MSG_KEY_REDIRECT_AP, // only remote ctrl 
 }CloudMsgKey;
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port);

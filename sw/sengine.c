@@ -1348,15 +1348,16 @@ int senginePollingSlave(void) {
             // LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
             memcpy(&datas.arrDatas[appendLen], &bin[appendLen], currLen);
 
-            /*
+            if (0)
             {
                 int j = 0;
-                for (j = 0; j < currLen; j++) {
-                    LEPRINTF("%02x ", datas.arrDatas[j + appendLen]);
-                }  
-                LEPRINTF("\r\n");              
+                extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
+                char hexStr[96] = {0};
+                LELOG("[SENGINE]datas.arrDatas currLen[%d], appendLen[%d]", currLen, appendLen);
+                bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
+                LELOG("bin[%s]", hexStr);          
             }
-            */
+            
 
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     &datas.arrDatas[appendLen], currLen, (uint8_t *)&whatKind, sizeof(whatKind));

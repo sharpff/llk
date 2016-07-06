@@ -47,8 +47,10 @@ end
 
 --[[ MUST
 	whatCvtType:
-	0. UART json <-> bin
-	1. PIPE/IPC json <-> json
+	0x1. UART json <-> bin
+	0x2. GPIO
+	0x4. PIPE
+	0X8. SOCKET	
 ]]
 function s1GetCvtType()
 	local str = [[
