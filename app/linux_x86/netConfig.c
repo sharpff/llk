@@ -120,6 +120,7 @@ int netConfigCheck(void)
 
 static void capCallBk(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
+	target_item_t item;
 	int i, channel, ret;
 	struct ieee80211_radiotap_header *rh = (struct ieee80211_radiotap_header *) packet;
 	struct ieee80211_head *ih = (struct ieee80211_head *) (packet + rh->it_len);
@@ -128,25 +129,26 @@ static void capCallBk(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_cha
 		return;
 	}
 	channel = getChByFr(rh->channelfrequency);
-	sNetConfig.item.data = pkthdr->len - rh->it_len - sizeof(*ih);
-	memcpy(sNetConfig.item.mac_dst, ih->wi_add1, sizeof(sNetConfig.item.mac_dst));
-	memcpy(sNetConfig.item.mac_src, ih->wi_add3, sizeof(sNetConfig.item.mac_src));
-	memcpy(sNetConfig.item.mac_bssid, ih->wi_add2, sizeof(sNetConfig.item.mac_bssid));
+	item.data = pkthdr->len - rh->it_len - sizeof(*ih);
+	memcpy(item.mac_dst, ih->wi_add1, sizeof(item.mac_dst));
+	memcpy(item.mac_src, ih->wi_add3, sizeof(item.mac_src));
+	memcpy(item.mac_bssid, ih->wi_add2, sizeof(item.mac_bssid));
 #if 0
     {
         u_char *ptr;
-        ptr = sNetConfig.item.mac_dst;
+        ptr =item.mac_dst;
         printf("DA: %02X:%02X:%02X:%02X:%02X:%02X, ", ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5]);
-        ptr = sNetConfig.item.mac_bssid;
+        ptr =item.mac_bssid;
         printf("BS: %02X:%02X:%02X:%02X:%02X:%02X, ", ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5]);
-        ptr = sNetConfig.item.mac_src;
+        ptr =item.mac_src;
         printf("SA: %02X:%02X:%02X:%02X:%02X:%02X, ", ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5]);
-        printf("%03d\n", sNetConfig.item.data);
+        printf("%03d\n",item.data);
     }
 #endif
 	if (!(sNetConfig.state & CFGS_STATE_LOCK)) {
-		ret = airconfig_do_sync(&sNetConfig.item, channel, sNetConfig.channel_locked, (uint16_t *) &sNetConfig.base);
+		ret = airconfig_do_sync(&item, channel, sNetConfig.channel_locked, (uint16_t *) &sNetConfig.base);
 		if (ret == AIRCONFIG_NW_STATE_CHANNEL_LOCKED) {
+            sNetConfig.item = item;
             sNetConfig.lockTime = time(NULL);
             setState(CFGS_STATE_LOCK, 1);
 			printf("bssid lock!! base = %d, channel: ", sNetConfig.base);
@@ -167,7 +169,10 @@ static void capCallBk(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_cha
 				return;
 			}
 		}
-		ret = airconfig_get_info(sNetConfig.item.data, sNetConfig.base, &sNetConfig.account, NULL, 0);
+        if(memcmp(item.mac_src, sNetConfig.item.mac_src, sizeof(item.mac_src))) {
+            return;
+        }
+		ret = airconfig_get_info(item.data, sNetConfig.base, &sNetConfig.account, NULL, 0);
 		if (ret) {
 			printf("ssid[%s] passwd[%s]\r\n", sNetConfig.account.ssid, sNetConfig.account.psk);
             setState(CFGS_STATE_GETAP, 1);
