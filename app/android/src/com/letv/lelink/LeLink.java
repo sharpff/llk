@@ -34,8 +34,9 @@ public class LeLink {
 	 * 0.1, 添加Listener
 	 */
 	private static final String VERSION = "0.4"; // 与以上的注释一致
-	private static LeLink sLeLink = null;
 	private static final String TAG = "LeLinkJar";
+	private static LeLink sLeLink = null;
+	private static boolean isAuthed = false;
 	private static final int MAX_WAIT_CMD = 10;
 	private static final int DEFAULT_TIMEOUT = 3;
 	private static final int DEFAULT_AIRCONFIG_DELAY = 10;
@@ -137,7 +138,7 @@ public class LeLink {
 			e.printStackTrace();
 		}
 		LOGI(mSdkInfo);
-		return true;
+		return isAuthed;
 	}
 
 	/**
@@ -210,6 +211,10 @@ public class LeLink {
 
 		if (jsonStr == null) {
 			LOGE("airConfig, string null");
+			return -1;
+		}
+		if (!isAuthed) {
+			LOGE("Error, please `setContext` first!!");
 			return -1;
 		}
 		mIsGetDevHello = false;
@@ -847,6 +852,8 @@ public class LeLink {
 
 	private LeLink(String info) {
 		mPtr = init(info);
+		isAuthed = (mPtr != 0);
+		LOGE("init: " + (isAuthed ? "ok" : "error"));
 	}
 
 	private static final int MSG_TYPE_LOCALREQUEST = 1;

@@ -71,11 +71,15 @@ int initTask(char *json)
         LELOGE("Fialed to lelinkStorageInit\n");
         return -1;
     }
-	lelinkInit();
+    if((ret = lelinkInit()) < 0) {
+        LELOGE("Fialed to lelinkInit\n");
+        return ret;
+    }
     getTerminalUUID(authCfg->data.uuid, MAX_UUID);
 	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
+        LELOGE("Fialed to pthread_create\n");
 		return ret;
 	}
 	return ret;

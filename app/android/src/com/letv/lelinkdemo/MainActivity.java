@@ -42,10 +42,13 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		
 		Log.i(TAG, LeLink.getSdkInfo());
-		LeLink.setContext(getApplicationContext(), mLeLinkListener, "11:22:33:44:55:66");
-		Log.i(TAG, "SDKUUID: " + LeLink.getSdkUUID());
-		mLeLink = LeLink.getInstance();
-		mTestThread.start();
+		if (LeLink.setContext(getApplicationContext(), mLeLinkListener, "11:22:33:44:55:66")) {
+			Log.i(TAG, "SDKUUID: " + LeLink.getSdkUUID());
+			mLeLink = LeLink.getInstance();
+			mTestThread.start();
+		} else {
+			Log.e(TAG, "Failed to setContext");
+		}
 	}
 
 	private Thread mTestThread = new Thread(new Runnable() {

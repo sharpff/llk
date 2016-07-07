@@ -1719,8 +1719,8 @@ static int cbCloudIAExeNotifyLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, u
 }
 
 static void cbCloudIAExeNotifyRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbCloudIAExeNotifyRemoteRsp -s")
-    LELOG("cbCloudIAExeNotifyRemoteRsp -e")
+    LELOG("cbCloudIAExeNotifyRemoteRsp -s");
+    LELOG("cbCloudIAExeNotifyRemoteRsp -e");
 }
 
 static int cbCloudMsgCtrlC2RLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {

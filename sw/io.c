@@ -590,7 +590,7 @@ IOHDL *ioGetHdlExt() {
     if (0x00 == whatCvtType) {
         ret = sengineGetTerminalProfileCvtType(json, sizeof(json));
         if (0 >= ret) {
-            LELOGW("ioGetHdl sengineGetTerminalProfileCvtType ret[%d]", ret);
+            LELOG("ioGetHdl sengineGetTerminalProfileCvtType ret[%d]", ret);
             return NULL;
         }
         whatCvtType = getWhatCvtType(json, ret);

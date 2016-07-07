@@ -1239,7 +1239,7 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_CVTTYPE,
             NULL, 0, (uint8_t *)json, jsonLen);
     if (ret <= 0) {
-        LELOGW("sengineGetTerminalProfileCvtType sengineCall("S1_GET_CVTTYPE") [%d]", ret);
+        LELOG("sengineGetTerminalProfileCvtType sengineCall("S1_GET_CVTTYPE") [%d]", ret);
         return ret;
     }
     return ret;

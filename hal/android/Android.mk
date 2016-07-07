@@ -30,7 +30,7 @@ include $(CLEAR_VARS)
 LOCAL_DISABLE_FORMAT_STRING_CHECKS := true
 LOCAL_SRC_FILES := $(ALL_SRC_FILES)
 LOCAL_C_INCLUDES :=$(ALL_SRC_INCLUDES) 
-LOCAL_CFLAGS := -O2 -fexceptions -D__STDC_CONSTANT_MACROS=1 -D__LE_SDK__ -DTAG_LOG=\"LeLink\" -Dl_getlocaledecpoint=android_getlocaledecpoint
+LOCAL_CFLAGS := -O2 -fexceptions -D__STDC_CONSTANT_MACROS=1 -D__LE_SDK__ -DTAG_LOG=\"LeLinkSo\" -Dl_getlocaledecpoint=android_getlocaledecpoint
 LOCAL_LDLIBS := -llog
 LOCAL_MODULE := liblelink
 LOCAL_MODULE_TAGS := optional
