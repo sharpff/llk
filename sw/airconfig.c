@@ -346,7 +346,6 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
         if (fulled >= MAX_ITEM_SET / 2) {
             int valid_channel = 0, valid_counts = 0;
             for (i = 0; i < MAX_CHANNEL_CARE; i++) {
-                channel_locked[i] = node->channel_care[i][0];
                 LELOG("channel [%d] counts [%d]", node->channel_care[i][0], node->channel_care[i][1]);
                 if (node->channel_care[i][1] > valid_counts) {
                     valid_channel = node->channel_care[i][0];
@@ -357,6 +356,7 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
             }
             node->channel_care[0][0] = valid_channel;
             node->channel_care[0][1] = valid_counts;
+            channel_locked[0] = valid_channel;
             for (i = 0; i < MAX_CHANNEL_CARE; i++) {
                 LELOG("merge to one channel [%d] counts [%d]", node->channel_care[i][0], node->channel_care[i][1]);
             }
@@ -389,6 +389,48 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
     }
 
     return AIRCONFIG_NW_STATE_NONE;
+}
+
+void logprint(void)
+{
+    int last_bytes;
+    int i, j;
+    int m = 0, n = 0, x = 0;
+    uint8_t bufCheck[1+32+1+32] = {0};
+    // recover the data
+    gin_spencial_total = 1 + gin_psk_len + 1 + gin_ssid_len;
+    gin_info_block_total = (gin_spencial_total - 1)/4 + 1;
+    last_bytes = gin_spencial_total%4 ? gin_spencial_total%4 : 4;
+
+    LELOG("DONE ok gin_info_block_total[%d] gin_psk_len[%d] gin_ssid_len[%d] last_bytes[%d]", 
+            gin_info_block_total, gin_psk_len, gin_ssid_len, last_bytes);
+
+    for (i = 0; i < gin_info_block_total; i++) {
+        int bytes = ((i+1) == gin_info_block_total) ? last_bytes : 4;
+        for (j = 0; j < bytes; j++) {
+            if (i*4 + j <= gin_psk_len) {
+                // passport->psk[m++] = gin_info[i].data[j];
+                if (i != 0 || j != 0)
+                    m++;
+            } else if (i*4 + j > (1 + gin_psk_len)) {
+                // passport->ssid[n++] = gin_info[i].data[j];
+                n++;
+            }
+            bufCheck[x++] = gin_info[i].data[j];
+
+        }
+    }
+    LEPRINTF("bufCheck => m[%d] n[%d]\r\n", m, n);
+    for (i = 0; i < (1 + m + 1 + n); i++) {
+        LEPRINTF("[0x%02x], [%c]\r\n", bufCheck[i], bufCheck[i]);
+    }
+    LEPRINTF("<=== \r\n");
+
+    if (bufCheck[0] == crc8(&bufCheck[1], m+1+n)) {
+        LELOG("bufCheck OK => ");
+    } else {
+        LELOG("bufCheck NOT OK => ");
+    }
 }
 
 int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *currSSID, int currSSIDLen) {
@@ -483,11 +525,11 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
         // prefix part end
         default: {
             int i = 0;
-            LEPRINTF("EXCEPTION AIRCONFIG_STATE_GET_HEADER [0x%04x] => ", data);
+            LEPRINTF("EXCEPTION AIRCONFIG_STATE_GET_HEADER [0x%04x] => \n", data);
             for (i = 0; i < MAX_HEADER_FLAG; i++) {
-                LEPRINTF("idx[%d] counts[%d]", i, gin_airconfig_flag_header[i]);
+                LEPRINTF("idx[%d] counts[%d]\n", i, gin_airconfig_flag_header[i]);
             }
-            LEPRINTF("<= EXCEPTION HEADER ");
+            LEPRINTF("<= EXCEPTION HEADER \n");
         }break;
     }
         // if ((0xFF == gin_airconfig_flag_header)) {

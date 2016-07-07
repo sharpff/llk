@@ -22,6 +22,7 @@ JNIEXPORT jstring JNICALL Java_com_letv_lelink_LeLink_getSDKInfo(JNIEnv *env, jc
 
 JNIEXPORT jlong JNICALL Java_com_letv_lelink_LeLink_init(JNIEnv *env, jobject jobj, jstring jstr)
 {
+    int ret;
 	char *str;
 	jclass cls;
 
@@ -31,9 +32,9 @@ JNIEXPORT jlong JNICALL Java_com_letv_lelink_LeLink_init(JNIEnv *env, jobject jo
 	cls = env->FindClass("com/letv/lelink/LeLink"); //	C++ 中映射类
 	gNativeContext.onMessage = env->GetMethodID(cls, "onMessage", "(ILjava/lang/String;[B)I"); //	C++ 中映射非静态
 	str = js2c(env, jstr);
-	initTask(str);
+	ret = initTask(str);
 	free(str);
-	return (long) &gNativeContext;
+	return (ret < 0) ? 0 : (long) &gNativeContext;
 }
 
 JNIEXPORT jint JNICALL Java_com_letv_lelink_LeLink_airConfig(JNIEnv *env, jobject jobj, jlong ptr, jstring jstr)
