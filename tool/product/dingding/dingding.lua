@@ -28,7 +28,7 @@ function stringToTable( sta )
 end
 
 function LOGTBL(tblObj)
-	local str = ""
+	local str = "[LUA] "
 	for i = 1, #tblObj do 
 		str = str..string.format('%02x ', tblObj[i])
 	end
@@ -41,31 +41,35 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.0'
+	local str = '1.1'
 	return string.len(str), str
 end
 
 --[[ MUST
 	whatCvtType:
-	0. UART json <-> bin
-	1. GPIO
+	0x1. UART json <-> bin
+	0x2. GPIO
+	0x4. PIPE
+	0X8. SOCKET
 ]]
 function s1GetCvtType()
-
-	local whatCvtType = 1
-	-- delay time (ms) for the interval during write & read. 
+    -- combained uart(0x1) & gpio(0x2)
+    local str = [[
+    {
+    "whatCvtType":2,    
+    "gpio":[
+        {
+            "id":3,
+            "dir":0,
+            "mode":1,
+            "state":0,
+            "type":0
+        }
+        ]
+	}
+    ]]
 	local delay = 5
-	local gpioId = 39
-	local isInput = 1
-	--[[
-	    LELINK_GPIO_PINMODE_DEFAULT = 0,                      /*!< GPIO pin mode default define */
-	    LELINK_GPIO_PINMODE_PULLUP,                          /*!< GPIO pin mode pullup define */
-	    LELINK_GPIO_PINMODE_PULLDOWN,                        /*!< GPIO pin mode pulldown define */
-	    LELINK_GPIO_PINMODE_NOPULL,                          /*!< GPIO pin mode nopull define */
-	    LELINK_GPIO_PINMODE_TRISTATE,                        /*!< GPIO pin mode tristate define */
-	]] 
-	local gpioMode = 1
-	local str = string.format('{"whatCvtType":%d,"gpioId":%d,"isInput":%d,"initVal",%d}', whatCvtType, gpioId, isInput, gpioMode)
+
 	return string.len(str), str, delay
 end
 
@@ -115,6 +119,8 @@ function s1CvtPri2Std(bin)
 	-- end
 	-- LOGTBL(dataTbl)
 
-	str = string.format(str, dataTbl[1])
+	-- id is dataTbl[1] & 0xF0
+	-- the val of current id is dataTbl[1] & 0x0F
+	str = string.format(str, dataTbl[1] & 0x0F)
 	return string.len(str), str
 end

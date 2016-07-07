@@ -25,7 +25,7 @@ function stringToTable( sta )
 end
 
 function LOGTBL(tblObj)
-	local str = "LUA: "
+	local str = "[LUA] "
 	for i = 1, #tblObj do 
 		str = str..string.format('%02x ', tblObj[i])
 	end
@@ -44,8 +44,10 @@ end
 
 --[[ MUST
 	whatCvtType:
-	0. UART json <-> bin
-	1. PIPE/IPC json <-> json
+	0x1. UART json <-> bin
+	0x2. GPIO
+	0x4. PIPE
+	0X8. SOCKET
 ]]
 function s1GetCvtType()
     -- combained uart(0x1) & gpio(0x2)
