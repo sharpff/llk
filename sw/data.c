@@ -313,7 +313,8 @@ void setTerminalStatus(const char *status, int len) {
 }
 
 int getTerminalStatus(char *status, int len) {
-    int tmpLen = 0;
+    IA_CACHE_INT *cacheInt;
+    int i, j, cnt, tmpLen = 0;
 
     //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
 
@@ -343,6 +344,16 @@ int getTerminalStatus(char *status, int len) {
 
     sprintf(status + tmpLen, "\",\"lock\":%d", getLock());
     tmpLen = strlen(status);
+
+    tmpLen += sprintf(status + tmpLen, ",\"uuids\":%s", "[");
+    for (cnt = 0, i = 0; i < ginIACache.cfg.num; i++) {
+        cacheInt = &(ginIACache.cache[i]);
+        for(j = 0; j < cacheInt->beingReservedNum; j++) {
+            tmpLen += sprintf(status + tmpLen, "\"%s%s\"", (cnt > 0 ? ",":""), cacheInt->beingReservedUUID[j]);
+            cnt++;
+        }
+    }
+    tmpLen += sprintf(status + tmpLen, "%s", "]");
 
     // status[tmpLen] = '"'; 
     // tmpLen += 1;
