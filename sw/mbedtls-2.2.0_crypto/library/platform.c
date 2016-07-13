@@ -36,6 +36,8 @@
 #include "FreeRTOS.h"
 #elif defined(MT7687)
 #include "leconfig.h"
+#elif defined(EWM3801)
+#include "leconfig.h"
 #else
 #pragma error ("no adpation...")
 #endif
@@ -61,6 +63,12 @@ static void *platform_calloc_uninit(size_t n, size_t size )
     void *p = calloc(n, size);
     return p;
 }
+#elif defined(EWM3801)
+static void *platform_calloc_uninit(size_t n, size_t size )
+{
+    void *p = calloc(n, size);
+    return p;
+}
 #else
 #pragma error ("no adpation...")
 #endif
@@ -77,6 +85,11 @@ static void platform_free_uninit( void *ptr )
         vPortFree(ptr);
 }
 #elif defined(MT7687)
+void platform_free_uninit(void *ptr)
+{
+    free(ptr);
+}
+#elif defined(EWM3801)
 void platform_free_uninit(void *ptr)
 {
     free(ptr);
@@ -176,6 +189,11 @@ static int platform_printf_uninit( const char *format, ... )
     return ret;
 }
 #elif defined(MT7687)
+static int platform_printf_uninit(const char *format, ... )
+{
+    return 0;
+}
+#elif defined(EWM3801)
 static int platform_printf_uninit(const char *format, ... )
 {
     return 0;
