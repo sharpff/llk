@@ -23,8 +23,8 @@ error:
 	$(error Invalid configuration, please check your inputs)
 endif
 
-SOURCEFILES := ../../sw/airconfig.c ../../sw/cache.c ../../sw/convertor.c ../../sw/crypto/aesWrapper.c ../../sw/crypto/md5Wrapper.c ../../sw/crypto/rsaWrapper.c ../../sw/data.c ../../sw/io.c ../../sw/jsmn/jsgen.c ../../sw/jsmn/jsmn.c ../../sw/jsmn/jswrap.c ../../sw/mbedtls-2.2.0_crypto/library/aes.c ../../sw/mbedtls-2.2.0_crypto/library/aesni.c ../../sw/mbedtls-2.2.0_crypto/library/arc4.c ../../sw/mbedtls-2.2.0_crypto/library/asn1parse.c ../../sw/mbedtls-2.2.0_crypto/library/asn1write.c ../../sw/mbedtls-2.2.0_crypto/library/base64.c ../../sw/mbedtls-2.2.0_crypto/library/bignum.c ../../sw/mbedtls-2.2.0_crypto/library/blowfish.c ../../sw/mbedtls-2.2.0_crypto/library/camellia.c ../../sw/mbedtls-2.2.0_crypto/library/ccm.c ../../sw/mbedtls-2.2.0_crypto/library/cipher.c ../../sw/mbedtls-2.2.0_crypto/library/cipher_wrap.c ../../sw/mbedtls-2.2.0_crypto/library/ctr_drbg.c ../../sw/mbedtls-2.2.0_crypto/library/des.c ../../sw/mbedtls-2.2.0_crypto/library/dhm.c ../../sw/mbedtls-2.2.0_crypto/library/ecdh.c ../../sw/mbedtls-2.2.0_crypto/library/ecdsa.c ../../sw/mbedtls-2.2.0_crypto/library/ecjpake.c ../../sw/mbedtls-2.2.0_crypto/library/ecp.c ../../sw/mbedtls-2.2.0_crypto/library/ecp_curves.c ../../sw/mbedtls-2.2.0_crypto/library/entropy.c ../../sw/mbedtls-2.2.0_crypto/library/entropy_poll.c ../../sw/mbedtls-2.2.0_crypto/library/error.c ../../sw/mbedtls-2.2.0_crypto/library/gcm.c ../../sw/mbedtls-2.2.0_crypto/library/havege.c ../../sw/mbedtls-2.2.0_crypto/library/hmac_drbg.c ../../sw/mbedtls-2.2.0_crypto/library/md.c ../../sw/mbedtls-2.2.0_crypto/library/md2.c ../../sw/mbedtls-2.2.0_crypto/library/md4.c ../../sw/mbedtls-2.2.0_crypto/library/md5.c ../../sw/mbedtls-2.2.0_crypto/library/md_wrap.c ../../sw/mbedtls-2.2.0_crypto/library/memory_buffer_alloc.c ../../sw/mbedtls-2.2.0_crypto/library/oid.c ../../sw/mbedtls-2.2.0_crypto/library/padlock.c ../../sw/mbedtls-2.2.0_crypto/library/pem.c ../../sw/mbedtls-2.2.0_crypto/library/pk.c ../../sw/mbedtls-2.2.0_crypto/library/pkcs12.c ../../sw/mbedtls-2.2.0_crypto/library/pkcs5.c ../../sw/mbedtls-2.2.0_crypto/library/pkparse.c ../../sw/mbedtls-2.2.0_crypto/library/pkwrite.c ../../sw/mbedtls-2.2.0_crypto/library/pk_wrap.c ../../sw/mbedtls-2.2.0_crypto/library/platform.c ../../sw/mbedtls-2.2.0_crypto/library/ripemd160.c ../../sw/mbedtls-2.2.0_crypto/library/rsa.c ../../sw/mbedtls-2.2.0_crypto/library/sha1.c ../../sw/mbedtls-2.2.0_crypto/library/sha256.c ../../sw/mbedtls-2.2.0_crypto/library/sha512.c ../../sw/mbedtls-2.2.0_crypto/library/threading.c ../../sw/mbedtls-2.2.0_crypto/library/timing.c ../../sw/mbedtls-2.2.0_crypto/library/version.c ../../sw/mbedtls-2.2.0_crypto/library/version_features.c ../../sw/mbedtls-2.2.0_crypto/library/xtea.c ../../sw/misc.c ../../sw/network.c ../../sw/ota.c ../../sw/pack.c ../../sw/protocol.c ../../sw/sengine.c ../../sw/state.c ../../sw/utility.c
-SOURCEFILES += ../../sw/sengine/fpconv.c ../../sw/sengine/lapi.c ../../sw/sengine/lauxlib.c ../../sw/sengine/lbaselib.c ../../sw/sengine/lbitlib.c ../../sw/sengine/lcode.c ../../sw/sengine/lcorolib.c ../../sw/sengine/lctype.c ../../sw/sengine/ldblib.c ../../sw/sengine/ldebug.c ../../sw/sengine/ldo.c ../../sw/sengine/ldump.c ../../sw/sengine/lfunc.c ../../sw/sengine/lgc.c ../../sw/sengine/linit.c ../../sw/sengine/llex.c ../../sw/sengine/lmem.c ../../sw/sengine/lobject.c ../../sw/sengine/lopcodes.c ../../sw/sengine/lparser.c ../../sw/sengine/lstate.c ../../sw/sengine/lstring.c ../../sw/sengine/lstrlib.c ../../sw/sengine/ltable.c ../../sw/sengine/ltablib.c ../../sw/sengine/ltm.c ../../sw/sengine/lua_cjson.c ../../sw/sengine/lua_clib.c ../../sw/sengine/lundump.c ../../sw/sengine/lvm.c ../../sw/sengine/lzio.c ../../sw/sengine/strbuf.c
+SOURCEFILES := $(MAIN_PATH)/sw/airconfig.c $(MAIN_PATH)/sw/cache.c $(MAIN_PATH)/sw/convertor.c $(MAIN_PATH)/sw/crypto/aesWrapper.c $(MAIN_PATH)/sw/crypto/md5Wrapper.c $(MAIN_PATH)/sw/crypto/rsaWrapper.c $(MAIN_PATH)/sw/data.c $(MAIN_PATH)/sw/io.c $(MAIN_PATH)/sw/jsmn/jsgen.c $(MAIN_PATH)/sw/jsmn/jsmn.c $(MAIN_PATH)/sw/jsmn/jswrap.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/aes.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/aesni.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/arc4.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/asn1parse.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/asn1write.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/base64.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/bignum.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/blowfish.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/camellia.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ccm.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/cipher.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/cipher_wrap.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ctr_drbg.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/des.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/dhm.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecdh.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecdsa.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecjpake.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecp.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecp_curves.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/entropy.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/entropy_poll.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/error.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/gcm.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/havege.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/hmac_drbg.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md2.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md4.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md5.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md_wrap.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/memory_buffer_alloc.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/oid.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/padlock.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pem.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pk.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pkcs12.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pkcs5.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pkparse.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pkwrite.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pk_wrap.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/platform.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ripemd160.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/rsa.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/sha1.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/sha256.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/sha512.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/threading.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/timing.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/version.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/version_features.c $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/xtea.c $(MAIN_PATH)/sw/misc.c $(MAIN_PATH)/sw/network.c $(MAIN_PATH)/sw/ota.c $(MAIN_PATH)/sw/pack.c $(MAIN_PATH)/sw/protocol.c $(MAIN_PATH)/sw/sengine.c $(MAIN_PATH)/sw/state.c $(MAIN_PATH)/sw/utility.c
+SOURCEFILES += $(MAIN_PATH)/sw/sengine/fpconv.c $(MAIN_PATH)/sw/sengine/lapi.c $(MAIN_PATH)/sw/sengine/lauxlib.c $(MAIN_PATH)/sw/sengine/lbaselib.c $(MAIN_PATH)/sw/sengine/lbitlib.c $(MAIN_PATH)/sw/sengine/lcode.c $(MAIN_PATH)/sw/sengine/lcorolib.c $(MAIN_PATH)/sw/sengine/lctype.c $(MAIN_PATH)/sw/sengine/ldblib.c $(MAIN_PATH)/sw/sengine/ldebug.c $(MAIN_PATH)/sw/sengine/ldo.c $(MAIN_PATH)/sw/sengine/ldump.c $(MAIN_PATH)/sw/sengine/lfunc.c $(MAIN_PATH)/sw/sengine/lgc.c $(MAIN_PATH)/sw/sengine/linit.c $(MAIN_PATH)/sw/sengine/llex.c $(MAIN_PATH)/sw/sengine/lmem.c $(MAIN_PATH)/sw/sengine/lobject.c $(MAIN_PATH)/sw/sengine/lopcodes.c $(MAIN_PATH)/sw/sengine/lparser.c $(MAIN_PATH)/sw/sengine/lstate.c $(MAIN_PATH)/sw/sengine/lstring.c $(MAIN_PATH)/sw/sengine/lstrlib.c $(MAIN_PATH)/sw/sengine/ltable.c $(MAIN_PATH)/sw/sengine/ltablib.c $(MAIN_PATH)/sw/sengine/ltm.c $(MAIN_PATH)/sw/sengine/lua_cjson.c $(MAIN_PATH)/sw/sengine/lua_clib.c $(MAIN_PATH)/sw/sengine/lundump.c $(MAIN_PATH)/sw/sengine/lvm.c $(MAIN_PATH)/sw/sengine/lzio.c $(MAIN_PATH)/sw/sengine/strbuf.c
 EXTERNAL_LIBS := 
 EXTERNAL_LIBS_COPIED := $(foreach lib, $(EXTERNAL_LIBS),$(BINARYDIR)/$(notdir $(lib)))
 
@@ -166,418 +166,418 @@ $(BINARYDIR)/%.o : %.cxx $(all_make_files) |$(BINARYDIR)
 #VisualGDB: GeneratedRules				#<--- All lines below are auto-generated
 
 
-$(BINARYDIR)/airconfig.o : ../../sw/airconfig.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/airconfig.o : $(MAIN_PATH)/sw/airconfig.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/airconfig_ctrl.o : ../../sw/airconfig_ctrl.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/airconfig_ctrl.o : $(MAIN_PATH)/sw/airconfig_ctrl.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/cache.o : ../../sw/cache.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/cache.o : $(MAIN_PATH)/sw/cache.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/convertor.o : ../../sw/convertor.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/convertor.o : $(MAIN_PATH)/sw/convertor.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/aesWrapper.o : ../../sw/crypto/aesWrapper.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/aesWrapper.o : $(MAIN_PATH)/sw/crypto/aesWrapper.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/md5Wrapper.o : ../../sw/crypto/md5Wrapper.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/md5Wrapper.o : $(MAIN_PATH)/sw/crypto/md5Wrapper.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/rsaWrapper.o : ../../sw/crypto/rsaWrapper.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/rsaWrapper.o : $(MAIN_PATH)/sw/crypto/rsaWrapper.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/data.o : ../../sw/data.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/data.o : $(MAIN_PATH)/sw/data.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/io.o : ../../sw/io.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/io.o : $(MAIN_PATH)/sw/io.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/jsgen.o : ../../sw/jsmn/jsgen.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/jsgen.o : $(MAIN_PATH)/sw/jsmn/jsgen.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/jsmn.o : ../../sw/jsmn/jsmn.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/jsmn.o : $(MAIN_PATH)/sw/jsmn/jsmn.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/jswrap.o : ../../sw/jsmn/jswrap.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/jswrap.o : $(MAIN_PATH)/sw/jsmn/jswrap.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/aes.o : ../../sw/mbedtls-2.2.0_crypto/library/aes.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/aes.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/aes.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/aesni.o : ../../sw/mbedtls-2.2.0_crypto/library/aesni.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/aesni.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/aesni.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/arc4.o : ../../sw/mbedtls-2.2.0_crypto/library/arc4.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/arc4.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/arc4.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/asn1parse.o : ../../sw/mbedtls-2.2.0_crypto/library/asn1parse.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/asn1parse.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/asn1parse.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/asn1write.o : ../../sw/mbedtls-2.2.0_crypto/library/asn1write.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/asn1write.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/asn1write.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/base64.o : ../../sw/mbedtls-2.2.0_crypto/library/base64.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/base64.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/base64.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/bignum.o : ../../sw/mbedtls-2.2.0_crypto/library/bignum.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/bignum.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/bignum.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/blowfish.o : ../../sw/mbedtls-2.2.0_crypto/library/blowfish.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/blowfish.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/blowfish.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/camellia.o : ../../sw/mbedtls-2.2.0_crypto/library/camellia.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/camellia.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/camellia.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ccm.o : ../../sw/mbedtls-2.2.0_crypto/library/ccm.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ccm.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ccm.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/cipher.o : ../../sw/mbedtls-2.2.0_crypto/library/cipher.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/cipher.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/cipher.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/cipher_wrap.o : ../../sw/mbedtls-2.2.0_crypto/library/cipher_wrap.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/cipher_wrap.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/cipher_wrap.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ctr_drbg.o : ../../sw/mbedtls-2.2.0_crypto/library/ctr_drbg.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ctr_drbg.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ctr_drbg.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/des.o : ../../sw/mbedtls-2.2.0_crypto/library/des.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/des.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/des.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/dhm.o : ../../sw/mbedtls-2.2.0_crypto/library/dhm.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/dhm.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/dhm.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ecdh.o : ../../sw/mbedtls-2.2.0_crypto/library/ecdh.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ecdh.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecdh.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ecdsa.o : ../../sw/mbedtls-2.2.0_crypto/library/ecdsa.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ecdsa.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecdsa.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ecjpake.o : ../../sw/mbedtls-2.2.0_crypto/library/ecjpake.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ecjpake.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecjpake.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ecp.o : ../../sw/mbedtls-2.2.0_crypto/library/ecp.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ecp.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecp.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ecp_curves.o : ../../sw/mbedtls-2.2.0_crypto/library/ecp_curves.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ecp_curves.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ecp_curves.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/entropy.o : ../../sw/mbedtls-2.2.0_crypto/library/entropy.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/entropy.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/entropy.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/entropy_poll.o : ../../sw/mbedtls-2.2.0_crypto/library/entropy_poll.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/entropy_poll.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/entropy_poll.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/error.o : ../../sw/mbedtls-2.2.0_crypto/library/error.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/error.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/error.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/gcm.o : ../../sw/mbedtls-2.2.0_crypto/library/gcm.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/gcm.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/gcm.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/havege.o : ../../sw/mbedtls-2.2.0_crypto/library/havege.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/havege.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/havege.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/hmac_drbg.o : ../../sw/mbedtls-2.2.0_crypto/library/hmac_drbg.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/hmac_drbg.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/hmac_drbg.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/md.o : ../../sw/mbedtls-2.2.0_crypto/library/md.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/md.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/md2.o : ../../sw/mbedtls-2.2.0_crypto/library/md2.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/md2.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md2.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/md4.o : ../../sw/mbedtls-2.2.0_crypto/library/md4.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/md4.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md4.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/md5.o : ../../sw/mbedtls-2.2.0_crypto/library/md5.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/md5.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md5.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/md_wrap.o : ../../sw/mbedtls-2.2.0_crypto/library/md_wrap.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/md_wrap.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/md_wrap.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/memory_buffer_alloc.o : ../../sw/mbedtls-2.2.0_crypto/library/memory_buffer_alloc.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/memory_buffer_alloc.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/memory_buffer_alloc.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/oid.o : ../../sw/mbedtls-2.2.0_crypto/library/oid.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/oid.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/oid.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/padlock.o : ../../sw/mbedtls-2.2.0_crypto/library/padlock.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/padlock.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/padlock.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/pem.o : ../../sw/mbedtls-2.2.0_crypto/library/pem.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/pem.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pem.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/pk.o : ../../sw/mbedtls-2.2.0_crypto/library/pk.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/pk.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pk.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/pkcs12.o : ../../sw/mbedtls-2.2.0_crypto/library/pkcs12.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/pkcs12.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pkcs12.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/pkcs5.o : ../../sw/mbedtls-2.2.0_crypto/library/pkcs5.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/pkcs5.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pkcs5.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/pkparse.o : ../../sw/mbedtls-2.2.0_crypto/library/pkparse.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/pkparse.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pkparse.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/pkwrite.o : ../../sw/mbedtls-2.2.0_crypto/library/pkwrite.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/pkwrite.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pkwrite.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/pk_wrap.o : ../../sw/mbedtls-2.2.0_crypto/library/pk_wrap.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/pk_wrap.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/pk_wrap.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/platform.o : ../../sw/mbedtls-2.2.0_crypto/library/platform.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/platform.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/platform.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ripemd160.o : ../../sw/mbedtls-2.2.0_crypto/library/ripemd160.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ripemd160.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/ripemd160.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/rsa.o : ../../sw/mbedtls-2.2.0_crypto/library/rsa.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/rsa.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/rsa.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/sha1.o : ../../sw/mbedtls-2.2.0_crypto/library/sha1.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/sha1.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/sha1.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/sha256.o : ../../sw/mbedtls-2.2.0_crypto/library/sha256.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/sha256.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/sha256.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/sha512.o : ../../sw/mbedtls-2.2.0_crypto/library/sha512.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/sha512.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/sha512.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/threading.o : ../../sw/mbedtls-2.2.0_crypto/library/threading.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/threading.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/threading.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/timing.o : ../../sw/mbedtls-2.2.0_crypto/library/timing.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/timing.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/timing.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/version.o : ../../sw/mbedtls-2.2.0_crypto/library/version.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/version.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/version.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/version_features.o : ../../sw/mbedtls-2.2.0_crypto/library/version_features.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/version_features.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/version_features.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/xtea.o : ../../sw/mbedtls-2.2.0_crypto/library/xtea.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/xtea.o : $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/library/xtea.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/misc.o : ../../sw/misc.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/misc.o : $(MAIN_PATH)/sw/misc.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/network.o : ../../sw/network.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/network.o : $(MAIN_PATH)/sw/network.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ota.o : ../../sw/ota.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ota.o : $(MAIN_PATH)/sw/ota.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/pack.o : ../../sw/pack.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/pack.o : $(MAIN_PATH)/sw/pack.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/protocol.o : ../../sw/protocol.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/protocol.o : $(MAIN_PATH)/sw/protocol.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/sengine.o : ../../sw/sengine.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/sengine.o : $(MAIN_PATH)/sw/sengine.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/state.o : ../../sw/state.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/state.o : $(MAIN_PATH)/sw/state.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/utility.o : ../../sw/utility.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/utility.o : $(MAIN_PATH)/sw/utility.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 ## -------------------------------------------------------------------------------
 
-$(BINARYDIR)/fpconv.o : ../../sw/sengine/fpconv.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/fpconv.o : $(MAIN_PATH)/sw/sengine/fpconv.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lapi.o : ../../sw/sengine/lapi.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lapi.o : $(MAIN_PATH)/sw/sengine/lapi.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lauxlib.o : ../../sw/sengine/lauxlib.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lauxlib.o : $(MAIN_PATH)/sw/sengine/lauxlib.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lbaselib.o : ../../sw/sengine/lbaselib.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lbaselib.o : $(MAIN_PATH)/sw/sengine/lbaselib.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lbitlib.o : ../../sw/sengine/lbitlib.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lbitlib.o : $(MAIN_PATH)/sw/sengine/lbitlib.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lcode.o : ../../sw/sengine/lcode.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lcode.o : $(MAIN_PATH)/sw/sengine/lcode.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lcorolib.o : ../../sw/sengine/lcorolib.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lcorolib.o : $(MAIN_PATH)/sw/sengine/lcorolib.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lctype.o : ../../sw/sengine/lctype.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lctype.o : $(MAIN_PATH)/sw/sengine/lctype.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ldblib.o : ../../sw/sengine/ldblib.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ldblib.o : $(MAIN_PATH)/sw/sengine/ldblib.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ldebug.o : ../../sw/sengine/ldebug.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ldebug.o : $(MAIN_PATH)/sw/sengine/ldebug.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ldo.o : ../../sw/sengine/ldo.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ldo.o : $(MAIN_PATH)/sw/sengine/ldo.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ldump.o : ../../sw/sengine/ldump.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ldump.o : $(MAIN_PATH)/sw/sengine/ldump.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lfunc.o : ../../sw/sengine/lfunc.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lfunc.o : $(MAIN_PATH)/sw/sengine/lfunc.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lgc.o : ../../sw/sengine/lgc.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lgc.o : $(MAIN_PATH)/sw/sengine/lgc.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/linit.o : ../../sw/sengine/linit.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/linit.o : $(MAIN_PATH)/sw/sengine/linit.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/llex.o : ../../sw/sengine/llex.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/llex.o : $(MAIN_PATH)/sw/sengine/llex.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lmem.o : ../../sw/sengine/lmem.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lmem.o : $(MAIN_PATH)/sw/sengine/lmem.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lobject.o : ../../sw/sengine/lobject.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lobject.o : $(MAIN_PATH)/sw/sengine/lobject.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lopcodes.o : ../../sw/sengine/lopcodes.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lopcodes.o : $(MAIN_PATH)/sw/sengine/lopcodes.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lparser.o : ../../sw/sengine/lparser.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lparser.o : $(MAIN_PATH)/sw/sengine/lparser.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lstate.o : ../../sw/sengine/lstate.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lstate.o : $(MAIN_PATH)/sw/sengine/lstate.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lstring.o : ../../sw/sengine/lstring.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lstring.o : $(MAIN_PATH)/sw/sengine/lstring.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lstrlib.o : ../../sw/sengine/lstrlib.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lstrlib.o : $(MAIN_PATH)/sw/sengine/lstrlib.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ltable.o : ../../sw/sengine/ltable.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ltable.o : $(MAIN_PATH)/sw/sengine/ltable.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ltablib.o : ../../sw/sengine/ltablib.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ltablib.o : $(MAIN_PATH)/sw/sengine/ltablib.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/ltm.o : ../../sw/sengine/ltm.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/ltm.o : $(MAIN_PATH)/sw/sengine/ltm.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lua_cjson.o : ../../sw/sengine/lua_cjson.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lua_cjson.o : $(MAIN_PATH)/sw/sengine/lua_cjson.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lua_clib.o : ../../sw/sengine/lua_clib.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lua_clib.o : $(MAIN_PATH)/sw/sengine/lua_clib.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lundump.o : ../../sw/sengine/lundump.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lundump.o : $(MAIN_PATH)/sw/sengine/lundump.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lvm.o : ../../sw/sengine/lvm.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lvm.o : $(MAIN_PATH)/sw/sengine/lvm.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/lzio.o : ../../sw/sengine/lzio.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/lzio.o : $(MAIN_PATH)/sw/sengine/lzio.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 
-$(BINARYDIR)/strbuf.o : ../../sw/sengine/strbuf.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/strbuf.o : $(MAIN_PATH)/sw/sengine/strbuf.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
