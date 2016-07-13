@@ -231,6 +231,22 @@ int mbedtls_hardware_poll( void *data,
 
     return( 0 );
 }
+#elif defined(EWM3801)
+int mbedtls_hardware_poll( void *data,
+                           unsigned char *output, size_t len, size_t *olen )
+{
+    uint32_t timer =  halGetTimeStamp();
+    ((void) data);
+    *olen = 0;
+
+    if( len < sizeof(uint32_t) )
+        return( 0 );
+
+    memcpy( output, &timer, sizeof(uint32_t) );
+    *olen = sizeof(uint32_t);
+
+    return( 0 );
+}
 #else
 #pragma error ("no adpation...")
 #endif

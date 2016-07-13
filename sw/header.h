@@ -239,7 +239,34 @@ typedef short int16_t;
     usleep(ms*1000)
     
 //#define LELOG(...)
+#elif defined (EWM3801)
+#define PF_VAL 6
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 
+#define lelog(_mod_name_, _fmt_, ...) \
+    { \
+        const char * p = strrchr(__FILE__, '/'); \
+        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
+    }
+
+#define LELOG(...) \
+    lelog("LE", ##__VA_ARGS__)
+
+#define LELOGW(...) \
+    lelog("LE[W]", ##__VA_ARGS__)
+
+#define LELOGE(...) \
+    lelog("LE[E]", ##__VA_ARGS__)
+
+#define LEPRINTF(...) \
+    printOut(__VA_ARGS__)
+
+#define delayms(ms) \
+    usleep(ms*1000)
+    
 #else
 
 #define LELOG(...)

@@ -33,7 +33,7 @@ extern "C"
 #define free halFree
 #endif
 
-#if defined (WIN32)
+#if defined(WIN32) || defined(EWM3801)
 #define ALIGNED
 #else
 #define ALIGNED __attribute__((packed))
