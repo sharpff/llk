@@ -2,8 +2,7 @@ RM="rm -f"
 COPY="cp -prf"
 MKDIR="mkdir -p"
 MAIN_PATH="`pwd`/../../"
-PATH_SENGINE=../../lib/sengine
-PATH_LELINK=../../lib/lelink
+PATH_LELINK=../../lib
 
 if [ "$1" = "gdb" ]; then
 
@@ -56,14 +55,8 @@ touch "$MAIN_PATH/sw/data.c"
 # $MAIN_PATH/tool/SubWCRev $MAIN_PATH $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 $MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
-pushd $PATH_SENGINE > /dev/null 2>&1
-make PLATFORM="linux_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
-#make PLATFORM="linux_arm" $*
-popd > /dev/null 2>&1
-
 pushd $PATH_LELINK > /dev/null 2>&1
-make PLATFORM="linux_arm" MYXPREFIX="arm-none-linux-gnueabi-" $*
-#make PLATFORM="linux_arm" $*
+make PLATFORM="linux_arm" $*
 popd > /dev/null 2>&1
 
 make PLATFORM="linux_arm" $*
