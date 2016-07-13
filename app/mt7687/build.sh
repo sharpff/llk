@@ -56,9 +56,9 @@ touch "$MAIN_PATH/sw/data.c"
 $MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
 pushd $PATH_LELINK > /dev/null 2>&1
-make PLATFORM="linux_x86" $*
+make PLATFORM="mt7687" $*
 popd > /dev/null 2>&1
 
-make PLATFORM="linux_x86" $*
+#make PLATFORM="mt7687" $*
 echo done
 
