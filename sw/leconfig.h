@@ -29,6 +29,8 @@ extern "C"
 #define vsnprintf hal_vsnprintf
 #define strcoll hal_strcoll
 #define abort hal_abort
+#define calloc halCalloc
+#define free halFree
 #endif
 
 #if defined (WIN32)
@@ -40,9 +42,6 @@ extern "C"
 // osal
 #define MUTEX_LOCK halLock()
 #define MUTEX_UNLOCK halUnlock()
-#define lelinkCalloc halCalloc
-#define lelinkFree halFree
-
 
 
 #define AES_LEN (128/8)

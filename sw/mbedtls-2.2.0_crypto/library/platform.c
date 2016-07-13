@@ -34,6 +34,8 @@
 #ifdef __MRVL_MW300__
 #include "leconfig.h"
 #include "FreeRTOS.h"
+#elif defined(MT7687)
+#include "leconfig.h"
 #else
 #pragma error ("no adpation...")
 #endif
@@ -53,6 +55,12 @@ static void *platform_calloc_uninit( size_t n, size_t size )
 
     return ptr;
 }
+#elif defined(MT7687)
+static void *platform_calloc_uninit(size_t n, size_t size )
+{
+    void *p = calloc(n, size);
+    return p;
+}
 #else
 #pragma error ("no adpation...")
 #endif
@@ -67,6 +75,11 @@ static void platform_free_uninit( void *ptr )
     // ((void) ptr);
     if (ptr)
         vPortFree(ptr);
+}
+#elif defined(MT7687)
+void platform_free_uninit(void *ptr)
+{
+    free(ptr);
 }
 #else
 #pragma error ("no adpation...")
@@ -161,6 +174,11 @@ static int platform_printf_uninit( const char *format, ... )
     va_end(args);
     wmprintf(wmstdio_msg_buf_impl);
     return ret;
+}
+#elif defined(MT7687)
+static int platform_printf_uninit(const char *format, ... )
+{
+    return 0;
 }
 #else
 #pragma error ("no adpation...")

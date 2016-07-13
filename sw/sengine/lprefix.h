@@ -114,6 +114,51 @@
 #define lua_writeline(...)
 #endif
 
+#elif defined (MT7687)
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+void *halCalloc(size_t n, size_t size);
+void *halRealloc(void *ptr, size_t size);
+#define memset hal_memset
+#define memcpy hal_memcpy
+#define memcmp hal_memcmp
+#define strlen hal_strlen
+#define strcmp hal_strcmp
+#define strncmp hal_strncmp
+#define strcpy hal_strcpy
+#define strtol hal_strtol
+#define strstr hal_strstr
+#define sprintf hal_sprintf
+#define snprintf hal_snprintf
+#define vsnprintf hal_vsnprintf
+#define strcoll hal_strcoll
+#define abort hal_abort
+#define malloc(s) halCalloc(1, s)
+#define realloc halRealloc
+#define free halFree
+
+#define leslog(_mod_name_, _fmt_, ...) \
+    wmprintf("[%s] "_fmt_"\r\n", _mod_name_, ##__VA_ARGS__)
+#define LES_LOG(...) \
+    leslog("LE", ##__VA_ARGS__)
+#define LES_LOGW(...) \
+    leslog("LE [W]", ##__VA_ARGS__)
+#define LES_LOGE(...) \
+    leslog("LE [E]", ##__VA_ARGS__)
+#define LES_PRINTF(...) \
+    wmprintf(__VA_ARGS__)
+
+#if !defined(lua_writestring)
+#define lua_writestring(s,l)   wmprintf(s);
+#endif
+
+#if !defined(lua_writeline)
+#define lua_writeline(...)
+#endif
+
+    
+
 #else
 #error ("no adpation...")
 // #include <errno.h>
