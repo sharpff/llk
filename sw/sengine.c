@@ -1657,6 +1657,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     }
 
     // for every single rule
+    ginIACache.cfg.num = 0;
     for (i = 0; i < privCfg.data.iaCfg.num; i++) {
         if (0 < privCfg.data.iaCfg.arrIA[i]) {
             memset(ginScriptCfg2, 0, sizeof(ScriptCfg));
@@ -1694,6 +1695,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
 
             sengineS2RuleHandler(ginScriptCfg2, tmpLocalJson, tmpLocalJsonLen, 
                 tmpRmtJsonLen > 0 ? tmpRmtJson : NULL, tmpRmtJsonLen, &(ginIACache.cache[i]));
+            ginIACache.cfg.num++;
         }
     }
     LELOG("senginePollingRules -e ");
