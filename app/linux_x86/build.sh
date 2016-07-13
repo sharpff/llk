@@ -59,6 +59,6 @@ pushd $PATH_LELINK > /dev/null 2>&1
 make PLATFORM="linux_x86" $*
 popd > /dev/null 2>&1
 
-make PLATFORM="linux_x86" $*
+make clean && make PLATFORM="linux_x86" $*
 echo done
 

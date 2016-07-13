@@ -3,8 +3,9 @@
 #
 
 SYS_MACROS := MT7687
-MYXPATH := /home/fei/Desktop/slimV3.2.0/tools/gcc/gcc-arm-none-eabi/bin/
-MYXPREFIX := arm-none-eabi-
+# [TOBESET] means u have to set the vars, E.g. ./build.sh MYXPATH=/home/lf/dev/mtk/slimV3.2.0/tools/gcc/gcc-arm-none-eabi/bin/ MYXPREFIX=arm-none-eabi-
+MYXPATH := [TOBESET]
+MYXPREFIX := [TOBESET]
 
 COM_CFLAGS := -mlittle-endian -mthumb -mcpu=cortex-m4
 COM_CFLAGS := -fsingle-precision-constant -Wdouble-promotion -mfpu=fpv4-sp-d16 -mfloat-abi=hard
