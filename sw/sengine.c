@@ -1205,7 +1205,7 @@ int sengineSetStatus(char *json, int jsonLen) {
 
         {
             extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
-            char hexStr[96] = {0};
+            uint8_t  hexStr[96] = {0};
             bytes2hexStr(bin, ret, hexStr, sizeof(hexStr));
             LELOG("bin[%s]", hexStr);
         }
@@ -1352,7 +1352,7 @@ int senginePollingSlave(void) {
             {
                 int j = 0;
                 extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
-                char hexStr[96] = {0};
+                uint8_t hexStr[96] = {0};
                 LELOG("[SENGINE]datas.arrDatas currLen[%d], appendLen[%d]", currLen, appendLen);
                 bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
                 LELOG("bin[%s]", hexStr);          

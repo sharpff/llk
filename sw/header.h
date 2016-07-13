@@ -197,6 +197,49 @@ typedef unsigned int uint32_t;
 #define inet_ntop(a, b, c, d) inet_ntoa(*(struct in_addr *)b)
 
 //#define LELOG(...)
+#elif defined (MT7687)
+#define PF_VAL 6
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <sys/types.h>
+
+#ifndef uint8_t
+typedef unsigned char uint8_t;
+#endif
+
+#ifndef uint16_t
+typedef unsigned short uint16_t;
+#endif
+
+#ifndef int16_t
+typedef short int16_t;
+#endif
+
+#define lelog(_mod_name_, _fmt_, ...) \
+    { \
+        const char * p = strrchr(__FILE__, '/'); \
+        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
+    }
+
+#define LELOG(...) \
+    lelog("LE", ##__VA_ARGS__)
+
+#define LELOGW(...) \
+    lelog("LE[W]", ##__VA_ARGS__)
+
+#define LELOGE(...) \
+    lelog("LE[E]", ##__VA_ARGS__)
+
+#define LEPRINTF(...) \
+    printf(__VA_ARGS__)
+
+#define delayms(ms) \
+    usleep(ms*1000)
+    
+//#define LELOG(...)
+
 #else
 
 #define LELOG(...)
@@ -256,7 +299,8 @@ int halLock(void);
 int halUnlock(void);
 unsigned int halGetTimeStamp(void);
 unsigned int halGetUTC(void);
-void *halCalloc(int n, size_t size);
+void *halCalloc(size_t n, size_t size);
+void *halRealloc(void *ptr, size_t size);
 void halFree(void *ptr);
 int halReboot();
 

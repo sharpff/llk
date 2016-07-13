@@ -1175,7 +1175,6 @@ static int isNeedDelCB(NodeData *currNode) {
             (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId)) {
             uint8_t bRspFlag = 0x01; // for unicast
             NodeData node = {0};
-            char br[MAX_IPLEN] = {0};
             LELOG("**************** cmd[%d] subCmd[%d], needRsp[%d] reserved2[%d]", 
                 currNode->cmdId, currNode->subCmdId, currNode->needRsp, currNode->reserved2);
             if (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) {
