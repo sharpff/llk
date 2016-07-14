@@ -12,7 +12,7 @@ COM_CFLAGS += -fsingle-precision-constant -Wdouble-promotion -mfpu=fpv4-sp-d16 -
 COM_CFLAGS += -ffunction-sections -fdata-sections -fno-builtin -Wno-implicit-function-declaration
 COM_CFLAGS += -gdwarf-2 -Os -Wall -fno-strict-aliasing -fno-common
 COM_CFLAGS += -Wall -Werror=uninitialized -Wno-error=maybe-uninitialized -Werror=return-type
-COM_CFLAGS += -DPCFG_OS=2 -D_REENT_SMALL
+COM_CFLAGS += -DPCFG_OS=2 -D_REENT_SMALL -Wno-comment
 
 IS_LINUX_PROJECT := 0
 
