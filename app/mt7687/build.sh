@@ -71,12 +71,12 @@ touch "$MAIN_PATH/sw/data.c"
 $MAIN_PATH/tool/gitVersion $MAIN_PATH/tool/version.template.h $MAIN_PATH/sw/version.h
 
 rm ../../lib/Debug-$PF/*.a
-rm $MTSDK7687/out/mt7687_hdk/le_demo/lib/*.a
+rm $MTSDK7687/middleware/third_party/cloud/lelink/lib/*.a
 pushd $PATH_LELINK > /dev/null 2>&1
 make PLATFORM="$PF" $*
 popd > /dev/null 2>&1
 if [ "$1" != "clean" ]; then
-	cp ../../lib/Debug-$PF/*.a $MTSDK7687/out/mt7687_hdk/le_demo/lib/
+	cp ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/
 fi
 
 rm $MTSDK7687/out/mt7687_hdk/le_demo/*.bin
