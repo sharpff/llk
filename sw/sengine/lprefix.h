@@ -78,6 +78,7 @@
 //     leslog("LE [E]", ##__VA_ARGS__)
 // #define LES_PRINTF(...) \
 //     wmprintf(__VA_ARGS__)
+#include "leconfig.h"
 
 #if !defined(lua_writestring)
 #define lua_writestring(s,l)   printOut(s);

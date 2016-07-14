@@ -18,7 +18,7 @@
  *
  *  This file is part of mbed TLS (https://tls.mbed.org)
  */
-
+#include "lprefix.h"
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include "mbedtls/config.h"
 #else
@@ -31,34 +31,33 @@
 
 
 #if defined(MBEDTLS_PLATFORM_MEMORY)
-#if defined (mw300)
-#include "leconfig.h"
-#elif defined(MT7687)
-#include "leconfig.h"
-#elif defined(EWM3801)
-#include "leconfig.h"
-#else
-#pragma error ("no adpation...")
-#endif
+// #if defined (mw300)
+// #include "leconfig.h"
+// #elif defined(MT7687)
+// #include "leconfig.h"
+// #elif defined(EWM3801)
+// #include "leconfig.h"
+// #else
+// #pragma error ("no adpation...")
+// #endif
 
 #if !defined(MBEDTLS_PLATFORM_STD_CALLOC)
 #if defined (mw300)
 static void *platform_calloc_uninit( size_t n, size_t size )
 {
-    printOut("********calloc");
-    void *p = calloc(n, size);
+    void *p = (void *)calloc(n, size);
     return p;
 }
 #elif defined(MT7687)
 static void *platform_calloc_uninit(size_t n, size_t size )
 {
-    void *p = calloc(n, size);
+    void *p = (void *)calloc(n, size);
     return p;
 }
 #elif defined(EWM3801)
 static void *platform_calloc_uninit(size_t n, size_t size )
 {
-    void *p = calloc(n, size);
+    void *p = (void *)calloc(n, size);
     return p;
 }
 #else

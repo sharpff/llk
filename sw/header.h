@@ -349,11 +349,11 @@ int halLock(void);
 int halUnlock(void);
 unsigned int halGetTimeStamp(void);
 unsigned int halGetUTC(void);
+void *halMalloc(size_t size);
 void *halCalloc(size_t n, size_t size);
 void *halRealloc(void *ptr, size_t size);
 void halFree(void *ptr);
 int halReboot();
-
 
 
 
