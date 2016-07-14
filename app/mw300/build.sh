@@ -56,13 +56,13 @@ $COPY "$MAIN_PATH/app/mw300/$LDFILE" "$WMSDK/sample_apps/toolchains/gnu/$LDFILE"
 
 # source
 do_copy "$MAIN_PATH/app/mw300"  $WMSDK
-do_copy "$MAIN_PATH/hal/Marvell/" "$WMSDK/sample_apps/le_demo/src/hal/Marvell/"
+do_copy "$MAIN_PATH/hal/mw300/" "$WMSDK/sample_apps/le_demo/src/hal/mw300/"
 do_copy "$MAIN_PATH/sw/" "$WMSDK/wmsdk/external/lelink/sw/"
 do_copy "$MAIN_PATH/sw/sengine/" "$WMSDK/wmsdk/external/sengine"
 
 # obj dir
 $MKDIR $WMSDK/sample_apps/le_demo/obj/app/mw300
-$MKDIR $WMSDK/sample_apps/le_demo/obj/hal/Marvell
+$MKDIR $WMSDK/sample_apps/le_demo/obj/hal/mw300
 
 # make -C $WMSDK clean
 make -C $WMSDK XIP=1 APPS=le_demo $*

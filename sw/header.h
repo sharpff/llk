@@ -8,7 +8,7 @@ extern "C"
     
 
 #if defined (mw300)
-#define PF_VAL 1
+// #define PF_VAL 1
 // #pragma message("mw300")
 
 #ifndef uint8_t
@@ -47,28 +47,9 @@ typedef long long int64_t;
 #define NULL ((void *)0)
 #endif
 
-#define lelog(_mod_name_, _fmt_, ...) \
-    { \
-        const char * p = (const char *)strrchr(__FILE__, '/'); \
-        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
-    }
-
-#define LELOG(...) \
-    lelog("LE", ##__VA_ARGS__)
-
-#define LELOGW(...) \
-    lelog("LE[W]", ##__VA_ARGS__)
-
-#define LELOGE(...) \
-    lelog("LE[E]", ##__VA_ARGS__)
-
-#define LEPRINTF(...) \
-    printOut(__VA_ARGS__)
         
 // #define delayms(ms) \
 //     os_thread_sleep(os_msec_to_ticks(ms)) 
-
-
 
 
 #elif defined (__ATMEL__)
@@ -76,7 +57,7 @@ typedef long long int64_t;
 #pragma message("__ATMEL__")
 
 #elif defined (LINUX)
-#define PF_VAL 3
+// #define PF_VAL 3
 #include <stdio.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -86,39 +67,39 @@ typedef long long int64_t;
 #include <unistd.h>
 #include <string.h>
 
-#ifndef uint8_t
-typedef unsigned char uint8_t;
-#endif
+// #ifndef uint8_t
+// typedef unsigned char uint8_t;
+// #endif
 
-#ifndef uint16_t
-typedef unsigned short uint16_t;
-#endif
+// #ifndef uint16_t
+// typedef unsigned short uint16_t;
+// #endif
 
-#ifndef int16_t
-typedef short int16_t;
-#endif
+// #ifndef int16_t
+// typedef short int16_t;
+// #endif
 
-#ifndef uint32_t
-typedef unsigned int uint32_t;
-#endif
+// #ifndef uint32_t
+// typedef unsigned int uint32_t;
+// #endif
 
-#define lelog(_mod_name_, _fmt_, ...) \
-    { \
-        const char * p = (const char *)strrchr(__FILE__, '/'); \
-        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
-    }
+// #define lelog(_mod_name_, _fmt_, ...) \
+//     { \
+//         const char * p = (const char *)strrchr(__FILE__, '/'); \
+//         printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
+//     }
 
-#define LELOG(...) \
-    lelog("LE", ##__VA_ARGS__)
+// #define LELOG(...) \
+//     lelog("LE", ##__VA_ARGS__)
 
-#define LELOGW(...) \
-    lelog("LE[W]", ##__VA_ARGS__)
+// #define LELOGW(...) \
+//     lelog("LE[W]", ##__VA_ARGS__)
 
-#define LELOGE(...) \
-    lelog("LE[E]", ##__VA_ARGS__)
+// #define LELOGE(...) \
+//     lelog("LE[E]", ##__VA_ARGS__)
 
-#define LEPRINTF(...) \
-    printf(__VA_ARGS__)
+// #define LEPRINTF(...) \
+//     printf(__VA_ARGS__)
 
 // #define delayms(ms) \
 //     usleep(ms*1000)
@@ -195,33 +176,33 @@ typedef short int16_t;
 typedef unsigned int uint32_t;
 #endif
 
-#define lelog(_mod_name_, _fmt_, ...) \
-    { \
-        const char * p = strrchr(__FILE__, '\\'); \
-        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
-    }
+// #define lelog(_mod_name_, _fmt_, ...) \
+//     { \
+//         const char * p = strrchr(__FILE__, '\\'); \
+//         printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
+//     }
 
-#define LELOG(...) \
-    lelog("LE", ##__VA_ARGS__)
+// #define LELOG(...) \
+//     lelog("LE", ##__VA_ARGS__)
 
-#define LELOGW(...) \
-    lelog("LE[W]", ##__VA_ARGS__)
+// #define LELOGW(...) \
+//     lelog("LE[W]", ##__VA_ARGS__)
 
-#define LELOGE(...) \
-    lelog("LE[E]", ##__VA_ARGS__)
+// #define LELOGE(...) \
+//     lelog("LE[E]", ##__VA_ARGS__)
 
-#define LEPRINTF(...) \
-    printf(__VA_ARGS__)
+// #define LEPRINTF(...) \
+//     printf(__VA_ARGS__)
 
 
-#define delayms(ms) \
-    Sleep(ms)
+// #define delayms(ms) \
+//     Sleep(ms)
 
 #define inet_ntop(a, b, c, d) inet_ntoa(*(struct in_addr *)b)
 
 //#define LELOG(...)
 #elif defined (MT7687)
-#define PF_VAL 6
+// #define PF_VAL 6
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -240,30 +221,30 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 #endif
 
-#define lelog(_mod_name_, _fmt_, ...) \
-    { \
-        const char * p = strrchr(__FILE__, '/'); \
-        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
-    }
+// #define lelog(_mod_name_, _fmt_, ...) \
+//     { \
+//         const char * p = strrchr(__FILE__, '/'); \
+//         printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
+//     }
 
-#define LELOG(...) \
-    lelog("LE", ##__VA_ARGS__)
+// #define LELOG(...) \
+//     lelog("LE", ##__VA_ARGS__)
 
-#define LELOGW(...) \
-    lelog("LE[W]", ##__VA_ARGS__)
+// #define LELOGW(...) \
+//     lelog("LE[W]", ##__VA_ARGS__)
 
-#define LELOGE(...) \
-    lelog("LE[E]", ##__VA_ARGS__)
+// #define LELOGE(...) \
+//     lelog("LE[E]", ##__VA_ARGS__)
 
-#define LEPRINTF(...) \
-    printf(__VA_ARGS__)
+// #define LEPRINTF(...) \
+//     printf(__VA_ARGS__)
 
 // #define delayms(ms) \
 //     usleep(ms*1000)
     
 //#define LELOG(...)
 #elif defined (EWM3801)
-#define PF_VAL 6
+#define PF_VAL 7
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -318,6 +299,26 @@ typedef short int16_t;
 #define TIMEOUT_SECS_END \
     ot = halGetTimeStamp(); \
     }}
+
+
+#define lelog(_mod_name_, _fmt_, ...) \
+    { \
+        const char * p = (const char *)strrchr(__FILE__, '/'); \
+        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
+    }
+
+#define LELOG(...) \
+    lelog("LE", ##__VA_ARGS__)
+
+#define LELOGW(...) \
+    lelog("LE[W]", ##__VA_ARGS__)
+
+#define LELOGE(...) \
+    lelog("LE[E]", ##__VA_ARGS__)
+
+#define LEPRINTF(...) \
+    printOut(__VA_ARGS__)
+
 
 // halIO
 void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
