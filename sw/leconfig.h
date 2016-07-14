@@ -29,7 +29,9 @@ extern "C"
 #define vsnprintf hal_vsnprintf
 #define strcoll hal_strcoll
 #define abort hal_abort
+#define malloc halMalloc
 #define calloc halCalloc
+#define realloc halRealloc
 #define free halFree
 #endif
 

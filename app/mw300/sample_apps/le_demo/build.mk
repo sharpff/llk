@@ -18,23 +18,23 @@ le_demo-cflags-y += \
 	-I$(MAIN_PATH)/../ \
 	-I$(MAIN_PATH)/sw/ \
 	-I$(MAIN_PATH)/sw/sengine \
-	-I$(MAIN_PATH)/hal/Marvell
+	-I$(MAIN_PATH)/hal/mw300
 
-le_demo-cflags-y += -llelink -lsengine -Lbin/mw300_defconfig/libs/
+le_demo-cflags-y += -llelink -Lbin/mw300_defconfig/libs/
 
 le_demo-objs-y := \
 	$(RELATIVE_PATH)/app/mw300/sample_apps/le_demo/src/app/mw300/main.c \
-	$(RELATIVE_PATH)/hal/Marvell/halAES.c \
-	$(RELATIVE_PATH)/hal/Marvell/halAirConfig.c \
-	$(RELATIVE_PATH)/hal/Marvell/halCallback.c \
-	$(RELATIVE_PATH)/hal/Marvell/halHelper.c \
-	$(RELATIVE_PATH)/hal/Marvell/halMD5.c \
-	$(RELATIVE_PATH)/hal/Marvell/halNetwork.c \
-	$(RELATIVE_PATH)/hal/Marvell/halOS.c \
-	$(RELATIVE_PATH)/hal/Marvell/halRSA.c \
-	$(RELATIVE_PATH)/hal/Marvell/halConvertor.c \
-	$(RELATIVE_PATH)/hal/Marvell/halIO.c \
-	$(RELATIVE_PATH)/hal/Marvell/halOTA.c
+	$(RELATIVE_PATH)/hal/mw300/halAES.c \
+	$(RELATIVE_PATH)/hal/mw300/halAirConfig.c \
+	$(RELATIVE_PATH)/hal/mw300/halCallback.c \
+	$(RELATIVE_PATH)/hal/mw300/halHelper.c \
+	$(RELATIVE_PATH)/hal/mw300/halMD5.c \
+	$(RELATIVE_PATH)/hal/mw300/halNetwork.c \
+	$(RELATIVE_PATH)/hal/mw300/halOS.c \
+	$(RELATIVE_PATH)/hal/mw300/halRSA.c \
+	$(RELATIVE_PATH)/hal/mw300/halConvertor.c \
+	$(RELATIVE_PATH)/hal/mw300/halIO.c \
+	$(RELATIVE_PATH)/hal/mw300/halOTA.c
 
 le_demo-linkerscript-y := $(MAIN_PATH)/app/mw300/mw300-xip.ld
 le_demo-board-y := $(MAIN_PATH)/app/mw300/sample_apps/le_demo/src/board.c
