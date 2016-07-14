@@ -42,45 +42,45 @@
 #endif			/* } */
 
 
-#if defined(__MRVL_MW300__)
-#include <wmerrno.h>
-#include <stdarg.h>
-#include <wmstdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wmtime.h>
-#include "FreeRTOS.h"
-#define malloc(s) pvPortMalloc(s)
-#define realloc(p, s) pvPortReAlloc(p, s)
-#define free(p) vPortFree(p)
-#define memset hal_memset
-#define memcpy hal_memcpy
-#define memcmp hal_memcmp
-#define strlen hal_strlen
-#define strcmp hal_strcmp
-#define strncmp hal_strncmp
-#define strcpy hal_strcpy
-#define strtol hal_strtol
-#define strstr hal_strstr
-#define sprintf hal_sprintf
-#define snprintf hal_snprintf
-#define vsnprintf hal_vsnprintf
-#define strcoll hal_strcoll
-#define abort hal_abort
+#if defined (mw300)
+// #include <wmerrno.h>
+// #include <stdarg.h>
+// #include <wmstdio.h>
+// #include <stdlib.h>
+// #include <string.h>
+// #include <wmtime.h>
+// #include "FreeRTOS.h"
+// #define malloc(s) pvPortMalloc(s)
+// #define realloc(p, s) pvPortReAlloc(p, s)
+// #define free(p) vPortFree(p)
+// #define memset hal_memset
+// #define memcpy hal_memcpy
+// #define memcmp hal_memcmp
+// #define strlen hal_strlen
+// #define strcmp hal_strcmp
+// #define strncmp hal_strncmp
+// #define strcpy hal_strcpy
+// #define strtol hal_strtol
+// #define strstr hal_strstr
+// #define sprintf hal_sprintf
+// #define snprintf hal_snprintf
+// #define vsnprintf hal_vsnprintf
+// #define strcoll hal_strcoll
+// #define abort hal_abort
 
-#define leslog(_mod_name_, _fmt_, ...) \
-    wmprintf("[%s] "_fmt_"\r\n", _mod_name_, ##__VA_ARGS__)
-#define LES_LOG(...) \
-    leslog("LE", ##__VA_ARGS__)
-#define LES_LOGW(...) \
-    leslog("LE [W]", ##__VA_ARGS__)
-#define LES_LOGE(...) \
-    leslog("LE [E]", ##__VA_ARGS__)
-#define LES_PRINTF(...) \
-    wmprintf(__VA_ARGS__)
+// #define leslog(_mod_name_, _fmt_, ...) \
+//     wmprintf("[%s] "_fmt_"\r\n", _mod_name_, ##__VA_ARGS__)
+// #define LES_LOG(...) \
+//     leslog("LE", ##__VA_ARGS__)
+// #define LES_LOGW(...) \
+//     leslog("LE [W]", ##__VA_ARGS__)
+// #define LES_LOGE(...) \
+//     leslog("LE [E]", ##__VA_ARGS__)
+// #define LES_PRINTF(...) \
+//     wmprintf(__VA_ARGS__)
 
 #if !defined(lua_writestring)
-#define lua_writestring(s,l)   wmprintf(s);
+#define lua_writestring(s,l)   printOut(s);
 #endif
 
 #if !defined(lua_writeline)

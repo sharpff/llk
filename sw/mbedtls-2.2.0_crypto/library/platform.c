@@ -31,9 +31,8 @@
 
 
 #if defined(MBEDTLS_PLATFORM_MEMORY)
-#ifdef __MRVL_MW300__
+#if defined (mw300)
 #include "leconfig.h"
-#include "FreeRTOS.h"
 #elif defined(MT7687)
 #include "leconfig.h"
 #elif defined(EWM3801)
@@ -43,19 +42,12 @@
 #endif
 
 #if !defined(MBEDTLS_PLATFORM_STD_CALLOC)
-#ifdef __MRVL_MW300__
+#if defined (mw300)
 static void *platform_calloc_uninit( size_t n, size_t size )
 {
-    // ((void) n);
-    // ((void) size);
-    // return( NULL );
-
-    void *ptr = pvPortMalloc(n * size);
-    // LELOG("pvPortMalloc RSA ptr[0x%x] [%d]\r\n", ptr, n*size);
-    if (ptr)
-        memset(ptr, 0x00, n * size);
-
-    return ptr;
+    printOut("********calloc");
+    void *p = calloc(n, size);
+    return p;
 }
 #elif defined(MT7687)
 static void *platform_calloc_uninit(size_t n, size_t size )
@@ -77,20 +69,18 @@ static void *platform_calloc_uninit(size_t n, size_t size )
 #endif /* !MBEDTLS_PLATFORM_STD_CALLOC */
 
 #if !defined(MBEDTLS_PLATFORM_STD_FREE)
-#ifdef __MRVL_MW300__
-static void platform_free_uninit( void *ptr )
+#if defined (mw300)
+static void platform_free_uninit(void *ptr)
 {
-    // ((void) ptr);
-    if (ptr)
-        vPortFree(ptr);
+    free(ptr);
 }
 #elif defined(MT7687)
-void platform_free_uninit(void *ptr)
+static void platform_free_uninit(void *ptr)
 {
     free(ptr);
 }
 #elif defined(EWM3801)
-void platform_free_uninit(void *ptr)
+static void platform_free_uninit(void *ptr)
 {
     free(ptr);
 }
@@ -173,19 +163,24 @@ int mbedtls_platform_set_snprintf( int (*snprintf_func)( char * s, size_t n,
 
 #if defined(MBEDTLS_PLATFORM_PRINTF_ALT)
 #if !defined(MBEDTLS_PLATFORM_STD_PRINTF)
+#include <stdarg.h>
 /*
  * Make dummy function to prevent NULL pointer dereferences
  */
-#ifdef __MRVL_MW300__
-static char wmstdio_msg_buf_impl[128];
+#if defined (mw300)
+// static char wmstdio_msg_buf_impl[128];
 static int platform_printf_uninit( const char *format, ... )
 {
+    int ret = 0;
+    // va_list args;
+    // va_start(args, format);
+    // ret = vsnprintf(wmstdio_msg_buf_impl, sizeof(wmstdio_msg_buf_impl), &format[0], args);
+    // va_end(args);
+    // wmprintf(wmstdio_msg_buf_impl);
     va_list args;
-    int ret;
     va_start(args, format);
-    ret = vsnprintf(wmstdio_msg_buf_impl, sizeof(wmstdio_msg_buf_impl), &format[0], args);
+    printOut(format, args);
     va_end(args);
-    wmprintf(wmstdio_msg_buf_impl);
     return ret;
 }
 #elif defined(MT7687)

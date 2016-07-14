@@ -7,22 +7,49 @@ extern "C"
 #endif
     
 
-#ifdef __MRVL_MW300__
+#if defined (mw300)
 #define PF_VAL 1
-// #pragma message("__MRVL_MW300__")
-#include <stdarg.h>
-#include <sys/types.h>
-#include <wmlog.h>
-#include <wm_os.h>
-// #include <app_framework.h>
-#include <lwip/sockets.h>
-#include <wmstdio.h>
-#include <wmsysinfo.h> 
+// #pragma message("mw300")
 
+#ifndef uint8_t
+typedef unsigned char uint8_t;
+#endif
+
+#ifndef int8_t
+typedef char int8_t;
+#endif
+
+#ifndef uint16_t
+typedef unsigned short uint16_t;
+#endif
+
+#ifndef int16_t
+typedef short int16_t;
+#endif
+
+#ifndef uint32_t
+typedef unsigned int uint32_t;
+#endif
+
+#ifndef size_t
+typedef unsigned int size_t;
+#endif
+
+#ifndef uint64_t
+typedef unsigned long long int  uint64_t;
+#endif
+
+#ifndef int64_t
+typedef long long int64_t;
+#endif
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
 
 #define lelog(_mod_name_, _fmt_, ...) \
     { \
-        const char * p = strrchr(__FILE__, '/'); \
+        const char * p = (const char *)strrchr(__FILE__, '/'); \
         printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
     }
 
@@ -36,16 +63,12 @@ extern "C"
     lelog("LE[E]", ##__VA_ARGS__)
 
 #define LEPRINTF(...) \
-    wmprintf(__VA_ARGS__)
+    printOut(__VA_ARGS__)
         
-#define delayms(ms) \
-    os_thread_sleep(os_msec_to_ticks(ms)) 
+// #define delayms(ms) \
+//     os_thread_sleep(os_msec_to_ticks(ms)) 
 
 
-// for json_generator.h
-#ifndef int64_t
-typedef long long int64_t;
-#endif
 
 
 #elif defined (__ATMEL__)
@@ -81,7 +104,7 @@ typedef unsigned int uint32_t;
 
 #define lelog(_mod_name_, _fmt_, ...) \
     { \
-        const char * p = strrchr(__FILE__, '/'); \
+        const char * p = (const char *)strrchr(__FILE__, '/'); \
         printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
     }
 
@@ -97,8 +120,8 @@ typedef unsigned int uint32_t;
 #define LEPRINTF(...) \
     printf(__VA_ARGS__)
 
-#define delayms(ms) \
-    usleep(ms*1000)
+// #define delayms(ms) \
+//     usleep(ms*1000)
     
 //#define LELOG(...)
 
@@ -235,8 +258,8 @@ typedef short int16_t;
 #define LEPRINTF(...) \
     printf(__VA_ARGS__)
 
-#define delayms(ms) \
-    usleep(ms*1000)
+// #define delayms(ms) \
+//     usleep(ms*1000)
     
 //#define LELOG(...)
 #elif defined (EWM3801)

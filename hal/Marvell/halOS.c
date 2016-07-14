@@ -56,3 +56,7 @@ int halReboot(void) {
 uint16_t halRand() {
     return 0;
 }
+
+void halDelayms(int ms) {
+    os_thread_sleep(os_msec_to_ticks(ms));
+}

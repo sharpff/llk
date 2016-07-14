@@ -55,3 +55,7 @@ uint16_t halRand() {
     val = 0xFFFF & rand();
     return val;
 }
+
+void halDelayms(int ms) {
+    usleep(ms*1000);
+}

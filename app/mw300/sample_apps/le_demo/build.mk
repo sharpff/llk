@@ -20,7 +20,7 @@ le_demo-cflags-y += \
 	-I$(MAIN_PATH)/sw/sengine \
 	-I$(MAIN_PATH)/hal/Marvell
 
-le_demo-cflags-y += -llelink -lsengine -Lbin/mw300_defconfig/libs/
+le_demo-cflags-y += -llelink -Lbin/mw300_defconfig/libs/
 
 le_demo-objs-y := \
 	$(RELATIVE_PATH)/app/mw300/sample_apps/le_demo/src/app/mw300/main.c \
