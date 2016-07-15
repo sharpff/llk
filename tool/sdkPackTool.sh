@@ -98,7 +98,7 @@ do
     done
 done
 
-sed -e "s/PLATFORM/$PLATFORM/g" $MAIN_PATH/tool/product/README.md > $PACK_SDK_PATH/$PACK_SDK_NAME/README.md
+sed -e "s/PLATFORM/$PLATFORM/g" $MAIN_PATH/README.md > $PACK_SDK_PATH/$PACK_SDK_NAME/README.md
 
 echo done
 

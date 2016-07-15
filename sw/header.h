@@ -107,7 +107,6 @@ typedef long long int64_t;
 //#define LELOG(...)
 
 #elif defined (__ANDROID__)
-#define PF_VAL 4
 #include <stdio.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -116,6 +115,7 @@ typedef long long int64_t;
 #include <errno.h>
 #include <unistd.h>
 
+extern int printOut(const char *fmt, ...);
 
 #ifndef uint8_t
 typedef unsigned char uint8_t;
@@ -132,20 +132,6 @@ typedef short int16_t;
 #ifndef uint32_t
 typedef unsigned int uint32_t;
 #endif
-
-#include <android/log.h>
-#define LE_ANDROID_LOG_ERROR    1
-#define LE_ANDROID_LOG_DEBUG    1
-#define LE_ANDROID_LOG_WARN     1
-
-#define LELOG(__fmt__, ...)  do {if (LE_ANDROID_LOG_DEBUG) {__android_log_print(ANDROID_LOG_DEBUG, TAG_LOG, "[D]: %s, %s, %d\r\n" __fmt__ "\r\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);}}while(0)
-#define LELOGW(__fmt__, ...)  do {if (LE_ANDROID_LOG_WARN) {__android_log_print(ANDROID_LOG_WARN, TAG_LOG, "[W]: %s, %s, %d\r\n" __fmt__ "\r\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);}}while(0)
-#define LELOGE(__fmt__, ...)  do {if (LE_ANDROID_LOG_ERROR)  {__android_log_print(ANDROID_LOG_ERROR, TAG_LOG, "[E]: %s, %s, %d\r\n" __fmt__ "\r\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);}}while(0)
-
-#define delayms(ms) \
-    usleep(ms*1000)
-
-#define LEPRINTF(...)    
 
 #elif defined (WIN32)
 #define PF_VAL 5
@@ -244,32 +230,32 @@ typedef short int16_t;
     
 //#define LELOG(...)
 #elif defined (EWM3801)
-#define PF_VAL 7
+//#define PF_VAL 7
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 
-#define lelog(_mod_name_, _fmt_, ...) \
-    { \
-        const char * p = strrchr(__FILE__, '/'); \
-        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
-    }
+//#define lelog(_mod_name_, _fmt_, ...) \
+    //{ \
+        //const char * p = strrchr(__FILE__, '/'); \
+        //printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
+    //}
 
-#define LELOG(...) \
-    lelog("LE", ##__VA_ARGS__)
+//#define LELOG(...) \
+    //lelog("LE", ##__VA_ARGS__)
 
-#define LELOGW(...) \
-    lelog("LE[W]", ##__VA_ARGS__)
+//#define LELOGW(...) \
+    //lelog("LE[W]", ##__VA_ARGS__)
 
-#define LELOGE(...) \
-    lelog("LE[E]", ##__VA_ARGS__)
+//#define LELOGE(...) \
+    //lelog("LE[E]", ##__VA_ARGS__)
 
-#define LEPRINTF(...) \
-    printOut(__VA_ARGS__)
+//#define LEPRINTF(...) \
+    //printOut(__VA_ARGS__)
 
-#define delayms(ms) \
-    usleep(ms*1000)
+//#define delayms(ms) \
+    //usleep(ms*1000)
     
 #else
 

@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "halHeader.h"
 static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -52,4 +53,8 @@ uint16_t halRand() {
     }
     val = 0xFFFF & rand();
     return val;
+}
+
+void halDelayms(int ms) {
+    usleep(ms*1000);
 }
