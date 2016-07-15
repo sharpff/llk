@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "halHeader.h"
 static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
 
