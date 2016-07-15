@@ -1111,6 +1111,7 @@
         <option>
           <name>CCDefines</name>
           <state>NDEBUG</state>
+          <state>PF_VAL=6</state>
           <state>__LE_SDK__</state>
           <state>EWM3801</state>
         </option>
@@ -1247,6 +1248,7 @@
           <state>$PROJ_DIR$\..\..\..\sw\mbedtls-2.2.0_crypto\include</state>
           <state>$PROJ_DIR$\..\..\..\sw\mbedtls-2.2.0_crypto\include\mbedtls</state>
           <state>$PROJ_DIR$\..\..\..\sw\mbedtls-2.2.0_crypto\library</state>
+          <state>$PROJ_DIR$\..\..\..\sw\sengine</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -1883,7 +1885,7 @@
         </option>
         <option>
           <name>IarchiveOutput</name>
-          <state>\\vmware-host\Shared Folders\share\lelink\app\ewm3081\lib\Release\Exe\lelink.a</state>
+          <state></state>
         </option>
       </data>
     </settings>
