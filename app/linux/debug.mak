@@ -3,19 +3,22 @@
 #USE VISUALGDB PROJECT PROPERTIES DIALOG INSTEAD
 
 BINARYDIR := Debug
+PLATFORM := linux
+MYXPREFIX=
 
+MAIN_PATH=$(CURDIR)/../..
 #Toolchain
-CC := gcc
-CXX := g++
+CC := $(MYXPATH)$(MYXPREFIX)gcc
+CXX := $(MYXPATH)$(MYXPREFIX)g++
 LD := $(CXX)
-AR := ar
-OBJCOPY := objcopy
+AR := $(MYXPATH)$(MYXPREFIX)ar
+OBJCOPY := $(MYXPATH)$(MYXPREFIX)objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG LINUX
-INCLUDE_DIRS := ../../sw ../../hal/$(PLATFORM) ../../sw/mbedtls-2.2.0_crypto/include ../../sw/sengine
-LIBRARY_DIRS := ../../lib/lelink/$(BINARYDIR)-$(PLATFORM) ../../lib/sengine/$(BINARYDIR)-$(PLATFORM)
-LIBRARY_NAMES := pthread lelink sengine
+INCLUDE_DIRS := $(MAIN_PATH)/sw $(MAIN_PATH)/hal/$(PLATFORM) $(MAIN_PATH)/sw/mbedtls-2.2.0_crypto/include $(MAIN_PATH)/sw/sengine include .
+LIBRARY_DIRS := $(MAIN_PATH)/lib/$(BINARYDIR)-$(PLATFORM)
+LIBRARY_NAMES := pcap pthread lelink
 ADDITIONAL_LINKER_INPUTS := 
 MACOS_FRAMEWORKS := 
 LINUX_PACKAGES := 

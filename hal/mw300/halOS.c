@@ -36,11 +36,21 @@ unsigned int halGetUTC(void) {
     return 1234;
 }
 
+void *halMalloc(size_t size) {
+    void *ptr = pvPortMalloc(size);
+    return ptr;
+}
+
 void *halCalloc(int n, size_t size) {
     void *ptr = pvPortMalloc(n*size);
     if (ptr)
         memset(ptr, 0x00, n*size);
     return ptr;
+}
+
+void *halRealloc(void *ptr, size_t size) {
+    void *ptr1 = pvPortReAlloc(ptr, size);
+    return ptr1;
 }
 
 void halFree(void *ptr) {
@@ -55,4 +65,8 @@ int halReboot(void) {
 
 uint16_t halRand() {
     return 0;
+}
+
+void halDelayms(int ms) {
+    os_thread_sleep(os_msec_to_ticks(ms));
 }

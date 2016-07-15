@@ -561,3 +561,7 @@ int printOut(const char *fmt, ...) {
     }
     return 0;
 }
+
+void delayms(int ms) {
+    halDelayms(ms);
+}

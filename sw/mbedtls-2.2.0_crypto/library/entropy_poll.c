@@ -215,7 +215,7 @@ int mbedtls_havege_poll( void *data,
 
 
 #if defined(MBEDTLS_ENTROPY_HARDWARE_ALT)
-#ifdef __MRVL_MW300__
+#if defined (mw300)
 int mbedtls_hardware_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {

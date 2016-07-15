@@ -18,6 +18,14 @@
 #include <wmlog.h>
 
 
+// #include <stdarg.h>
+#include <sys/types.h>
+// #include <wmlog.h>
+// #include <wm_os.h>
+#include <lwip/sockets.h>
+// #include <wmstdio.h>
+// #include <wmsysinfo.h> 
+
 #define DEBUG_APP
 #ifdef DEBUG_APP
 #define APPLOGE(...)             \

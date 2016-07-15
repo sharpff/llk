@@ -60,21 +60,21 @@ EXTRACFLAGS += -DWM_IOT_PLATFORM=TRUE
 EXTRACFLAGS += -DHAVE_CONFIG_H
 EXTRACFLAGS += -D__MRVL_MW300__
 EXTRACFLAGS += -I./src/app/mw300
-EXTRACFLAGS += -I./src/hal/Marvell
+EXTRACFLAGS += -I./src/hal/mw300
 
 
 SRCS = ./app/mw300/main.c \
-	./hal/Marvell/halAES.c \
-	./hal/Marvell/halAirConfig.c \
-	./hal/Marvell/halCallback.c \
-	./hal/Marvell/halHelper.c \
-	./hal/Marvell/halMD5.c \
-	./hal/Marvell/halNetwork.c \
-	./hal/Marvell/halOS.c \
-	./hal/Marvell/halRSA.c \
-	./hal/Marvell/halConvertor.c \
-	./hal/Marvell/halIO.c \
-	./hal/Marvell/halOTA.c \
+	./hal/mw300/halAES.c \
+	./hal/mw300/halAirConfig.c \
+	./hal/mw300/halCallback.c \
+	./hal/mw300/halHelper.c \
+	./hal/mw300/halMD5.c \
+	./hal/mw300/halNetwork.c \
+	./hal/mw300/halOS.c \
+	./hal/mw300/halRSA.c \
+	./hal/mw300/halConvertor.c \
+	./hal/mw300/halIO.c \
+	./hal/mw300/halOTA.c \
 	board.c 
 # SRCS = main.c \
 # 	halAirConfig.c \
