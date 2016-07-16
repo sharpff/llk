@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <android/log.h>
 #include "halHeader.h"
 #include "halCenter.h"
 
@@ -107,5 +108,7 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
 }
 
 void halPrint(const char *log) {
-    printf(log);
+    /*ANDROID_LOG_DEBUG ANDROID_LOG_WARN ANDROID_LOG_ERROR*/
+    __android_log_print(ANDROID_LOG_DEBUG, TAG_LOG, log);
 }
+
