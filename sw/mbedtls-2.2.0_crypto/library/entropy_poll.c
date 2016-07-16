@@ -215,23 +215,6 @@ int mbedtls_havege_poll( void *data,
 
 
 #if defined(MBEDTLS_ENTROPY_HARDWARE_ALT)
-#if defined (mw300)
-int mbedtls_hardware_poll( void *data,
-                           unsigned char *output, size_t len, size_t *olen )
-{
-    uint32_t timer = os_get_timestamp();
-    ((void) data);
-    *olen = 0;
-
-    if( len < sizeof(uint32_t) )
-        return( 0 );
-
-    memcpy( output, &timer, sizeof(uint32_t) );
-    *olen = sizeof(uint32_t);
-
-    return( 0 );
-}
-#elif defined(EWM3801)
 int mbedtls_hardware_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {
@@ -247,9 +230,6 @@ int mbedtls_hardware_poll( void *data,
 
     return( 0 );
 }
-#else
-#pragma error ("no adpation...")
-#endif
 #endif /* MBEDTLS_ENTROPY_HARDWARE_ALT */
 
 #endif /* MBEDTLS_ENTROPY_C */

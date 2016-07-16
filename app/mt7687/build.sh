@@ -23,34 +23,34 @@ fi
 # 	    exit -1
 # 	fi
 
-# 	function do_dir()
-# 	{
-# 	    local IN_DIR=$1
-# 	    echo PWD:`pwd`
-# 	    for file in `ls`;do
-# 	        if [ -d $file ]; then
-# 	            $MKDIR "$DSTDIR/$IN_DIR/$file"
-# 	            pushd $file > /dev/null 2>&1
-# 	            do_dir $IN_DIR/$file
-# 	            popd > /dev/null 2>&1
-# 	        elif [ -f $file ]; then
-# 	            $RM "$DSTDIR/$IN_DIR/$file"
-# 	            $COPY $file "$DSTDIR/$IN_DIR/$file"
-# 	        fi
-# 	    done
-# 	}
+	function do_dir()
+	{
+	    local IN_DIR=$1
+	    echo PWD:`pwd`
+	    for file in `ls`;do
+	        if [ -d $file ]; then
+	            $MKDIR "$DSTDIR/$IN_DIR/$file"
+	            pushd $file > /dev/null 2>&1
+	            do_dir $IN_DIR/$file
+	            popd > /dev/null 2>&1
+	        elif [ -f $file ]; then
+	            $RM "$DSTDIR/$IN_DIR/$file"
+	            $COPY $file "$DSTDIR/$IN_DIR/$file"
+	        fi
+	    done
+	}
 
-# 	function do_copy()
-# 	{
-# 	    SRCDIR=$1
-# 	    DSTDIR=$2
-# 	    echo "Copy: $SRCDIR --> $DSTDIR"
-# 	    pushd $SRCDIR > /dev/null 2>&1
-# 	    echo SRC:`pwd`
-# 	    $MKDIR $DSTDIR
-# 	    do_dir ""
-# 	    popd > /dev/null 2>&1
-# 	}
+	function do_copy()
+	{
+	    SRCDIR=$1
+	    DSTDIR=$2
+	    echo "Copy: $SRCDIR --> $DSTDIR"
+	    pushd $SRCDIR > /dev/null 2>&1
+	    echo SRC:`pwd`
+	    $MKDIR $DSTDIR
+	    do_dir ""
+	    popd > /dev/null 2>&1
+	}
 
 # 	do_copy "$MAIN_PATH/hal/linux/" "$LinuxGDB/dev/hal/linux/"
 # 	do_copy "$MAIN_PATH/sw/" "$LinuxGDB/dev/sw/"
@@ -75,16 +75,30 @@ rm $MTSDK7687/middleware/third_party/cloud/lelink/lib/*.a
 pushd $PATH_LELINK > /dev/null 2>&1
 make PLATFORM="$PF" $*
 popd > /dev/null 2>&1
+
 if [ "$1" != "clean" ]; then
 	cp ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/
-fi
-
-rm $MTSDK7687/out/mt7687_hdk/le_demo/*.bin
-pushd $MTSDK7687 > /dev/null 2>&1
-./build.sh mt7687_hdk le_demo
-popd > /dev/null 2>&1
-if [ "$1" != "clean" ]; then
+	rm $MTSDK7687/out/mt7687_hdk/le_demo/*.bin
+	echo "!!!!!!!!!!!!!!!!!"
+	cp $MAIN_PATH/sw/airconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	cp $MAIN_PATH/sw/io.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	cp $MAIN_PATH/sw/leconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	cp $MAIN_PATH/sw/ota.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	cp $MAIN_PATH/sw/protocol.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	cp $MAIN_PATH/sw/state.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	do_copy "$MAIN_PATH/sw/mbedtls-2.2.0_crypto/include/" "$MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw/mbedtls-2.2.0_crypto/include/"
+	cp $MAIN_PATH/hal/$PF/halHeader.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
+	cp $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
+	cp main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+	echo "*****************"
+	pushd $MTSDK7687 > /dev/null 2>&1
+	./build.sh mt7687_hdk le_demo
+	popd > /dev/null 2>&1
 	cp $MTSDK7687/out/mt7687_hdk/le_demo/*.bin ../../tool
+else
+	pushd $MTSDK7687 > /dev/null 2>&1
+	./build.sh mt7687_hdk le_demo clean
+	popd > /dev/null 2>&1
 fi
 echo done
 
