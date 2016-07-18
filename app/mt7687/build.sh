@@ -77,9 +77,16 @@ make PLATFORM="$PF" $*
 popd > /dev/null 2>&1
 
 if [ "$1" != "clean" ]; then
+	# for mt7687 sdk
+	echo "*****************"
+	cp ./config/chip/mt7687/chip.mk $MTSDK7687/config/chip/mt7687
+	do_copy "./middleware/third_party/cloud/lelink" "$MTSDK7687/middleware/third_party/cloud/lelink"
+	cp main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+	cp $MAIN_PATH/hal/$PF/halHeader.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
+	cp $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
+	# for lelink
 	cp ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/
 	rm $MTSDK7687/out/mt7687_hdk/le_demo/*.bin
-	echo "!!!!!!!!!!!!!!!!!"
 	cp $MAIN_PATH/sw/airconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	cp $MAIN_PATH/sw/io.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	cp $MAIN_PATH/sw/leconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
@@ -87,10 +94,7 @@ if [ "$1" != "clean" ]; then
 	cp $MAIN_PATH/sw/protocol.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	cp $MAIN_PATH/sw/state.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	do_copy "$MAIN_PATH/sw/mbedtls-2.2.0_crypto/include/" "$MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw/mbedtls-2.2.0_crypto/include/"
-	cp $MAIN_PATH/hal/$PF/halHeader.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
-	cp $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
-	cp main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
-	echo "*****************"
+	echo "!!!!!!!!!!!!!!!!!"
 	pushd $MTSDK7687 > /dev/null 2>&1
 	./build.sh mt7687_hdk le_demo
 	popd > /dev/null 2>&1
