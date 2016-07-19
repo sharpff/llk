@@ -31,7 +31,7 @@
  * packets that are received.
  *
  */
-
+#if 0
 #include <wm_os.h>
 #include <app_framework.h>
 #include <wmtime.h>
@@ -45,14 +45,21 @@
 #include <httpd.h>
 #include <wifidirectutl.h>
 #include <nw_utils.h>
+#endif//0
 
-#if defined(__MRVL_SDK3_3__)
-#include "leconfig.h"
+#if 1//defined(__MRVL_SDK3_3__)
+#include "FreeRTOS.h"
+#include "FreeRTOSConfig.h"
+#include "timers.h"
+
+#include "halHeader.h"
 #include "airconfig.h"
 #include "protocol.h"
 #include "state.h"
+//#include "data.h"
 #include "io.h"
 #include "ota.h"
+#include "hal_sleep_manager.h"
 #else
 #include <lelink/sw/leconfig.h>
 #include <lelink/sw/airconfig.h>
@@ -63,20 +70,36 @@
 #include <lelink/sw/ota.h>
 #endif
 
-static uint8_t gin_airconfig_running;
-static uint8_t gin_airconfig_channel_locked;
-static uint8_t gin_airconfig_current_channel;
-static int gin_airconfig_channel_cared[MAX_CHANNEL_CARE];
-struct wlan_network gin_sta_net;
+#if defined(MTK_SMTCN_ENABLE)
+#include "smt_conn.h"
+#include "smt_api.h"
+#endif
+#include "netif.h"
+#include "flash_map.h"
+
+#include "sys_init.h"
+#include "bsp_gpio_ept_config.h"
+#include "network_init.h"
+#include "cli_def.h"
+
+
+//static uint8_t gin_airconfig_running;
+//static uint8_t gin_airconfig_channel_locked;
+uint8_t gin_airconfig_current_channel = 0;
+
+int gin_airconfig_channel_cared[MAX_CHANNEL_CARE];
+//struct wlan_network gin_sta_net;
+
+static TimerHandle_t lelink_airconfig_timer = NULL;
 
 
 int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 int airconfig_stop();
 
-void inner_set_ap_info(const ap_passport_t *passport);
-int inner_start_to_connect_ap(const ap_passport_t *passport);
+//void inner_set_ap_info(const ap_passport_t *passport);
+//int inner_start_to_connect_ap(const ap_passport_t *passport);
 
-static int lelink_start();
+// static int lelink_start();
 
 /*-----------------------Global declarations----------------------*/
 int8_t gin_airconfig_ap_connected;
@@ -88,6 +111,7 @@ char ginSsid[33];
  * a critical error occurs.
  *
  */
+#if 0
 void appln_critical_error_handler(void *data)
 {
 	while (1)
@@ -138,13 +162,15 @@ void print_frame_info(const wlan_frame_t *frame)
 		}
 	}
 }
+#endif//0
+
+//#define AIRCONFIG_INFINITE_INTERVAL os_msec_to_ticks(0xffffffff)
 
 
-#define AIRCONFIG_INFINITE_INTERVAL os_msec_to_ticks(0xffffffff)
-// #define AIRCONFIG_CHANNEL_SWITCH_INTERVAL os_msec_to_ticks(800)
-#define AIRCONFIG_CHANNEL_SWITCH_INTERVAL os_msec_to_ticks(300)
-#define AIRCONFIG_CHANNEL_TIMEOUT os_msec_to_ticks(12*1000)
-#define AIRCONFIG_TIMEOUT os_msec_to_ticks(60*60*1000)
+//#define AIRCONFIG_TIMEOUT os_msec_to_ticks(60*60*1000)
+#define AIRCONFIG_TIMEOUT (60*60*1000/portTICK_PERIOD_MS)
+
+#if 0
 #define LOCK_AIRCONFIG "lock_airconfig"
 static os_thread_t thread_airconfig;
 static os_thread_t thread_lelink;
@@ -153,9 +179,11 @@ static os_timer_t timer_timeout;
 static os_thread_stack_define(thread_stack_airconfig, 1024);
 static os_thread_stack_define(thread_stack_lelink, 1024 * 16);
 static os_semaphore_t sem_airconfig;
+#endif
 
 // static uint16_t g_airconfig_base = 0x0000;
 // extern uint8_t gin_ssid_crc;
+#if 0
 void native_sniffer_airconfig_processing(const wlan_frame_t *frame, const uint16_t len)
 {   
     // uint8_t latest_ssid_crc8 = 0;
@@ -249,9 +277,7 @@ void native_sniffer_airconfig_processing(const wlan_frame_t *frame, const uint16
                     wmprintf("[Prov] state => gin_airconfig_channel_locked \r\n");
                     gin_airconfig_channel_locked = 1;
                     // os_thread_sleep(AIRCONFIG_INFINITE_INTERVAL);
-                }break;
-                default:
-                break; 
+                }break; 
             }
         } else if (0 == memcmp(item.mac_src, tmp_src, sizeof(item.mac_src))) {
             ap_passport_t passport;
@@ -268,6 +294,7 @@ void native_sniffer_airconfig_processing(const wlan_frame_t *frame, const uint16
     }
 }
 
+
 static void timer_airconfig_cb(os_timer_arg_t handle)
 {
 	os_semaphore_put(&sem_airconfig);
@@ -280,8 +307,39 @@ static void timer_timeout_cb(os_timer_arg_t handle)
     os_timer_delete(&timer_timeout);
     wmprintf("timer_timeout_cb \r\n");
 }
+#endif//0
+static void lelink_airconfig_timeout_timer_callback( TimerHandle_t tmr )
+{
+    //int ret = HTTPCLIENT_ERROR_CONN;
 
-static void thread_airconfig_proc(os_thread_arg_t thandle)
+    if (tmr) 
+	{
+        xTimerStop(tmr, 0);
+        xTimerDelete(tmr, portMAX_DELAY);
+        lelink_airconfig_timer = NULL;
+    }
+
+    airconfig_stop();
+
+	printf("lelink_airconfig_timeout_timer_callback(). \r\n");
+
+	#if 0
+	//timer loop;
+   	{
+        lelink_airconfig_timer = xTimerCreate( "lelink_airconfig_timer",
+                                       AIRCONFIG_TIMEOUT,
+                                       pdFALSE,
+                                       NULL,
+                                       lelink_airconfig_timeout_timer_callback);
+        if (lelink_airconfig_timer != NULL) {
+            xTimerStart(lelink_airconfig_timer, 0);
+        }
+    }
+	#endif//0
+}
+
+#if 0
+static void thread_airconfig_proc(void *args)//marvell;
 {
 
     int ret;
@@ -338,7 +396,8 @@ static void thread_airconfig_proc(os_thread_arg_t thandle)
             //wmprintf("os_semaphore_get s [%d]\r\n", ret);
             os_semaphore_get(&sem_airconfig, OS_WAIT_FOREVER);
             //wmprintf("os_semaphore_get e [%d]\r\n", ret);
-            if (gin_airconfig_channel_locked) {
+            if (gin_airconfig_channel_locked) 
+			{
                 os_thread_sleep(AIRCONFIG_CHANNEL_TIMEOUT);
                 wmprintf("AIRCONFIG_CHANNEL_TIMEOUT for channel[%d] [%d] \r\n", gin_airconfig_channel_cared[i], channel);
                 gin_airconfig_channel_cared[i] = 0;
@@ -381,10 +440,40 @@ static void thread_airconfig_proc(os_thread_arg_t thandle)
     
     return;
 }
+#endif//0
+
+extern void smtcn_evt_handler(wifi_smart_connection_event_t event, void *data);
+
+static void mtk_thread_airconfig_proc(void *args)
+{
+    // wifi_smart_connection_status_t ret = WIFI_SMART_CONNECTION_OK;
+		
+    if(wifi_smart_connection_init(NULL, 0, smtcn_evt_handler) < 0){
+        return;
+    }
+
+    /*ret = */wifi_smart_connection_start(0);
+
+  #if 0
+	if (gin_airconfig_channel_locked) 
+	{
+        //os_thread_sleep(AIRCONFIG_CHANNEL_TIMEOUT);
+        vTaskDelay();
+        
+        wmprintf("AIRCONFIG_CHANNEL_TIMEOUT for channel[%d] [%d] \r\n", gin_airconfig_channel_cared[i], channel);
+        gin_airconfig_channel_cared[i] = 0;
+        if (0 == gin_airconfig_sniffer_got) {
+            // state go back to sniffer
+            gin_airconfig_sniffer_got = -1;
+            airconfig_stop();
+        }
+    }
+  #endif
+}
 
 int airconfig_start(void *ptr, uint8_t *prov_key, int prov_key_len)
 {
-    int ret;
+    // int ret;
     /*
     if (prov_g.pc != NULL) {
     prov_w("already configured!");
@@ -411,15 +500,31 @@ int airconfig_start(void *ptr, uint8_t *prov_key, int prov_key_len)
 
 
     //prov_g.pc = pc;
-    ret = os_timer_create(&timer_timeout, "timer_timeout",
+
+	//air config timeout handler;
+    /*ret = os_timer_create(&timer_timeout, "timer_timeout",
                   AIRCONFIG_TIMEOUT,
                   timer_timeout_cb, NULL, OS_TIMER_PERIODIC,
                   OS_TIMER_AUTO_ACTIVATE);
-    if (ret) {
+	
+    if (ret) 
+	{
         APPLOGE("os_timer_create timeout: %d", ret);
         goto fail; 
+    }*/
+	lelink_airconfig_timer = xTimerCreate( "lelink_airconfig_timer",
+                                       AIRCONFIG_TIMEOUT,
+                                       pdFALSE,
+                                       NULL,
+                                       lelink_airconfig_timeout_timer_callback);
+    if (lelink_airconfig_timer != NULL) 
+	{
+        xTimerStart(lelink_airconfig_timer, 0);
     }
-    ret = os_thread_create(&thread_airconfig,
+	
+
+	//launch air config; 
+    /*ret = os_thread_create(&thread_airconfig,
         "airconfig",
         thread_airconfig_proc,
         (void *)&thread_airconfig,
@@ -428,26 +533,39 @@ int airconfig_start(void *ptr, uint8_t *prov_key, int prov_key_len)
     if (ret) {
         APPLOGE("Failed to launch thread: %d", ret);
         goto fail;
-    }
+    }*/
+    if (pdPASS != xTaskCreate(mtk_thread_airconfig_proc,
+							  "thread_lelink_proc",
+							  1024*2,  //2K stack size;
+							  NULL,
+							  1,
+							  NULL)) 
+	{
+		LOG_E(common, "create user task fail");
+		//return -1;
+		return 0;
+	}
+	
     gin_airconfig_sniffer_got = 0;
     return 1;
 
-fail:
+/*fail:
     if (thread_airconfig)
         os_thread_delete(&thread_airconfig);
 
-    return 0;
+    return 0;*/
 }
 
 int airconfig_stop()
 {
-    gin_airconfig_channel_locked = 0;
+    //gin_airconfig_channel_locked = 0;
     gin_airconfig_current_channel = 0;
-    gin_airconfig_running = 0;
+    //gin_airconfig_running = 0;
     airconfig_reset();
     return 0;
 }
 
+#if 0
 void inner_set_ap_info(const ap_passport_t *passport) {
     gin_airconfig_ap_connected = 0;
     bzero(&gin_sta_net, sizeof(gin_sta_net));
@@ -471,39 +589,55 @@ void inner_set_ap_info(const ap_passport_t *passport) {
     /* Specify address type as dynamic assignment */
     gin_sta_net.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 }
+#endif//0
 
-static void thread_lelink_proc(os_thread_arg_t thandle) {
+static void mtk_thread_lelink_proc(void *args) 
+{
     void *ctxR2R = (void *)lelinkNwNew(REMOTE_BAK_IP, REMOTE_BAK_PORT, 0, NULL);
     void *ctxQ2A = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, NULL);
     // int i, ret = 0;
 
 
-    while (1) {
+    while (1) 
+	{
         lelinkPollingState(100, ctxR2R, ctxQ2A);
         // LELOG("thread_airconfig_proc pollingState ret [%d]", ret);
     }
 
     lelinkNwDelete(ctxR2R);
     lelinkNwDelete(ctxQ2A);
-    os_thread_self_complete((os_thread_t *)thandle);
+    //os_thread_self_complete((os_thread_t *)thandle);
 }
 
-static int lelink_start(void) {
-    int ret;
-    ret = os_thread_create(&thread_lelink,
+static int platform_launch_lelink_start(void) 
+{
+    // int ret;
+    /*ret = os_thread_create(&thread_lelink,
         "lelink",
         thread_lelink_proc,
         (void *)&thread_lelink,
         &thread_stack_lelink,
-        OS_PRIO_3);
-    if (ret) {
+        OS_PRIO_3);*/
+    if (pdPASS != xTaskCreate(mtk_thread_lelink_proc,
+							  "thread_lelink_proc",
+							  1024*16,  //16K stack size;
+							  NULL,
+							  1,
+							  NULL)) 
+	{
+		LOG_E(common, "create user task fail");
+		return -1;
+	}
+	
+    /*if (ret) 
+	{
         APPLOGE("Failed to launch thread: %d", ret);
         goto fail;
     }
     return 1;
 fail:
     if (thread_lelink)
-        os_thread_delete(&thread_lelink);
+        os_thread_delete(&thread_lelink);*/
 
     return 0;
 }
@@ -513,6 +647,7 @@ fail:
 //     lelinkDeinit();
 // }
 
+#if 0
 /** This Sniffer callback is called from a thread with small stack size,
  * So do minimal memory allocations for correct behaviour.
  */
@@ -535,15 +670,16 @@ void printOutBytes(const uint8_t buf[], int len) {
     }
     APPPRINTF("\n"); 
 }
-
+#endif//0
 
 void printForFac(void) {
-    char fwVer[64] = {0};
-    char mac[MLAN_MAC_ADDR_LENGTH] = {0};
-    getVer(fwVer, sizeof(fwVer));
-    wmprintf("firmware: %s\r\n", fwVer);
-    wlan_get_mac_address(mac);
-    wmprintf("mac: %02x:%02x:%02x:%02x:%02x:%02x\r\n", 
+    // char fwVer[64] = {0};
+    uint8_t mac[6] = {0};
+    //getVer(fwVer, sizeof(fwVer));
+    //wmprintf("firmware: %s\r\n", fwVer);
+    //wlan_get_mac_address(mac);
+    halGetMac(mac, 6);
+    printf("mac: %02x:%02x:%02x:%02x:%02x:%02x\r\n", 
         mac[0], 
         mac[1], 
         mac[2], 
@@ -565,38 +701,45 @@ void printForFac(void) {
  * to connect to us and receive a valid IP address via
  * DHCP.
  */
-void event_wlan_init_done(void *data)
+void platform_and_wlan_init_done(void)
 {
 	int ret;
 
-	ret = wlan_cli_init();
+	/*ret = wlan_cli_init();
     if (ret != WM_SUCCESS) {
 		APPLOGE("Error: wlan_cli_init failed");
     }
 	ret = wlan_iw_cli_init();
     if (ret != WM_SUCCESS) {
 		APPLOGE("Error: wlan_iw_init failed");
-    }
+    }*/
+    
     printForFac();
-    os_dump_mem_stats();
+	
+    //os_dump_mem_stats();
     // sector 0x1000(512pcs), block 0x10000(32pcs)
-    ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000);
-    if (0 > ret) {
-        APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
+    ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
+    if (0 > ret) 
+	{
+        //APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
+        printf("lelinkStorageInit ret[%d]\r\n", ret);
         return;
     }
     // protocol
     ret = lelinkInit(NULL);
-    if (0 > ret) {
-        APPLOGE("lelinkInit ret[%d]\r\n", ret);
+    if (0 > ret) 
+	{
+        //APPLOGE("lelinkInit ret[%d]\r\n", ret);
+        printf("lelinkInit ret[%d]\r\n", ret);
         return;
     }
-    lelink_start();
+    platform_launch_lelink_start();
 }
 
 /* This is the main event handler for this project. The application framework
  * calls this function in response to the various events in the system.
  */
+#if 0
 int common_event_handler(int event, void *data)
 {
 	switch (event) {
@@ -624,9 +767,12 @@ int common_event_handler(int event, void *data)
 
 	return 0;
 }
+#endif//0
 
 extern int getVer(char fwVer[64], int size);
 extern int halUpdateImage(int type, const char *url, const char *sig);
+
+#if 0//CLI CMD test OTA func;
 void le_ota(int argc, char **argv)
 {
     int c;
@@ -692,107 +838,96 @@ int le_utils_cli_init(void)
             return -WM_FAIL;
     return WM_SUCCESS;
 }
+#endif//0
 
-static void modules_init()
+uint8_t g_ipv4_addr[4] = {0};
+
+extern void tickless_init(void);
+
+void socket_test(const struct netif *netif)
+{	
+	printf("[wifibox]begin to create wifi_audio_box_socket_task. \n");
+	//xTaskHandle xHandle;
+
+#if BYTE_ORDER == BIG_ENDIAN
+	 g_ipv4_addr[0] = (((netif->ip_addr).addr) >> 24) & 0xff ;
+	 g_ipv4_addr[1] = (((netif->ip_addr).addr) >> 16) & 0xff ;
+	 g_ipv4_addr[2] = (((netif->ip_addr).addr) >> 8) & 0xff ;
+	 g_ipv4_addr[3] = ((netif->ip_addr).addr) & 0xff ;
+	 printf("[BIG_ENDIAN]:wifi_box_socket_test(), ip_addr = %d.%d.%d.%d \n",g_ipv4_addr[0], g_ipv4_addr[1], g_ipv4_addr[2], g_ipv4_addr[3]);
+#else
+	 g_ipv4_addr[0] = ((netif->ip_addr).addr) & 0xff ;
+	 g_ipv4_addr[1] = (((netif->ip_addr).addr) >> 8) & 0xff ;
+	 g_ipv4_addr[2] = (((netif->ip_addr).addr) >> 16) & 0xff ;
+	 g_ipv4_addr[3] = (((netif->ip_addr).addr) >> 24) & 0xff ;
+	 printf("[LITTLE_ENDIAN]:wifi_box_socket_test(), ip_addr = %d.%d.%d.%d \n",g_ipv4_addr[0], g_ipv4_addr[1], g_ipv4_addr[2], g_ipv4_addr[3]);
+#endif
+
+}
+
+void mtk_platform_init()
 {
-	int ret;
+	/* Do system initialization, eg: hardware, nvdm, logging and random seed. */
+    system_init();
 
-	/*
-	 * Initialize wmstdio prints
-	 */
-	ret = wmstdio_init(UART0_ID, 0);
-	if (ret != WM_SUCCESS) {
-		APPLOGE("Error: wmstdio_init failed");
-		appln_critical_error_handler((void *) -WM_FAIL);
-	}
-
-	/*
-	 * Initialize CLI Commands
-	 */
-	ret = cli_init();
-	if (ret != WM_SUCCESS) {
-		APPLOGE("Error: cli_init failed");
-		appln_critical_error_handler((void *) -WM_FAIL);
-	}
-
-	/* Initialize time subsystem.
-	 *
-	 * Initializes time to 1/1/1970 epoch 0.
-	*/
-    ret = wmtime_init();
-    if (ret != WM_SUCCESS) {
-        APPLOGE("Error: wmtime_init failed");
-        appln_critical_error_handler((void *) - WM_FAIL);
-    }
-
-    /*
-     * Register Power Management CLI Commands
+    /* bsp_ept_gpio_setting_init() under driver/board/mt76x7_hdk/ept will initialize the GPIO settings
+     * generated by easy pinmux tool (ept). ept_*.c and ept*.h are the ept files and will be used by
+     * bsp_ept_gpio_setting_init() for GPIO pinumux setup.
      */
-    ret = pm_cli_init();
-    if (ret != WM_SUCCESS) {
-        APPLOGE("Error: pm_cli_init failed");
-        appln_critical_error_handler((void *) - WM_FAIL);
-    }
+    bsp_ept_gpio_setting_init();
 
-    /*
-	 * Register Time CLI Commands
-	 */
-	ret = wmtime_cli_init();
-	if (ret != WM_SUCCESS) {
-		APPLOGE("Error: wmtime_cli_init failed");
-		appln_critical_error_handler((void *) -WM_FAIL);
-	}
+    /* Initialize network process,  includes: load the wifi profile setting from NVDM,  
+     * wifi stack initaization,  and some wifi event handler register,   
+     * tcpip stack and net interface initialization,  dhcp client, dhcp server process initialization
+     * notes:  the wifi initial process will be implemented and finished while system task scheduler is running,
+     *            when it is done , the WIFI_EVENT_IOT_INIT_COMPLETE event will be triggered */
+    network_full_init();
+    
+#if configUSE_TICKLESS_IDLE == 2
+    if (hal_sleep_manager_init() == HAL_SLEEP_MANAGER_OK) {
+        tickless_init();
+    }
+#endif
 
-    ret = sysinfo_init();
-    if (ret != WM_SUCCESS) {
-        APPLOGE("Error: sysinfo_init failed");
-        appln_critical_error_handler((void *) -WM_FAIL);
-    }
+#if defined(MTK_MINICLI_ENABLE)
+    /* Initialize cli task to enable user input cli command from uart port.*/
+    cli_def_create();
+    cli_task_create();
+#endif
 
-    ret = nw_utils_cli_init();
-    if (ret != WM_SUCCESS) {
-        APPLOGE("Error: nw_utils_cli_init failed");
-        appln_critical_error_handler((void *) -WM_FAIL);
-    }
-    ret = le_utils_cli_init();
-    if (ret != WM_SUCCESS) {
-        APPLOGE("Error: le_utils_cli_init failed");
-        appln_critical_error_handler((void *) -WM_FAIL);
-    }
-	return;
+#ifdef MTK_HOMEKIT_ENABLE
+    homekit_init();
+#endif
+	
+	//sta_network_init();
+	wifi_register_ip_ready_callback(socket_test);
+
+
+	/*if (pdPASS != xTaskCreate(user_entry,
+							  "user entry",
+							  USER_ENTRY_STACK_SIZE,
+							  NULL,
+							  USER_ENTRY_TASK_PRIO,
+							  NULL)) {
+		LOG_E(common, "create user task fail");
+		return -1;
+	}*/
 }
 
 
 int main()
 {
-    modules_init();
+    //modules_init();
+    mtk_platform_init();
 
-    if (1)
-    {
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x41}; // dooya
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x50}; // honyar
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x51}; // honyar
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x52}; // honyar
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x5B}; // honyar
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x5A}; // honyar OTA
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x60}; // dingding
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x70}; // honyar 86 box
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x80}; // midea kfr
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x81}; // midea kfr
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x88}; // midea kfr
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x90}; // FOREE GW
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x91}; // FOREE GW
-        // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xA0}; // lbest
-        uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xFF}; // my local
-        wlan_set_mac_addr(mac);
+    platform_and_wlan_init_done();
+	
+    vTaskStartScheduler();
 
-    }
-    APPLOG("Build Time: " __DATE__ " " __TIME__ "");
-    /* Start the application framework */
-    if (app_framework_start(common_event_handler) != WM_SUCCESS) {
-        APPLOGE("Failed to start application framework");
-                appln_critical_error_handler((void *) -WM_FAIL);
-    }
-    return 0;
+    /* If all is well, the scheduler will now be running, and the following line
+    will never be reached.  If the following line does execute, then there was
+    insufficient FreeRTOS heap memory available for the idle and/or timer tasks
+    to be created.  See the memory management section on the FreeRTOS web site
+    for more details. */
+    for ( ;; );
 }

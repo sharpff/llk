@@ -195,17 +195,17 @@ typedef unsigned int uint32_t;
 #include <stdarg.h>
 #include <sys/types.h>
 
-#ifndef uint8_t
-typedef unsigned char uint8_t;
-#endif
+// #ifndef uint8_t
+// typedef unsigned char uint8_t;
+// #endif
 
-#ifndef uint16_t
-typedef unsigned short uint16_t;
-#endif
+// #ifndef uint16_t
+// typedef unsigned short uint16_t;
+// #endif
 
-#ifndef int16_t
-typedef short int16_t;
-#endif
+// #ifndef int16_t
+// typedef short int16_t;
+// #endif
 
 // #define lelog(_mod_name_, _fmt_, ...) \
 //     { \
@@ -305,6 +305,27 @@ typedef short int16_t;
 #define LEPRINTF(...) \
     printOut(__VA_ARGS__)
 
+
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#define memset hal_memset
+#define memcpy hal_memcpy
+#define memcmp hal_memcmp
+#define strlen hal_strlen
+#define strcmp hal_strcmp
+#define strncmp hal_strncmp
+#define strcpy hal_strcpy
+#define strtol hal_strtol
+#define strstr hal_strstr
+#define sprintf hal_sprintf
+#define snprintf hal_snprintf
+#define vsnprintf hal_vsnprintf
+#define strcoll hal_strcoll
+#define abort hal_abort
+#define malloc halMalloc
+#define calloc halCalloc
+#define realloc halRealloc
+#define free halFree
+#endif
 
 // halIO
 void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);

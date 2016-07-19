@@ -15,6 +15,7 @@ PACK_FILES=$PACK_FILES:"genProfile.sh@app/$PLATFORM"
 PACK_FILES=$PACK_FILES:"/tool/lelinkTool.py@tool"
 PACK_FILES=$PACK_FILES:"/tool/product/fwScript.md@"
 PACK_FILES=$PACK_FILES:"/tool/product/test.lua@app/$PLATFORM"
+PACK_FILES=$PACK_FILES:"kfr.lua@app/$PLATFORM"
 
 ./genProfile.sh
 

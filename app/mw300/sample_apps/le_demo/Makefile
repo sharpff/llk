@@ -82,10 +82,10 @@ SRCS = ./app/mw300/main.c \
 
 
 CFLAGS += -I$(SDK_PATH)/incl/lelink
-CFLAGS += -I$(SDK_PATH)/incl/sengine
+# CFLAGS += -I$(SDK_PATH)/incl/sengine
 
 EXTRALIBS += $(SDK_PATH)/libs/liblelink.a
-EXTRALIBS += $(SDK_PATH)/libs/libsengine.a
+# EXTRALIBS += $(SDK_PATH)/libs/libsengine.a
 
 
 LDSCRIPT = $(TOOLCHAIN_DIR)/$(ARCH_NAME-y).ld

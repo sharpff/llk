@@ -13,28 +13,6 @@ extern "C"
 #include "halHeader.h"
 #endif /* __LE_SDK__ */
 
-
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
-#define memset hal_memset
-#define memcpy hal_memcpy
-#define memcmp hal_memcmp
-#define strlen hal_strlen
-#define strcmp hal_strcmp
-#define strncmp hal_strncmp
-#define strcpy hal_strcpy
-#define strtol hal_strtol
-#define strstr hal_strstr
-#define sprintf hal_sprintf
-#define snprintf hal_snprintf
-#define vsnprintf hal_vsnprintf
-#define strcoll hal_strcoll
-#define abort hal_abort
-#define malloc halMalloc
-#define calloc halCalloc
-#define realloc halRealloc
-#define free halFree
-#endif
-
 #if defined(WIN32) || defined(EWM3801)
 #define ALIGNED
 #else
@@ -45,15 +23,18 @@ extern "C"
 #define MUTEX_LOCK halLock()
 #define MUTEX_UNLOCK halUnlock()
 
-
 #define AES_LEN (128/8)
 #define RSA_LEN (1024/8)
 #define RSA_RAW_LEN ((1024/8) - 11)
 #define MAX_RSA_PUBKEY (RSA_LEN + RSA_LEN/2)
 #define MD5_LEN (16)
+#define SHA1_LEN (16)
 #define MAX_UUID (32)
 #if (MD5_LEN > AES_LEN)
     #pragma error "MD5_LEN > AES_LEN"
+#endif
+#if (SHA1_LEN > AES_LEN)
+    #pragma error "SHA1_LEN > AES_LEN"
 #endif
 #define MAX_BUF (1024+256)
 
@@ -63,6 +44,46 @@ extern "C"
 
 #define REMOTE_BAK_IP "115.182.94.173"
 #define REMOTE_BAK_PORT 5546
+
+
+
+
+// halIO
+void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
+int halUartClose(void *dev);
+int halUartRead(void *dev, uint8_t *buf, uint32_t len);
+int halUartWrite(void *dev, const uint8_t *buf, uint32_t len);
+void *halGPIOInit(void);
+int halGPIOClose(void *dev);
+int halGPIOOpen(int8_t id, int8_t dir, int8_t mode);
+int halGPIORead(void *dev, int gpioId, int *val);
+int halGPIOWrite(void *dev, int gpioId, const int val);
+int halFlashInit(void);
+int halFlashDeinit(void);
+void *halFlashOpen(void);
+int halFlashClose(void *dev);
+int halFlashErase(void *dev, uint32_t startAddr, uint32_t size);
+int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr);
+int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr);
+int halGetMac(uint8_t *mac, int len);
+void *halPipeOpen(char *name);
+int halPipeClose(void *dev);
+int halPipeRead(void *dev, uint8_t *buf, uint32_t len);
+int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len);
+
+// halOS
+int halLockInit(void);
+void halDeLockInit(void);
+int halLock(void);
+int halUnlock(void);
+unsigned int halGetTimeStamp(void);
+unsigned int halGetUTC(void);
+void *halMalloc(size_t size);
+void *halCalloc(size_t n, size_t size);
+void *halRealloc(void *ptr, size_t size);
+void halFree(void *ptr);
+int halReboot();
+
 
 
 #ifdef __cplusplus
