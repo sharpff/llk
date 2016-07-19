@@ -245,7 +245,7 @@ void thread_input_check(void *arg) {
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0, 
 
-// #define DO_AIR_CONFIG    
+#define DO_AIR_CONFIG    
 // #define ENABLE_WIFI_SOFT_AP 1
 
 #ifndef DO_AIR_CONFIG
@@ -361,7 +361,17 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000);
+    if (0 > ret) {
+        APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
+        return -2;
+    }
 
+    ret = lelinkInit(NULL);
+    if (0 > ret) {
+        APPLOGE("lelinkInit failed [%d]\r\n", ret);
+        return -3;
+    }
 
     // configInfo = "SSID=TP-LINK_JJFA1,PASSWD=987654321,AES=912EC803B2CE49E4A541068D495AB570,TYPE=2,DELAY=10";
     // configInfo = "SSID=Xiaomi_A7DD,PASSWD=987654321,AES=912EC803B2CE49E4A541068D495AB570,TYPE=2,DELAY=10";

@@ -5,7 +5,10 @@
 BINARYDIR := Debug
 PLATFORM := linux_mips
 MYXPATH := 
-MYXPREFIX := mipsel-linux-
+# MYXPREFIX := mipsel-linux-
+# qca9531
+MYXPREFIX := mips-openwrt-linux-
+
 
 MAIN_PATH=$(CURDIR)/../..
 #Toolchain
@@ -27,7 +30,7 @@ LINUX_PACKAGES :=
 CFLAGS := -ggdb -ffunction-sections -O0
 CXXFLAGS := -ggdb -ffunction-sections -O0
 ASFLAGS := 
-LDFLAGS := -Wl,-gc-sections
+LDFLAGS := -Wl,-gc-sections -ldl
 COMMONFLAGS := 
 
 START_GROUP := -Wl,--start-group
