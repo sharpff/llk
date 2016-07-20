@@ -796,8 +796,9 @@ int lelinkDoPollingR2R(void *ctx) {
             CmdRecord *ct_p = getCmdRecord(cmdInfo.cmdId, cmdInfo.subCmdId);
             if (ct_p && !isCacheEmpty) {
                 if (0 <= qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindNode, (void *)&cmdInfo)) {
-                    ct_p->procR2R ?
-                    ((CBRemoteRsp) ct_p->procR2R)(pCtx, &cmdInfo, COMM_CTX(pCtx)->protocolBuf, len) : 0;
+                    if(ct_p->procR2R) {
+                      ((CBRemoteRsp) ct_p->procR2R)(pCtx, &cmdInfo, COMM_CTX(pCtx)->protocolBuf, len);
+                    }
                 }
             }
         }

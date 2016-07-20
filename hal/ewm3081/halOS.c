@@ -35,6 +35,21 @@ void *halCalloc(int n, size_t size) {
     return ptr;
 }
 
+void *halMalloc(size_t size) {
+    void *ptr;
+    return ptr;
+}
+
+void *halCalloc(int n, size_t size) {
+    void *ptr;
+    return ptr;
+}
+
+void *halRealloc(void *ptr, size_t size) {
+    void *ptr1;
+    return ptr1;
+}
+
 void halFree(void *ptr) {
     if (ptr)
         free(ptr);
