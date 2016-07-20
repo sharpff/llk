@@ -36,5 +36,6 @@ COMMONFLAGS :=
 START_GROUP := -Wl,--start-group
 END_GROUP := -Wl,--end-group
 
+IS_SUPPORT_AIRCONFIG_CTRL := 1
 #Additional options detected from testing the toolchain
 IS_LINUX_PROJECT := 1

@@ -14,5 +14,6 @@ MYXPREFIX := [TOBESET]
 
 COM_CFLAGS := -ffunction-sections -O0 -gstabs+
 
+IS_SUPPORT_AIRCONFIG_CTRL := 1
 IS_LINUX_PROJECT := 1
 

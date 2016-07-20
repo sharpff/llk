@@ -73,25 +73,6 @@ int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int l
     return ret;
 }
 
-// int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int lenIP, int *port) {
-//     int ret;
-//     struct sockaddr_in from_addr;
-//     socklen_t len_from = sizeof(struct sockaddr_in);
-//     ret = recvfrom(sock, buf, len, 0, (struct sockaddr *)&from_addr, (socklen_t *)&len_from);
-//     if (ret > 0)
-//     {
-//         const char *p = (const char *)inet_ntoa(from_addr.sin_addr); 
-//         int len1 = strlen(p);
-//         if (lenIP < len1)
-//         {
-//             len1 = lenIP;
-//         }
-//         *port = htons(from_addr.sin_port);
-//         strncpy(ip, p, len1);
-//     }
-//     return ret;
-// }
-
 int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint16_t *port) {
     int ret;
     struct sockaddr_in from_addr;
@@ -110,7 +91,6 @@ int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint
     }
     return ret;
 }
-
 
 int halGetSelfAddr(char *ip, int size, int *port) {
     // struct ifaddrs * ifAddrStruct = NULL;
