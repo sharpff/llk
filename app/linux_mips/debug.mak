@@ -5,9 +5,7 @@
 BINARYDIR := Debug
 PLATFORM := linux_mips
 MYXPATH := 
-# MYXPREFIX := mipsel-linux-
-# qca9531
-MYXPREFIX := mips-openwrt-linux-
+MYXPREFIX := mipsel-linux-
 
 
 MAIN_PATH=$(CURDIR)/../..
