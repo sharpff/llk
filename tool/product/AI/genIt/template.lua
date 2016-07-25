@@ -206,54 +206,6 @@ end
 	lua5.3.0_win_slim.exe hello/helloworld.lua s2GetSelfCtrlCmd
 ]]
 
--- {
---     "status":{
---         "pwr":1,
---         "mark":2,
---         "actions":3
---     },
---     "cloud":1,
---     "uuid":"d05bca44feb34aeca2dd111111111111",
---     "ip":"192.168.1.100",
---     "ver":"3-1.0.0.git.004-161-g7b08f3c.1-1-1.1",
---     "ssid":"",
---     "lock":0,
---     "uuids":[
-
---     ],
---     "sDev":[
---         {
---             "sid":"0006000001010104",
---             "status":{
---                 "switcher":1,
---                 "detector":0
---             }
---         },
---         {
---             "sid":"0006000001010104",
---             "status":{
---                 "switcher":1,
---                 "detector":0
---             }
---         }
---     ],
---     "sMac":"7409E17E3376AF60"
--- }
-
--- {
---     "ctrl":{
---         "pwr":1
---     },
---     "sDev":[
---         {
---             "sid":"0006000001010104",
---             "ctrl":{
---                 "mark":3
---             }
---         }
---     ],
---     "sMac":"7409E17E3376AF60"
--- }
 function s2GetSelfCtrlCmd()
 	--[[
 		to get the cmd for self ctrl
