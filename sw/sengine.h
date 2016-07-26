@@ -41,7 +41,9 @@ extern "C"
 #define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
 
 #define SDEV_MAX_INFO MAX_BUF/4
-#define SDEV_MAX_STATUS MAX_BUF/4*3
+#define SDEV_MAX_STATUS MAX_BUF/2
+#define SDEV_MAX_MAC 24
+#define SDEV_MAX_EPT 8
 
 
 enum {
@@ -92,10 +94,13 @@ typedef struct {
 }Datas;
 
 typedef struct {
-    char mac[MAX_UUID];
+    char mac[SDEV_MAX_MAC];
     char sdevStatus[SDEV_MAX_STATUS]; // as json object "sDevStatus"
     char sdevInfo[SDEV_MAX_INFO]; // as json object "sDev"
-    int occupied;
+    uint8_t sdevEpt[SDEV_MAX_EPT]; // the element - 1 is the real ept
+    uint8_t idx[SDEV_MAX_MAC/4]; // short mac or index
+    uint8_t occupied;
+    uint8_t isSDevInfoDone;
 }SDevNode;
 
 typedef struct {

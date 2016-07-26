@@ -126,9 +126,9 @@ function s1GetVer()
 	-- local str = string.format('%02X ', ret)
 	-- print ("[LUA] csum "..str.."\r\n")
 
-	-- local tblData1 = {0x01, 0x00, 0x47, 0x00, 0x0C, 0x18, 0x05, 0x7D, 0xC0, 0x6F, 0xA0, 0x00, 0xE4, 0x4C, 0xE3, 0x6F, 0x00, 0x00, 0x03}
-	-- LOGTBL(tblData1)
-	-- LOGTBL(whatWrite(tblData1))
+	local tblData1 = {0x01, 0x80, 0x43, 0x00, 0x25, 0x4C, 0xE9, 0x00, 0xDB, 0x8F, 0x16, 0x01, 0x01, 0x04, 0x01, 0x01, 0x02, 0x06, 0x00, 0x00, 0x00, 0x04, 0x00, 0x03, 0x00, 0x06, 0x00, 0x08, 0x00, 0x05, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x03, 0x00, 0x06, 0x00, 0x08, 0x00, 0x05, 0x03}
+	LOGTBL(tblData1)
+	LOGTBL(whatWrite(tblData1))
 
 	-- local tblData2 = {0x01, 0x02, 0x10, 0x47, 0x02, 0x10, 0x02, 0x1C, 0x18, 0x02, 0x15, 0x7D, 0xC0, 0x6F, 0xA0, 0x02, 0x10, 0xE4, 0x4C, 0xE3, 0x6F, 0x02, 0x10, 0x02, 0x10, 0x03}
 	-- LOGTBL(tblData2)
@@ -248,21 +248,25 @@ function s1GetValidKind(data)
 			end
 
 			if nil ~= string.find(data, string.char(0x01, 0x00, 0x4D, 0x00, 0x0B)) then
-				-- (IND RAW) new device joining, RAW rep is 0102104D02100B2331BC60AF76337EE10219748003
+				-- (IND RAW) new device joining, RAW ind is 0102104D02100B2331BC60AF76337EE10219748003
 				print ("[LUA] s1GetValidKind - sub devices - new device joining\r\n")
 				ret = WHATKIND_SUB_DEV_JOIN
 				break
 			end
 
 			if nil ~= string.find(data, string.char(0x01, 0x80, 0x48, 0x00, 0x09)) then
-				-- (IND RAW) new device leaving, RAW rep is 01804802100219A960AF76337EE1021974021003 
+				-- (IND RAW) new device leaving, RAW ind is 01804802100219A960AF76337EE1021974021003 
 				print ("[LUA] s1GetValidKind - sub devices - new device leaving\r\n")
 				ret = WHATKIND_SUB_DEV_LEAVE
 				break
 			end
 
-			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) then
+			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) or 
+				nil ~= string.find(data, string.char(0x01, 0x80, 0x45)) or 
+				nil ~= string.find(data, string.char(0x01, 0x80, 0x43)) then
 				-- (IND RAW) sDevStatus action, RAW ind 0181021202100B2D0212853002150210021602100210021010021103 
+				-- (RSP RAW) endpoint RAW rsp 018045021002167fe80210db8f0211021103  
+				-- (RSP RAW) descriptor RAW rsp 0180430210254ce90210db8f160211021102140211021102120216021002100210021402100213021002160210021802100215021102100210021002140210021302100216021002180210021503 
 				print ("[LUA] s1GetValidKind - sub devices - sDevStatus action ind "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
@@ -292,8 +296,12 @@ end
 -- \{\"ctrl\":\{\"sDevGetInfo\":0\}\}
 -- \{\"ctrl\":\{\"sDevGetInfo\":1\}\}
 -- \{\"ctrl\":\{\"pwr\":1,\"sDev\":\{\"pid\":\"0104\",\"did\":\"0107\",\"clu\":\"0006\",\"ept\":[1,2],\"mac\":\"7409E17E3376AF60\"\}\}\}
+local function bin2hex(s)
+    s=string.gsub(s,"(.)",function (x) return string.format("%02X",string.byte(x)) end)
+    return s
+end
 
-function hexStr2Bin(str)
+function hex2bin(str)
 	local tmp = ''
 	for i = 1, string.len(str), 2 do 
 		local sub = string.sub(str, i, i+1)
@@ -354,10 +362,10 @@ function s1CvtStd2Pri(json)
 				local addr = ctrl["sDevMgmtLeave"]["addr"]
 				local mac = ctrl["sDevMgmtLeave"]["mac"]
 				local str = string.char(0x01, 0x00, 0x47, 0x00, 0x0C, 0x00)
-				str = str .. hexStr2Bin(addr) .. hexStr2Bin(mac) .. string.char(0x00, 0x00, 0x03)
+				str = str .. hex2bin(addr) .. hex2bin(mac) .. string.char(0x00, 0x00, 0x03)
 				cmdTbl = stringToTable(str)
 				cmdTbl[6] = csum(cmdTbl)
-				LOGTBL(cmdTbl)
+				-- LOGTBL(cmdTbl)
  				break
 			end
 
@@ -372,7 +380,7 @@ function s1CvtStd2Pri(json)
 	end
 
 	cmdTbl = whatWrite(cmdTbl)
-	LOGTBL(cmdTbl)
+	-- LOGTBL(cmdTbl)
 	dataStr = tableToString(cmdTbl)
 	return string.len(dataStr), dataStr
 end
@@ -396,23 +404,33 @@ function s1CvtPri2Std(bin)
 	local cvtType = s1apiGetCurrCvtType()
 	local dataTbl = {}
 	local strMain = ''
-	local strSubDev = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
+	-- local strSubDev = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
+	local strSubDev = '"sDev":[%s],"sMac":%s'
 	dataTbl = stringToTable(bin)
+
+	dataTbl = whatRead(dataTbl)
+	LOGTBL(dataTbl)
+	bin = tableToString(dataTbl)
+
+	-- test only
+	cvtType = 0x01
 
 	for i = 1, 1 do
 		-- UART
 		if 0x01 == cvtType then
 			-- START for status of sub devices
-			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x05, 0x82, 0x04, 0x01, 0x41, 0x00, 0xCC)) then
-				-- (RSP) join permition rsp , rep is AA 00 0D 02 04 01 41 00 00 00 00 00 00 00 00 00 7B
-				print ("[LUA] s1CvtPri2Std - sub devices - join permition rsp\r\n")
-				strMain = string.format('{"sDevJoin":%d}', 2)
+			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x00, 0x00, 0x04)) then
+				-- (RSP) join permition rsp , RAW rsp is 0180021002100214380210F502104903  
+				print ("[LUA] s1CvtPri2Std - RSP - join permition or mgnt leave rsp\r\n")
+				strMain = string.format('{"sDevActRsp":%d}', 2)
 				break
 			end
 
-			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x11, 0x82)) then
-				-- (IND) new device joining, rep is 0xAA, 0x00, 0x11, 0x82
-				-- {"sDevJoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
+			if nil ~= string.find(bin, string.char(0x01, 0x00, 0x4D)) then
+				-- (IND) new device joining, RAW rep is 0102104d0210021b5abe4a60af76337ee10219748003 
+				-- {"sDevPmtJoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
+				-- {"sDevPmtJoin":2,"sDev":{"pid":"0401","ept":[["0701",0],["0701",1]],"mac":"6FE34CE400A06FC0"}}
+				bin2hex(string.sub(bin, 7, 8))
 				print("s1CvtPri2Std - sub devices - new device joining\r\n")
 				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
 				local addr = dataTbl[8]
@@ -426,28 +444,7 @@ function s1CvtPri2Std(bin)
 				end
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				strMain = '{"sDevJoin":2,'..strSubDev..'}'
-				print("[LUA] return => "..strMain.."\r\n")
-				break
-			end
-
-			if nil ~= string.find(bin, string.char(0xAA, 0x00, 0x11, 0x82)) then
-				-- (IND) new device joining, rep is 0xAA, 0x00, 0x11, 0x82
-				-- {"sDevJoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
-				print("s1CvtPri2Std - sub devices - new device joining\r\n")
-				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
-				local addr = dataTbl[8]
-				local strMac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16], dataTbl[17], dataTbl[18])
-				local sDevEPList = {}
-				local strCluster = '""'
-				for i = 1, 1 do
-					local strDevId = string.format("%02x%02x", dataTbl[20], dataTbl[19])
-					sDevEPList[#sDevEPList + 1] = {strDevId, 1}
-					strCluster = getClusterFromDid(strDevId)
-				end
-				local ept = cjson.encode(sDevEPList)
-				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				strMain = '{"sDevJoin":2,'..strSubDev..'}'
+				strMain = '{"sDevPmtJoin":2,'..strSubDev..'}'
 				print("[LUA] return => "..strMain.."\r\n")
 				break
 			end

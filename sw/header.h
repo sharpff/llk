@@ -66,6 +66,7 @@ typedef long long int64_t;
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 // #ifndef uint8_t
 // typedef unsigned char uint8_t;

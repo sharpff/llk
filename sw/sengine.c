@@ -185,7 +185,36 @@ static void postStatusChanged(int plusIdx) {
     // TIMEOUT_SECS_END
 }
 
+static int sdevQueryInfo(SDevNode *arr) {
+    // TODO: according to the ept list to query the clusters
+
+    int tmpCurrNum = 0, j = 0;
+    const char *fmt = "{\"%s\":%d}";
+    int maxSize = sdevCache()->maxsize;
+    int currSize = sdevCache()->currsize;
+    SDevNode *arr = sdevArray();
+    for (j = 0; (j < maxSize && tmpCurrNum < currSize); j++) {     
+        if (arr[j].occupied) {                            
+            memset(json, 0, sizeof(json));
+            ret = sprintf(json, fmt, JSON_NAME_SDEV_GET_INFO, j);
+            LELOG("idx[%d], json is [%d][%s]", ret, json);
+            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
+                (uint8_t *)json, ret, (uint8_t *)cmd, sizeof(cmd));
+            if (ret <= 0) {
+                LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
+                continue;
+            }
+            ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
+            if (0 >= ret) {
+                LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
+            }
+            tmpCurrNum++;
+        }
+    }               
+}
+
 static int sdevInsert(SDevNode *arr, const char *status, int len) {
+    // TODO: insert the idx(short mac) & mac
     int valJoin = 0, index = 0, ret = 0;
     jobj_t jobj;
     jsontok_t jsonToken[NUM_TOKENS];
@@ -235,6 +264,10 @@ static int sdevInsert(SDevNode *arr, const char *status, int len) {
 }
 
 static int sdevUpdate(SDevNode *arr, const char *status, int len) {
+    // TODO: 
+    // 1. update the info
+    // 2. update the status
+    
     // {"subDevGetList":[0,1,2]}
     jobj_t jobj;
     jsontok_t jsonToken[NUM_TOKENS];
@@ -1270,50 +1303,50 @@ int sengineQuerySlave(QuerieType_t type)
         }
 
         // query for sub dev
-        if (sengineHasDevs()) {
-            TIMEOUT_SECS_BEGIN(5)
-                char json[256] = {0};
-                uint8_t cmd[128] = {0};
-                sprintf(json, "{\"%s\":1}", JSON_NAME_SDEV_GET_LIST);
-                LELOG("json is [%s]", json);
-                ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
-                    (uint8_t *)json, strlen(json), (uint8_t *)cmd, sizeof(cmd));
-                if (ret <= 0) {
-                    LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
-                    continue;
-                }
-                ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
-                if (0 >= ret) {
-                    LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
-                }
-                {
-                    int tmpCurrNum = 0, j = 0;
-                    const char *fmt = "{\"%s\":%d}";
-                    int maxSize = sdevCache()->maxsize;
-                    int currSize = sdevCache()->currsize;
-                    SDevNode *arr = sdevArray();
-                    for (j = 0; (j < maxSize && tmpCurrNum < currSize); j++) {     
-                        if (arr[j].occupied) {                            
-                            memset(json, 0, sizeof(json));
-                            ret = sprintf(json, fmt, JSON_NAME_SDEV_GET_INFO, j);
-                            LELOG("idx[%d], json is [%d][%s]", ret, json);
-                            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
-                                (uint8_t *)json, ret, (uint8_t *)cmd, sizeof(cmd));
-                            if (ret <= 0) {
-                                LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
-                                continue;
-                            }
-                            ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
-                            if (0 >= ret) {
-                                LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
-                            }
-                            tmpCurrNum++;
-                        }
-                    }               
-                }
-                LELOG("sengineQuerySlave done");
-            TIMEOUT_SECS_END
-        }
+        // if (sengineHasDevs()) {
+        //     TIMEOUT_SECS_BEGIN(5)
+        //         char json[256] = {0};
+        //         uint8_t cmd[128] = {0};
+        //         sprintf(json, "{\"%s\":1}", JSON_NAME_SDEV_GET_LIST);
+        //         LELOG("json is [%s]", json);
+        //         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
+        //             (uint8_t *)json, strlen(json), (uint8_t *)cmd, sizeof(cmd));
+        //         if (ret <= 0) {
+        //             LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
+        //             continue;
+        //         }
+        //         ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
+        //         if (0 >= ret) {
+        //             LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
+        //         }
+        //         {
+        //             int tmpCurrNum = 0, j = 0;
+        //             const char *fmt = "{\"%s\":%d}";
+        //             int maxSize = sdevCache()->maxsize;
+        //             int currSize = sdevCache()->currsize;
+        //             SDevNode *arr = sdevArray();
+        //             for (j = 0; (j < maxSize && tmpCurrNum < currSize); j++) {     
+        //                 if (arr[j].occupied) {                            
+        //                     memset(json, 0, sizeof(json));
+        //                     ret = sprintf(json, fmt, JSON_NAME_SDEV_GET_INFO, j);
+        //                     LELOG("idx[%d], json is [%d][%s]", ret, json);
+        //                     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
+        //                         (uint8_t *)json, ret, (uint8_t *)cmd, sizeof(cmd));
+        //                     if (ret <= 0) {
+        //                         LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
+        //                         continue;
+        //                     }
+        //                     ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
+        //                     if (0 >= ret) {
+        //                         LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
+        //                     }
+        //                     tmpCurrNum++;
+        //                 }
+        //             }               
+        //         }
+        //         LELOG("sengineQuerySlave done");
+        //     TIMEOUT_SECS_END
+        // }
 
     FOR_EACH_IO_HDL_END;
 
@@ -1418,6 +1451,7 @@ int senginePollingSlave(void) {
                                 LELOGE("sdevInsert is FAILED");
                                 break;
                             }
+                            sdevQueryInfo(tmpArr);
                         } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_DATA");
                             if (0 > sdevUpdate(tmpArr, status, len)) {

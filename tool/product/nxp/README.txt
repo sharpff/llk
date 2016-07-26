@@ -40,7 +40,10 @@ RSP:
 *新设备入网：
    msgT  len   cs short |-------MAC-----------| 
 btn: 
+01 02 10 4d 02 10 02 1b 5a be 4a 60 af 76 33 7e e1 02 19 74 80 03 
+01 00    4D 00    0B    5A BE 4A 60 AF 76 33 7E E1 09    74 80 03 
 01 00 4D 00 0B 5A BE 4A 60 AF 76 33 7E E1 09 74 80 03 
+
 01 00 4D 00 0B 3B B4 4C 00 15 8D 00 00 F3 A0 CE 80 03 
 heat:
 01 00 4D 00 0B F3 D2 CC C0 6F A0 00 E4 4C E3 6F 80 03 
@@ -120,14 +123,31 @@ heart:
 
 
 *ctrl类：                
-   msgT  len   cs 
+   msgT  len   cs 02 short se de cmd
 light:
 01 00 92 00 06 D4 02 31 71 01 01 02 03 
 01 02 10 92 02 10 02 16 D4 02 12 31 71 02 11 02 11 02 12 03
-01 00    92    00    06 D4 02    31 71    01    01    02 03 
+01 00    92    00    06 D4 02    31 71    01    01    02 03
 
 
-profile->clu->did->endpoint->mac
+profile->endpoint(did)->cluster
+
+
+*endpoint request:
+   msgT  len   cs short
+01 00 45 00 02 13 DB 8F 03 
+*endpoint response:
+   msgT  len   cs       short n  v
+01 80 45 00 06 7F E8 00 DB 8F 01 01 03 
+01 80 45 02 10 02 16 7f e8 02 10 db 8f 02 11 02 11 03 
+
+*descriptor request:
+   msgT  len   cs short ept
+01 00 43 00 03 15 DB 8F 01 03 
+*descriptor response:
+   msgT  len   cs       short       pid   did   *v cn                                     *ocn
+01 80 43 00 25 4C E9 00 DB 8F 16 01 01 04 01 01 02 06 00 00 00 04 00 03 00 06 00 08 00 05 01 00 00 00 04 00 03 00 06 00 08 00 05 03 
+01 80 43 02 10 25 4c e9 02 10 db 8f 16 02 11 02 11 02 14 02 11 02 11 02 12 02 16 02 10 02 10 02 10 02 14 02 10 02 13 02 10 02 16 02 10 02 18 02 10 02 15 02 11 02 10 02 10 02 10 02 14 02 10 02 13 02 10 02 16 02 10 02 18 02 10 02 15 03 
 
 
 std2pri:
@@ -143,6 +163,11 @@ did ---------------- cluster // 脚本中转换
 mac ---------------- getMacFromAddr() // 如果是设备状态通知的情况
 endpoint
 
+{"sDev":{"pid":"","ept":[],"mac":"7409E17E3376AF60"}}
+*endpoint response:
+{"sDev":{"pid":"","ept":[1,2,3],"mac":"7409E17E3376AF60"}}
+*descriptor response:
+{"sDevStatus":{"btn":1},"sDev":{"pid":"0104","ept":[[1,"0101","0000"],[2,"0101","0004"],[3,"0101","0003"]],"mac":"7409E17E3376AF60"}}
 
 {
     "status":{
