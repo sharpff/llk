@@ -47,14 +47,15 @@ pushd $PATH_LELINK > /dev/null 2>&1
 make PLATFORM="$PF" $*
 popd > /dev/null 2>&1
 if [ "$1" != "clean" ]; then
-	cp ../../lib/Debug-$PF/*.a $WMSDK33/bin/mw300_defconfig/libs/
+	$COPY ../../lib/Debug-$PF/*.a $WMSDK33/bin/mw300_defconfig/libs/
 fi
 
-rm $WMSDK33/bin/mw300_defconfig/board/le_demo.bin
+touch "$MAIN_PATH/app/mw300/sample_apps/le_demo/src/app/mw300/main.c"
 pushd $WMSDK33 > /dev/null 2>&1
 make APP=$MAIN_PATH/app/mw300/sample_apps/le_demo/ $*
 popd > /dev/null 2>&1
 if [ "$1" != "clean" ]; then
-	cp $WMSDK33/bin/mw300_defconfig/board/*.bin ../../tool
+	$COPY $WMSDK33/bin/mw300_defconfig/board/*.bin ../../tool
 fi
 echo done
+

@@ -849,28 +849,42 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
 }
 
 #include "network.h"
+
+#define WIFICONFIG_LISTEN_PORT      (4911)
+#define WIFICONFIG_MAGIC            (0x7689)
+#define WIFICONFIG_VERSION          (1)
+//#define WIFICONFIG_CKSUM_LEN        ((uint32_t)&(((wificonfig_t *)0)->reserved))
+#define WIFICONFIG_CKSUM_LEN        (2 + 32 + 32)
+
+typedef struct {
+    uint32_t magic;
+    uint8_t version;
+    uint8_t checksum;
+    uint16_t reserved;
+    uint8_t ssid[32];
+    uint8_t wap2passwd[32];
+} wificonfig_t;
+
+int softApStart(void);
+int softApCheck(void);
+int softApStop(void);
+
+static void *ginApNetCtx = NULL;
 /*
- * 功能: 在softap模式下，接收AP的配置信息
+ * 功能: 启动softap
  *
  * 返回值: 
- *      0 表示成功接收到AP的信息
- *
- * 注: 该函数返回条件是 1, 接收到AP信息; 2, 通过其它配置完成了AP配置
+ *      0 表示启动AP成功
  *
  */
-int softApStarted(void)
+int softApStart(void)
 {
     int ret;
     char ssid[32];
-    uint16_t port;
-    uint8_t sum;
-    char ipaddr[32];
-    wificonfig_t wc;
-    char buf[UDP_MTU];
-    void *ctx = NULL;
     char uuid[32] = {0};
     char wpa2_passphrase[32] = "00000000";
 
+    softApStop();
     if((ret = getTerminalUUID((uint8_t *)uuid, sizeof(uuid))) < 0) {
         LELOGE("getTerminalUUID ret[%d]", ret);
         goto out;
@@ -880,55 +894,87 @@ int softApStarted(void)
         LELOGE("halSoftApStart ret[%d]", ret);
         goto out;
     }
-    ctx = lelinkNwNew(NULL, 0, 4911, NULL);
-    if(!ctx) {
+    ginApNetCtx = lelinkNwNew(NULL, 0, 4911, NULL);
+    if(!ginApNetCtx) {
         LELOGE("New link");
         goto out;
     }
-    while(!isApConnected()) {
-        LELOG("Waitting wifi configure.");
-        delayms(1000);
-        ret = nwUDPRecvfrom(ctx, (uint8_t *)buf, UDP_MTU, ipaddr, sizeof(ipaddr), &port);
-        if(ret > 0 ) {
-            LELOG("nwUDPRecvfrom ret = %d", ret);
-            if(ret != sizeof(wc)) {
-                LELOGE("Wrong len = %d", ret);
-                continue;
-            }
-            memcpy(&wc, buf, ret);
-            if(wc.magic != WIFICONFIG_MAGIC) {
-                LELOGE("magic = %d", wc.magic);
-                continue;
-            }
-            sum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
-            if(wc.checksum != sum) {
-                LELOGE("checksum = %d", wc.magic);
-                continue;
-            }
-            LELOG("Get ssid[%s] passwd[%s]", wc.ssid, wc.wap2passwd);
-            {
-                PrivateCfg cfg;
-                lelinkStorageReadPrivateCfg(&cfg);
-                LELOG("read last ssid[%s], psk[%s], configStatus[%d]", 
-                        cfg.data.nwCfg.config.ssid,
-                        cfg.data.nwCfg.config.psk, 
-                        cfg.data.nwCfg.configStatus);
-                strcpy(cfg.data.nwCfg.config.ssid, wc.ssid);
-                strcpy(cfg.data.nwCfg.config.psk, wc.wap2passwd);
-                cfg.data.nwCfg.configStatus = 1;
-                ret = lelinkStorageWritePrivateCfg(&cfg);
-                LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
-            }
-            break;
-        } else {
-            LELOGE("nwUDPRecvfrom ret = %d", ret);
-        }
-    }
+    return 0;
 out:
-    if(ctx) {
-        lelinkNwDelete(ctx);
-    }
+    softApStop();
+    return ret;
+}
+
+/*
+ * 功能: 停止softap
+ *
+ * 返回值: 
+ *      0 表示停止AP成功
+ *
+ */
+int softApStop(void)
+{
     halSoftApStop();
+    if(ginApNetCtx) {
+        lelinkNwDelete(ginApNetCtx);
+        ginApNetCtx = NULL;
+    }
+    return 0;
+}
+
+/*
+ * 功能: 在softap模式下，接收AP的配置信息
+ *
+ * 返回值: 
+ *      0 表示成功接收到AP的信息
+ *
+ */
+int softApCheck(void)
+{
+    int ret;
+    uint8_t sum;
+    uint16_t port;
+    char ipaddr[32];
+    wificonfig_t wc;
+    char buf[UDP_MTU];
+
+    if(!ginApNetCtx) {
+        return -1;
+    }
+    LELOG("Checking wifi configure...");
+    ret = nwUDPRecvfrom(ginApNetCtx, (uint8_t *)buf, UDP_MTU, ipaddr, sizeof(ipaddr), &port);
+    if(ret <= 0 ) {
+        return -1;
+    }
+    LELOG("nwUDPRecvfrom ret = %d", ret);
+    if(ret != sizeof(wc)) {
+        LELOGE("wrong len = %d", ret);
+        return -1;
+    }
+    memcpy(&wc, buf, ret);
+    if(wc.magic != WIFICONFIG_MAGIC) {
+        LELOGE("magic = %d", wc.magic);
+        return -1;
+    }
+    sum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
+    if(wc.checksum != sum) {
+        LELOGE("checksum = %d", wc.magic);
+        return -1;
+    }
+    LELOG("Get ssid[%s] passwd[%s]", wc.ssid, wc.wap2passwd);
+    {
+        PrivateCfg cfg;
+        lelinkStorageReadPrivateCfg(&cfg);
+        LELOG("read last ssid[%s], psk[%s], configStatus[%d]", 
+                cfg.data.nwCfg.config.ssid,
+                cfg.data.nwCfg.config.psk, 
+                cfg.data.nwCfg.configStatus);
+        strcpy(cfg.data.nwCfg.config.ssid, wc.ssid);
+        strcpy(cfg.data.nwCfg.config.psk, wc.wap2passwd);
+        cfg.data.nwCfg.configStatus = 1;
+        ret = lelinkStorageWritePrivateCfg(&cfg);
+        LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
+    }
     return ret;
 }
 
