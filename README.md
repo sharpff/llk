@@ -1,6 +1,6 @@
 ## Lelink SDK 使用说明
 
-Version: 0.2
+Version: 0.3
 
 Author: feiguoyou@le.com
 
@@ -135,7 +135,7 @@ Lelink的头文件，其中主要使用(airconfig.h)的接口，完成wifi的配
     int halSoftApStop(void);
 ```
 
-*注: 以上函数的实现说请参考文件中的注释部分, 另外halDoConfig()调用后，需要另起线程处理monitor数据的监控及处理开启softap接收数据， 其中用到的函数的详细说明如下(其它未说明的函数使用请按照示例代码使用):*
+*注: 以上函数的实现说请参考文件中的注释部分, 另外halDoConfig()调用后，需要另起线程处理monitor数据的监控， 其中用到的函数的详细说明如下(其它未说明的函数使用请按照示例代码使用):*
 
 
 * airconfig_do_sync()
@@ -196,20 +196,6 @@ int airconfig_get_info(int len, int base, ap_passport_t *account,
  *
  */
 int airconfig_reset(void);
-```
-
-* softApStarted(void);
-```c
-/*
- * 功能: 在softap模式下，接收AP的配置信息
- *
- * 返回值: 
- *      0 表示成功接收到AP的信息
- *
- * 注: 该函数返回条件是 1, 接收到AP信息; 2, 通过其它配置完成了AP配置
- *
- */
-int softApStarted(void);
 ```
 
 

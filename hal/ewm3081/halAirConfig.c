@@ -19,7 +19,18 @@ int halDoConfig(void *ptr, int ptrLen) {
      * int airconfig_get_info(int len, int base, ap_passport_t *account, const char *ssid, int len_ssid);
      * int airconfig_reset(void);
      */
-    return !netConfigStart();
+    return 1;
+}
+
+/*
+ * 功能: 停止wifi的monitor模式
+ *
+ * 返回值:
+ *      1 - 成功停止, 其它表示失败
+ *
+ */
+int halStopConfig(void) {
+    return 1;
 }
 
 /*
@@ -33,7 +44,7 @@ int halDoConfig(void *ptr, int ptrLen) {
  *      1 - 得到配置, 其它表示失败
  */
 int halDoConfiguring(void *ptr, int ptrLen) {
-	return !netConfigCheck();
+	return 1;
 }
 
 /*
@@ -61,11 +72,7 @@ int halDoApConnect(void *ptr, int ptrLen) {
  *      1 - 连接AP成功, 其它表示失败
  */
 int halDoApConnecting(void *ptr, int ptrLen) {
-    char ip[64];
-    int ret, port;
-
-    ret = halGetSelfAddr(ip, sizeof(ip), &port);
-    return (ret > 0);
+    return 1;
 }
 
 

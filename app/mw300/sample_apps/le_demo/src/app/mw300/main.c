@@ -51,7 +51,6 @@
 #include "airconfig.h"
 #include "protocol.h"
 #include "state.h"
-#include "data.h"
 #include "io.h"
 #include "ota.h"
 #else
@@ -250,7 +249,9 @@ void native_sniffer_airconfig_processing(const wlan_frame_t *frame, const uint16
                     wmprintf("[Prov] state => gin_airconfig_channel_locked \r\n");
                     gin_airconfig_channel_locked = 1;
                     // os_thread_sleep(AIRCONFIG_INFINITE_INTERVAL);
-                }break; 
+                }break;
+                default:
+                break; 
             }
         } else if (0 == memcmp(item.mac_src, tmp_src, sizeof(item.mac_src))) {
             ap_passport_t passport;
@@ -783,7 +784,7 @@ int main()
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x90}; // FOREE GW
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x91}; // FOREE GW
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xA0}; // lbest
-        uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xFE}; // my local
+        uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0xFF}; // my local
         wlan_set_mac_addr(mac);
 
     }

@@ -75,6 +75,8 @@ typedef struct
 #define DEF_JSON "{\"def\":\"nothing\"}"
 #define RETRY_TIMES 2
 
+// init state
+static int8_t ginInitOk = 0;
 // for state
 extern int8_t ginStateCloudLinked;
 extern int8_t ginStateCloudAuthed;
@@ -653,7 +655,7 @@ int lelinkInit() {
     testSengine();
 #endif
 
-
+    ginInitOk = 1;
 failed:
     return ret;
 }
@@ -794,8 +796,9 @@ int lelinkDoPollingR2R(void *ctx) {
             CmdRecord *ct_p = getCmdRecord(cmdInfo.cmdId, cmdInfo.subCmdId);
             if (ct_p && !isCacheEmpty) {
                 if (0 <= qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeR2RFindNode, (void *)&cmdInfo)) {
-                    ct_p->procR2R ?
-                    ((CBRemoteRsp) ct_p->procR2R)(pCtx, &cmdInfo, COMM_CTX(pCtx)->protocolBuf, len) : 0;
+                    if(ct_p->procR2R) {
+                      ((CBRemoteRsp) ct_p->procR2R)(pCtx, &cmdInfo, COMM_CTX(pCtx)->protocolBuf, len);
+                    }
                 }
             }
         }
@@ -2144,6 +2147,10 @@ int lelinkDoConfig(const char *configInfo) {
     void *context = NULL;
     static uint32_t ts = 0;
 
+    if(!ginInitOk) {
+        LELOGE("Init error!");
+        return -1;
+    }
     if (30 > (halGetTimeStamp() - ts)) {
         return -1;
     }

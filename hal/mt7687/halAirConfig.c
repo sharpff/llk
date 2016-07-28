@@ -21,7 +21,7 @@ extern void network_dhcp_start(uint8_t opmode);
 
 
 int halDoConfig(void *ptr, int ptrLen) {
-	int ret;
+	int ret = 0;
 
 #if ENABLE_WIFI_SOFT_AP
     ret = !startApListen();
@@ -37,6 +37,10 @@ int halDoConfig(void *ptr, int ptrLen) {
     APPLOG("halDoConfig in hal [%d]", ret);
    #endif
 	return ret;
+}
+
+int halStopConfig(void) {
+    return airconfig_stop();
 }
 
 int halDoConfiguring(void *ptr, int ptrLen) {

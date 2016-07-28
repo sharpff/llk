@@ -133,7 +133,7 @@
         </option>
         <option>
           <name>RTConfigPath2</name>
-          <state></state>
+          <state>$TOOLKIT_DIR$\INC\c\DLib_Config_Normal.h</state>
         </option>
         <option>
           <name>GFPUCoreSlave</name>
@@ -281,7 +281,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state></state>
+          <state>$FILE_BNAME$.o</state>
         </option>
         <option>
           <name>CCLibConfigHeader</name>
@@ -1153,7 +1153,7 @@
         </option>
         <option>
           <name>CCDiagSuppress</name>
-          <state>Pe223,Pa050,Pe001,Pe826,Pe381,Pe177</state>
+          <state>Pe223,Pa050,Pe001,Pe826,Pe381,Pe177,Pe144</state>
         </option>
         <option>
           <name>CCDiagRemark</name>
@@ -2488,6 +2488,93 @@
         <name>$PROJ_DIR$\..\..\..\sw\sengine\strbuf.h</name>
       </file>
     </group>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\airconfig.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\airconfig.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\cache.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\cache.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\convertor.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\convertor.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\data.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\data.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\header.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\io.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\io.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\leconfig.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\misc.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\misc.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\network.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\network.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\ota.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\ota.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\pack.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\pack.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\protocol.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\protocol.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\sengine.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\sengine.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\state.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\state.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\utility.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\utility.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\sw\version.h</name>
+    </file>
   </group>
 </project>
 

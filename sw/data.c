@@ -349,7 +349,7 @@ int getTerminalStatus(char *status, int len) {
     for (cnt = 0, i = 0; i < ginIACache.cfg.num; i++) {
         cacheInt = &(ginIACache.cache[i]);
         for(j = 0; j < cacheInt->beingReservedNum; j++) {
-            tmpLen += sprintf(status + tmpLen, "\"%s%s\"", (cnt > 0 ? ",":""), cacheInt->beingReservedUUID[j]);
+            tmpLen += sprintf(status + tmpLen, "%s\"%s\"", (cnt > 0 ? ",":""), cacheInt->beingReservedUUID[j]);
             cnt++;
         }
     }

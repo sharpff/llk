@@ -7,6 +7,7 @@ PLATFORM := linux_mips
 MYXPATH := 
 MYXPREFIX := mipsel-linux-
 
+
 MAIN_PATH=$(CURDIR)/../..
 #Toolchain
 CC := $(MYXPATH)$(MYXPREFIX)gcc
@@ -27,11 +28,12 @@ LINUX_PACKAGES :=
 CFLAGS := -ggdb -ffunction-sections -O0
 CXXFLAGS := -ggdb -ffunction-sections -O0
 ASFLAGS := 
-LDFLAGS := -Wl,-gc-sections
+LDFLAGS := -Wl,-gc-sections -ldl
 COMMONFLAGS := 
 
 START_GROUP := -Wl,--start-group
 END_GROUP := -Wl,--end-group
 
+IS_SUPPORT_AIRCONFIG_CTRL := 1
 #Additional options detected from testing the toolchain
 IS_LINUX_PROJECT := 1

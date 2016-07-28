@@ -22,6 +22,17 @@ int halDoConfig(void *ptr, int ptrLen) {
 }
 
 /*
+ * 功能: 停止wifi的monitor模式
+ *
+ * 返回值:
+ *      1 - 成功停止, 其它表示失败
+ *
+ */
+int halStopConfig(void) {
+    return 1;
+}
+
+/*
  * 功能: 查看是否得到wifi的配置
  *
  * 参数:
