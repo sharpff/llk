@@ -1113,7 +1113,7 @@
           <state>NDEBUG</state>
           <state>PF_VAL=6</state>
           <state>__LE_SDK__</state>
-          <state>EWM3801</state>
+          <state>EWM3081</state>
         </option>
         <option>
           <name>CCPreprocFile</name>

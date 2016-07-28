@@ -128,7 +128,7 @@
 // #if !defined(lua_writeline)
 // #define lua_writeline(...)
 // #endif
-#elif defined(EWM3801)
+#elif defined(EWM3081)
 // #include <stdarg.h>
 // #include <stdlib.h>
 // #include <string.h>

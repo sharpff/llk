@@ -23,6 +23,9 @@ typedef enum {
     IO_TYPE_SOCKET = 0x8,
 }IO_TYPE;
 
+#ifdef LELINK_PACK
+#pragma pack(1)
+#endif
 /*
  * private info
  */
@@ -39,7 +42,7 @@ typedef struct
     uint8_t psk_len;
     uint8_t type;
     uint8_t channel;
-}ALIGNED WifiNetwork;
+}LELINK_ALIGNED WifiNetwork;
 
 /* Read/Write info */
 typedef struct {
@@ -47,33 +50,33 @@ typedef struct {
     uint8_t newOne;
     uint8_t bind;
     uint8_t locked;
-}ALIGNED DevCfg;
+}LELINK_ALIGNED DevCfg;
 
 typedef struct
 {
     int configStatus; // 1. wifi has been configed. 2. hello has been sent
     WifiNetwork config;
-}ALIGNED NwCfg;
+}LELINK_ALIGNED NwCfg;
 
 typedef struct
 {
     int num;
     int arrIA[MAX_IA];
     char arrIAName[MAX_IA][MAX_RULE_NAME];
-}ALIGNED IACfg;
+}LELINK_ALIGNED IACfg;
 
 typedef struct
 {
     DevCfg  devCfg;
     NwCfg nwCfg;
     IACfg iaCfg;
-}ALIGNED PrivateData;
+}LELINK_ALIGNED PrivateData;
 
 typedef struct
 {
     PrivateData data;
     uint8_t csum;
-}ALIGNED PrivateCfg;
+}LELINK_ALIGNED PrivateCfg;
 
 
 /*
@@ -88,13 +91,16 @@ typedef struct {
     char remote[MAX_REMOTE];
     uint16_t port;
     uint16_t reserved;
-}ALIGNED AuthData;
+}LELINK_ALIGNED AuthData;
 
 typedef struct
 {
     AuthData data;
     uint8_t csum;
-}ALIGNED AuthCfg;
+}LELINK_ALIGNED AuthCfg;
+#ifdef LELINK_PACK
+#pragma pack()
+#endif
 
 typedef enum {
     E_FLASH_TYPE_AUTH, 

@@ -13,10 +13,11 @@ extern "C"
 #include "halHeader.h"
 #endif /* __LE_SDK__ */
 
-#if defined(WIN32) || defined(EWM3801)
-#define ALIGNED
+#if defined(WIN32) || defined(EWM3081)
+#define LELINK_ALIGNED
+#define LELINK_PACK
 #else
-#define ALIGNED __attribute__((packed))
+#define LELINK_ALIGNED __attribute__((packed))
 #endif
 
 // osal
