@@ -31,61 +31,25 @@
 
 
 #if defined(MBEDTLS_PLATFORM_MEMORY)
-// #if defined (mw300)
-// #include "leconfig.h"
-// #elif defined(MT7687)
-// #include "leconfig.h"
-// #elif defined(EWM3801)
-// #include "leconfig.h"
-// #else
-// #pragma error ("no adpation...")
-// #endif
 
 #if !defined(MBEDTLS_PLATFORM_STD_CALLOC)
-#if defined (mw300)
+// LELINK ADAPTOR
 static void *platform_calloc_uninit( size_t n, size_t size )
 {
     void *p = (void *)calloc(n, size);
     return p;
 }
-#elif defined(MT7687)
-static void *platform_calloc_uninit(size_t n, size_t size )
-{
-    void *p = (void *)calloc(n, size);
-    return p;
-}
-#elif defined(EWM3801)
-static void *platform_calloc_uninit(size_t n, size_t size )
-{
-    void *p = (void *)calloc(n, size);
-    return p;
-}
-#else
-#pragma error ("no adpation...")
-#endif
 
 #define MBEDTLS_PLATFORM_STD_CALLOC   platform_calloc_uninit
 #endif /* !MBEDTLS_PLATFORM_STD_CALLOC */
 
 #if !defined(MBEDTLS_PLATFORM_STD_FREE)
-#if defined (mw300)
+// LELINK ADAPTOR
 static void platform_free_uninit(void *ptr)
 {
     free(ptr);
 }
-#elif defined(MT7687)
-static void platform_free_uninit(void *ptr)
-{
-    free(ptr);
-}
-#elif defined(EWM3801)
-static void platform_free_uninit(void *ptr)
-{
-    free(ptr);
-}
-#else
-#pragma error ("no adpation...")
-#endif
+
 
 #define MBEDTLS_PLATFORM_STD_FREE     platform_free_uninit
 #endif /* !MBEDTLS_PLATFORM_STD_FREE */
@@ -166,8 +130,8 @@ int mbedtls_platform_set_snprintf( int (*snprintf_func)( char * s, size_t n,
 /*
  * Make dummy function to prevent NULL pointer dereferences
  */
-#if defined (mw300)
-// static char wmstdio_msg_buf_impl[128];
+
+// LELINK ADAPTOR
 static int platform_printf_uninit( const char *format, ... )
 {
     int ret = 0;
@@ -182,19 +146,6 @@ static int platform_printf_uninit( const char *format, ... )
     va_end(args);
     return ret;
 }
-#elif defined(MT7687)
-static int platform_printf_uninit(const char *format, ... )
-{
-    return 0;
-}
-#elif defined(EWM3801)
-static int platform_printf_uninit(const char *format, ... )
-{
-    return 0;
-}
-#else
-#pragma error ("no adpation...")
-#endif
 
 #define MBEDTLS_PLATFORM_STD_PRINTF    platform_printf_uninit
 #endif /* !MBEDTLS_PLATFORM_STD_PRINTF */
