@@ -120,6 +120,8 @@ public class LeCmd {
 		public static final String ACCOUNT = "account";
 		public static final String SHARE = "share";
 		public static final String ACCEPTED = "accepted";
+		public static final String SDEV = "sDev";
+		public static final String ZMAC = "mac";
 	}
 	/** Json中的值 */
 	public class V {

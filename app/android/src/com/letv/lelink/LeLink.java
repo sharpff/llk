@@ -661,6 +661,11 @@ public class LeLink {
 					// LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
 					uuid = dataJson.getString(LeCmd.K.UUID);
+					JSONObject objSDev = dataJson.optJSONObject(LeCmd.K.SDEV);	
+					if (null != objSDev) {
+						uuid += objSDev.optString(LeCmd.K.ZMAC);
+					}
+
 					dataJson.put(LeCmd.K.MSGSTATUS, status);
 					dataStr = dataJson.toString();
 					if (mWaitGetUuid != null) {
