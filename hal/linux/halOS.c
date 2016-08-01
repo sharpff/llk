@@ -28,6 +28,11 @@ unsigned int halGetUTC(void)
     return 1234;
 }
 
+void *halMalloc(size_t size) {
+    void *ptr = malloc(size);
+    return ptr;
+}
+
 void *halCalloc(int n, size_t size) {
     void *ptr = malloc(n*size);
     if (ptr) {
