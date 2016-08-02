@@ -433,7 +433,7 @@ function s1CvtPri2Std(bin)
 				break
 			end
 			
-			-- (RSP) ept info 
+			-- (RSP) ept list {"idx":"DB8F","ept":1,"did":"0101","clu":["0000","0004"]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
 				break
 			end

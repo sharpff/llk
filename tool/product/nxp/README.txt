@@ -137,19 +137,21 @@ profile->endpoint(did)->cluster
 *endpoint request:
    msgT  len   cs short
 01 00 45 00 02 13 DB 8F 03 
+xxxx010210450210021213DB8F03
 *endpoint response:
    msgT  len   cs       short n  v
 01 80 45 00 06 7F E8 00 DB 8F 01 01 03 
 01 80 45 02 10 02 16 7f e8 02 10 db 8f 02 11 02 11 03 
 018045021002167fe80210db8f0211021103 
-
-*descriptor request:
+*simple descriptor request:
    msgT  len   cs short ept
 01 00 43 00 03 15 DB 8F 01 03 
-*descriptor response:
-   msgT  len   cs       short       pid   did   *v cn                                     *ocn
+xxxx010210430210021315DB8F021103
+*simple descriptor response:
+   msgT  len   cs       short l  e  pid   did   *v cn                                     *ocn
 01 80 43 00 25 4C E9 00 DB 8F 16 01 01 04 01 01 02 06 00 00 00 04 00 03 00 06 00 08 00 05 01 00 00 00 04 00 03 00 06 00 08 00 05 03 
 0180430210254ce90210db8f160211021102140211021102120216021002100210021402100213021002160210021802100215021102100210021002140210021302100216021002180210021503
+
 
 
 std2pri:
@@ -169,7 +171,7 @@ endpoint
 *endpoint response:
 {"sDev":{"pid":"","ept":[1,2,3],"mac":"7409E17E3376AF60"}}
 *descriptor response:
-{"sDevStatus":{"btn":1},"sDev":[{"ept":1,"did":"0101","clu":["0000","0004","0004","0004","0004"]}],"sDevMA":"1234","sDevPid":"0104","sDevMac":"7409E17E3376AF60"}
+{"sDevStatus":{"btn":1},"sDev":{"info":[{"ept":1,"did":"0101","clu":["0000","0004","0004","0004","0004"]}],"man":"1234","pid":"0104","mac":"7409E17E3376AF60"}}
 
 {
     "status":{
@@ -189,22 +191,24 @@ endpoint
     "sDevStatus":{
         "btn":1
     },
-    "sDev":[
-        {
-            "ept":1,
-            "did":"0101",
-            "clu":[
-                "0000",
-                "0004",
-                "0004",
-                "0004",
-                "0004"
-            ]
-        }
-    ],
-    "sDevMA":"1234",
-    "sDevPid":"0104",
-    "sDevMac":"7409E17E3376AF60"
+    "sDev":{
+        "info":[
+            {
+                "ept":1,
+                "did":"0101",
+                "clu":[
+                    "0000",
+                    "0004",
+                    "0004",
+                    "0004",
+                    "0004"
+                ]
+            }
+        ],
+        "man":"1234",
+        "pid":"0104",
+        "mac":"7409E17E3376AF60"
+    }
 }
 
 {
