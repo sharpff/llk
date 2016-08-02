@@ -235,30 +235,30 @@ function s1GetValidKind(data)
 			dataTbl = stringToTable(data)
 			-- START for status of sub devices
 			if nil ~= string.find(data, string.char(0x01, 0x00, 0x4D, 0x00, 0x0B)) then
-				-- (IND RAW) new device joining, RAW ind is 0102104D02100B2331BC60AF76337EE10219748003
+				-- (IND) new device joining, RAW ind is 0102104D02100B2331BC60AF76337EE10219748003
 				print ("[LUA] s1GetValidKind - new device joining\r\n")
 				ret = WHATKIND_SUB_DEV_JOIN
 				break
 			end
 
 			if nil ~= string.find(data, string.char(0x01, 0x80, 0x48, 0x00, 0x09)) then
-				-- (IND RAW) new device leaving, RAW ind is 01804802100219A960AF76337EE1021974021003 
+				-- (IND) new device leaving, RAW ind is 01804802100219A960AF76337EE1021974021003 
 				print ("[LUA] s1GetValidKind - new device leaving\r\n")
 				ret = WHATKIND_SUB_DEV_LEAVE
 				break
 			end
 
 			if nil ~= string.find(data, string.char(0x01, 0x80, 0x45)) or 
+				nil ~= string.find(data, string.char(0x01, 0x80, 0x42)) or
 				nil ~= string.find(data, string.char(0x01, 0x80, 0x43)) then
-				-- (RSP RAW) RAW endpoint list 018045021002167fe80210db8f0211021103 
-				-- (RSP RAW) RAW endpoint info 0180430210254ce90210db8f160211021102140211021102120216021002100210021402100213021002160210021802100215021102100210021002140210021302100216021002180210021503 
+				-- (RSP) query ept, query man, query ept info
 				print ("[LUA] s1GetValidKind - ENDPOINT list or info "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_INFO
 				break
 			end
 
 			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) then
-				-- (IND RAW) sDevStatus, RAW ind 0181021202100B2D0212853002150210021602100210021010021103 
+				-- (IND) sDevStatus, RAW ind 0181021202100B2D0212853002150210021602100210021010021103 
 				print ("[LUA] s1GetValidKind - sDevStatus ind "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
@@ -267,8 +267,8 @@ function s1GetValidKind(data)
 			-- TODO: if it is really need
 			if nil ~= string.find(data, string.char(0x01, 0x80, 0x06, 0x00, 0x01, 0x86, 0x01, 0x03)) or
 				nil ~= string.find(data, string.char(0X01, 0X80, 0X00, 0X00, 0X04)) then
-				-- (RSP RAW) reset FAC rsp , RAW rep is 018002160210021186021103 
-				-- (RSP RAW) join permition rsp , RAW rep is 0180021002100214380210F502104903 
+				-- (RSP) reset FAC rsp , RAW rep is 018002160210021186021103 
+				-- (RSP) join permition rsp , RAW rep is 0180021002100214380210F502104903 
 				print ("[LUA] s1GetValidKind - RSP(s) "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
@@ -371,6 +371,19 @@ function s1CvtStd2Pri(json)
  				break
 			end
 
+			if ctrl["sDevQryEpt"] == 1 then
+				cmdTbl = {0x01, 0x00, 0x45, 0x00, 0x02, 0x13, 0xDB, 0x8F, 0x03}
+				break
+			end
+			if ctrl["sDevQryMan"] == 1 then
+				cmdTbl = {0x01, 0x00, 0x42, 0x00, 0x02, 0x14, 0xDB, 0x8F, 0x03}
+				break
+			end
+			if ctrl["sDevQryEptInfo"] == 1 then
+				cmdTbl = {0x01, 0x00, 0x43, 0x00, 0x03, 0x15, 0xDB, 0x8F, 0x01, 0x03}
+				break
+			end
+
 			-- TODO: ctrl the sub dev.
 			if sDev then 
 				print("TODO: ctrl the sub dev. \r\n")
@@ -387,15 +400,17 @@ function s1CvtStd2Pri(json)
 	return string.len(dataStr), dataStr
 end
 
-function genStatus(eptList, len, data)
+function genStatus(clu, ept, val)
 	local status = "{}"
-	for _, dept in ipairs(eptList) do
-		-- print("did "..dept[1]..", ept "..dept[2].."\r\n")
-		if nil ~= string.find(dept[1], "0000") then 
-			status = string.format('{"switcher":%d}', data[4])
-		elseif nil ~= string.find(dept[1], "0107") then
-			status = string.format('{"detector":%d}', data[4])
-		end
+	print("clu is "..clu..'\r\n')
+	print("ept is "..ept..'\r\n')
+	print("val is "..val..'\r\n')
+
+	-- print("did "..dept[1]..", ept "..dept[2].."\r\n")
+	if nil ~= string.find(clu, "0006") then 
+		status = string.format('{"switcher":%d}', val)
+	elseif nil ~= string.find(clu, "0406") then
+		status = string.format('{"pir":%d}', val)
 	end
 	return status
 end
@@ -407,7 +422,7 @@ function s1CvtPri2Std(bin)
 	local dataTbl = {}
 	local strMain = ''
 	-- local strSubDev = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
-	local strSubDev = '"sDev":[%s],"sMac":%s'
+	local strSubDev = '{}'
 	dataTbl = stringToTable(bin)
 
 	dataTbl = whatRead(dataTbl)
@@ -423,88 +438,60 @@ function s1CvtPri2Std(bin)
 			-- INTERNAL
 			-- (RSP) ept list {"idx":"DB8F","ept":[1,2]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x45)) then
-				hex2bin(string.sub(bin,7,8))
-				strSubDev = '{"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":['
+				strSubDev = '{"sDevQryEpt":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":['
 				for i = 12, dataTbl[11]+11 do
 					strSubDev = strSubDev..dataTbl[i]..','
 				end
 				strSubDev = string.sub(strSubDev,1,string.len(strSubDev) - 1)..']}'
-				print("result -> "..strSubDev..'\r\n')
+				break
+			end
+
+			-- (RSP) manufacture {"man":"1234"}
+			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x42)) then
+				strSubDev = '{"sDevQryMan":2,"man":"'..bin2hex(string.sub(bin,11,12))..'"}'
 				break
 			end
 			
-			-- (RSP) ept list {"idx":"DB8F","ept":1,"did":"0101","clu":["0000","0004"]}
+			-- (RSP) ept info {"idx":"DB8F","ept":1,"did":"0101","clu":["0000","0004"]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
+				strSubDev = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":'..dataTbl[12]..',"did":"'..bin2hex(string.sub(bin,15,16))..'","clu":['
+				for i = 19, dataTbl[18]*2+18, 2 do
+					strSubDev = strSubDev..'"'..bin2hex(string.sub(bin,i,i+1))..'",'
+				end
+				strSubDev = string.sub(strSubDev,1,string.len(strSubDev) - 1)..']}'
 				break
 			end
-			-- EXTERNAL
-			-- (RSP) join, leave
-			-- (IND) ind actions
-			-- if nil ~= string.find(bin, string.char(0x01, 0x80, 0x00, 0x00, 0x04)) then
-			-- 	-- (RSP) join permition rsp , RAW rsp is 0180021002100214380210F502104903  
-			-- 	print ("[LUA] s1CvtPri2Std - RSP - join permition or mgnt leave rsp\r\n")
-			-- 	strMain = string.format('{"sDevActRsp":%d}', 2)
-			-- 	break
-			-- end
 
+			-- INTERNAL -> EXTERNAL
+			-- (IND) join, leave
 			if nil ~= string.find(bin, string.char(0x01, 0x00, 0x4D)) then
-				-- (IND) new device joining, RAW rep is 0102104d0210021b5abe4a60af76337ee10219748003 
-				-- {"sDevJoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
-				-- {"sDevJoin":2,"sDev":{"pid":"0401","ept":[["0701",0],["0701",1]],"mac":"6FE34CE400A06FC0"}}
-				bin2hex(string.sub(bin, 7, 8))
-				print("s1CvtPri2Std - sub devices - new device joining\r\n")
-				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
-				local addr = dataTbl[8]
-				local strMac = string.format("%02X%02X%02X%02X%02X%02X%02X%02X", dataTbl[11], dataTbl[12], dataTbl[13], dataTbl[14], dataTbl[15], dataTbl[16], dataTbl[17], dataTbl[18])
-				local sDevEPList = {}
-				local strCluster = '""'
-				for i = 1, 1 do
-					local strDevId = string.format("%02x%02x", dataTbl[20], dataTbl[19])
-					sDevEPList[#sDevEPList + 1] = {strDevId, 1}
-					strCluster = getClusterFromDid(strDevId)
-				end
-				local ept = cjson.encode(sDevEPList)
-				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				strMain = '{"sDevJoin":2,'..strSubDev..'}'
-				print("[LUA] return => "..strMain.."\r\n")
+				-- {"sDevJoin":2,"sDev":{"idx":"DB8F","mac":"6FE34CE400A06FC0"}}
+				strSubDev = '{"sDevJoin":2,"sDev":{"idx":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
+				break
+			end
+			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x48)) then
+				-- {"sDevLeave":2,"sDev":{mac":"6FE34CE400A06FC0"}}
+				strSubDev = '{"sDevLeave":2,"sDev":{"mac":'..'"'..bin2hex(string.sub(bin,7,14))..'"'..'}}'
 				break
 			end
 
-			if dataTbl[1] == 0xAA and dataTbl[2] == 0x00 and dataTbl[4] == 0x90 then
-				-- (IND) sDevStatus action ind
-				-- {"sDevStatus":{"btn":1},"sDev":{"pid":"0401","clu":"0000","ept":[["0000",5]],"mac":"7409E17E3376AF60"}}
-				-- {"sDevStatus":{"act":1},"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
-				print ("[LUA] s1CvtPri2Std - sub devices - sDevStatus action ind "..#dataTbl.."\r\n")
-				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
-				local addr = dataTbl[10]
-				-- local lenMac = 0
-				-- local strMac = ""
-				local lenMac, strMac = s1apiSDevGetMacByUserData(addr)
-				-- print("[LUA] lenMac is "..lenMac..", strMac is "..strMac.."\r\n")
-				local sDevEPList = {}
-				local strCluster = '""'
-				for i = 1, 1 do
-					local strDevId = string.format("%02x%02x", dataTbl[13], dataTbl[12])
-					sDevEPList[#sDevEPList + 1] = {strDevId, dataTbl[11]}
-					strCluster = getClusterFromDid(strDevId)
-				end
-				local ept = cjson.encode(sDevEPList)
-				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				local tblStatusData = {}
-				for i = 15, (dataTbl[14] + 15) do
-					tblStatusData[#tblStatusData + 1] = dataTbl[i]
-				end
-				strMain = '{"sDevStatus":'..genStatus(sDevEPList, dataTbl[14], tblStatusData)..','..strSubDev..'}'
-				print("[LUA] return => "..strMain.."\r\n")
+			-- (IND) ind actions
+			-- {"sDevStatus":{"btn":1},"sDev":{"idx":"DB8F"}}
+			if nil ~= string.find(bin, string.char(0x01, 0x81, 0x02)) then
+				strSubDev = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,11,12)), bin2hex(string.sub(bin,10,10)), bin2hex(string.sub(bin,17,17)))..',"sDev":{"idx":"'..bin2hex(string.sub(bin,8,9)).. '"}}'
 				break
 			end
+
+
 
 		end
+
 
 		-- GPIO
 		if 0x02 == cvtType then
 			return WHATKIND_MAIN_DEV_DATA
 		end
 	end
+	print("result -> "..strSubDev..'\r\n')
 	return string.len(strMain), strMain
 end
