@@ -45,7 +45,10 @@ extern "C"
 #define SDEV_MAX_MAC 24
 #define SDEV_MAX_EPT 8
 
-
+/*
+ * 这些enum值通过FW脚本中的s1GetValidKind进行处理并返回
+ * 标示当前在脚本中分析出来的数据类型
+ */
 enum {
 	WHATKIND_MAIN_DEV_RESET = 1,
 	WHATKIND_MAIN_DEV_DATA,
@@ -53,6 +56,7 @@ enum {
 	WHATKIND_SUB_DEV_DATA,
     WHATKIND_SUB_DEV_JOIN,
     WHATKIND_SUB_DEV_LEAVE,
+    WHATKIND_SUB_DEV_INFO,
 };
 
 typedef enum {

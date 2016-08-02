@@ -219,6 +219,7 @@ function s1GetValidKind(data)
 	local WHATKIND_SUB_DEV_DATA = 11
 	local WHATKIND_SUB_DEV_JOIN = 12
 	local WHATKIND_SUB_DEV_LEAVE = 13
+	local WHATKIND_SUB_DEV_INFO = 14
 
 	local tmp = stringToTable(data)
 	tmp = whatRead(tmp)
@@ -233,41 +234,42 @@ function s1GetValidKind(data)
 		if 0x01 == cvtType then
 			dataTbl = stringToTable(data)
 			-- START for status of sub devices
-			if nil ~= string.find(data, string.char(0x01, 0x80, 0x06, 0x00, 0x01, 0x86, 0x01, 0x03))  then
-				-- (RSP RAW) reset FAC rsp , RAW rep is 018002160210021186021103 
-				print ("[LUA] s1GetValidKind - sub devices - reset rsp\r\n")
-				ret = WHATKIND_SUB_DEV_RESET
-				break
-			end
-
-			if nil ~= string.find(data, string.char(0X01, 0X80, 0X00, 0X00, 0X04)) then
-				-- (RSP RAW) join permition rsp , RAW rep is 0180021002100214380210F502104903 
-				print ("[LUA] s1GetValidKind - sub devices - RSP for join permition or mgnt leave\r\n")
-				ret = WHATKIND_SUB_DEV_DATA
-				break
-			end
-
 			if nil ~= string.find(data, string.char(0x01, 0x00, 0x4D, 0x00, 0x0B)) then
 				-- (IND RAW) new device joining, RAW ind is 0102104D02100B2331BC60AF76337EE10219748003
-				print ("[LUA] s1GetValidKind - sub devices - new device joining\r\n")
+				print ("[LUA] s1GetValidKind - new device joining\r\n")
 				ret = WHATKIND_SUB_DEV_JOIN
 				break
 			end
 
 			if nil ~= string.find(data, string.char(0x01, 0x80, 0x48, 0x00, 0x09)) then
 				-- (IND RAW) new device leaving, RAW ind is 01804802100219A960AF76337EE1021974021003 
-				print ("[LUA] s1GetValidKind - sub devices - new device leaving\r\n")
+				print ("[LUA] s1GetValidKind - new device leaving\r\n")
 				ret = WHATKIND_SUB_DEV_LEAVE
 				break
 			end
 
-			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) or 
-				nil ~= string.find(data, string.char(0x01, 0x80, 0x45)) or 
+			if nil ~= string.find(data, string.char(0x01, 0x80, 0x45)) or 
 				nil ~= string.find(data, string.char(0x01, 0x80, 0x43)) then
-				-- (IND RAW) sDevStatus action, RAW ind 0181021202100B2D0212853002150210021602100210021010021103 
-				-- (RSP RAW) endpoint RAW rsp 018045021002167fe80210db8f0211021103  
-				-- (RSP RAW) descriptor RAW rsp 0180430210254ce90210db8f160211021102140211021102120216021002100210021402100213021002160210021802100215021102100210021002140210021302100216021002180210021503 
-				print ("[LUA] s1GetValidKind - sub devices - sDevStatus action ind "..#dataTbl.."\r\n")
+				-- (RSP RAW) RAW endpoint list 018045021002167fe80210db8f0211021103 
+				-- (RSP RAW) RAW endpoint info 0180430210254ce90210db8f160211021102140211021102120216021002100210021402100213021002160210021802100215021102100210021002140210021302100216021002180210021503 
+				print ("[LUA] s1GetValidKind - ENDPOINT list or info "..#dataTbl.."\r\n")
+				ret = WHATKIND_SUB_DEV_INFO
+				break
+			end
+
+			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) then
+				-- (IND RAW) sDevStatus, RAW ind 0181021202100B2D0212853002150210021602100210021010021103 
+				print ("[LUA] s1GetValidKind - sDevStatus ind "..#dataTbl.."\r\n")
+				ret = WHATKIND_SUB_DEV_DATA
+				break
+			end
+
+			-- TODO: if it is really need
+			if nil ~= string.find(data, string.char(0x01, 0x80, 0x06, 0x00, 0x01, 0x86, 0x01, 0x03)) or
+				nil ~= string.find(data, string.char(0X01, 0X80, 0X00, 0X00, 0X04)) then
+				-- (RSP RAW) reset FAC rsp , RAW rep is 018002160210021186021103 
+				-- (RSP RAW) join permition rsp , RAW rep is 0180021002100214380210F502104903 
+				print ("[LUA] s1GetValidKind - RSP(s) "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
 				break
 			end
@@ -290,8 +292,8 @@ end
 -- s1apiSdevGetUserDataByMac()
 
 -- \{\"ctrl\":\{\"reset\":1\}\}
--- \{\"ctrl\":\{\"sDevPmtJoin\":1\}\}
--- \{\"ctrl\":\{\"sDevMgmtLeave\":\{\"addr\":\"057d\",\"mac\":\"C06FA000E44CE36F\"\}\}\}
+-- \{\"ctrl\":\{\"sDevJoin\":1\}\}
+-- \{\"ctrl\":\{\"sDevLeave\":\{\"addr\":\"057d\",\"mac\":\"C06FA000E44CE36F\"\}\}\}
 -- \{\"ctrl\":\{\"sDevGetList\":1\}\}
 -- \{\"ctrl\":\{\"sDevGetInfo\":0\}\}
 -- \{\"ctrl\":\{\"sDevGetInfo\":1\}\}
@@ -350,17 +352,17 @@ function s1CvtStd2Pri(json)
 				break
 			end
 
-			if ctrl["sDevPmtJoin"] == 1 then
+			if ctrl["sDevJoin"] == 1 then
 			-- RAW is  01 02 10 49 02 10 02 14 7E FF FC 30 02 10 03
 				cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x7E, 0xFF, 0xFC, 0x30, 0x00, 0x03}
  				break
 			end
 
-			if ctrl["sDevMgmtLeave"] then
+			if ctrl["sDevLeave"] then
 			-- NXP is 01 00 47 00 0C 18 05 7D C0 6F A0 00 E4 4C E3 6F 00 00 03
 			-- RAW is 01 02 10 47 02 10 02 1C 18 02 15 7D C0 6F A0 02 10 E4 4C E3 6F 02 10 02 10 03
-				local addr = ctrl["sDevMgmtLeave"]["addr"]
-				local mac = ctrl["sDevMgmtLeave"]["mac"]
+				local addr = ctrl["sDevLeave"]["addr"]
+				local mac = ctrl["sDevLeave"]["mac"]
 				local str = string.char(0x01, 0x00, 0x47, 0x00, 0x0C, 0x00)
 				str = str .. hex2bin(addr) .. hex2bin(mac) .. string.char(0x00, 0x00, 0x03)
 				cmdTbl = stringToTable(str)
@@ -418,18 +420,37 @@ function s1CvtPri2Std(bin)
 	for i = 1, 1 do
 		-- UART
 		if 0x01 == cvtType then
-			-- START for status of sub devices
-			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x00, 0x00, 0x04)) then
-				-- (RSP) join permition rsp , RAW rsp is 0180021002100214380210F502104903  
-				print ("[LUA] s1CvtPri2Std - RSP - join permition or mgnt leave rsp\r\n")
-				strMain = string.format('{"sDevActRsp":%d}', 2)
+			-- INTERNAL
+			-- (RSP) ept list {"idx":"DB8F","ept":[1,2]}
+			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x45)) then
+				hex2bin(string.sub(bin,7,8))
+				strSubDev = '{"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":['
+				for i = 12, dataTbl[11]+11 do
+					strSubDev = strSubDev..dataTbl[i]..','
+				end
+				strSubDev = string.sub(strSubDev,1,string.len(strSubDev) - 1)..']}'
+				print("result -> "..strSubDev..'\r\n')
 				break
 			end
+			
+			-- (RSP) ept info 
+			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
+				break
+			end
+			-- EXTERNAL
+			-- (RSP) join, leave
+			-- (IND) ind actions
+			-- if nil ~= string.find(bin, string.char(0x01, 0x80, 0x00, 0x00, 0x04)) then
+			-- 	-- (RSP) join permition rsp , RAW rsp is 0180021002100214380210F502104903  
+			-- 	print ("[LUA] s1CvtPri2Std - RSP - join permition or mgnt leave rsp\r\n")
+			-- 	strMain = string.format('{"sDevActRsp":%d}', 2)
+			-- 	break
+			-- end
 
 			if nil ~= string.find(bin, string.char(0x01, 0x00, 0x4D)) then
 				-- (IND) new device joining, RAW rep is 0102104d0210021b5abe4a60af76337ee10219748003 
-				-- {"sDevPmtJoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
-				-- {"sDevPmtJoin":2,"sDev":{"pid":"0401","ept":[["0701",0],["0701",1]],"mac":"6FE34CE400A06FC0"}}
+				-- {"sDevJoin":2,"sDev":{"pid":"0401","clu":"0107","ept":[["0701",1]],"mac":"6FE34CE400A06FC0"}}
+				-- {"sDevJoin":2,"sDev":{"pid":"0401","ept":[["0701",0],["0701",1]],"mac":"6FE34CE400A06FC0"}}
 				bin2hex(string.sub(bin, 7, 8))
 				print("s1CvtPri2Std - sub devices - new device joining\r\n")
 				local strProId = string.format("%02x%02x", dataTbl[6], dataTbl[5])
@@ -444,7 +465,7 @@ function s1CvtPri2Std(bin)
 				end
 				local ept = cjson.encode(sDevEPList)
 				strSubDev = string.format(strSubDev, strProId, strCluster, ept, strMac)
-				strMain = '{"sDevPmtJoin":2,'..strSubDev..'}'
+				strMain = '{"sDevJoin":2,'..strSubDev..'}'
 				print("[LUA] return => "..strMain.."\r\n")
 				break
 			end

@@ -188,29 +188,30 @@ static void postStatusChanged(int plusIdx) {
 static int sdevQueryInfo(SDevNode *arr) {
     // TODO: according to the ept list to query the clusters
 
-    int tmpCurrNum = 0, j = 0;
-    const char *fmt = "{\"%s\":%d}";
-    int maxSize = sdevCache()->maxsize;
-    int currSize = sdevCache()->currsize;
-    SDevNode *arr = sdevArray();
-    for (j = 0; (j < maxSize && tmpCurrNum < currSize); j++) {     
-        if (arr[j].occupied) {                            
-            memset(json, 0, sizeof(json));
-            ret = sprintf(json, fmt, JSON_NAME_SDEV_GET_INFO, j);
-            LELOG("idx[%d], json is [%d][%s]", ret, json);
-            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
-                (uint8_t *)json, ret, (uint8_t *)cmd, sizeof(cmd));
-            if (ret <= 0) {
-                LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
-                continue;
-            }
-            ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
-            if (0 >= ret) {
-                LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
-            }
-            tmpCurrNum++;
-        }
-    }               
+    // int tmpCurrNum = 0, j = 0;
+    // const char *fmt = "{\"%s\":%d}";
+    // int maxSize = sdevCache()->maxsize;
+    // int currSize = sdevCache()->currsize;
+    // SDevNode *arr = sdevArray();
+    // for (j = 0; (j < maxSize && tmpCurrNum < currSize); j++) {     
+    //     if (arr[j].occupied) {                            
+    //         memset(json, 0, sizeof(json));
+    //         ret = sprintf(json, fmt, JSON_NAME_SDEV_GET_INFO, j);
+    //         LELOG("idx[%d], json is [%d][%s]", ret, json);
+    //         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
+    //             (uint8_t *)json, ret, (uint8_t *)cmd, sizeof(cmd));
+    //         if (ret <= 0) {
+    //             LELOGW("[SUBDEV] sengineQuerySlave sengineCall("S1_STD2PRI") [%d]", ret);
+    //             continue;
+    //         }
+    //         ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, cmd, ret);
+    //         if (0 >= ret) {
+    //             LELOGW("[SUBDEV] sengineQuerySlave ioWrite [%d]", ret);
+    //         }
+    //         tmpCurrNum++;
+    //     }
+    // }               
+    return 0;
 }
 
 static int sdevInsert(SDevNode *arr, const char *status, int len) {
