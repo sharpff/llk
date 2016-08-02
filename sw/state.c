@@ -404,16 +404,18 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
         if (ginCtxR2R) {
-            SDevNode *arr = sdevArray();
-            PCACHE cache = sdevCache(); 
+            if (sengineHasDevs()) {
+                SDevNode *arr = sdevArray();
+                PCACHE cache = sdevCache(); 
             // LELOGW("******** stateProcCloudAuthed [%p] [%p] [%d]", arr, cache, cache->currsize);
-            if (arr && cache) {
-                int i = 0;
-                for (i = 0; i < cache->currsize; i++) {
-                    node.reserved = i + 1;
-                    lelinkNwPostCmd(ginCtxR2R, &node);
+                if (arr && cache) {
+                    int i = 0;
+                    for (i = 0; i < cache->currsize; i++) {
+                        node.reserved = i + 1;
+                        lelinkNwPostCmd(ginCtxR2R, &node);
+                    }
+                    node.reserved = 0;
                 }
-                node.reserved = 0;
             }
             if (lelinkNwPostCmd(ginCtxR2R, &node)) {
             }
