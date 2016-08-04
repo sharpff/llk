@@ -34,47 +34,29 @@ int qEmptyCache(PCACHE C)
         return 0;
     }
 }
-int qEnCache(PCACHE C, void *val)
-{
+
+int qEnCache(PCACHE C, void *val) {
     int i = 0;
     //int bFind = 0;
     NodeHead *tmp = (NodeHead *) val;
 
     if (qFullCache(C))
         return 0;
-    else
-    {
-        if (!tmp->flag) // invalid seq id, it will only be used as Cache for send
-        {
-            if (0 == C->flagAuto)
-
-            {
+    else {
+        if (!tmp->flag) {
+            if (0 == C->flagAuto) {
                 C->flagAuto = 1;
             }
-            else
-            {
+            else {
                 C->flagAuto++;
             }
             tmp->flag = C->flagAuto;
         }
-        // else  // it will only be used as Cache for remote req
-        // {
-        //     for (i = 0; i < C->maxsize; i++)
-        //     {
-        //         if (tmp->flag == ((NodeHead*) (C->pBase))[i*C->singleSize].flag)
-        //         {
-        //             // already in Cache
-        //             return 0;
-        //         }
-        //     }
-        // }
 
         // find an empty space to put in
-        for (i = 0; i < C->maxsize; i++)
-        {
+        for (i = 0; i < C->maxsize; i++) {
             // the current not has not been ocupied.
-            if (0 == ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag)
-            {
+            if (0 == ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag) {
                 MUTEX_LOCK;
                 memcpy(&(((uint8_t*)(C->pBase))[i*C->singleSize]), val, C->singleSize);
                 ((NodeHead*)&(((uint8_t*)(C->pBase))[i*C->singleSize]))->flag = tmp->flag;

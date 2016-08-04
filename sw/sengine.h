@@ -97,14 +97,26 @@ typedef struct {
     uint16_t arrDatasCounts[MAX_QUERY_COUNTS];
 }Datas;
 
+#define CACHE_NODE_HEADER \
+    uint16_t flag; \
+    uint16_t nodeReserved;
+
 typedef struct {
+    CACHE_NODE_HEADER;
     char mac[SDEV_MAX_MAC];
     char sdevStatus[SDEV_MAX_STATUS]; // as json object "sDevStatus"
     char sdevInfo[SDEV_MAX_INFO]; // as json object "sDev"
     uint8_t sdevEpt[SDEV_MAX_EPT]; // the element - 1 is the real ept
     uint8_t idx[SDEV_MAX_MAC/4]; // short mac or index
     uint8_t occupied;
-    uint8_t isSDevInfoDone;
+    /* 
+     * isSDevInfoDone identify the mask of these info
+     * 0x01. endpoint list(active response)
+     * 0x02. man done(node descriptor response)
+     * 0x04. cluster done(simple descriptor response)
+     * 0x08. timeout 
+     */
+    uint8_t isSDevInfoDone; 
 }SDevNode;
 
 typedef struct {
