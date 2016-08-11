@@ -70,24 +70,29 @@ void *lelinkNwNew(const char *remoteIP, int remotePort, int selfPort, void *ctx)
         return NULL;
     }
 
+    ctx_p->sock = sock;
     if (remoteIP) {
+        char ip[4][32];
         int ret = 0;
         AuthCfg authCfg;
         ret = lelinkStorageReadAuthCfg(&authCfg);
-        if (0 > ret) {
-            strcpy(ctx_p->remoteIP, remoteIP);
-            ctx_p->remotePort = remotePort;
-        } else {
-            if (authCfg.csum != crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data))) {
-                strcpy(ctx_p->remoteIP, remoteIP);
-                ctx_p->remotePort = remotePort;
-            } else {
+        if ((0 <= ret) && (authCfg.csum == crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data)))) {
+            memset(ip, 0, sizeof(ip));
+            if (!halGetHostByName(authCfg.data.remote, ip, 4*32)) { // dns
+                LELOG("dns ------------------------------");
+                strcpy(ctx_p->remoteIP, ip[0]);
+                ctx_p->remotePort = authCfg.data.port;
+                return (void *)ctx_p;
+            } else { // ip
+                LELOG("ip ------------------------------");
                 strcpy(ctx_p->remoteIP, authCfg.data.remote);
                 ctx_p->remotePort = authCfg.data.port;
+                return (void *)ctx_p;
             }
         }
+        strcpy(ctx_p->remoteIP, remoteIP);
+        ctx_p->remotePort = remotePort;
     }
-    ctx_p->sock = sock;
     LELOG("socket [%d] rmt[%s:%d]", sock, remoteIP, remotePort);
 
     

@@ -70,3 +70,7 @@ uint16_t halRand() {
 void halDelayms(int ms) {
     os_thread_sleep(os_msec_to_ticks(ms));
 }
+
+int halGetHostByName(const char *name, char ip[4][32], int len) { 
+    return -1;
+}
