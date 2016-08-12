@@ -101,6 +101,21 @@ int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
 }
 
+int getDevFlag(DEV_FLAG_t flag)
+{
+    return ~(ginPrivateCfg.data.devCfg.flag & flag) & flag;
+}
+
+int setDevFlag(DEV_FLAG_t flag, int isSet)
+{
+    if(isSet) {
+        ginPrivateCfg.data.devCfg.flag &= ~flag;
+    } else {
+        ginPrivateCfg.data.devCfg.flag |= flag;
+    }
+    return lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+}
+
 void setTerminalUTC(uint64_t *utc) {
     ginRemoteUTC = *utc/1000;
     ginBaseSecs = halGetTimeStamp();

@@ -1,6 +1,8 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 
+#include "io.h"
+
 extern uint8_t terminalAES[];
 
 const uint8_t *getPreSharedIV();
@@ -28,6 +30,8 @@ int cacheGetTerminalStatus(char *status, int len);
 
 int setLock(int locked);
 int getLock();
+int getDevFlag(DEV_FLAG_t flag);
+int setDevFlag(DEV_FLAG_t flag, int isSet);
 
 // test only
 #define PUBLIC_KEY_PEM \

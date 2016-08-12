@@ -44,12 +44,15 @@ typedef struct
     uint8_t channel;
 }LELINK_ALIGNED WifiNetwork;
 
+typedef enum {
+    DEV_FLAG_RESET = 0x01, // reboot by reset key
+} DEV_FLAG_t;
+
 /* Read/Write info */
 typedef struct {
-    uint8_t name[MAX_STR_LEN];
-    uint8_t newOne;
-    uint8_t bind;
+    uint8_t flag; // DEV_FLAG_t
     uint8_t locked;
+    uint8_t reserved[37];
 }LELINK_ALIGNED DevCfg;
 
 typedef struct

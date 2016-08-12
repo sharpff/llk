@@ -96,6 +96,7 @@ public class LeCmd {
 	public class K {
 		public static final String PUBLIC_KEY = "public_key";
 		public static final String SIGNATURE = "signature";
+		public static final String APSSID = "apSsid";
 		public static final String TYPE = "type";
 		public static final String SSID = "ssid";
 		public static final String PASSWD = "passwd";

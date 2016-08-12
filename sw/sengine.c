@@ -2,6 +2,7 @@
 #include "sengine.h"
 
 #include "io.h"
+#include "data.h"
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
@@ -1372,6 +1373,7 @@ int senginePollingSlave(void) {
                         ret = resetConfigData();
                         LELOG("resetConfigData [%d]", ret);
                         if (0 <= ret) {
+                            setDevFlag(DEV_FLAG_RESET, 1);
                             halReboot();
                         }
                     }
