@@ -21,19 +21,21 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 0.5
+ * @version 0.6
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
 	/*
+	 * 0.6, 解决启动了两个线程的BUG
+	 * 0.5,
 	 * 0.4, 优化wifi配置
 	 * 0.3, 添加Listener onControl()
 	 * 0.2, 添加Listener onPushMessage()
 	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "0.5"; // 与以上的注释一致
+	private static final String VERSION = "0.6"; // 与以上的注释一致
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
@@ -97,47 +99,49 @@ public class LeLink {
 //		String macStr = "11:22:33:44:55:66";
 		JSONObject jsonObj = null;
 		
-		if (sLeLink != null) {
-			return true;
+		synchronized (TAG) {
+			if (sLeLink != null) {
+				return true;
+			}
+			if (context == null) {
+				LOGE("Context null");
+				return false;
+			}
+			if (macStr == null || !macStr.matches("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")) {
+				LOGE("Mac address error");
+				return false;
+			}
+			try {
+				byte buffer[] = new byte[1024 * 10];
+				InputStream in = context.getAssets().open("lelink/auth.cfg");
+				int rd = in.read(buffer);
+				authStr = Base64.encodeToString(buffer, 0, rd, Base64.NO_WRAP);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			mListener = listener;
+			jsonObj = new JSONObject();
+			try {
+				jsonObj.put(LeCmd.K.AUTH, authStr);
+				jsonObj.put(LeCmd.K.MAC, macStr);
+			} catch (JSONException e1) {
+				e1.printStackTrace();
+				return false;
+			}
+			mInitInfo = jsonObj.toString();
+			sLeLink = new LeLink(mInitInfo);
+			mSdkInfo = getSDKInfo();
+			LOGI(mSdkInfo);
+			try {
+				jsonObj = new JSONObject(mSdkInfo);
+				jsonObj.put(LeCmd.K.JARVER, VERSION);
+				mSdkInfo = jsonObj.toString();
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			LOGI(mSdkInfo);
 		}
-		if (context == null) {
-			LOGE("Context null");
-			return false;
-		}
-		if(macStr == null || !macStr.matches("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")){
-			LOGE("Mac address error");
-			return false;
-		}
-		try {
-			byte buffer[] = new byte[1024 * 10];
-			InputStream in = context.getAssets().open("lelink/auth.cfg");
-			int rd = in.read(buffer);
-			authStr = Base64.encodeToString(buffer, 0, rd, Base64.NO_WRAP);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
-		mListener = listener;
-		jsonObj = new JSONObject();
-		try {
-			jsonObj.put(LeCmd.K.AUTH, authStr);
-			jsonObj.put(LeCmd.K.MAC, macStr);
-		} catch (JSONException e1) {
-			e1.printStackTrace();
-			return false;
-		}
-		mInitInfo = jsonObj.toString();
-		sLeLink = new LeLink(mInitInfo);
-		mSdkInfo = getSDKInfo();
-		LOGI(mSdkInfo);
-		try {
-			jsonObj = new JSONObject(mSdkInfo);
-			jsonObj.put(LeCmd.K.JARVER, VERSION);
-			mSdkInfo = jsonObj.toString();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		LOGI(mSdkInfo);
 		return isAuthed;
 	}
 
@@ -198,7 +202,7 @@ public class LeLink {
 	 * 必须传入参数: ssid, passwd, timeout.<br>
 	 * 
 	 * @param jsonStr
-	 *            String ssid, String passwd, int timeout(sec)
+	 *            String ssid, String passwd, String apSsid(only for LeCmd.V.AIR_CONFIG_TYPE_SOFTAP), int timeout(sec)
 	 * 
 	 * @return -1 - 错误; 0 - 成功; 1 - 超时
 	 */
@@ -229,6 +233,9 @@ public class LeLink {
 			sendJson.put(LeCmd.K.TIMEOUT, timeout);
 			if (sendJson.has(LeCmd.K.TYPE)) {
 				airConfigType = sendJson.getInt(LeCmd.K.TYPE);
+			}
+			if (airConfigType == LeCmd.V.AIR_CONFIG_TYPE_SOFTAP) {
+				sendJson.getString(LeCmd.K.APSSID);
 			}
 			while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
 				String logStr = String.format("AirConfig type = %d tryTimes = %d", airConfigType, tryTimes);
