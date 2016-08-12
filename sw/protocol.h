@@ -247,9 +247,8 @@ void *lelinkNwNew(const char *remoteIP, int remotePort, int selfPort, void *ctx)
 int lelinkNwPostCmd(void *ctx, const void *cmdInfo);
 int lelinkNwDelete(void *ctx);
 
-
 int lelinkDoConfig(const char *configInfo);
-
+int lelinkVerify(uint32_t startAddr, uint32_t size);
 
 #ifdef __cplusplus
 }

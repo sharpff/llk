@@ -237,13 +237,13 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size)
     return 0;
 }
 
-int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr)
+int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin)
 {
     return flash_drv_write((mdev_t *)dev, data, len, startAddr);
     return 0;
 }
 
-int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr)
+int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin)
 {
     return flash_drv_read((mdev_t *)dev, data, len, startAddr);
 }

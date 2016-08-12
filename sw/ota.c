@@ -140,7 +140,7 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                         status = -4;
                         break;
                     }
-                    ret = halFlashWrite(hdl, tmpPtr, flashSize, fr.addr);
+                    ret = halFlashWrite(hdl, tmpPtr, flashSize, fr.addr, 0);
                     if (0 > ret) {
                         halFree(tmpPtr);
                         status = -5;

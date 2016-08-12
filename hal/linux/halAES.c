@@ -43,7 +43,7 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
     int ret = 0;
     uint8_t out[MAX_BUF] = {0};
     if (!type) {
-        APPLOG("dec *len is [%d] ret[%d] START", *len, ret);
+        APPLOG("dec *len is [%d] ret[%d] maxLen[%d] START", *len, ret, maxLen);
         mbedtls_aes_setkey_dec(&ginAESCtx, key, keyLen);
         ret = mbedtls_aes_crypt_cbc(&ginAESCtx, MBEDTLS_AES_DECRYPT, *len, iv, data, out);
         // APPPRINTF("dec *len is [%d]\r\n", *len);
@@ -56,7 +56,7 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
         // APPPRINTF("\r\n");
         if (0 == ret) {
             *len -= out[*len - 1];
-            memcpy(data, out, *len);
+            memcpy(data, out, *len > maxLen ? maxLen : *len);
         }
         APPLOG("dec *len is [%d] ret[%d] END", *len, ret);
 

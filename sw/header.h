@@ -27,6 +27,10 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 #endif
 
+#ifndef int32_t
+typedef unsigned int int32_t;
+#endif
+
 #ifndef uint32_t
 typedef unsigned int uint32_t;
 #endif

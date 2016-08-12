@@ -52,6 +52,43 @@ extern PrivateCfg ginPrivateCfg;
 
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
+int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
+    int i = 0;
+    uint8_t tmp[20] = {0};
+    halSha1Start();
+    halSha1Update(input, inputLen);
+    halSha1End(tmp);
+
+    {
+        LELOG("------ sha12key single ----------");
+        for (i = 0; i < sizeof(tmp); i++) {
+            LEPRINTF("%02x", tmp[i]);
+        }
+        LEPRINTF("\r\n");
+    }
+    memcpy(output, tmp, MD5_LEN);
+    return 0;
+}
+
+// int sha12keyMulti(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
+//     int i = 0;
+//     uint8_t tmp[20] = {0};
+//     halSha1Start();
+//     for (i = 0; i < inputLen; i++) {
+//         halSha1Update(input + i, 1);
+//     }
+//     halSha1End(tmp);
+
+//     {
+//         LELOG("------ sha12key multi ----------");
+//         for (i = 0; i < sizeof(tmp); i++) {
+//             LEPRINTF("%02x", tmp[i]);
+//         }
+//         LEPRINTF("\r\n");
+//     }
+//     memcpy(output, tmp, MD5_LEN);
+//     return 0;
+// }
 
 int setLock(int locked) {
     int ret = 0;
@@ -96,7 +133,8 @@ const uint8_t *getTerminalToken() {
     if (isCloudAuthed()) {
         if ((0 == ginTerminalToken[0]) || 
             (0 == memcmp(ginTerminalToken, getPreSharedToken(), AES_LEN))) {
-            md5(&ginRemoteUTC, sizeof(uint32_t), ginTerminalToken);
+            // md5(&ginRemoteUTC, sizeof(uint32_t), ginTerminalToken);
+            sha12key((uint8_t *)&ginRemoteUTC, sizeof(uint32_t), ginTerminalToken);
         }
         return ginTerminalToken;
     } else {

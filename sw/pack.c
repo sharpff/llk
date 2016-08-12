@@ -181,7 +181,7 @@ int doUnpack(void *ctx,
                 key, 
                 tmpBuf + sizeof(CommonHeader),
                 &rawLenCmdHeader, /* in-len/out-enc size */
-                encLenPayload,
+                sizeof(tmpBuf) - sizeof(CommonHeader),
                 0);
             if (0 > ret) {
                 LELOGW("LELINK_ERR_DEC1_ERR [%d] ", LELINK_ERR_DEC1_ERR);

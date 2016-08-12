@@ -167,7 +167,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) 
     // LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
 
     *((uint8_t *)data + (size - 1)) = crc8(data, size - 1);
-    ret = halFlashWrite(hdl, data, size, fr.addr + (idx*fr.size));
+    ret = halFlashWrite(hdl, data, size, fr.addr + (idx*fr.size), 0);
     if (0 > ret) {
         return -4;
     }
@@ -192,7 +192,7 @@ static int storageRead(E_FLASH_TYPE type, void *data, int size, int idx) {
         return -2;
     }
 
-    ret = halFlashRead(hdl, data, size, fr.addr + (idx*fr.size));
+    ret = halFlashRead(hdl, data, size, fr.addr + (idx*fr.size), 0);
     if (0 > ret) {
         return -3;
     }

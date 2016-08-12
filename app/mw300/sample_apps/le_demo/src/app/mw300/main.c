@@ -767,7 +767,7 @@ int main()
 {
     modules_init();
 
-    if (1)
+    if (0)
     {
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x41}; // dooya
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya

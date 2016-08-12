@@ -395,6 +395,8 @@ void testRSA(void) {
     ret = rsaVerify(pubkey, pubkeyLen, beVerified, strlen(beVerified), signature, ret);
     LELOG("rsaVerify [%d]", ret);
 
+    // otaSetLatestSig()
+    // lelinkVerify(0x11111111, 428804);
 }
 #endif
 
@@ -2034,6 +2036,8 @@ static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     // char uuid[64] = {0};
     // char query[128] = {0};
     LELOG("cbCloudIndOTARemoteReq -s");
+    // {"force":"0","type":2,"url":"http://g3.letv.cn/232/31/100/resolve-smart/0/le_demo.bin","uuid":"10000100091000610006111111111111"}
+    LELOG("[%d][%s]", dataLen - RSA_LEN, dataIn + RSA_LEN);
     LELOG("cbCloudIndOTARemoteReq -e");
     return 1;
 }
@@ -2168,4 +2172,42 @@ int lelinkDoConfig(const char *configInfo) {
     };
     airconfig_delete(context);
     return 0;
+}
+
+int lelinkVerify(uint32_t startAddr, uint32_t size) {
+    int ret = 0, restSize = size, i = 0;
+    uint8_t tPubkey[256] = {0};
+    uint8_t raw[512] = {0};
+    int tPubkeyLen = 0;
+    uint8_t tmp[20] = {0};
+    void *dev = NULL;
+    tPubkeyLen = getTerminalPublicKey(tPubkey, sizeof(tPubkey));
+    dev = halFlashOpen();
+    if (NULL == dev) {
+        return -0XAB;
+    }
+    halSha1Start();
+    for (;restSize > 0;) {
+        ret = halFlashRead(dev, raw, restSize < sizeof(raw) ? restSize : sizeof(raw), startAddr, size - restSize);
+        if (0 >= ret) {
+            break;
+        }
+        restSize -= ret;
+        halSha1Update(raw, ret);
+    }
+    halSha1End(tmp);
+    halFlashClose(dev);
+    {
+        LELOG("------ lelinkVerify ----------");
+        for (i = 0; i < sizeof(tmp); i++) {
+            LEPRINTF("%02x", tmp[i]);
+        }
+        LEPRINTF("\r\n");
+    }
+
+    if (!otaGetLatestSig()) {
+        return -0XAC;
+    }
+    ret = halRsaVerify(tPubkey, tPubkeyLen, tmp, sizeof(tmp), otaGetLatestSig(), RSA_LEN);
+    return ret;
 }

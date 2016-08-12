@@ -129,7 +129,7 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size){
     return 0;
 }
 
-int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
+int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin){
     int fd, ret, append;
     char fileName[64] = {0};
     sprintf(fileName, "./0x%x.bin", startAddr);
@@ -138,7 +138,7 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
         APPLOG("WRITE FAILED [%d]\r\n", errno);
         return fd;
     }
-
+    lseek(fd, offsetToBegin, SEEK_SET);
     ret = write(fd, data, len);
     append = GET_PAGE_SIZE(len) - len;
     if (0 < append) {
@@ -152,7 +152,7 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
     return ret;
 }
 
-int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
+int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin){
     int fd, ret;
     char fileName[64] = {0};
     sprintf(fileName, "./0x%x.bin", startAddr);
@@ -162,6 +162,7 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
         // APPLOG("READ FAILED [%d]", errno);
         return fd;
     }
+    lseek(fd, offsetToBegin, SEEK_SET);
     ret = read(fd, data, len);
     close(fd);
     // APPLOG("READ OK [%s]", fileName);
