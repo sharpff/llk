@@ -2175,21 +2175,24 @@ int lelinkDoConfig(const char *configInfo) {
 }
 
 int lelinkVerify(uint32_t startAddr, uint32_t size) {
-    int ret = 0, restSize = size, i = 0;
+    int ret = 0, restSize = size;
     uint8_t tPubkey[256] = {0};
     uint8_t raw[512] = {0};
     int tPubkeyLen = 0;
     uint8_t tmp[20] = {0};
+    uint8_t tmpStr[42] = {0};
     void *dev = NULL;
     tPubkeyLen = getTerminalPublicKey(tPubkey, sizeof(tPubkey));
     dev = halFlashOpen();
     if (NULL == dev) {
+        LELOGE("lelinkVerify halFlashOpen failed");
         return -0XAB;
     }
     halSha1Start();
     for (;restSize > 0;) {
         ret = halFlashRead(dev, raw, restSize < sizeof(raw) ? restSize : sizeof(raw), startAddr, size - restSize);
         if (0 >= ret) {
+            LELOGE("lelinkVerify halFlashRead failed [%d]", ret);
             break;
         }
         restSize -= ret;
@@ -2197,17 +2200,15 @@ int lelinkVerify(uint32_t startAddr, uint32_t size) {
     }
     halSha1End(tmp);
     halFlashClose(dev);
-    {
-        LELOG("------ lelinkVerify ----------");
-        for (i = 0; i < sizeof(tmp); i++) {
-            LEPRINTF("%02x", tmp[i]);
-        }
-        LEPRINTF("\r\n");
-    }
-
+    
+    bytes2hexStr(tmp, sizeof(tmp), tmpStr, sizeof(tmpStr));
+    LELOG("sha1: [%s]", tmpStr);
     if (!otaGetLatestSig()) {
+        LELOGE("lelinkVerify otaGetLatestSig failed");
         return -0XAC;
     }
-    ret = halRsaVerify(tPubkey, tPubkeyLen, tmp, sizeof(tmp), otaGetLatestSig(), RSA_LEN);
+    ret = rsaVerify(tPubkey, tPubkeyLen, tmpStr, strlen(tmpStr), otaGetLatestSig(), RSA_LEN);
+    LELOG("lelinkVerify rsaVerify[%d]", ret);
+    otaInfoClean();
     return ret;
 }

@@ -64,15 +64,31 @@ void halHttpClose(OTAInfo_t *info)
     }
 }
 
-int halUpdateFirmware(OTAInfo_t *info)
-{
+int halUpdateFirmware(OTAInfo_t *info) {
+    int ret = 0;
     struct partition_entry *p = (struct partition_entry *)rfget_get_passive_firmware();
     /* Perform FW update later */
     if (p == NULL) {
         APPLOGE("Failed to get passive partition");
         return -1;
-    } 
-    return update_firmware(httpFetchData, (void *)info, info->imgLen, p);
+    }
+
+    APPLOG("halUpdateFirmware start");
+    // ret = update_firmware(httpFetchData, (void *)info, info->imgLen, p);
+    ret = update_and_validate_firmware_cust(httpFetchData, info, info->imgLen, p, 0);
+    APPLOG("halUpdateFirmware [%d] end p->start[%p] len[%d]", ret, p->start, info->imgLen);
+    if (WM_SUCCESS != ret) {
+        return -2;
+    }
+    ret = lelinkVerify(p->start, info->imgLen);
+    APPLOG("halUpdateFirmware lelinkVerify[%d]", ret);
+    if (0 == ret) {
+        update_complete();
+    } else {
+        update_abort();
+        return -3;
+    }
+    return 0;
 }
 
 uint32_t halUpdate(OTAInfo_t *info, uint8_t *buf, uint32_t bufLen)

@@ -239,13 +239,17 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size)
 
 int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin)
 {
-    return flash_drv_write((mdev_t *)dev, data, len, startAddr);
+    return flash_drv_write((mdev_t *)dev, data, len, startAddr + offsetToBegin);
     return 0;
 }
 
 int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin)
 {
-    return flash_drv_read((mdev_t *)dev, data, len, startAddr);
+    int ret = flash_drv_read((mdev_t *)dev, data, len, startAddr + offsetToBegin);
+    if (0 == ret) {
+        return len;
+    }
+    return -1;
 }
 
 int halGetMac(uint8_t *mac, int len) {
