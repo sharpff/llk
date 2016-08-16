@@ -83,57 +83,54 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 APPLOG("C2R req[%d][%s]", ret, cmdCtrl);
             } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ == cmdInfo->subCmdId) {
                 int type = 0, sizeOTA = 0;
-                sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
-                // test only for trig a OTA
-                if (RSA_LEN >= sizeOTA) {
-                    type = OTA_TYPE_FW;
-                    // type = OTA_TYPE_FW_SCRIPT;
-                    // type = OTA_TYPE_IA_SCRIPT;
-                    // type = OTA_TYPE_AUTH;
-                    // type = OTA_TYPE_PRIVATE;
-                    switch (type) {
-                        case OTA_TYPE_FW: {
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo.bin", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/le_demo.bin", type, 35);
-                        } break;
-                        case OTA_TYPE_FW_SCRIPT: {
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.bin", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.lua", type, 35);
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar2.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/vanst86.lua", type, 35);
-                        } break;
-                        case OTA_TYPE_IA_SCRIPT: {
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_honyarOff.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_honyarOn.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOn.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOff.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_hOn_sOn.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_hOff_sOff.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forHonyar_switcherOff.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forHonyar_switcherOn.lua", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://10.154.252.128:8081/linkage/10000100101000010007C80E77ABCD52/2016042116405200016.lua", type, 35);
-                            printf("OTA:%s\n", ginOTAUrl + RSA_LEN);
-                        } break;
-                        case OTA_TYPE_AUTH: {
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1c2000.bin", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/0x1c2000.bin", type, 35);
-                        } break;
-                        case OTA_TYPE_PRIVATE: {
-                            sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1c8000.bin", type, 35);
-                            // sprintf(ginOTAUrl + RSA_LEN, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/0x1c8000.bin", type, 35);
-                        } break;
-                        default: {
-                            APPLOG("unknown type");
-                        } break;
-                    }
-                    sizeOTA += strlen(ginOTAUrl + RSA_LEN);
+                // sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
+
+                type = OTA_TYPE_FW;
+                // type = OTA_TYPE_FW_SCRIPT;
+                // type = OTA_TYPE_IA_SCRIPT;
+                // type = OTA_TYPE_AUTH;
+                // type = OTA_TYPE_PRIVATE;
+                switch (type) {
+                    case OTA_TYPE_FW: {
+                        // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0xa000.bin", type, 35);
+                            sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo.bin", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/le_demo.bin", type, 35);
+                    } break;
+                    case OTA_TYPE_FW_SCRIPT: {
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.bin", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.lua", type, 35);
+                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar2.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/vanst86.lua", type, 35);
+                    } break;
+                    case OTA_TYPE_IA_SCRIPT: {
+                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_honyarOff.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_honyarOn.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOn.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_switcherOff.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_hOn_sOn.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forDooya_hOff_sOff.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forHonyar_switcherOff.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ia_forHonyar_switcherOn.lua", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://10.154.252.128:8081/linkage/10000100101000010007C80E77ABCD52/2016042116405200016.lua", type, 35);
+                        printf("OTA:%s\n", ginOTAUrl);
+                    } break;
+                    case OTA_TYPE_AUTH: {
+                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1c2000.bin", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/0x1c2000.bin", type, 35);
+                    } break;
+                    case OTA_TYPE_PRIVATE: {
+                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1c8000.bin", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/0x1c8000.bin", type, 35);
+                    } break;
+                    default: {
+                        APPLOG("unknown type");
+                    } break;
                 }
-                // test only END
+                sizeOTA = strlen(ginOTAUrl);
                 memcpy(data, ginOTAUrl, len > sizeOTA ? sizeOTA : len);
-                
-                APPLOG("LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ [%d][%s]", sizeOTA, ginOTAUrl + RSA_LEN);
+                APPLOG("LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ [%d][%s]", sizeOTA, ginOTAUrl);
                 ret = sizeOTA;
             } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_TELL_SHARE_REQ == cmdInfo->subCmdId) {
                 const char *tellMgs = "{\"account\":\"user1\",\"uuid\":\"10000100051000310024223456abcdef\",\"share\":1}";
@@ -165,9 +162,9 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 // ret = sprintf(data, "{\"uuid\":\"%s\",\"mac\":\"3B9A011A0477DFF8\"}", uuid);
                 ret = strlen(data);
             } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ == cmdInfo->subCmdId) {
-                // int type = OTA_TYPE_FW;
+                int type = OTA_TYPE_FW;
                 // int type = OTA_TYPE_FW_SCRIPT;
-                int type = OTA_TYPE_IA_SCRIPT;
+                // int type = OTA_TYPE_IA_SCRIPT;
                 strcpy(uuid, ginCtrlUUID);
                 ret = sprintf(data, "{\"uuid\":\"%s\",\"type\":%d,\"ver\":%s, \"iaId\":\"%s\"}", uuid, type, ver, "2016042117413700000");
                 // memcpy(data, uuid, ret);
