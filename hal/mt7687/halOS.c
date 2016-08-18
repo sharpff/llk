@@ -116,8 +116,3 @@ uint16_t halRand() {
 void halDelayms(int ms) {
 	 vTaskDelay(ms / portTICK_PERIOD_MS);
 }
-
-
-int halGetHostByName(const char *name, char ip[4][32], int len) { 
-    return -1;
-}

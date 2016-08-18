@@ -6,6 +6,13 @@
 #include "data.h"
 #include "cache.h"
 #include "sengine.h"
+#include "network.h"
+
+/*
+ * it is just a test for remote ip(support in genProfile.sh) connection.
+ * for standard case, ip shoudl be got from DNS only.
+ */
+// #define DNS_IP_TEST
 
 #ifndef LOG_STATE
 #ifdef LELOG
@@ -322,22 +329,16 @@ static int stateProcApConnecting(StateContext *cntx) {
 
 static int s_first_heart = 1;
 static int stateProcApConnected(StateContext *cntx) {
-    int ret = -1;
+    int sta = -1;
     int count = 3;
-
     NodeData node = {0};
 
+    LELOG("stateProcApConnected");
+
     if (0 == ginConfigStatus) {
-        return ret;
+        return sta;
     }
-    
-    node.cmdId = LELINK_CMD_CLOUD_GET_TARGET_REQ;
-    node.subCmdId = LELINK_SUBCMD_CLOUD_GET_TARGET_REQ;
-    if (ginCtxR2R) {
-        if (lelinkNwPostCmd(ginCtxR2R, &node)) {
-            ret = 1;
-        }
-    }
+    sta = 0;
 
     // only for backup
     // LELOG("***** start stateProcApConnected ginPrivateCfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus, ginConfigStatus);
@@ -346,7 +347,6 @@ static int stateProcApConnected(StateContext *cntx) {
         ginPrivateCfg.data.nwCfg.configStatus = 2;
     }
     // LELOG("***** end stateProcApConnected ginPrivateCfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus, ginConfigStatus);
-
     if (2 != ginPrivateCfg.data.nwCfg.configStatus && (1 == ginConfigStatus)) {
         char br[32] = {0};
         int ret = 0;
@@ -367,10 +367,46 @@ static int stateProcApConnected(StateContext *cntx) {
         ginPrivateCfg.data.nwCfg.configStatus = 2;
         lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     }
-    LELOG("stateProcApConnected");
+    
+    if (ginCtxR2R) {
+        int ret = 0;
+        char ip[4][32];
+        AuthCfg authCfg;
+        ret = lelinkStorageReadAuthCfg(&authCfg);
+        if ((0 <= ret) && (authCfg.csum == crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data)))) {
+            memset(ip, 0, sizeof(ip));
+            if (!halGetHostByName(authCfg.data.remote, ip, 4*32)) { // dns
+                int k = 0;
+                for (k = 0; k < 4; k++) {
+                    LELOG("DNS OK [%s]", ip[k]);
+                }
+                strcpy(COMM_CTX(ginCtxR2R)->remoteIP, ip[0]);
+                COMM_CTX(ginCtxR2R)->remotePort = authCfg.data.port;
+                #ifndef DNS_IP_TEST
+                node.cmdId = LELINK_CMD_CLOUD_GET_TARGET_REQ;
+                node.subCmdId = LELINK_SUBCMD_CLOUD_GET_TARGET_REQ;
+                if (lelinkNwPostCmd(COMM_CTX(ginCtxR2R), &node)) {
+                    sta = 1;
+                }
+                #endif
+            }
+            else { // ip
+                LELOGE("DNS faield");
+                strcpy(COMM_CTX(ginCtxR2R)->remoteIP, authCfg.data.remote);
+                COMM_CTX(ginCtxR2R)->remotePort = authCfg.data.port;
+            }
+            #ifdef DNS_IP_TEST
+            LELOG("IP TEST ON ------- to connect[%s:%d]", COMM_CTX(ginCtxR2R)->remoteIP, COMM_CTX(ginCtxR2R)->remotePort);
+            node.cmdId = LELINK_CMD_CLOUD_GET_TARGET_REQ;
+            node.subCmdId = LELINK_SUBCMD_CLOUD_GET_TARGET_REQ;
+            if (lelinkNwPostCmd(COMM_CTX(ginCtxR2R), &node)) {
+                sta = 1;
+            }
+            #endif
+        }
+    }
     s_first_heart = 1;
-    // ret = halDoApConnected(NULL, 0);
-    return ret;
+    return sta;
 }
 
 static int stateProcCloudLinked(StateContext *cntx) {

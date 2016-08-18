@@ -123,3 +123,6 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
     return strlen(ip);
 }
 
+int halGetHostByName(const char *name, char ip[4][32], int len) { 
+    return -1;
+}
