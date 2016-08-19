@@ -55,7 +55,7 @@ int initTask(char *json)
         char *mac = gNativeContext.mac;
 
         s1 = base64_decode(s1);
-        memcpy(authCfg, s1.c_str(), s1.length());
+        memcpy(authCfg, s1.c_str(), sizeof(AuthCfg));
         p = s2.c_str();
         for(i = 0; i < 6; i++) {
             mac[i] = strtol(p, (char **)&p, 16);
@@ -76,6 +76,7 @@ int initTask(char *json)
         return ret;
     }
     getTerminalUUID(authCfg->data.uuid, MAX_UUID);
+    authCfg->csum = crc8((uint8_t *)&(authCfg->data), sizeof(authCfg->data));
 	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
