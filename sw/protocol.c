@@ -1273,9 +1273,17 @@ MULTI_LOCAL_RSP:
 /* hello */
 static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    char helloReq[32] = {"{\"msg\":\"hello\"}"};
+    char helloReq[MAX_BUF] = {"{\"msg\":\"hello\""};
+    int helloReqLen = strlen(helloReq);
+    ret = getTerminalStatus(helloReq + helloReqLen, sizeof(helloReq) - helloReqLen);
+    if (ret > 0) {
+        helloReq[helloReqLen] = ',';
+    } else {
+        helloReq[helloReqLen] = '}';
+        helloReq[helloReqLen + 1] = 0;
+    }
+    LELOG("cbHelloLocalReq [%s] -s", helloReq);
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbHelloLocalReq -s");
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)helloReq, strlen(helloReq), dataOut, dataLen);
     LELOG("cbHelloLocalReq [%d] -e", ret);
     return ret;
