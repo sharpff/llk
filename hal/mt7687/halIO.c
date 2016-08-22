@@ -382,7 +382,7 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size) {
 int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin) {
     hal_flash_status_t ret;
 
-	ret = hal_flash_write(startAddr, data, len);
+	ret = hal_flash_write(startAddr + offsetToBegin, data, len);
 
 	if (ret < HAL_FLASH_STATUS_OK)
       	return ret;
@@ -393,7 +393,7 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, i
 int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin) {
     hal_flash_status_t ret;
 
-	ret = hal_flash_read(startAddr, data, len);
+	ret = hal_flash_read(startAddr + offsetToBegin, data, len);
 
 	if (ret < HAL_FLASH_STATUS_OK)
       	return ret;

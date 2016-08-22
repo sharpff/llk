@@ -22,7 +22,6 @@
 #include "cli_def.h"
 
 
-uint8_t gin_airconfig_current_channel = 0;
 int gin_airconfig_channel_cared[MAX_CHANNEL_CARE];
 static TimerHandle_t lelink_airconfig_timer = NULL;
 extern void smtcn_evt_handler(wifi_smart_connection_event_t event, void *data);
@@ -78,7 +77,6 @@ int airconfig_start(void *ptr, uint8_t *prov_key, int prov_key_len) {
 }
 
 int airconfig_stop() {
-    gin_airconfig_current_channel = 0;
     airconfig_reset();
     return 0;
 }

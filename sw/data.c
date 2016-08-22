@@ -103,11 +103,13 @@ int getLock() {
 
 int getDevFlag(DEV_FLAG_t flag)
 {
+    return 1;
     return ~(ginPrivateCfg.data.devCfg.flag & flag) & flag;
 }
 
 int setDevFlag(DEV_FLAG_t flag, int isSet)
 {
+    return 1;
     if(isSet) {
         ginPrivateCfg.data.devCfg.flag &= ~flag;
     } else {

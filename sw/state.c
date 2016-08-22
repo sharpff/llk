@@ -12,7 +12,8 @@
  * it is just a test for remote ip(support in genProfile.sh) connection.
  * for standard case, ip shoudl be got from DNS only.
  */
-// #define DNS_IP_TEST
+
+#define DNS_IP_TEST
 
 #ifndef LOG_STATE
 #ifdef LELOG
@@ -232,8 +233,8 @@ static int stateProcStart(StateContext *cntx) {
         if (ginPrivateCfg.csum == crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
             LELOG("csum [0x%02x]", ginPrivateCfg.csum);
             if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
-                ret = ginPrivateCfg.data.nwCfg.configStatus;
-                ginConfigStatus = 1;
+                //ret = ginPrivateCfg.data.nwCfg.configStatus;
+                //ginConfigStatus = 1;
             } 
         }
     }

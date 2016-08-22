@@ -172,6 +172,15 @@ int halUpdateFirmware(OTAInfo_t *info) {
 
 	vPortFree(buf);
 	buf = NULL;
+
+	if ( 0 == ret) {
+    	//ret = lelinkVerify(p->start, info->imgLen);
+     
+    } else {
+    	APPLOG("lelinkVerify error!");
+    	return -1;
+    }
+
 	if ( 0 == ret) {
 		fota_trigger_update();
 		fota_ret_t err;
