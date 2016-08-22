@@ -47,18 +47,27 @@ extern "C"
 #define REMOTE_BAK_PORT 5546
 
 
-
-
 // halIO
-void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl);
+void *halUartOpen(void *dev);
 int halUartClose(void *dev);
 int halUartRead(void *dev, uint8_t *buf, uint32_t len);
 int halUartWrite(void *dev, const uint8_t *buf, uint32_t len);
+
 void *halGPIOInit(void);
 int halGPIOClose(void *dev);
-int halGPIOOpen(int8_t id, int8_t dir, int8_t mode);
-int halGPIORead(void *dev, int gpioId, int *val);
-int halGPIOWrite(void *dev, int gpioId, const int val);
+int halGPIOOpen(void *dev);
+int halGPIORead(void *dev, int *val);
+int halGPIOWrite(void *dev, const int val);
+
+void* halPWMInit(int clock);
+int halPWMOpen(void *dev);
+int halPWMClose(void *dev);
+void halPWMWrite(void *dev, uint32_t percent);
+void halPWMRead(void *dev, uint32_t *percent);
+void halPWMSetFrequency(void *dev);
+
+void halCommonInit(void* dev);
+
 int halFlashInit(void);
 int halFlashDeinit(void);
 void *halFlashOpen(void);
@@ -79,13 +88,25 @@ int halLock(void);
 int halUnlock(void);
 unsigned int halGetTimeStamp(void);
 unsigned int halGetUTC(void);
-void *halMalloc(size_t size);
-void *halCalloc(size_t n, size_t size);
-void *halRealloc(void *ptr, size_t size);
-void halFree(void *ptr);
 int halReboot();
+uint32_t halGetCurrentTaskId(void);
 
+void *halMallocEx(size_t size, char* filename, uint32_t line);
+void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line);
+void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line);
+void halFreeEx(void *ptr, char* filename, uint32_t line);
 
+#if 0
+void *_halMalloc(size_t size);
+void *_halCalloc(size_t n, size_t size);
+void *_halRealloc(void *ptr, size_t size);
+void _halFree(void *ptr);
+#endif
+
+#define halMalloc(size)        halMallocEx(size, __FILE__, __LINE__)
+#define halCalloc(n, size)     halCallocEx(n, size, __FILE__, __LINE__)
+#define halRealloc(ptr, size)  halReallocEx(ptr, size, __FILE__, __LINE__)
+#define halFree(ptr)           halFreeEx(ptr, __FILE__, __LINE__)
 
 #ifdef __cplusplus
 }

@@ -21,6 +21,7 @@ typedef enum {
     IO_TYPE_GPIO = 0x2,
     IO_TYPE_PIPE = 0x4,
     IO_TYPE_SOCKET = 0x8,
+    IO_TYPE_PWM = 0x10,
 }IO_TYPE;
 
 #ifdef LELINK_PACK
@@ -172,7 +173,7 @@ typedef enum {
 
 typedef enum {
     GPIO_STATE_LOW = 0,
-    GPIO_STATE_HIGH, 
+    GPIO_STATE_HIGH,
     GPIO_STATE_BLINK,
 } GPIO_STATE_t;
 
@@ -184,10 +185,19 @@ typedef enum {
     GPIO_TYPE_OUTPUT_RESET = 1
 } GPIO_TYPE_OUTPUT_t;
 
+typedef enum {
+   PWM_TYPE_OUTPUT_RESET = 1
+} PWM_TYPE_OUTPUT_t;
+
+typedef enum {
+    PWM_STATE_LOW = 0,
+    PWM_STATE_HIGH
+} PWM_STATE_t;
+
 #define GPIO_MAX_ID     (3)
 typedef struct {
-    int8_t id;          // support 1, 2, 3 
-    int8_t num;         // gpio num
+    uint8_t id;          // support 1, 2, 3 
+    //int8_t num;         // gpio num
     uint16_t dir:1;     // 0 - input; 1 - output
     uint16_t mode:3;    // 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
     uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
@@ -195,6 +205,7 @@ typedef struct {
     uint16_t gpiostate:1;   // only : 0 - low; 1 - high
     uint16_t freestate:1;   // only output reset: 0 - low; 1 - high
     uint8_t blink;          // only output. ticks, blink frequency
+    uint8_t oldState; 
     // for input/output type reset
     uint8_t longTime;
     uint8_t shortTime;
@@ -202,7 +213,7 @@ typedef struct {
     // TODO: only for internal
     uint8_t keepLowTimes;   // ticks, gpiostat keep low times
     uint8_t keepHighTimes;  // ticks, gpiostat keep high times
-    uint8_t reserved;   
+    uint32_t reserved;   
 } gpioHand_t;
 
 typedef struct {
@@ -211,6 +222,50 @@ typedef struct {
     gpioHand_t table[GPIO_MAX_ID + 1];
 } gpioManager_t;
 
+typedef struct {
+    int16_t id;          // support 1, 2, 3 
+    int32_t baud;
+    int8_t dataBits;
+    int8_t stopBits;
+    int8_t flowCtrl;
+    int8_t parity;
+    uint32_t reserved;
+} uartHand_t;
+
+#define PWM_MAX_ID     (4)
+
+typedef struct {
+    uint8_t id;            // support 1, 2, 3, 4
+    uint8_t type;
+    uint8_t blink;
+    uint8_t state;
+    uint8_t oldState;
+    uint8_t longTime;
+    uint8_t shortTime;
+    uint8_t clock;
+    uint32_t frequency;
+    uint32_t percent;
+    uint32_t duty;
+    uint32_t reserved;
+} pwmHand_t;
+
+typedef struct {
+    //void *handle;
+    uint32_t num;
+    pwmHand_t table[PWM_MAX_ID + 1];
+} pwmManager_t;
+
+#define COMMON_MAX_ID     (10)
+
+typedef struct {
+    uint16_t id;            // support 1, 2, 3, 4
+    uint16_t mux;
+} commonHand_t;
+
+typedef struct {
+    uint32_t num;
+    commonHand_t table[COMMON_MAX_ID + 1];
+} commonManager_t;
 
 typedef enum {
     RLED_STATE_IGNORE = -1, // 忽略, 设置的时候返回当前状态

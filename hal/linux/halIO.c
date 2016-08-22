@@ -101,6 +101,33 @@ int halGPIOWrite(void *dev, int gpioId, const int val) {
     return 0;
 }
 
+void* halPWMInit(int clock) {
+    return NULL;
+}
+
+int halPWMOpen(void *dev) {
+    return 0;
+}
+
+int halPWMClose(void *dev) {
+    return 0;
+}
+
+void halPWMWrite(void *dev, uint32_t percent) {
+
+}
+
+void halPWMRead(void *dev, uint32_t *percent) {
+
+}
+
+void halPWMSetFrequency(void *dev) {
+
+}
+
+void halCommonInit(void* dev) {
+
+}
 
 int halFlashInit(void)
 {

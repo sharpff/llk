@@ -285,13 +285,17 @@ static int stateProcConfiguring(StateContext *cntx) {
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
         } 
     }
+    /*LELOG("wifiConfigTime(%d): %d, (%d, %d)", ginMSDelay, wifiConfigTime, WIFI_CFG_BY_MONITOR_TIME, WIFI_CFG_BY_SOFTAP_TIME);*/
     return ret;
 }
+
 static int stateProcSnifferGot(StateContext *cntx) {
     int ret = 0;
 
-    softApStop();
-    halStopConfig();
+    if (0 == ginConfigStatus) {
+        softApStop();
+        halStopConfig();
+    }
     // ginPrivateCfg.data.nwCfg.configStatus = 0;
     lelinkStorageReadPrivateCfg(&ginPrivateCfg);
     if (ginPrivateCfg.csum != crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {

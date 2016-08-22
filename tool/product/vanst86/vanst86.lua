@@ -149,6 +149,30 @@ function s1GetValidKind(data)
 	return 2
 end
 
+function s1OptCvtPri2Pri(info)
+    local dst = nil
+    info includes {type, src, val}
+    if type == gpio then
+        if src == gpio10 then
+            dst = uart1
+            if val == 1 then 
+                val = 'abc'
+            end
+        else src == gpio11 then
+            dst = gpio12
+        end
+    else type == uart then 
+        if src == uart3 then
+            dst = gpio3
+            if val == 'aaa' then
+                val = 0
+            end
+        end
+    end
+    return info
+end
+
+
 --[[ MUST
 ]]
 -- {"ctrl":{"led":2, "hub":1}}, 0 - low; 1 - high; 2 - blink

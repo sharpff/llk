@@ -57,8 +57,7 @@ int doUnpack(void *ctx,
 
     commonHeader = (CommonHeader *)(nw);
     if (MAGIC_CODE != commonHeader->magic) {
-        LELOGW("LELINK_ERR_MAGIC_ERR mismatch ");
-        return LELINK_ERR_MAGIC_ERR;
+        LELOGW("LELINK_ERR_MAGIC_ERR mismatch ");        return LELINK_ERR_MAGIC_ERR;
     }
     memcpy(tmpBuf, commonHeader, sizeof(CommonHeader));
 

@@ -42,7 +42,7 @@ int hal_sprintf(char *buf, const char *fmt, ...) {
     int rv;
 
     va_start(ap, fmt);
-    rv = vsnprintf(buf, ~(size_t) 0, fmt, ap);
+    rv = vsnprintf(buf, 260, fmt, ap);
     va_end(ap);
     return rv;
 }

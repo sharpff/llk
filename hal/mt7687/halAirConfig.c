@@ -11,31 +11,31 @@
 #include "stddef.h"
 #include "os.h"
 
-#if ENABLE_WIFI_SOFT_AP
-static int startApListen(void);
-#endif
-
+//static int startApListen(void);
+extern int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 extern int8_t gin_airconfig_sniffer_got;
 extern int8_t gin_airconfig_ap_connected;
 extern void network_dhcp_start(uint8_t opmode);
+extern wifi_scan_list_item_t g_ap_list[8];
+extern int softApCheck(void);
 
+static int g_softap_start = 0;
+
+uint8_t ginSSID[16] = {0};
+uint8_t ginPassword[16] = {0};
+uint8_t ginChannel = 0;
+uint8_t ginSanDone = 0;
+//static wifi_scan_list_item_t g_ap_list[16] = {{0}};
 
 int halDoConfig(void *ptr, int ptrLen) {
 	int ret = 0;
 
-#if ENABLE_WIFI_SOFT_AP
-    ret = !startApListen();
-#endif
-  
-    if (gin_airconfig_sniffer_got) 
-	{
+    if (gin_airconfig_sniffer_got) {
         gin_airconfig_sniffer_got = 0;
         //app_sta_stop();//not need to stop STA;
     }
-   #if 0
 	ret = airconfig_start(NULL, NULL, 0);
     APPLOG("halDoConfig in hal [%d]", ret);
-   #endif
 	return ret;
 }
 
@@ -44,84 +44,121 @@ int halStopConfig(void) {
 }
 
 int halDoConfiguring(void *ptr, int ptrLen) {
-  #ifndef __MTK_MT7687_PLATFORM__
-    APPLOG("halDoConfiguring in hal [%d]", gin_airconfig_sniffer_got);
-  #else
-    printf("halDoConfiguring in hal [%d]", gin_airconfig_sniffer_got);
-  #endif
-  
+    uint32_t ret = halGetCurrentTaskId();
+    if(g_softap_start) {
+        gin_airconfig_sniffer_got = !softApCheck();
+    }
+    APPLOG("halDoConfiguring in hal task[%u] [%u]", ret, gin_airconfig_sniffer_got);
 	return gin_airconfig_sniffer_got;
 }
 
-int wifi_connect_sta_start(ap_passport_t *args)
-{
-    LOG_I(common, "Enter connection init.");
-    uint8_t opmode  = WIFI_MODE_STA_ONLY;
-    uint8_t port = WIFI_PORT_STA;
+int wifi_connect_repeater_start(ap_passport_t *args) {
     uint8_t *ssid = (uint8_t *)(args->ssid);
-    wifi_auth_mode_t auth = WIFI_AUTH_MODE_WPA_PSK_WPA2_PSK;
-    wifi_encrypt_type_t encrypt = WIFI_ENCRYPT_TYPE_TKIP_AES_MIX;
     uint8_t *password = (uint8_t *)(args->psk);
-    uint8_t nv_opmode;
+    APPLOG("Repeater mode connect to AP,  SSID[%s][%s]", ssid, password); 
+    wifi_set_opmode(WIFI_MODE_REPEATER);
+    wifi_config_set_ssid(WIFI_PORT_APCLI, ssid ,(uint8_t)os_strlen((char *)ssid));
+    wifi_config_set_wpa_psk_key(WIFI_PORT_APCLI, password, (uint8_t)os_strlen((char *)password));
+    wifi_config_set_security_mode(WIFI_PORT_APCLI, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
+    wifi_config_set_channel(WIFI_PORT_APCLI, 6);
+    wifi_config_set_bandwidth(WIFI_PORT_APCLI, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
+    wifi_config_set_wireless_mode(WIFI_PORT_APCLI, WIFI_PHY_11BG_MIXED);
+    wifi_config_set_ssid(WIFI_PORT_AP, (uint8_t *)"ff_repeater", strlen("ff_repeater"));
+    wifi_config_set_wpa_psk_key(WIFI_PORT_AP, (uint8_t *)"1234abcd", strlen("1234abcd"));
+    wifi_config_set_security_mode(WIFI_PORT_AP, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
+    wifi_config_set_channel(WIFI_PORT_AP, 6);
+    wifi_config_set_bandwidth(WIFI_PORT_AP, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
+    wifi_config_set_wireless_mode(WIFI_PORT_AP, WIFI_PHY_11BG_MIXED);
+    wifi_config_reload_setting();
+    network_dhcp_start(WIFI_MODE_REPEATER);
+    APPLOG("network_dhcp_start WIFI_MODE_REPEATER");
+    return 1;
+}
 
-    if (1) 
-	{
-        wifi_config_get_opmode(&nv_opmode);
-        if (nv_opmode != opmode) {
-            wifi_config_set_opmode(opmode);
+int wifi_connect_one_sta_start(uint8_t *ssid, uint8_t *password, uint8_t channel) {
+    APPLOG("Repeater mode connect to AP,  SSID[%s][%s]", ssid, password); 
+    wifi_set_opmode(WIFI_MODE_REPEATER);
+    wifi_config_set_ssid(WIFI_PORT_APCLI, ssid ,(uint8_t)os_strlen((char *)ssid));
+    wifi_config_set_wpa_psk_key(WIFI_PORT_APCLI, password, (uint8_t)os_strlen((char *)password));
+    wifi_config_set_security_mode(WIFI_PORT_APCLI, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
+    wifi_config_set_channel(WIFI_PORT_APCLI, channel);
+    wifi_config_set_bandwidth(WIFI_PORT_APCLI, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
+    wifi_config_set_wireless_mode(WIFI_PORT_APCLI, WIFI_PHY_11BG_MIXED);
+    wifi_config_set_ssid(WIFI_PORT_AP, (uint8_t *)"ff_repeater", strlen("ff_repeater"));
+    wifi_config_set_wpa_psk_key(WIFI_PORT_AP, (uint8_t *)"1234abcd", strlen("1234abcd"));
+    wifi_config_set_security_mode(WIFI_PORT_AP, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
+    wifi_config_set_channel(WIFI_PORT_AP, channel);
+    wifi_config_set_bandwidth(WIFI_PORT_AP, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
+    wifi_config_set_wireless_mode(WIFI_PORT_AP, WIFI_PHY_11BG_MIXED);
+    wifi_config_reload_setting();
+    network_dhcp_start(WIFI_MODE_REPEATER);
+	return 1;
+}
+
+static int wifi_scan_event_handler(wifi_event_t event_id, unsigned char *payload, unsigned int len) {
+    if(event_id == WIFI_EVENT_IOT_SCAN_COMPLETE) {
+        int i;
+        //int count = 0;
+
+        for(i=0;i<4;i++) {
+            APPLOG("ssid %d, %s, %d", i, g_ap_list[i].ssid, g_ap_list[i].channel);
+            if(strcmp((char*)ginSSID, (char*)g_ap_list[i].ssid) == 0) {
+                wifi_connection_unregister_event_handler(WIFI_EVENT_IOT_SCAN_COMPLETE, (wifi_event_handler_t) wifi_scan_event_handler);
+                //wifi_connection_stop_scan();
+                //wifi_connect_one_sta_start(ginSSID, ginPassword, g_ap_list[i].channel);
+                ginChannel = g_ap_list[i].channel;
+                ginSanDone = 1;
+                break;
+            }
         }
-        wifi_config_set_ssid(port, ssid ,(uint8_t)os_strlen((char *)ssid));
-        wifi_config_set_security_mode(port, auth, encrypt);
-        wifi_config_set_wpa_psk_key(port, password, (uint8_t)os_strlen((char *)password));
-        wifi_config_reload_setting();
-
-        network_dhcp_start(opmode);
-
-		return 1;
     }
-	else
-	{
-	   return -1;
-	}
+    return 0;
+}
+
+int wifi_connect_sta_start(ap_passport_t *args) {
+    uint8_t *ssid = (uint8_t *)(args->ssid);
+    strcpy((char*)ginSSID,(char*)ssid);
+    strcpy((char*)ginPassword,(char *)(args->psk));
+    wifi_config_set_opmode(WIFI_MODE_STA_ONLY);
+    wifi_config_reload_setting();
+    //wifi_connection_scan_init(g_ap_list, 16);
+    //wifi_connection_start_scan(NULL, 0, NULL, 0, 2);
+    wifi_connection_register_event_handler(WIFI_EVENT_IOT_SCAN_COMPLETE, (wifi_event_handler_t) wifi_scan_event_handler);
+    return 1;
 }
 
 //Lelink lib get ssid & passwd;
-int halDoApConnect(void *ptr, int ptrLen) 
-{
+int halDoApConnect(void *ptr, int ptrLen) {
     int ret = 0;
 	ap_passport_t passport;
 	os_memset(&passport, 0, sizeof(passport));
     if (ptr) {
-        //ap_passport_t passport;
         PrivateCfg *privateCfg = (PrivateCfg *)ptr;//ssid ,passwd;
         gin_airconfig_sniffer_got = 1;
         os_strncpy(passport.ssid, (char *)(privateCfg->data.nwCfg.config.ssid), 36);
         os_strncpy(passport.psk, (char *)(privateCfg->data.nwCfg.config.psk), 36);
-        //inner_set_ap_info(&passport);//get ssid & passwd,then switch to STA;
     }
-    //ret = app_sta_start_by_network(&gin_sta_net);
+    APPLOG("halDoApConnect ssid[%s], psk [%s]", passport.ssid, passport.psk);
+
     ret = wifi_connect_sta_start(&passport);
-	
-    /*APPLOG("halDoApConnect in hal[%d]", ret);
-    if (WM_SUCCESS == ret) {
-    	ret = 1;
-    }
-    else {
-    	ret = -1;
-    }*/
-    
+    //ret = wifi_connect_repeater_start(&passport);
     return ret;
 }
 
 int halDoApConnecting(void *ptr, int ptrLen) {
-    APPLOG("halDoApConnecting in hal[%d]", gin_airconfig_ap_connected);
+    uint32_t task_id = halGetCurrentTaskId();
+    if(ginSanDone)
+    {
+        ginSanDone = 0;
+        wifi_connect_one_sta_start(ginSSID, ginPassword, ginChannel);
+    }
+    APPLOG("halDoApConnecting in hal[%d][%d]", task_id, gin_airconfig_ap_connected);
     return gin_airconfig_ap_connected;
 }
 
 extern int g_supplicant_ready;
 
-void lelink_softap_setup(char *ssid, char *wpa2_passphrase)
-{
+void lelink_softap_setup(char *ssid, char *wpa2_passphrase) {
 	/*
 	 * wilress params: 11BGN
 	 * channel: auto, or 1, 6, 11
@@ -143,19 +180,17 @@ void lelink_softap_setup(char *ssid, char *wpa2_passphrase)
 	wifi_config_set_ssid(WIFI_PORT_AP, (uint8_t *)ssid, os_strlen(ssid));
 	wifi_config_set_wpa_psk_key(WIFI_PORT_AP, (uint8_t *)wpa2_passphrase, (uint8_t)os_strlen(wpa2_passphrase));
 	wifi_config_reload_setting();
-
+    g_softap_start = 1;
 	while(!g_supplicant_ready){
 		vTaskDelay(20);
 	}
 
-  #if 1
-	if(1)
 	{
-		char ip_buf[] = "172.31.254.250";
+		char ip_buf[] = "192.168.10.1";
 		char mask_buf[] = "255.255.255.0";
-		char start_ip[] = "172.31.254.251";
-		char end_ip[] = "172.31.254.254";
-		char primary_dns[] = "172.31.254.250";
+		char start_ip[] = "192.168.10.2";
+		char end_ip[] = "192.168.10.254";
+		char primary_dns[] = "192.168.10.1";
 		char secondary_dns[] = "8.8.4.4";
 		struct ip4_addr addr;
 		struct netif *sta_if;
@@ -184,14 +219,11 @@ void lelink_softap_setup(char *ssid, char *wpa2_passphrase)
 		os_strncpy((char *)dhcpd_settings.dhcpd_ip_pool_start, start_ip, sizeof(start_ip));
 		os_strncpy((char *)dhcpd_settings.dhcpd_ip_pool_end, end_ip, sizeof(end_ip));
 		dhcpd_start(&dhcpd_settings);
-	   
-		printf("start dhcpd, stop dhcp. g_supplicant_ready:%d\n", g_supplicant_ready);
+		APPLOG("start dhcpd, stop dhcp. g_supplicant_ready:%d\n", g_supplicant_ready);
 	}
-  #endif//0
 }
 
-void lelink_softap_exit(void)
-{
+void lelink_softap_exit(void) {
 /*
     dhcpd_stop();
     wifi_config_set_opmode(WIFI_MODE_STA_ONLY);
@@ -201,6 +233,10 @@ void lelink_softap_exit(void)
  */
     struct netif *sta_if;
     struct netif *ap_if;
+    if(!g_softap_start) {
+        return;
+    }
+    g_softap_start = 0;
     ap_if = netif_find_by_type(NETIF_TYPE_AP);   
     dhcpd_stop();
     netif_set_link_down(ap_if);
@@ -211,68 +247,14 @@ void lelink_softap_exit(void)
     dhcp_start(sta_if);
 }
 
-extern int softApStarted(void);
-
-static int thread_uapconfig_run = 0;
-//static os_thread_t thread_uapconfig;
-//static os_thread_stack_define(thread_stack_uapconfig, 1024 * 10);
-//static void thread_uapconfig_proc(os_thread_arg_t thandle);
-static void task_apconfig_proc(void *not_used)
-{
-    thread_uapconfig_run = 1;
-    gin_airconfig_sniffer_got = !softApStarted();
-    vTaskDelete(NULL);
-    thread_uapconfig_run = 0;
-}
-
-static int startApListen(void)
-{
-    int ret = 0;
-
-    if(!thread_uapconfig_run) 
-	{
-        /*ret = os_thread_create(&thread_uapconfig,
-                "uapconfig",
-                thread_uapconfig_proc,
-                (void *)&thread_uapconfig,
-                &thread_stack_uapconfig,
-                OS_PRIO_3);*/
-		if(pdPASS != xTaskCreate(task_apconfig_proc,
-                              "thread_uapconfig_proc",
-                              1024,
-                              NULL,
-                              1,
-                              NULL))
-            return -1;                
-                       
-    }
-    return ret;
-}
-
 int halSoftApStart(char *ssid, char *wpa2_passphrase) {
 	int ret = 0;
-	
 	/* prepare and setup softap */
 	lelink_softap_setup(ssid, wpa2_passphrase);
-
-  #if 0
-	/* tcp server to get ssid & passwd */
-	aws_softap_tcp_server();
-
-	strncpy(ssid_buf, aws_ssid, os_strlen(aws_ssid));
-	ssid_buf[os_strlen(aws_ssid)] = 0;
-	strncpy(passwd_buf, aws_passwd, os_strlen(aws_passwd));
-	passwd_buf[os_strlen(aws_passwd)] = 0;
-	
-	lelink_softap_exit(); 
-  #endif//0
-  
 	return ret;
 }
 
 int halSoftApStop(void) {
     lelink_softap_exit();
-	
     return 0;
 }
-

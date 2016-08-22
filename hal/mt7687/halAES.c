@@ -1,129 +1,205 @@
 #include "halHeader.h"
-// #include "protocol.h"
+#include "protocol.h"
+#include <stdio.h>
+#include <string.h>
 #include "hal_aes.h"
-#include "hal_log.h"
-#include "os.h"
 
-extern void* pvPortMalloc(size_t xWanteSize);
+//#define HW_AES
+#ifdef HW_AES
 
 int halAESInit(void) {
-    //not need to do something;
-    return 0;//always return success;
+    return 0;
 }
 
 void halDeAESInit(void) {
-    //not need to do something;
-    return;
-}
-
-/* Display the data in the format of 16 bytes per line */
-void aes_result_dump(uint8_t *result, uint8_t length)
-{
-    uint8_t i;
-
-    for (i = 0; i < length; i++) {
-        if (i % 16 == 0) {
-            log_hal_info("\r\n");
-        }
-
-        log_hal_info(" %02x ", result[i]);
-    }
-    log_hal_info("\r\n");
 
 }
 
-//AES crypt
+uint8_t data_buffer[1280] = {0};
+
 int halAES(uint8_t *aes_key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *len, uint32_t maxLen, int isPKCS5, int type)
 {
-    int ret;
-	
-	/*uint8_t hardware_id[16] = {
-		0x4d, 0x54, 0x4b, 0x30, 0x30, 0x30, 0x30, 0x30,
-		0x32, 0x30, 0x31, 0x34, 0x30, 0x38, 0x31, 0x35
-	};
-	uint8_t aes_cbc_iv[HAL_AES_CBC_IV_LENGTH] = {
-		0x61, 0x33, 0x46, 0x68, 0x55, 0x38, 0x31, 0x43,
-		0x77, 0x68, 0x36, 0x33, 0x50, 0x76, 0x33, 0x46
-	};
-	uint8_t plain[] = {
-		0, 11, 22, 33, 44, 55, 66, 77, 88, 99, 0, 11, 22, 33, 44, 55,
-		66, 77, 88, 99, 0, 11, 22, 33, 44, 55, 66, 77, 88, 99
-	};*/
-
-	//uint8_t encrypted_buffer[32] = {0};
-	//uint8_t decrypted_buffer[32] = {0};
-		
-	hal_aes_buffer_t key = {
-		.buffer = aes_key,
-		.length = keyLen
-	};
-
-	log_hal_info("aes_cbc_iv: iv= ");
-	aes_result_dump(iv, HAL_AES_CBC_IV_LENGTH);
-	log_hal_info("Key:");
-	aes_result_dump(key.buffer, key.length);
+    int ret = 0;
+    
+    hal_aes_buffer_t key = {
+        .buffer = aes_key,
+        .length = keyLen/8
+    };
 
     if (!type)
     {
         //decrypt case;
-        uint8_t * decrypted_buffer = (uint8_t *)pvPortMalloc(*len);
+        printf("\n==== decrypt len[%d] key[%d] ==== \n", keyLen/8, *len);
+        hal_aes_buffer_t encrypted_text = {
+            .buffer = data,
+            .length = *len
+        };
+        
+        hal_aes_buffer_t decrypted_text = {
+            .buffer = data_buffer,
+            .length = *len
+        };
+ #if 0
+        {
+            int i = 0;
+            printf(" \n =====> halAES decrypt data begin <===== \n");
+            for (i = 0; i < *len; i++) {
+                printf("%02X", data[i]);
+            }
+            printf(" \n =====> halAES decrypt data  <===== \n");
+        }
+#endif
+        ret = hal_aes_cbc_decrypt(&decrypted_text, &encrypted_text, &key, iv);
+        printf(" \n =====> hal_aes_cbc_decrypt  %d <===== \n",decrypted_text.length);
+        if(ret != HAL_AES_STATUS_OK)
+        {
+            printf(" \n =====> halAES decrypt data error <===== \n");
+            goto end;
+        }
+#if 0
+        {
+            int i = 0;
+            printf(" \n =====> halAES decrypt data  %d <===== \n",decrypted_text.length);
+            for (i = 0; i < decrypted_text.length; i++) {
+                printf("%02X", decrypted_text.buffer[i]);
+            }
+            printf(" \n =====> halAES decrypt data end <===== \n");
+        }
+#endif
+        os_memset(data, 0x00, (*len));
+        *len = decrypted_text.length;
+        os_memcpy(data, decrypted_text.buffer, decrypted_text.length);
+    }
+    else
+    {
+        
+        uint8_t padding_size = 16 - *len%16;
+        uint32_t encrypted_len = *len+padding_size;
+        printf("\n==== encrypted begin len[%d] encrypted_len[%d]==== \n", *len, encrypted_len);
+        hal_aes_buffer_t plain_text = {
+            .buffer = data,
+            .length = *len
+        };
 
         hal_aes_buffer_t encrypted_text = {
-		.buffer = data,
-		.length = *len
-		};
-		
-		hal_aes_buffer_t decrypted_text = {
-			.buffer = decrypted_buffer,
-			.length = sizeof(decrypted_buffer)
-		};
-		ret = hal_aes_cbc_decrypt(&decrypted_text, &encrypted_text, &key, iv);
-		
-		log_hal_info("Decrypted data(AES CBC):");
-		aes_result_dump(decrypted_text.buffer, decrypted_text.length);
-
-		os_memset(data, 0x00, (*len));
-		*len = decrypted_text.length;
-		os_memcpy(data, decrypted_text.buffer, decrypted_text.length);
-    }	
-	else
-	{
-	    //encrypt case;
-	    uint8_t* encrypted_buffer = (uint8_t *)pvPortMalloc(*len);
-		
-	    hal_aes_buffer_t plain_text = {
-		.buffer = data,
-		.length = *len
-		};
-
-		hal_aes_buffer_t encrypted_text = {
-		.buffer = encrypted_buffer,
-		.length = sizeof(encrypted_buffer)
-		};
-
-		log_hal_info("Origin data:");
-		aes_result_dump(plain_text.buffer, plain_text.length);
-		
-		ret = hal_aes_cbc_encrypt(&encrypted_text, &plain_text, &key, iv);
-
-		log_hal_info("Encrypted data(AES CBC):");
-		aes_result_dump(encrypted_text.buffer, encrypted_text.length);
-
-		
-		os_memset(data, 0x00, (*len));
-		*len = encrypted_text.length;
-		os_memcpy(data, encrypted_text.buffer, encrypted_text.length);
-	}
-	
- #if 0
-	hal_aes_ecb_encrypt(&encrypted_text, &plain_text, &key);
-	log_hal_info("Encrypted data(AES ECB):");
-	aes_result_dump(encrypted_text.buffer, encrypted_text.length);
-
-	hal_aes_ecb_decrypt(&decrypted_text, &encrypted_text, &key);
-	log_hal_info("Decrypted data(AES ECB):");
-	aes_result_dump(decrypted_text.buffer, decrypted_text.length);
- #endif//0
-
-	return ret;
+            .buffer = data_buffer,
+            .length = encrypted_len
+        };
+#if 0
+        {
+            int i = 0;
+            printf(" \n =====> halAES encrypted data begin <===== \n");
+            for (i = 0; i < *len; i++) {
+                printf("%02X", data[i]);
+            }
+            printf(" \n =====> halAES encrypted data  <===== \n");
+        }
+#endif
+        ret = hal_aes_cbc_encrypt(&encrypted_text, &plain_text, &key, iv);
+        printf(" \n =====> halAES encrypted data <===== %d \n", encrypted_text.length);
+        if(ret != HAL_AES_STATUS_OK)
+        {
+            printf(" \n =====> halAES encrypt data error <===== \n");
+            goto end;
+        }
+#if 0
+        {
+            int i = 0;
+            printf(" \n =====> halAES encrypted data <===== %d \n", encrypted_text.length);
+            for (i = 0; i < encrypted_text.length; i++) {
+                printf("%02X", encrypted_text.buffer[i]);
+            }
+            printf(" \n =====> halAES encrypted data  end<===== \n");
+        }
+#endif
+        os_memset(data, 0x00, encrypted_text.length);
+        *len = encrypted_text.length;
+        os_memcpy(data, encrypted_text.buffer, encrypted_text.length);
+        //printf("\n==== encrypted end len[%d]==== \n", *len);
+    }
+end:
+    return ret;
 }
+#else
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
+#endif
+
+#if defined(MBEDTLS_PLATFORM_C)
+#include "mbedtls/platform.h"
+#else
+#include <stdio.h>
+#define mbedtls_printf     printf
+#endif
+
+#include "mbedtls/error.h"
+#include "mbedtls/pk.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+
+#include <stdio.h>
+#include <string.h>
+
+static mbedtls_aes_context ginAESCtx;
+int halAESInit(void) {
+    mbedtls_aes_init( &ginAESCtx );
+    return 0;
+}
+
+void halDeAESInit(void) {
+    mbedtls_aes_free( &ginAESCtx );
+}
+
+//AES crypt
+int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *len, uint32_t maxLen, int isPKCS5, int type) {
+    int ret = 0;
+    uint8_t out[MAX_BUF] = {0};
+    if (!type) {
+        //APPLOG("dec *len is [%d] ret[%d] START", *len, ret);
+        mbedtls_aes_setkey_dec(&ginAESCtx, key, keyLen);
+        ret = mbedtls_aes_crypt_cbc(&ginAESCtx, MBEDTLS_AES_DECRYPT, *len, iv, data, out);
+        // APPPRINTF("dec *len is [%d]\r\n", *len);
+        // for (i = 0; i < *len; i++) {
+        //     APPPRINTF("%02x ", out[i]);
+        //     if (0 == (i + 1)%AES_LEN) {
+        //         APPPRINTF("\r\n");
+        //     }
+        // }
+        // APPPRINTF("\r\n");
+        if (0 == ret) {
+            *len -= out[*len - 1];
+            memcpy(data, out, *len);
+        }
+        //APPLOG("dec *len is [%d] ret[%d] END", *len, ret);
+
+    } else {
+        int blocks = 0, padSize = 0, i = 0;
+        //APPLOG("enc *len is [%d] ret[%d] START", *len, ret);
+        blocks = (*len/AES_LEN) + 1;
+        padSize = AES_LEN - *len%AES_LEN;
+        for (i = *len; i < *len + padSize; i++) {
+            data[i] = padSize;
+        }
+        // APPPRINTF("*len is [%d]\r\n", *len);
+        *len = AES_LEN*blocks;
+        // for (i = 0; i < *len; i++) {
+        //     APPPRINTF("%02x ", data[i]);
+        //     if (0 == (i + 1)%AES_LEN) {
+        //         APPPRINTF("\r\n");
+        //     }
+        // }
+        // APPPRINTF("\r\n");
+        mbedtls_aes_setkey_enc(&ginAESCtx, key, keyLen);
+        ret = mbedtls_aes_crypt_cbc(&ginAESCtx, MBEDTLS_AES_ENCRYPT, *len, iv, data, out);
+        if (0 == ret) {
+            memcpy(data, out, *len);
+        }
+        //APPLOG("enc *len is [%d] ret[%d] END", *len, ret);
+    }
+    
+
+    return ret;
+}
+#endif

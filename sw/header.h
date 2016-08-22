@@ -5,7 +5,6 @@
 extern "C"
 {
 #endif
-    
 
 #if defined (mw300)
 // #define PF_VAL 1
@@ -275,7 +274,7 @@ typedef unsigned int uint32_t;
 #define LOG_PROTOCOL
 #define LOG_STATE
 #define LOG_PACK
-// #define LOG_AIRCONFIG_CTRL
+//#define LOG_AIRCONFIG_CTRL
 
 
         
@@ -326,12 +325,11 @@ typedef unsigned int uint32_t;
 #define vsnprintf hal_vsnprintf
 #define strcoll hal_strcoll
 #define abort hal_abort
-#define malloc halMalloc
-#define calloc halCalloc
-#define realloc halRealloc
-#define free halFree
+#define malloc halMallocError
+#define calloc halCallocError
+#define realloc halReallocError
+#define free halFreeError
 #endif
-
 
 #ifdef __cplusplus
 }

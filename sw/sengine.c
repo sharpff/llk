@@ -39,7 +39,7 @@
 // #include <stdlib.h>
 // #include <string.h>
 
-#define MAX_SDEV_NUM 64
+#define MAX_SDEV_NUM 32
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
@@ -439,7 +439,8 @@ static int lf_s1GetQueries(lua_State *L, uint8_t *output, int outputLen) {
     //     }
     // }
     
-    return sizeof(Queries);
+    //return sizeof(Queries);
+    return queries->queriesLen;
 }
 
 static IO lf_s1GetCvtType_input(lua_State *L, const uint8_t *input, int inputLen) {
@@ -604,6 +605,7 @@ static IO lf_s1CvtPri2Std_input(lua_State *L, const uint8_t *input, int inputLen
     IO io = { 1, 2 };
     return io;
 }
+
 static int lf_s1CvtPri2Std(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     int sLen = lua_tointeger(L, -2);
@@ -870,6 +872,7 @@ int sengineInit(void) {
 int s2apiSetCurrStatus(lua_State *L);
 int s2apiGetLatestStatus(lua_State *L);
 int s1apiGetCurrCvtType(lua_State *L);
+int s1apiGetDevStatus(lua_State *L);
 int s1apiSdevGetUserDataByMac(lua_State *L);
 int s1apiSDevGetMacByUserData(lua_State *L);
 
@@ -887,6 +890,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     lua_register(L, "s2apiSetCurrStatus", s2apiSetCurrStatus);
     lua_register(L, "s2apiGetLatestStatus", s2apiGetLatestStatus);
     lua_register(L, "s1apiGetCurrCvtType", s1apiGetCurrCvtType);
+    lua_register(L, "s1apiGetDevStatus", s1apiGetDevStatus);
     lua_register(L, "s1apiSdevGetUserDataByMac", s1apiSdevGetUserDataByMac);
     lua_register(L, "s1apiSDevGetMacByUserData", s1apiSDevGetMacByUserData);
     // lua_register(L, "csum", csum);
@@ -955,10 +959,22 @@ int sengineHasDevs(void) {
 }
 
 int s1apiGetCurrCvtType(lua_State *L) {
+    //LELOG("[SENGINE] s1apiGetCurrCvtType %d", ginCurrCvtType);
     lua_pushnumber(L, ginCurrCvtType);    //key  
     return 1;
 }
 
+int s1apiGetDevStatus(lua_State *L) {
+    int ret;
+    char jsonState[MAX_BUF] = {0};
+    memset(jsonState, 0, MAX_BUF);
+    //LELOG("[SENGINE] s1apiGetDevStatus b");
+    ret = sengineGetStatus(jsonState, MAX_BUF);
+    //LELOG("[SENGINE] s1apiGetDevStatus %s", jsonState);
+    lua_pushnumber(L, ret);
+    lua_pushstring(L, jsonState);
+    return 2;
+}
 
 static int forEachNodeSDevThruMacCB(SDevNode *currNode, void *uData) {
     LELOG("[SENGINE] forEachNodeSDevThruMacCB [0x%p]", uData);
@@ -1157,7 +1173,6 @@ int s2apiGetLatestStatus(lua_State *L) {
     return ret;
 }
 
-
 int sengineSetStatus(char *json, int jsonLen) {
     int ret = 0;
     uint8_t bin[512] = {0};
@@ -1248,16 +1263,17 @@ int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
 
 int sengineQuerySlave(QuerieType_t type)
 {
-    Queries queries;
+    Queries queries = {0};
     int ret = 0, i = 0;
     uint16_t currLen = 0, appendLen = 0;
 
     FOR_EACH_IO_HDL_START;
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
                 (uint8_t *)&type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
-
+        
+        //LELOGW("sengineQuerySlave query [%d][%d]", ret, ioHdl[x].ioType);
         if (ret <= 0) {
-            LELOGW("sengineQuerySlave sengineCall("S1_GET_QUERIES") [%d]", ret);
+            //LELOGW("sengineQuerySlave sengineCall("S1_GET_QUERIES") [%d][%d]", ret, ioHdl[x].ioType);
             continue;
         }
 
@@ -1265,7 +1281,7 @@ int sengineQuerySlave(QuerieType_t type)
             memcpy(&currLen, &queries.arrQueriesCounts[i], 2);
             ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &(queries.arrQueries[appendLen]), currLen);
             if (ret <= 0) {
-                LELOGW("sengineQuerySlave ioWrite [%d]", ret);
+                //LELOGW("sengineQuerySlave ioWrite [%d]", ret);
                 break;
             }
         }
@@ -1323,7 +1339,7 @@ int sengineQuerySlave(QuerieType_t type)
 
 int senginePollingSlave(void) {
     Datas datas = {0};
-    char status[MAX_BUF];
+    char status[MAX_BUF] = {0};
     uint8_t bin[MAX_BUF] = {0};
     uint16_t currLen = 0, appendLen = 0;
     int whatKind = 0, ret = 0, size = 0, i;
@@ -1383,13 +1399,13 @@ int senginePollingSlave(void) {
                         int len = 0;
                         len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                                 &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
-                        // LELOGE("sengineCall len = %d. [%s]", len, status);
+                        // LELOG("sengineCall len = %d. [%s]", len, status);
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else if (cacheIsChanged(status, len)) {
                             postStatusChanged(0);
                             cacheSetTerminalStatus(status, len);
-                            LELOG("Cache status:%s", status);
+                            sengineSetStatus((char *)status, len);
                         }
                     }
                     break;
@@ -1749,17 +1765,12 @@ int sengineRemoveRules(const char *name) {
     return 0;
 }
 
-
-
-
-int test_lf_call(char *luacode, int size)
-{
+int test_lf_call(char *luacode, int size) {
     // int i = 0;
     // for (i = 0; i < (sizeof(func_list) / sizeof(FUNC_LIST) - 1); i++)
     // {
     //     sengineCall(luacode, size, func_list[i].func_name);
     // }
-
     return 0;
 }
 

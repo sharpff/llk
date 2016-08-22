@@ -17,29 +17,24 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
 	  
         local_addr.sin_family = AF_INET;
         local_addr.sin_port = htons(port);
-        if((ret = bind(*sock, (struct sockaddr *)&local_addr, sizeof(local_addr))) != 0) 
-        {
+        if((ret = bind(*sock, (struct sockaddr *)&local_addr, sizeof(local_addr))) != 0) {
           #ifdef BIND_DEBUG
             while (ret) {
                 port += 1;
                 local_addr.sin_port = htons(port);
                 if((ret = bind(*sock, (struct sockaddr *)&local_addr, sizeof(local_addr))) != 0) {
-				  #ifndef __MTK_MT7687_PLATFORM__
-                    APPLOGW("rebinding... udp port[%d] fail: %d.", port, ret);
-				  #else
-					printf("rebinding... udp port[%d] fail: %d.", port, ret);
-				  #endif/*__MTK_MT7687_PLATFORM__*/
+					APPLOG("rebinding... udp port[%d] fail: %d.", port, ret);
                 }
             }
           #else
 		  
-		    printf("Bind udp port[%d] fail: %d.", port, ret);
+		    APPLOG("Bind udp port[%d] fail: %d.", port, ret);
             close(*sock);
             return -1;
           #endif/*BIND_DEBUG*/
         }
 	 
-	    printf("bind: sock[%d] port[%d]", *sock, port);
+	    APPLOG("bind: sock[%d] port[%d]", *sock, port);
     }
 
 	//fcntl(*sock, F_SETFL, O_NONBLOCK, 1);
@@ -91,29 +86,16 @@ int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint
 }
 
 
-static bool get_local_ip(void* ip_addr)
-{
-    u8_t *p_ip_addr =(u8_t *)ip_addr;
-	
-    if(g_ipv4_addr[0] == 0 && g_ipv4_addr[1] == 0 && g_ipv4_addr[2] == 0 && g_ipv4_addr[3] == 0)
-    {
-       printf("get_local_ip(), the current is not get ip addr. \n");
-	   return false;
-    }
-	
-    (*p_ip_addr) =  g_ipv4_addr[0];
-	*(p_ip_addr+1) =  g_ipv4_addr[1];
-	*(p_ip_addr+2) =  g_ipv4_addr[2];
-	*(p_ip_addr+3)=  g_ipv4_addr[3];
-    //printf("get_local_ip(), ip_addr = %d.%d.%d.%d \n",ip_addr[0], ip_addr[1], ip_addr[2], ip_addr[3]);
-    printf("get_local_ip(), get ip addr success. \n");
-	return true;
-}
-
 int halGetSelfAddr(char *ip, int size, int *port) {
-    get_local_ip(ip);
-    //os_strncpy(ip, p, size);
-    
+
+    char *p;
+    ip[0] = '\0';
+    if(g_ipv4_addr[0] == 0 && g_ipv4_addr[1] == 0 && g_ipv4_addr[2] == 0 && g_ipv4_addr[3] == 0) {
+       //APPLOG("halGetSelfAddr(), the current is not get ip addr.");
+       return 0;
+    }
+    p = inet_ntoa(g_ipv4_addr);
+    strncpy(ip, p, size);
     return os_strlen(ip);
 }
 
