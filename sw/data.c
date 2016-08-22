@@ -101,15 +101,11 @@ int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
 }
 
-int getDevFlag(DEV_FLAG_t flag)
-{
-    return 1;
-    return ~(ginPrivateCfg.data.devCfg.flag & flag) & flag;
+int getDevFlag(DEV_FLAG_t flag) {
+    return (ginPrivateCfg.data.devCfg.flag & flag);
 }
 
-int setDevFlag(DEV_FLAG_t flag, int isSet)
-{
-    return 1;
+int setDevFlag(DEV_FLAG_t flag, int isSet) {
     if(isSet) {
         ginPrivateCfg.data.devCfg.flag &= ~flag;
     } else {

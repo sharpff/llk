@@ -174,7 +174,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) 
     if (0 > ret) {
         return -3;
     }
-    // LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
+    LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
 
     *((uint8_t *)data + (size - 1)) = crc8(data, size - 1);
     ret = halFlashWrite(hdl, data, size, fr.addr + (idx*fr.size), 0);
@@ -182,7 +182,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) 
         return -4;
     }
     
-    // LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
+ LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
     halFlashClose(hdl);
     return 0; 
 }
@@ -805,6 +805,7 @@ static void gpioCheckInput(gpioHand_t *ptr) {
     LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
     if(ptr->keepHighTimes >= ptr->longTime) {
         setDevFlag(DEV_FLAG_RESET, 1);
+        halDelayms(1000);
         halReboot();
     }
 }

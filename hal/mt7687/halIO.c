@@ -373,7 +373,7 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size) {
 	                return ret;
 	       }
 		   //LOG_DEBUG("==>ending erase 0x%x",sector_to_erase << 12);
-		   //APPLOG("[Lelink]: ==>ending erase 0x%x",sector_to_erase << 12);
+		   APPLOG("[Lelink]: ==>ending erase 0x%x",sector_to_erase << 12);
 	       sector_to_erase ++;
      }
      return ret;

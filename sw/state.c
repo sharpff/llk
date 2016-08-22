@@ -54,8 +54,6 @@
 #define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 3)
 #define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 3)
 static uint8_t wifiConfigByMonitor = 0;
-static uint32_t wifiConfigTime = 0;
-static uint32_t wifiConfigTimeout = 0;
 extern int softApStart(void);
 extern int softApCheck(void);
 extern int softApStop(void);
@@ -233,8 +231,8 @@ static int stateProcStart(StateContext *cntx) {
         if (ginPrivateCfg.csum == crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
             LELOG("csum [0x%02x]", ginPrivateCfg.csum);
             if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
-                ret = ginPrivateCfg.data.nwCfg.configStatus;
-                ginConfigStatus = 1;
+                //ret = ginPrivateCfg.data.nwCfg.configStatus;
+                //ginConfigStatus = 1;
             } 
         }
     }
@@ -242,17 +240,14 @@ static int stateProcStart(StateContext *cntx) {
     LELOG("flag = %02x", ginPrivateCfg.data.devCfg.flag);
     if (0 == ret) {
         if(getDevFlag(DEV_FLAG_RESET)) {
+            wifiConfigByMonitor = 0;
+        } else {
+            halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
             wifiConfigByMonitor = 1;
-            wifiConfigTimeout = WIFI_CFG_BY_MONITOR_TIME;
-        } else {
-            wifiConfigByMonitor = 0;
-            wifiConfigTimeout = WIFI_CFG_BY_SOFTAP_TIME;
         }
-        LELOG("wifiConfigTime(%d): %d - %d", ginMSDelay, wifiConfigTimeout, wifiConfigTime);
-        if(wifiConfigTime > wifiConfigTimeout) {
-            ret = 1; // loop in next
-        } else if(wifiConfigByMonitor) {
+        
+        if(wifiConfigByMonitor) {
             ret = halDoConfig(NULL, 0);
             LELOG("configure wifi by monitor(%d)", ret);
         } else{
@@ -267,26 +262,13 @@ static int stateProcStart(StateContext *cntx) {
 
 static int stateProcConfiguring(StateContext *cntx) {
     int ret = 0;
-
-    // LELOG("stateProcConfiguring [%d] -s", ret);
     if (1 == ginConfigStatus) {
         ret = 1;
     }
-    // LELOG("stateProcConfiguring configStatus[%d] -s", ginConfigStatus);
     if (0 == ret) {
-        wifiConfigTime++;
-        if(wifiConfigTime > wifiConfigTimeout) {
-            ret = 0;
-            wifiConfigTime--; // to prevent overflow
-            LELOG("Configure wifi timeout!!!");
-        } else if(wifiConfigTime == wifiConfigTimeout) {
-            ret = 0;
-            wifiConfigByMonitor ?  halStopConfig() : softApStop();
-        } else {
-            ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
-        } 
+
+        ret = halDoConfiguring(NULL, 0);
     }
-    /*LELOG("wifiConfigTime(%d): %d, (%d, %d)", ginMSDelay, wifiConfigTime, WIFI_CFG_BY_MONITOR_TIME, WIFI_CFG_BY_SOFTAP_TIME);*/
     return ret;
 }
 
