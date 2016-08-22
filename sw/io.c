@@ -51,6 +51,11 @@ static pwmManager_t ginPWMManager;
 static commonManager_t ginCommonManager;
 static uartHand_t uartHand;
 
+static void gpioCheckInput(gpioHand_t *p);
+static void gpioCheckState(gpioManager_t *mgr, int index);
+static void pwmCheckState(pwmHand_t *p);
+static void gpioInitState(gpioManager_t *mgr);
+
 static IOHDL ginIOHdl[] = {
     {IO_TYPE_UART, 0x0},
     {IO_TYPE_GPIO, 0x0},
@@ -460,7 +465,6 @@ static void pwmSetDefault(pwmManager_t *mgr)
     }
 }
 
-static void gpioInitState(gpioManager_t *mgr);
 void *ioInit(int ioType, const char *json, int jsonLen) {
     int ret = 0;
     void *ioHdl = NULL;
@@ -732,9 +736,6 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
     return 0;
 }
 
-static void gpioCheckInput(gpioHand_t *p);
-static void gpioCheckState(gpioManager_t *mgr, int index);
-static void pwmCheckState(pwmHand_t *p);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
     //LELOG("ioRead ioType[%d] [%d]", ioType, dataLen);
     switch (ioType) {
