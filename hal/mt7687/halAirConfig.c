@@ -25,7 +25,6 @@ uint8_t ginSSID[16] = {0};
 uint8_t ginPassword[16] = {0};
 uint8_t ginChannel = 0;
 uint8_t ginSanDone = 0;
-//static wifi_scan_list_item_t g_ap_list[16] = {{0}};
 
 int halDoConfig(void *ptr, int ptrLen) {
 	int ret = 0;
@@ -111,6 +110,7 @@ static int wifi_scan_event_handler(wifi_event_t event_id, unsigned char *payload
                 break;
             }
         }
+        os_memset(g_ap_list, 0, sizeof(g_ap_list));
     }
     return 0;
 }

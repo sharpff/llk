@@ -4,7 +4,7 @@
 #include <string.h>
 #include "hal_aes.h"
 
-//#define HW_AES
+//define HW_AES
 #ifdef HW_AES
 
 int halAESInit(void) {

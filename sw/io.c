@@ -432,7 +432,7 @@ static void gpioSetDefault(gpioManager_t *mgr)
         table[i].gpiostate = 0;
         table[i].freestate = GPIO_STATE_LOW;
         table[i].blink = 0;
-        table[i].longTime = 0;
+        table[i].longTime = 5;
         table[i].shortTime = 0;
         table[i].keepLowTimes = 0;
         table[i].keepHighTimes = 0;
@@ -728,10 +728,11 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             }
             return ret;
         }break;
-    }    
+    }
     return 0;
 }
 
+static void gpioCheckInput(gpioHand_t *p);
 static void gpioCheckState(gpioManager_t *mgr, int index);
 static void pwmCheckState(pwmHand_t *p);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
@@ -746,6 +747,12 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             gpioHand_t *q = mgr->table;
             for(i = 0; i < mgr->num; i++, q++) {
                 halGPIORead(q, &val);
+                if(val == GPIO_STATE_LOW) {
+                    q->keepHighTimes = 0;
+                } else if(q->type == GPIO_TYPE_INPUT_RESET && 
+                    (q->dir == GPIO_DIR_INPUT) && (q->oldState == val)) {
+                    gpioCheckInput(q);
+                }
                 if(q->oldState != val) {
                     data[k++] = q->id;
                     data[k++] = val;
@@ -790,6 +797,15 @@ RLED_STATE_t setResetLed(RLED_STATE_t st)
         s_resetLevel = st;
     }
     return s_resetLevel;
+}
+
+static void gpioCheckInput(gpioHand_t *ptr) {
+    ptr->keepHighTimes++;
+    LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
+    if(ptr->keepHighTimes >= ptr->longTime) {
+        setDevFlag(DEV_FLAG_RESET, 1);
+        halReboot();
+    }
 }
 
 static void pwmCheckState(pwmHand_t *ptr) {

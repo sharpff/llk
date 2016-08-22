@@ -233,8 +233,8 @@ static int stateProcStart(StateContext *cntx) {
         if (ginPrivateCfg.csum == crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
             LELOG("csum [0x%02x]", ginPrivateCfg.csum);
             if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
-                //ret = ginPrivateCfg.data.nwCfg.configStatus;
-                //ginConfigStatus = 1;
+                ret = ginPrivateCfg.data.nwCfg.configStatus;
+                ginConfigStatus = 1;
             } 
         }
     }
