@@ -748,17 +748,18 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             gpioHand_t *q = mgr->table;
             for(i = 0; i < mgr->num; i++, q++) {
                 halGPIORead(q, &val);
-                if(val == GPIO_STATE_LOW) {
+                //LELOG("halGPIORead [%d][%d][%d]", val, q->state, q->oldState);
+                if(val == q->state) {
                     q->keepHighTimes = 0;
                 } else if(q->type == GPIO_TYPE_INPUT_RESET && 
                     (q->dir == GPIO_DIR_INPUT) && (q->oldState == val)) {
                     gpioCheckInput(q);
                 }
-                if(q->oldState != val) {
+                if(q->oldState != val && q->oldState != q->state) {
                     data[k++] = q->id;
                     data[k++] = val;
-                    q->oldState = val;
                 }
+                q->oldState = val;
             }
             return k;
         } break;
@@ -805,7 +806,6 @@ static void gpioCheckInput(gpioHand_t *ptr) {
     LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
     if(ptr->keepHighTimes >= ptr->longTime) {
         setDevFlag(DEV_FLAG_RESET, 1);
-        halDelayms(1000);
         halReboot();
     }
 }
