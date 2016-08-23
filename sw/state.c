@@ -54,6 +54,8 @@
 #define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 3)
 #define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 3)
 static uint8_t wifiConfigByMonitor = 0;
+static uint32_t wifiConfigTime = 0;
+static uint32_t wifiConfigTimeout = 0;
 extern int softApStart(void);
 extern int softApCheck(void);
 extern int softApStop(void);
@@ -266,8 +268,16 @@ static int stateProcConfiguring(StateContext *cntx) {
         ret = 1;
     }
     if (0 == ret) {
-
-        ret = halDoConfiguring(NULL, 0);
+        if(wifiConfigTime <= wifiConfigTimeout) {
+            wifiConfigTime++;
+        }
+        if(wifiConfigTime == wifiConfigTimeout) {
+            ret = 0;
+            LELOG("Configure wifi timeout!!!");
+            wifiConfigByMonitor ?  halStopConfig() : softApStop();
+        } else {
+            ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
+        }
     }
     return ret;
 }

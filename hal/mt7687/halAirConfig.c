@@ -43,11 +43,7 @@ int halStopConfig(void) {
 }
 
 int halDoConfiguring(void *ptr, int ptrLen) {
-    uint32_t ret = halGetCurrentTaskId();
-    if(g_softap_start) {
-        gin_airconfig_sniffer_got = !softApCheck();
-    }
-    APPLOG("halDoConfiguring in hal task[%u] [%u]", ret, gin_airconfig_sniffer_got);
+    APPLOG("halDoConfiguring in hal [%d]", gin_airconfig_sniffer_got);
 	return gin_airconfig_sniffer_got;
 }
 
