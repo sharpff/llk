@@ -51,8 +51,8 @@
 
 /* for softAp */
 #define SEC2LETICK(x)               ((x) * 1000 / ginMSDelay)
-#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 3)
-#define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 3)
+#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 1)
+#define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 1)
 static uint8_t wifiConfigByMonitor = 0;
 static uint32_t wifiConfigTime = 0;
 static uint32_t wifiConfigTimeout = 0;
@@ -243,10 +243,13 @@ static int stateProcStart(StateContext *cntx) {
     if (0 == ret) {
         if(getDevFlag(DEV_FLAG_RESET)) {
             wifiConfigByMonitor = 0;
+            wifiConfigTimeout = WIFI_CFG_BY_SOFTAP_TIME;
+
         } else {
             halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
             wifiConfigByMonitor = 1;
+            wifiConfigTimeout = WIFI_CFG_BY_MONITOR_TIME;
         }
         
         if(wifiConfigByMonitor) {

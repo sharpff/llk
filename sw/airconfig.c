@@ -816,11 +816,11 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
                     cfg.data.nwCfg.configStatus);
                 // if (0 != cfg.data.nwCfg.configStatus) {
                     strcpy(cfg.data.nwCfg.config.ssid, passport->ssid);
-                    cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
                     cfg.data.nwCfg.config.ssid_len = strlen(passport->ssid);
+                    cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
                     strcpy(cfg.data.nwCfg.config.psk, passport->psk);
-                    cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
                     cfg.data.nwCfg.config.psk_len = strlen(passport->psk);
+                    cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
                     cfg.data.nwCfg.configStatus = 1;
                     ret = lelinkStorageWritePrivateCfg(&cfg);
                     LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
@@ -974,7 +974,11 @@ int softApCheck(void)
                 cfg.data.nwCfg.config.psk, 
                 cfg.data.nwCfg.configStatus);
         strcpy(cfg.data.nwCfg.config.ssid, wc.ssid);
+        cfg.data.nwCfg.config.ssid_len = strlen(wc.ssid);
+        cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
         strcpy(cfg.data.nwCfg.config.psk, wc.wap2passwd);
+        cfg.data.nwCfg.config.psk_len = strlen(wc.wap2passwd);
+        cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
         cfg.data.nwCfg.configStatus = 1;
         ret = lelinkStorageWritePrivateCfg(&cfg);
         LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
