@@ -51,8 +51,8 @@
 
 /* for softAp */
 #define SEC2LETICK(x)               ((x) * 1000 / ginMSDelay)
-#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 1)
-#define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 1)
+#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 3)
+#define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 3)
 static uint8_t wifiConfigByMonitor = 0;
 static uint32_t wifiConfigTime = 0;
 static uint32_t wifiConfigTimeout = 0;
@@ -233,8 +233,8 @@ static int stateProcStart(StateContext *cntx) {
         if (ginPrivateCfg.csum == crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
             LELOG("csum [0x%02x]", ginPrivateCfg.csum);
             if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
-                //ret = ginPrivateCfg.data.nwCfg.configStatus;
-                //ginConfigStatus = 1;
+                ret = ginPrivateCfg.data.nwCfg.configStatus;
+                ginConfigStatus = 1;
             } 
         }
     }
@@ -255,7 +255,7 @@ static int stateProcStart(StateContext *cntx) {
         if(wifiConfigByMonitor) {
             ret = halDoConfig(NULL, 0);
             LELOG("configure wifi by monitor(%d)", ret);
-        } else{
+        } else {
             ret = !softApStart();
             LELOG("configure wifi by softAp(%d)", ret);
         }
