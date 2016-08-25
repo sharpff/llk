@@ -372,6 +372,7 @@ static int stateProcApConnected(StateContext *cntx) {
         int ret = 0;
         char ip[4][32];
         AuthCfg authCfg;
+        memset(&node, 0, sizeof(NodeData));
         ret = lelinkStorageReadAuthCfg(&authCfg);
         if ((0 <= ret) && (authCfg.csum == crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data)))) {
             memset(ip, 0, sizeof(ip));
