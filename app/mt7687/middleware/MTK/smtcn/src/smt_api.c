@@ -233,7 +233,10 @@ static void switch_next_channel(TimerHandle_t tmr)
 
     smt_conn_st.cur_chanl = channel_list[smt_conn_st.search_idx];
     wifi_config_set_channel(WIFI_PORT_STA, smt_conn_st.cur_chanl);
+
+#if (CFG_SUPPORT_SMNT_PROTO == 6)
     gin_airconfig_current_channel = smt_conn_st.cur_chanl;
+#endif
 #if (smtcn_debug == 1)
     channel_times[smt_conn_st.cur_chanl - 1]++;
     /*
