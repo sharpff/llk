@@ -90,6 +90,7 @@ if [ "$1" != "clean" ]; then
         cp ./project/mt7687_hdk/apps/le_demo/GCC/Makefile $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
         cp ./project/mt7687_hdk/apps/le_demo/GCC/mt7687_flash.ld $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
         cp ./middleware/MTK/smtcn/src/*.c $MTSDK7687/middleware/MTK/smtcn/src
+        cp ./middleware/MTK/smtcn/inc/*.h $MTSDK7687/middleware/MTK/smtcn/inc
 	cp $MAIN_PATH/hal/$PF/halHeader.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
 	cp $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
 	# for lelink
