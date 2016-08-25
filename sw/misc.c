@@ -200,7 +200,7 @@ int getUartInfo(const char *json, int jsonLen, uartHand_t* uartHand) {
 int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
 {
     jobj_t jobj;
-    int i, k, num, ret, tmp, j = -1;
+    int i, num, ret, tmp, j = -1;
     jsontok_t jsonToken[NUM_TOKENS];
     LELOG("getGPIOInfo size[%d]", n);
     if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
@@ -216,17 +216,7 @@ int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
                 LELOG("getGPIOInfo json_get_val_int error");
                 return -1;
             }
-#if 0
-            for( k = 0; k < i; k++ ) {
-                if(table[k].id == tmp) {
-                    tmp = -1;
-                    break;
-                }
-            }
-            if(tmp <= 0 || tmp > n) {
-                continue;
-            }
-#endif
+
             table[j].id = tmp;
             if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_DIR, &tmp)) == WM_SUCCESS) {
                 table[j].dir = tmp;
@@ -284,7 +274,7 @@ int getPipeInfo(const char *json, int jsonLen, char *name, int size) {
 int getPWMInfo(const char *json, int jsonLen,  pwmHand_t *table, int n)
 {
     jobj_t jobj;
-    int i, k, num, ret, tmp;
+    int i = -1, num, ret, tmp;
     jsontok_t jsonToken[NUM_TOKENS];
     if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
         LELOG("getPWMInfo json_init");
@@ -366,7 +356,7 @@ void convertStringToArray(char* str, commonManager_t *commonManager, uint8_t typ
 int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager, int n)
 {
     jobj_t jobj;
-    int i, k, num, ret, tmp;
+    int i, num, ret, tmp;
     char strTemp[256] = {0};
     jsontok_t jsonToken[NUM_TOKENS];
     if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
@@ -475,6 +465,44 @@ int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJso
     result[tmpLen] = '}'; 
     tmpLen += 1;       
     return tmpLen;
+}
+
+int getCtrlData(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
+    char *start, *end, *temp;
+    char *tokenStart = "{", *tokenEnd = "}";
+    int len = 0;
+    start = (char *)strstr(json, key);
+    if (NULL == start) {
+        return -1;
+    }
+
+    start = (char *)strstr(start, tokenStart);
+    if (NULL == start) {
+        return -2;
+    }
+
+    temp = start;
+
+    while (1) {
+        end = (char *)strstr(temp + 1, tokenEnd);
+        if (NULL == end) {
+            if(temp != start) {
+                end = temp;
+                break;
+            } else {
+                return -3;
+            }
+        }
+        temp = end;
+    }
+
+    len = end - start;
+    if (objLen < len) {
+        return -4;
+    }
+
+    strncpy(obj, start, len);
+    return len;
 }
 
 // TODO: timer start for heart beat, hal need to support

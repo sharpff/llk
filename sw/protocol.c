@@ -775,6 +775,7 @@ int lelinkDoPollingR2R(void *ctx) {
         if (isFromRemote(pCtx, ipTmp, MAX_IPLEN, portTmp)) {
             len = doUnpack(pCtx, pCtx->nwBuf, len, pCtx->protocolBuf, UDP_MTU, &cmdInfo, (void *)findTokenByUUID);
             if (0 <= len) {
+                COMM_CTX(pCtx)->protocolBuf[len] = '\0';
                 if (cmdInfo.cmdId % 2) { // RemoteReq
                     doQ2AProcessing(pCtx, len, &cmdInfo, ipTmp, portTmp);
                 } else { // RemoteRsp
@@ -1061,7 +1062,7 @@ static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHead
         LELOGW("lelinkDoPolling doUnpack [%d]", ret);
         return -5;
     }
-
+    COMM_CTX(pCtx)->protocolBuf[ret] = '\0';
     return ret;
 }
 

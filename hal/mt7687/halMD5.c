@@ -4,6 +4,9 @@
 #include "hal_log.h"
 #include "os.h"
 #include "hal_sha.h"
+#include "mbedtls/sha1.h"
+
+#define HW_SHA1
 
 void md5_result_dump(uint8_t *result, uint8_t length) {
     uint8_t i;
@@ -29,6 +32,8 @@ void halMD5(uint8_t *input, uint32_t inputlen, uint8_t output[16]) {
 	os_memcpy(output, digest, HAL_MD5_DIGEST_SIZE);
 }
 
+#ifdef HW_SHA1
+
 static hal_sha1_context_t ginSha1Ctx;
 
 int halSha1Start() {
@@ -46,3 +51,25 @@ int halSha1End(uint8_t output[20]) {
     return 0;
 }
 
+#else
+
+static mbedtls_sha1_context ginSha1Ctx;
+
+int halSha1Start() {
+    mbedtls_sha1_init( &ginSha1Ctx );
+    mbedtls_sha1_starts( &ginSha1Ctx );
+    return 0;
+}
+
+int halSha1Update(const uint8_t *input, size_t ilen) {
+    mbedtls_sha1_update( &ginSha1Ctx, input, ilen );
+    return 0;
+}
+
+int halSha1End(uint8_t output[20]) {
+    mbedtls_sha1_finish( &ginSha1Ctx, output );
+    mbedtls_sha1_free( &ginSha1Ctx );
+    return 0;
+}
+
+#endif

@@ -81,7 +81,15 @@ if [ "$1" != "clean" ]; then
 	echo "*****************"
 	cp ./config/chip/mt7687/chip.mk $MTSDK7687/config/chip/mt7687
 	do_copy "./middleware/third_party/cloud/lelink" "$MTSDK7687/middleware/third_party/cloud/lelink"
-	cp main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+	#cp main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+        cp ./project/mt7687_hdk/apps/le_demo/src/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+        cp ./project/mt7687_hdk/template/download/flash_download.ini $MTSDK7687/project/mt7687_hdk/template/download
+        cp ./project/mt7687_hdk/apps/le_demo/inc/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
+        cp ./project/mt7687_hdk/apps/le_demo/inc/flash_map.h $MTSDK7687/project/mt7687_hdk/apps/bootloader/inc
+        cp ./project/mt7687_hdk/apps/le_demo/GCC/feature.mk $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
+        cp ./project/mt7687_hdk/apps/le_demo/GCC/Makefile $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
+        cp ./project/mt7687_hdk/apps/le_demo/GCC/mt7687_flash.ld $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
+        cp ./middleware/MTK/smtcn/src/*.c $MTSDK7687/middleware/MTK/smtcn/src
 	cp $MAIN_PATH/hal/$PF/halHeader.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
 	cp $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
 	# for lelink

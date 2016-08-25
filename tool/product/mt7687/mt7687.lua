@@ -62,7 +62,7 @@ function s1GetCvtType()
     "common":[
         {    
              "num":7,
-             "id":"36-37-32-33-34-35-0",
+             "id":"36-37-32-33-34-35-57",
              "mux":"7-7-9-9-9-9-8"
         }
         ],
@@ -74,10 +74,10 @@ function s1GetCvtType()
     	],  
     "gpio":[
         {
-            "id":0,
+            "id":57,
             "dir":0,
             "mode":1,
-            "state":0,
+            "state":1,
             "type":1,
             "longTime":30,
             "shortTime":3
@@ -174,18 +174,18 @@ end
 function s1CvtPri2Std(bin)
     local i = 0, val, j
     local str = ""
-    local datatb = {33, 0, 34, 0, 35, 0, 18, 0, 0, 0}
+    local datatb = {33, 0, 34, 0, 35, 0, 18, 0, 57, 1}
     local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}],"gpio":[{"id":%d,"val":%d}]}'
     local cvtType = s1apiGetCurrCvtType()
     local lenStatus, currStatus = s1apiGetDevStatus()
     if lenStatus <= 2 then
-        str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0, 0, 0)
+        str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0, 57, 1)
     end
     if cvtType == 2 then
         local ctrltb = {}
         local id = bin:byte(1)
-        if id == 0 and bin:byte(2) == 1 then
-            if lenStatus > 2 then
+        if id == 57 and bin:byte(2) == 0 then
+        if lenStatus > 2 then
 	    local tb = cjson.decode(currStatus)
 	    local pwm = tb["pwm"]
 	    local gpio = tb["gpio"]

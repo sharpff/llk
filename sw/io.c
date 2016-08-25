@@ -698,7 +698,7 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             int i,j,ret = 0;
             gpioManager_t *mgr = ((gpioManager_t *)hdl);
             gpioHand_t *q = mgr->table;
-            LELOG("ioWrite gpio count [%d]", mgr->num);
+            //LELOG("ioWrite gpio count [%d]", mgr->num);
             for(i = 0; i < mgr->num ; i++, q++) {
                 for(j = 0; j< mgr->num; j++) {
                     if(data[2*j] == q->id) {
@@ -720,7 +720,7 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             int i,j,ret = 0;
             pwmManager_t *mgr = ((pwmManager_t *)hdl);
             pwmHand_t *q = mgr->table;
-            LELOG("ioWrite pwm count [%d]", mgr->num);
+            //LELOG("ioWrite pwm count [%d]", mgr->num);
             for(i = 0; i < mgr->num ; i++, q++) {
                 for(j = 0; j< mgr->num; j++) {
                     if(data[2*j] == q->id) {
