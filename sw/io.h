@@ -184,7 +184,7 @@ typedef enum {
     GPIO_TYPE_OUTPUT_RESET = 1
 } GPIO_TYPE_OUTPUT_t;
 
-#define GPIO_MAX_ID     (3)
+#define GPIO_MAX_ID     (4)
 typedef struct {
     int8_t id;          // support 1, 2, 3 
     int8_t num;         // gpio num
