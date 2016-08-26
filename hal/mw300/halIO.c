@@ -103,6 +103,7 @@ static struct _gpioTable{
     {1, 48, 0, GPIO48_GPIO48}, // key
     {2, 49, 0, GPIO49_GPIO49}, // led
     {3, 39, 0, GPIO39_GPIO39}, // hub
+    {4, 48, 0, GPIO48_GPIO48} // test sensor (dingding)
 };
 #define GPIO_SUPPORT_NUM   ((int)(sizeof(gpioTable)/sizeof(gpioTable[0])))
 
@@ -119,7 +120,6 @@ void* halGPIOInit(void) {
 int halGPIOOpen(int8_t id, int8_t dir, int8_t mode) {
     int i;
     struct _gpioTable *p;
-
     for(i = 0, p = gpioTable; i < GPIO_SUPPORT_NUM; i++, p++) {
         if(p->id == id && !p->used) {
             break;

@@ -1880,7 +1880,7 @@ static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdIn
 
 static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    char rmtCtrl[1024] = {0};
+    char rmtCtrl[MAX_BUF] = {0};
     LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -s");
 
     if (otaGetLatestSig()) {
@@ -1932,7 +1932,7 @@ static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInf
     // uint8_t sig[RSA_LEN] = {0};
     CmdHeaderInfo* tmpCmdInfo = (CmdHeaderInfo *)cmdInfo;
     const char *urlPtr = otaGetLatestUrl();
-    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp url[0x%p] -s", urlPtr);
+    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp url[0x%p] lenWithRSA[%d] -s", urlPtr, len);
 
 
     if (NULL != urlPtr) {

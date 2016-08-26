@@ -2,6 +2,7 @@
 # UDP log master -  logMaster.py
 # remote ctrl cmd: {"key":6,"val":{"log2M":1,"IP":"192.168.3.100","port":1234}}
 # IP & port is for log master
+# \{\"key\":6,\"val\":\{\"log2M\":1,\"IP\":\"192.168.3.100\",\"port\":1234\}\} \{\"key\":6,\"val\":\{\"log2M\":0,\"IP\":\"192.168.3.100\",\"port\":1234\}\}
 import socket, traceback
 
 host = ''

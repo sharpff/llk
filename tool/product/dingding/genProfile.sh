@@ -10,11 +10,11 @@
 
 MAIN_PATH="../.."
 $MAIN_PATH/lelinkTool.py \
-    -a 115.182.63.167 \
-    -p 9002 \
-    -u 10000100011000510005 \
-    -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCyQMwvQauI1/PbtQ2FwVTZwDcPcDXI1nEUIvqsz+tlmQzwpCWGUOwHbZF3AVw8b1zvF5nW/UU0aF8z2KKCqtm6gB4jSblbJZDUlvMhASiGnCUGg2lHf3MDtiMFOeGy2XmvBLDLZVP3uU8gDLfTfCqW+JWzTqoEBZrEK5IPQbi+wIDAQAB \
-    -s F7nZeAaAoEky6vIITX5Lts3Fz2iThJH6a7iQzKGejWFTCE9nQTlsmlM8r6gQk2dEtmCBBerXK9SL17LuB6llnJjH59XebuV4nxA+1xV8XBZV5KXwLeKjTgpuTIoKpytRiJaMhkuLc1zxqt+jo+7ymAqd2fpAKRdouiy4Aoq/1n0= \
+    -a iot.fineat.com \
+    -p 9011 \
+    -u 10000100011000010022 \
+    -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCEW7N+AnWIkhGMGUfLFBdMd3txwA2D7jSeDq8xpuw80ru8XPFxM1Zc3fNy9Ps+F853uadfNr8JMZyr1lxbLmldTug9IusZVqZzqDYMbiVpjxFtp2WpXuQgiSJ14TuF/N4eGsgcB0KikXWum+ZlOtfCgpWjSKDsJgL2O95/UBwr1wIDAQAB \
+    -s asFxYWh+q61Fii5AhPOG3NSiCe5FzZcfeWho0qj0uq8y9oLIrWmXMT/xEX92eVqaH2x8pKepgyhzdNaqa27ugfijEm7i6Awmmrd0KOjwhAxSXwWmPYFb7RVgufEqSRKIETLG/FysJoIkAb6Rs70AdGz7oUYhxjRLt5Bxwhh3cT0= \
     -o ./0x1c2000.bin
 
 $MAIN_PATH/lelinkTool.py \
@@ -24,13 +24,10 @@ $MAIN_PATH/lelinkTool.py \
 #     -t $MAIN_PATH/testLua/basic.lua \
 #     -o ./0x1c3000.bin
 
-# $MAIN_PATH/lelinkTool.py \
-#     --genpriv \
-#     --ssid ff \
-#     --passwd fengfeng2qiqi \
-#     -o ./0x1c8000.bin
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
+    --ssid ff \
+    --passwd fengfeng2qiqi \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \
