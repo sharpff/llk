@@ -3,9 +3,27 @@
 #include <stdio.h>
 #include <string.h>
 #include "hal_aes.h"
+#include "debug.h"
+#include "semphr.h"
 
-//define HW_AES
+#define HW_AES
+
 #ifdef HW_AES
+
+uint8_t g_aes_key[16] = {0};
+uint32_t g_key_len =0;
+uint8_t g_iv[16] = {0};
+uint8_t g_data[1280] = {0};
+uint32_t g_len = 0;
+int g_type = 0;
+uint8_t data_buffer[1280] = {0};
+
+SemaphoreHandle_t g_m_mutex_for_aes = NULL;
+xQueueHandle aes_rx_queue = NULL;
+TaskHandle_t g_current_task_id = NULL;
+
+#define AES_RX_QUEUE_SIZE        4
+
 
 int halAESInit(void) {
     return 0;
@@ -15,111 +33,128 @@ void halDeAESInit(void) {
 
 }
 
-uint8_t data_buffer[1280] = {0};
+int halAES(uint8_t *aes_key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *len, uint32_t maxLen, int isPKCS5, int type) {
+    int is_aes = 1;
+    xSemaphoreTake(g_m_mutex_for_aes, portMAX_DELAY);
+	
+	g_current_task_id = xTaskGetCurrentTaskHandle(); 
 
-int halAES(uint8_t *aes_key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *len, uint32_t maxLen, int isPKCS5, int type)
-{
-    int ret = 0;
+    memcpy(g_aes_key, aes_key, keyLen);
+	g_key_len = keyLen;
+    memcpy(g_iv, iv, 16);
+	memcpy(g_data, data, *len);
+	g_len = *len;
+	g_type = type;
+
+    if (xQueueSendToBack(aes_rx_queue, (void *)&is_aes, (TickType_t)5) != pdPASS) {   
+        printf("can't add a job to aes rx queue. \n");
+        return -1;
+    }
+
+	vTaskSuspend(g_current_task_id);
+
+	memcpy(data, g_data, g_len);
+	*len = g_len;
+
+    memset(g_aes_key, 0x00, g_key_len);
+	memset(g_iv, 0x00, 16);
+	memset(g_data, 0x00, g_len);
+	xSemaphoreGive(g_m_mutex_for_aes);
+	return 0;
+}
+
+void aes_handle_task_func(void) {
+    int is_aes_handle;
+	while (1) {
+		if (xQueueReceive(aes_rx_queue, (void *)&is_aes_handle, portMAX_DELAY) == pdPASS) {
+			if(is_aes_handle == 1) {
+				ads_do_operate();
+			}
+		}
+	}
+}
+
+void aes_task_init(void) {
+    if (aes_rx_queue == NULL) {
+            aes_rx_queue = xQueueCreate(AES_RX_QUEUE_SIZE, sizeof(int));
+            if (aes_rx_queue == NULL) 
+            {
+                printf("aes_rx_queue create failed. \n");
+                return -1;
+            }
+            configASSERT(aes_rx_queue);
+            vQueueAddToRegistry(aes_rx_queue, "aes handle");
+    }
     
-    hal_aes_buffer_t key = {
-        .buffer = aes_key,
-        .length = keyLen/8
-    };
+    if (pdPASS != xTaskCreate(aes_handle_task_func,"aes_test",1024,NULL,1,NULL)) {
+        LOG_E(common, "create user task fail");
+        return -1;
+    }
+    g_m_mutex_for_aes = xSemaphoreCreateMutex(); 
+}
 
-    if (!type)
-    {
-        //decrypt case;
-        printf("\n==== decrypt len[%d] key[%d] ==== \n", keyLen/8, *len);
+void ads_do_operate(void) {
+    int ret = 0;
+    hal_aes_buffer_t key = {
+        .buffer = g_aes_key,
+        .length = g_key_len/8
+    };
+  
+    if (!g_type) {
         hal_aes_buffer_t encrypted_text = {
-            .buffer = data,
-            .length = *len
+            .buffer = g_data,
+            .length = g_len
         };
         
         hal_aes_buffer_t decrypted_text = {
             .buffer = data_buffer,
-            .length = *len
+            .length = sizeof(data_buffer)//*len
         };
- #if 0
-        {
-            int i = 0;
-            printf(" \n =====> halAES decrypt data begin <===== \n");
-            for (i = 0; i < *len; i++) {
-                printf("%02X", data[i]);
-            }
-            printf(" \n =====> halAES decrypt data  <===== \n");
-        }
-#endif
-        ret = hal_aes_cbc_decrypt(&decrypted_text, &encrypted_text, &key, iv);
-        printf(" \n =====> hal_aes_cbc_decrypt  %d <===== \n",decrypted_text.length);
-        if(ret != HAL_AES_STATUS_OK)
-        {
+
+	    ret = hal_aes_cbc_decrypt(&decrypted_text, &encrypted_text, &key, g_iv);
+
+        if(ret != HAL_AES_STATUS_OK) {
             printf(" \n =====> halAES decrypt data error <===== \n");
             goto end;
         }
-#if 0
-        {
-            int i = 0;
-            printf(" \n =====> halAES decrypt data  %d <===== \n",decrypted_text.length);
-            for (i = 0; i < decrypted_text.length; i++) {
-                printf("%02X", decrypted_text.buffer[i]);
-            }
-            printf(" \n =====> halAES decrypt data end <===== \n");
-        }
-#endif
-        os_memset(data, 0x00, (*len));
-        *len = decrypted_text.length;
-        os_memcpy(data, decrypted_text.buffer, decrypted_text.length);
-    }
-    else
-    {
-        
-        uint8_t padding_size = 16 - *len%16;
-        uint32_t encrypted_len = *len+padding_size;
-        printf("\n==== encrypted begin len[%d] encrypted_len[%d]==== \n", *len, encrypted_len);
+
+	    if(decrypted_text.length > 0) {
+            os_memset(g_data, 0x00, 1280);
+	        g_len = decrypted_text.length;
+	        os_memcpy(g_data, decrypted_text.buffer, decrypted_text.length);
+        } else {
+			printf("decrypted_text.length error. \n");
+		}
+    } else {
+        uint8_t padding_size = 16 - g_len%16;
+        uint32_t encrypted_len = g_len+padding_size;
         hal_aes_buffer_t plain_text = {
-            .buffer = data,
-            .length = *len
+            .buffer = g_data,
+            .length = g_len
         };
 
         hal_aes_buffer_t encrypted_text = {
             .buffer = data_buffer,
             .length = encrypted_len
         };
-#if 0
-        {
-            int i = 0;
-            printf(" \n =====> halAES encrypted data begin <===== \n");
-            for (i = 0; i < *len; i++) {
-                printf("%02X", data[i]);
-            }
-            printf(" \n =====> halAES encrypted data  <===== \n");
-        }
-#endif
-        ret = hal_aes_cbc_encrypt(&encrypted_text, &plain_text, &key, iv);
-        printf(" \n =====> halAES encrypted data <===== %d \n", encrypted_text.length);
-        if(ret != HAL_AES_STATUS_OK)
-        {
+
+        ret = hal_aes_cbc_encrypt(&encrypted_text, &plain_text, &key, g_iv);
+        if(ret != HAL_AES_STATUS_OK) {
             printf(" \n =====> halAES encrypt data error <===== \n");
             goto end;
         }
-#if 0
-        {
-            int i = 0;
-            printf(" \n =====> halAES encrypted data <===== %d \n", encrypted_text.length);
-            for (i = 0; i < encrypted_text.length; i++) {
-                printf("%02X", encrypted_text.buffer[i]);
-            }
-            printf(" \n =====> halAES encrypted data  end<===== \n");
-        }
-#endif
-        os_memset(data, 0x00, encrypted_text.length);
-        *len = encrypted_text.length;
-        os_memcpy(data, encrypted_text.buffer, encrypted_text.length);
-        //printf("\n==== encrypted end len[%d]==== \n", *len);
+
+        os_memset(g_data, 0x00, encrypted_text.length);
+        g_len = encrypted_text.length;
+        os_memcpy(g_data, encrypted_text.buffer, encrypted_text.length);
     }
+
 end:
-    return ret;
+    if(g_current_task_id != NULL) {
+        vTaskResume(g_current_task_id);
+    }
 }
+
 #else
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include "mbedtls/config.h"

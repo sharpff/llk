@@ -4,6 +4,8 @@
 #include "jsgen.h"
 #include <stdarg.h>
 
+static char miscBuf[MAX_BUF] = {0};
+
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
     int dir = 0;
@@ -330,8 +332,6 @@ int getPWMInfo(const char *json, int jsonLen,  pwmHand_t *table, int n)
     return i;
 }
 
-
-
 void convertStringToArray(char* str, commonManager_t *commonManager, uint8_t type) {
     char temp[8] = {0};
     int i, j = 0, count=0, len = strlen(str);
@@ -353,8 +353,7 @@ void convertStringToArray(char* str, commonManager_t *commonManager, uint8_t typ
     }
 }
 
-int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager, int n)
-{
+int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager, int n) {
     jobj_t jobj;
     int i, num, ret, tmp;
     char strTemp[256] = {0};
@@ -362,10 +361,8 @@ int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager
     if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
         return -1;
     }
-    LELOG("getCommonInfo 1");
     if((ret = json_get_array_object(&jobj, JSON_NAME_COMMON_CONF, &num))== WM_SUCCESS) {
         num = num < 0 ? 0 : num;
-        LELOG("getCommonInfo num %d", num);
         for(i = 0; i < num; i++) {
             if((ret = json_array_get_composite_object(&jobj, i)) != WM_SUCCESS) {
                 LELOG("json_array_get_composite_object error %d", ret);
@@ -373,23 +370,19 @@ int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager
             }
             if((ret = json_get_val_int(&jobj, JSON_NAME_COMMON_NUM, &tmp)) == WM_SUCCESS) {
                 commonManager->num = tmp;
-                LELOG("commonManager->num [%d]", tmp);
             }
             if (WM_SUCCESS == json_get_val_str(&jobj, JSON_NAME_COMMON_ID, strTemp, sizeof(strTemp))) {
                 convertStringToArray(strTemp, commonManager, 0);
-                LELOG("commonManager->id [%s]", strTemp);
                 memset(strTemp, 0, sizeof(strTemp));
             }
             if (WM_SUCCESS == json_get_val_str(&jobj, JSON_NAME_COMMON_MUX, strTemp, sizeof(strTemp))) {
                 convertStringToArray(strTemp, commonManager, 1);
-                LELOG("commonManager->mux [%s]", strTemp);
             }
         }
     }
     for(i=0; i<commonManager->num; i++) {
         LELOG("Common index[%d] id[%d] mux[%d]", i, commonManager->table[i].id, commonManager->table[i].mux);
     }
-    LELOG("Common data size e[%d]", i);
     return i;
 }
 
@@ -617,15 +610,17 @@ void logToMaster(const char *log) {
 int cloudMsgHandler(const char *data, int len) {
 
     int ret = WM_SUCCESS, dir = 0;
-    char buf[MAX_BUF] = {0};
-    CloudMsgKey key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
+    CloudMsgKey key;
+    //char buf[MAX_BUF] = {0};
+    memset(miscBuf, 0, MAX_BUF);
+    key = cloudMsgGetKey(data, len, miscBuf, sizeof(miscBuf), &ret);
     // SetLock();
     switch (key) {
         jsontok_t jsonToken[NUM_TOKENS];
         jobj_t jobj;
         case CLOUD_MSG_KEY_LOCK: {
             int locked = 0;
-            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)miscBuf, ret);
             if (WM_SUCCESS != ret) {
                 ret = LELINK_ERR_LOCK_UNLOCK;
                 break;
@@ -639,7 +634,7 @@ int cloudMsgHandler(const char *data, int len) {
         }break;
         case CLOUD_MSG_KEY_DO_IA: {
             char name[MAX_RULE_NAME] = {0};
-            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)miscBuf, ret);
             if (WM_SUCCESS != ret) {
                 ret = LELINK_ERR_IA_DELETE;
                 break;
@@ -664,14 +659,14 @@ int cloudMsgHandler(const char *data, int len) {
                 }        
             }
 
-            key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
+            key = cloudMsgGetKey(data, len, miscBuf, sizeof(miscBuf), &ret);
             LELOG("CLOUD_MSG_KEY_LOG2MASTER key[%d] [%s]", key, data);
             if (CLOUD_MSG_KEY_LOG2MASTER != key) {
                 LELOG("CLOUD_MSG_KEY_LOG2MASTER -e2");
                 ret = -2;
                 break;
             }
-            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)miscBuf, ret);
             if (WM_SUCCESS != ret) {
                 LELOG("CLOUD_MSG_KEY_LOG2MASTER -e3");
                 ret = -3;
@@ -706,15 +701,15 @@ int cloudMsgHandler(const char *data, int len) {
 }
 
 int printOut(const char *fmt, ...) {
-    char buf[MAX_BUF] = {0};
     va_list args;
+    memset(miscBuf, 0, MAX_BUF);
     va_start(args, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, args);
+    vsnprintf(miscBuf, sizeof(miscBuf), fmt, args);
     va_end(args);
     if (getLogDir()) {
-        logToMaster(buf);
+        logToMaster(miscBuf);
     } else {
-        halPrint(buf);
+        halPrint(miscBuf);
     }
     return 0;
 }

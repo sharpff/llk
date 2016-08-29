@@ -21,11 +21,10 @@
 #include "network_init.h"
 #include "cli_def.h"
 
-
 int gin_airconfig_channel_cared[MAX_CHANNEL_CARE];
 static TimerHandle_t lelink_airconfig_timer = NULL;
 extern void smtcn_evt_handler(wifi_smart_connection_event_t event, void *data);
-
+extern void aes_task_init();
 int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 int airconfig_stop();
 
@@ -81,9 +80,39 @@ int airconfig_stop() {
     return 0;
 }
 
+void printForFac(void) {
+    uint8_t mac[6] = {0};
+    halGetMac(mac, 6);
+    APPLOG("mac: %02x:%02x:%02x:%02x:%02x:%02x\r\n", 
+        mac[0], 
+        mac[1], 
+        mac[2], 
+        mac[3], 
+        mac[4], 
+        mac[5]);
+}
+
 static void mtk_thread_lelink_proc(void *args) {
-    void *ctxR2R = (void *)lelinkNwNew(REMOTE_BAK_IP, REMOTE_BAK_PORT, 0, NULL);
-    void *ctxQ2A = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, NULL);
+    int ret; 
+    void *ctxR2R;
+    void *ctxQ2A;
+
+    printForFac();
+
+    ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
+    if (0 > ret) {
+        APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
+        return;
+    }
+    // protocol
+    ret = lelinkInit(NULL);
+    if (0 > ret) {
+        APPLOGE("lelinkInit ret[%d]\r\n", ret);
+        return;
+    }
+
+    ctxR2R = (void *)lelinkNwNew(REMOTE_BAK_IP, REMOTE_BAK_PORT, 0, NULL);
+    ctxQ2A = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, NULL);
 
     while (1) {
         lelinkPollingState(100, ctxR2R, ctxQ2A);
@@ -104,38 +133,8 @@ static int platform_launch_lelink_start(void) {
 		LOG_E(common, "create user task fail");
 		return -1;
 	}
-	
+    aes_task_init();
     return 0;
-}
-
-void printForFac(void) {
-    uint8_t mac[6] = {0};
-    halGetMac(mac, 6);
-    APPLOG("mac: %02x:%02x:%02x:%02x:%02x:%02x\r\n", 
-        mac[0], 
-        mac[1], 
-        mac[2], 
-        mac[3], 
-        mac[4], 
-        mac[5]);
-}
-
-void platform_and_wlan_init_done(void) {
-	int ret; 
-    printForFac();
-	
-    ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
-    if (0 > ret) {
-        APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
-        return;
-    }
-    // protocol
-    ret = lelinkInit(NULL);
-    if (0 > ret) {
-        APPLOGE("lelinkInit ret[%d]\r\n", ret);
-        return;
-    }
-    platform_launch_lelink_start();
 }
 
 uint8_t le_ota(uint8_t len, char *param[]) {
@@ -155,60 +154,8 @@ uint8_t le_ota(uint8_t len, char *param[]) {
     return 0;
 }
 
-void le_gpio_test(char data)
-{
-    #if 0
-    uint8_t buff[24];
-    switch (data)
-    {
-        case 1:
-            APPLOG("all init \n");
-            break;
-        case 2:
-            halGPIOWrite(0, 0, 1);
-            break;
-        case 3:
-            halGPIOWrite(0, 0, 0);
-            break;
-        case 4:
-            halGPIOClose(0);
-            break;
-        case 5:
-            halUartWrite(0, "hello world!\n", 12);
-            break;
-        case 6:
-            memset(buff, 0, 24);
-            halUartRead(0, buff, 24);
-            halUartWrite(0, "receive data:", 13);
-            halUartWrite(0, buff, 24);
-            break;
-        case 7:
-            while(1)
-            {
-                if(flag)
-                    halPWMSetDuty(3, 255);
-                else
-                    halPWMSetDuty(3, 0);
-                flag = !flag;
-                vTaskDelay(1000);
-            }
-            break;
-        default:
-            APPLOGE("wrong param = %c", data);
-            break;
-    }
-    #endif
-}
-
-extern void HWhalAES(void);
-extern void mbedtls_aes_test();
 uint8_t le_reboot(uint8_t len, char *param[]) {
-    int type = atoi(param[0]);
-    //halReboot();
-    //mbedtls_aes_test();
-    //HWhalAES();
-    APPLOG("le_gpio_test len[%d] param[%d] \n", len, type);
-    le_gpio_test(type);
+    halReboot();
     return 0;
 }
 
@@ -275,8 +222,7 @@ void mtk_platform_init() {
 int main() {
     //modules_init();
     mtk_platform_init();
-
-    platform_and_wlan_init_done();
+    platform_launch_lelink_start();
 	
     vTaskStartScheduler();
 
