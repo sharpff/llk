@@ -237,7 +237,7 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
             } else if (LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP == cmdInfo->subCmdId) {
                 memset(ginOTAUrl, 0, sizeof(ginOTAUrl));
                 memcpy(ginOTAUrl, payloadBody, len > sizeof(ginOTAUrl) ? sizeof(ginOTAUrl) : len);                
-                APPLOG("set ota url [%d][%s]", RSA_LEN + strlen(ginOTAUrl + RSA_LEN), ginOTAUrl + RSA_LEN);
+                APPLOG("set ota url [%d][%s]", strlen(ginOTAUrl), ginOTAUrl);
             }
 
         }break;

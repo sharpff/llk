@@ -1637,7 +1637,7 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
     } else {
         syncUTC((const char *)dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
-        halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+        halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
         changeStateId(E_STATE_CLOUD_AUTHED);
     }
     LELOG("cbCloudAuthRemoteRsp -e");
@@ -1873,7 +1873,7 @@ static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdIn
     	LEPRINTF("\r\n");
     }
     otaSetLatestSig(dataIn);
-    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
     LELOG("cbCloudReportOTAQueryRemoteRsp -e");
     return;
 }

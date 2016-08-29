@@ -205,13 +205,13 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
 	com_letv_lelink_LeLink_MSG_TYPE_LOCALREQUEST, getJsonCmdHeaderInfo(env, cmdInfo), jbytes);
 	if (ret > 0 && ret < len) {
 		jdata = env->GetByteArrayElements(jbytes, NULL);
-        if(cmdInfo->cmdId == LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ) {
-            data += RSA_LEN;
-        }
+  //       if(cmdInfo->cmdId == LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ) {
+  //           data += RSA_LEN;
+  //       }
 		memcpy(data, jdata, ret);
-        if(cmdInfo->cmdId == LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ) {
-            ret += RSA_LEN;
-        }
+  //       if(cmdInfo->cmdId == LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ) {
+  //           ret += RSA_LEN;
+  //       }
 		env->ReleaseByteArrayElements(jbytes, jdata, JNI_ABORT);
 		//data[ret++] = '\0';
 	}
@@ -224,10 +224,10 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data
 	int ret = 0;
 	JNIEnv *env;
 
-    if(cmdInfo->cmdId == LELINK_CMD_CLOUD_REPORT_RSP && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP) {
-        data += RSA_LEN;
-        len -= RSA_LEN;
-    }
+    // if(cmdInfo->cmdId == LELINK_CMD_CLOUD_REPORT_RSP && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP) {
+    //     data += RSA_LEN;
+    //     len -= RSA_LEN;
+    // }
     if(len < 0) {
         LELOGE("Error len(%d)", len);
         return;
