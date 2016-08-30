@@ -20,15 +20,12 @@ static void halUartIrq(hal_uart_callback_event_t status, void *user_data) {
        receive_notice = 1;
 }
 
-void *halUartOpen(void* dev) {
+void *halUartOpen(uartHandler_t* handler) {
     hal_uart_config_t uart_config;
     hal_uart_dma_config_t dma_config;
 	hal_uart_status_t status = HAL_UART_STATUS_OK;
-    uartHand_t* uartHand = (uartHand_t*)dev;
-    APPLOG("halUartOpen id[%d] baud[%d], dataBits[%d], stopBits[%d], parity[%d], flowCtrl[%d]", uartHand->id,
-        uartHand->baud, uartHand->dataBits, uartHand->stopBits, uartHand->parity, uartHand->flowCtrl);
 
-    switch(uartHand->baud) {
+    switch(handler->baud) {
         case 110:           /**< Defines UART baudrate as 110 bps */
 		  uart_config.baudrate = HAL_UART_BAUDRATE_110;
 		  break;
@@ -86,7 +83,7 @@ void *halUartOpen(void* dev) {
 			break;
     }
 	
-    switch(uartHand->dataBits) {
+    switch(handler->dataBits) {
   		case 5:
   			uart_config.word_length = HAL_UART_WORD_LENGTH_5;
 			break;
@@ -108,7 +105,7 @@ void *halUartOpen(void* dev) {
 			break;
     }
     
-    switch(uartHand->stopBits) {
+    switch(handler->stopBits) {
         case 1:
 		  uart_config.stop_bit = HAL_UART_STOP_BIT_1;
 		  break;
@@ -120,10 +117,10 @@ void *halUartOpen(void* dev) {
 			break;
     }
 	
-    uart_config.parity = uartHand->parity;
-    status = hal_uart_init(uartHand->id, &uart_config);
+    uart_config.parity = handler->parity;
+    status = hal_uart_init(handler->id, &uart_config);
 	if(status != HAL_UART_STATUS_OK) {
-        APPLOG("open uart[%d] failed", uartHand->id);
+        APPLOG("open uart[%d] failed", handler->id);
         return NULL;
     }	
 
@@ -134,24 +131,22 @@ void *halUartOpen(void* dev) {
     dma_config.send_vfifo_buffer = tx_vfifo_buffer;
     dma_config.send_vfifo_buffer_size = 512;
     dma_config.send_vfifo_threshold_size = 51;
-    hal_uart_set_dma(uartHand->id, &dma_config);
-    hal_uart_register_callback(uartHand->id, halUartIrq, NULL);
-    return (void *)0xABCDFFFF;
+    hal_uart_set_dma(handler->id, &dma_config);
+    hal_uart_register_callback(handler->id, halUartIrq, NULL);
+    return (void *)handler;
 }
 
-int halUartClose(void *dev) {
+int halUartClose(uartHandler_t* handler) {
 	hal_uart_status_t status = HAL_UART_STATUS_OK;
-    uartHand_t* uartHand = (uartHand_t*)dev;
-	status = hal_uart_deinit(uartHand->id);
+	status = hal_uart_deinit(handler->id);
 	if(status != HAL_UART_STATUS_OK)
 		return -1;
 	else
 		return 0;
 }
 
-int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
+int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
     uint32_t rcv_cnt, size = 0;
-    uartHand_t* uartHand = (uartHand_t*)dev;
     memset(buf, 0, len);
 #if 0
     while(1){
@@ -170,7 +165,7 @@ int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     }
 #else
      while(receive_notice){
-       rcv_cnt = hal_uart_receive_dma(uartHand->id, buf+size, len);
+       rcv_cnt = hal_uart_receive_dma(handler->id, buf+size, len);
        if(rcv_cnt == 0)
           break;
        len -= rcv_cnt;
@@ -193,13 +188,11 @@ int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     return size;
 }
 
-int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
+int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
     uint32_t snd_cnt, size = 0;
-    uartHand_t* uartHand = (uartHand_t*)dev;
-    //APPLOG("halUartWrite id[%d] len[%d]", uartHand->id, len);
     while(1){
         uint32_t timeout = 0;
-        snd_cnt = hal_uart_send_dma(uartHand->id, buf+size, len);
+        snd_cnt = hal_uart_send_dma(handler->id, buf+size, len);
         len -= snd_cnt;
         size += snd_cnt;
         if(len == 0)
@@ -210,116 +203,95 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
         }
         send_notice = 0;
    }
-   //APPLOG("halUartWrite id[%d]", uartHand->id);
    return size;
 }
 
 void *halGPIOInit(void) {
-    //not to do anything;
     return 0xABCEFFFF;
 }
 
-int halGPIOClose(void *dev) {
-    gpioHand_t* gpioHand = (gpioHand_t*)dev;
-    //APPLOG("halGPIOClose id[%d]", gpioHand->id);
-	hal_gpio_deinit(gpioHand->id);
+int halGPIOClose(gpioHandler_t* handler) {
+	hal_gpio_deinit(handler->id);
     return 0;
 }
 
-int halGPIOOpen(void *dev) {
+int halGPIOOpen(gpioHandler_t* handler) {
 	hal_gpio_status_t ret;
-    gpioHand_t* gpioHand = (gpioHand_t*)dev;
-    APPLOG("halGPIOOpen b[%d]", gpioHand->id);
-    ret = hal_gpio_init(gpioHand->id);
+    ret = hal_gpio_init(handler->id);
     if (HAL_GPIO_STATUS_OK != ret) {
         APPLOG("hal_gpio_init failed");
-        hal_gpio_deinit(gpioHand->id);
+        hal_gpio_deinit(handler->id);
         return -1;
     }
 
-    switch(gpioHand->dir) {
+    switch(handler->dir) {
         case GPIO_DIR_INPUT:
-            hal_gpio_set_direction(gpioHand->id, HAL_GPIO_DIRECTION_INPUT);
+            hal_gpio_set_direction(handler->id, HAL_GPIO_DIRECTION_INPUT);
             break;
         case GPIO_DIR_OUTPUT:
-            hal_gpio_set_direction(gpioHand->id, HAL_GPIO_DIRECTION_OUTPUT);
+            hal_gpio_set_direction(handler->id, HAL_GPIO_DIRECTION_OUTPUT);
             break;
         default:
             return -1;
     }
 
-    switch(gpioHand->mode) {
+    switch(handler->mode) {
     	case GPIO_MODE_DEFAULT:
     	    break;
         case GPIO_MODE_PULLUP:
-            hal_gpio_pull_up(gpioHand->id);
+            hal_gpio_pull_up(handler->id);
             break;
         case GPIO_MODE_PULLDOWN:
-            hal_gpio_pull_down(gpioHand->id);
+            hal_gpio_pull_down(handler->id);
             break;
         case GPIO_MODE_NOPULL:
-            hal_gpio_disable_pull(gpioHand->id);
+            hal_gpio_disable_pull(handler->id);
             break;
         default:
             break;
     }
-
-    return gpioHand->id;
+    return handler->id;
 }
 
-int halGPIORead(void *dev, int *val) {
+int halGPIORead(gpioHandler_t* handler, int *val) {
 	hal_gpio_data_t gpio_data;
-    gpioHand_t* gpioHand = (gpioHand_t*)dev;
-    hal_gpio_get_input(gpioHand->id, &gpio_data);
+    hal_gpio_get_input(handler->id, &gpio_data);
     *val = (int)gpio_data;
-    //APPLOG("halGPIORead e[%d]", *val);
     return 0;
 }
 
-int halGPIOWrite(void *dev, const int val) {
-    gpioHand_t* gpioHand = (gpioHand_t*)dev;
-    //APPLOG("halGPIOWrite b[%d]", val);
-	hal_gpio_set_output(gpioHand->id, (hal_gpio_data_t)val);
+int halGPIOWrite(gpioHandler_t* handler, const int val) {
+	hal_gpio_set_output(handler->id, (hal_gpio_data_t)val);
     return 0;
 }
 
-void halPWMWrite(void *dev, uint32_t percent) {
+void halPWMWrite(pwmHandler_t *handler, uint32_t percent) {
     uint32_t duty_cycle = 0;
-    pwmHand_t* pwmHand = (pwmHand_t*)dev;
-    //APPLOG("halPWMSetDuty id[%d] percent[%d] [%d] [%d]", pwmHand->id, percent, pwmHand->duty, pwmHand->reserved);
-    pwmHand->percent = percent;
-    duty_cycle = (pwmHand->reserved * percent) / pwmHand->duty;
-    hal_pwm_set_duty_cycle(pwmHand->id, duty_cycle);
+    handler->percent = percent;
+    duty_cycle = (handler->reserved1 * percent) / handler->duty;
+    hal_pwm_set_duty_cycle(handler->id, duty_cycle);
 }
 
-void halPWMRead(void *dev, uint32_t *percent) {
-    pwmHand_t* pwmHand = (pwmHand_t*)dev;
-    //APPLOG("halPWMRead id[%d]", pwmHand->id);
-    *percent = pwmHand->percent;
+void halPWMRead(pwmHandler_t *handler, uint32_t *percent) {
+    *percent = handler->percent;
 }
 
-void halPWMSetFrequency(void *dev) {
-    pwmHand_t* pwmHand = (pwmHand_t*)dev;
-    hal_pwm_set_frequency(pwmHand->id, pwmHand->frequency, &pwmHand->reserved);
-    APPLOG("halPWMSetFrequency id[%d] frequency[%d] [%d]", pwmHand->id, pwmHand->frequency, pwmHand->reserved);
+void halPWMSetFrequency(pwmHandler_t *handler) {
+    hal_pwm_set_frequency(handler->id, handler->frequency, &handler->reserved1);
 }
 
-int halPWMClose(void* dev) {
-    pwmHand_t* pwmHand = (pwmHand_t*)dev;
-    //APPLOG("halPWMClose id[%d]", pwmHand->id);
-    hal_pwm_stop(pwmHand->id);
+int halPWMClose(pwmHandler_t *handler) {
+    hal_pwm_stop(handler->id);
     return 0;
 }
 
-int halPWMOpen(void *dev) {
-    pwmHand_t* pwmHand = (pwmHand_t*)dev;
-    hal_pwm_start(pwmHand->id);
-    return pwmHand->id;
+int halPWMOpen(pwmHandler_t *handler) {
+    hal_pwm_start(handler->id);
+    return handler->id;
 }
 
 void* halPWMInit(int clock) {
-    APPLOG("halPWMInit clock[%d]", clock);
-    hal_pwm_init(clock); // HAL_PWM_CLOCK_2MHZ
+    hal_pwm_init(clock);
     return 0xABCFFFFF;
 }
 
@@ -401,13 +373,12 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
 		return 0;
 }
 
-void halCommonInit(void* dev) {
+void halCommonInit(commonManager_t* dev) {
     int i = 0;
-    commonManager_t* commonManager = (commonManager_t*)dev;
-    for(i=0; i<commonManager->num; i++) {
-        hal_gpio_init(commonManager->table[i].id);
-        hal_pinmux_set_function(commonManager->table[i].id, commonManager->table[i].mux );
-        hal_gpio_deinit(commonManager->table[i].id);
+    for(i=0; i<dev->num; i++) {
+        hal_gpio_init(dev->table[i].id);
+        hal_pinmux_set_function(dev->table[i].id, dev->table[i].mux );
+        hal_gpio_deinit(dev->table[i].id);
     }
 }
 

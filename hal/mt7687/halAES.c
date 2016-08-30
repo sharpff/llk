@@ -5,8 +5,8 @@
 #include "hal_aes.h"
 #include "debug.h"
 #include "semphr.h"
-
-#define HW_AES
+#include "task.h"
+#include "os.h"
 
 #ifdef HW_AES
 
@@ -24,7 +24,6 @@ TaskHandle_t g_current_task_id = NULL;
 
 #define AES_RX_QUEUE_SIZE        4
 
-
 int halAESInit(void) {
     return 0;
 }
@@ -39,10 +38,10 @@ int halAES(uint8_t *aes_key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32
 	
 	g_current_task_id = xTaskGetCurrentTaskHandle(); 
 
-    memcpy(g_aes_key, aes_key, keyLen);
+    os_memcpy(g_aes_key, aes_key, keyLen);
 	g_key_len = keyLen;
-    memcpy(g_iv, iv, 16);
-	memcpy(g_data, data, *len);
+    os_memcpy(g_iv, iv, 16);
+	os_memcpy(g_data, data, *len);
 	g_len = *len;
 	g_type = type;
 
@@ -53,44 +52,14 @@ int halAES(uint8_t *aes_key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32
 
 	vTaskSuspend(g_current_task_id);
 
-	memcpy(data, g_data, g_len);
+	os_memcpy(data, g_data, g_len);
 	*len = g_len;
 
-    memset(g_aes_key, 0x00, g_key_len);
-	memset(g_iv, 0x00, 16);
-	memset(g_data, 0x00, g_len);
+    os_memset(g_aes_key, 0x00, g_key_len);
+	os_memset(g_iv, 0x00, 16);
+	os_memset(g_data, 0x00, g_len);
 	xSemaphoreGive(g_m_mutex_for_aes);
 	return 0;
-}
-
-void aes_handle_task_func(void) {
-    int is_aes_handle;
-	while (1) {
-		if (xQueueReceive(aes_rx_queue, (void *)&is_aes_handle, portMAX_DELAY) == pdPASS) {
-			if(is_aes_handle == 1) {
-				ads_do_operate();
-			}
-		}
-	}
-}
-
-void aes_task_init(void) {
-    if (aes_rx_queue == NULL) {
-            aes_rx_queue = xQueueCreate(AES_RX_QUEUE_SIZE, sizeof(int));
-            if (aes_rx_queue == NULL) 
-            {
-                printf("aes_rx_queue create failed. \n");
-                return -1;
-            }
-            configASSERT(aes_rx_queue);
-            vQueueAddToRegistry(aes_rx_queue, "aes handle");
-    }
-    
-    if (pdPASS != xTaskCreate(aes_handle_task_func,"aes_test",1024,NULL,1,NULL)) {
-        LOG_E(common, "create user task fail");
-        return -1;
-    }
-    g_m_mutex_for_aes = xSemaphoreCreateMutex(); 
 }
 
 void ads_do_operate(void) {
@@ -111,20 +80,20 @@ void ads_do_operate(void) {
             .length = sizeof(data_buffer)//*len
         };
 
-	    ret = hal_aes_cbc_decrypt(&decrypted_text, &encrypted_text, &key, g_iv);
+        ret = hal_aes_cbc_decrypt(&decrypted_text, &encrypted_text, &key, g_iv);
 
         if(ret != HAL_AES_STATUS_OK) {
             printf(" \n =====> halAES decrypt data error <===== \n");
             goto end;
         }
 
-	    if(decrypted_text.length > 0) {
+        if(decrypted_text.length > 0) {
             os_memset(g_data, 0x00, 1280);
-	        g_len = decrypted_text.length;
-	        os_memcpy(g_data, decrypted_text.buffer, decrypted_text.length);
+            g_len = decrypted_text.length;
+            os_memcpy(g_data, decrypted_text.buffer, decrypted_text.length);
         } else {
-			printf("decrypted_text.length error. \n");
-		}
+            printf("decrypted_text.length error. \n");
+        }
     } else {
         uint8_t padding_size = 16 - g_len%16;
         uint32_t encrypted_len = g_len+padding_size;
@@ -153,6 +122,36 @@ end:
     if(g_current_task_id != NULL) {
         vTaskResume(g_current_task_id);
     }
+}
+
+void aes_handle_task_func(void *args) {
+    int is_aes_handle;
+	while (1) {
+		if (xQueueReceive(aes_rx_queue, (void *)&is_aes_handle, portMAX_DELAY) == pdPASS) {
+			if(is_aes_handle == 1) {
+				ads_do_operate();
+			}
+		}
+	}
+}
+
+void aes_task_init(void) {
+    if (aes_rx_queue == NULL) {
+            aes_rx_queue = xQueueCreate(AES_RX_QUEUE_SIZE, sizeof(int));
+            if (aes_rx_queue == NULL) 
+            {
+                printf("aes_rx_queue create failed. \n");
+                return;
+            }
+            configASSERT(aes_rx_queue);
+            vQueueAddToRegistry(aes_rx_queue, "aes handle");
+    }
+    
+    if (pdPASS != xTaskCreate(aes_handle_task_func,"aes_test",1024,NULL,1,NULL)) {
+        LOG_E(common, "create user task fail");
+        return;
+    }
+    g_m_mutex_for_aes = xSemaphoreCreateMutex(); 
 }
 
 #else
@@ -205,9 +204,9 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
         // APPPRINTF("\r\n");
         if (0 == ret) {
             *len -= out[*len - 1];
-            memcpy(data, out, *len);
+            os_memcpy(data, out, *len);
         }
-        //APPLOG("dec *len is [%d] ret[%d] END", *len, ret);
+        APPLOG("dec *len is [%d] ret[%d] END", *len, ret);
 
     } else {
         int blocks = 0, padSize = 0, i = 0;
@@ -229,9 +228,9 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
         mbedtls_aes_setkey_enc(&ginAESCtx, key, keyLen);
         ret = mbedtls_aes_crypt_cbc(&ginAESCtx, MBEDTLS_AES_ENCRYPT, *len, iv, data, out);
         if (0 == ret) {
-            memcpy(data, out, *len);
+            os_memcpy(data, out, *len);
         }
-        //APPLOG("enc *len is [%d] ret[%d] END", *len, ret);
+        APPLOG("enc *len is [%d] ret[%d] END", *len, ret);
     }
     
 

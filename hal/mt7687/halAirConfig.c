@@ -10,9 +10,11 @@
 #include "stdio.h"
 #include "stddef.h"
 #include "os.h"
+#include "network_init.h"
 
 //static int startApListen(void);
 extern int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
+extern int airconfig_stop();
 extern int8_t gin_airconfig_sniffer_got;
 extern int8_t gin_airconfig_ap_connected;
 extern void network_dhcp_start(uint8_t opmode);
@@ -142,13 +144,11 @@ int halDoApConnect(void *ptr, int ptrLen) {
 }
 
 int halDoApConnecting(void *ptr, int ptrLen) {
-    uint32_t task_id = halGetCurrentTaskId();
     if(ginSanDone)
     {
         ginSanDone = 0;
         wifi_connect_one_sta_start(ginSSID, ginPassword, ginChannel);
     }
-    APPLOG("halDoApConnecting in hal[%d][%d]", task_id, gin_airconfig_ap_connected);
     return gin_airconfig_ap_connected;
 }
 

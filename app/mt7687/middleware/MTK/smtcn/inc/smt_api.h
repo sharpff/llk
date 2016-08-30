@@ -193,8 +193,6 @@ wifi_smart_connection_status_t wifi_smart_connection_get_result (uint8_t *ssid, 
 */
 wifi_smart_connection_status_t wifi_smart_connection_stop(void);
 
-#define CFG_SUPPORT_SMNT_PROTO 6
-
 #ifdef __cplusplus
 }
 #endif

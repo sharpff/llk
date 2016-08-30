@@ -10,59 +10,60 @@
 #include <lelink/sw/io.h>
 #endif
 
-void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
+void *halUartOpen(uartHandler_t* handler) {
+//void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
     int ret = 0;
     mdev_t *hdl = NULL;
-    switch (stopBits) {
+    switch (handler->stopBits) {
         case 1: {
-            stopBits = UART_STOPBITS_1;
+            handler->stopBits = UART_STOPBITS_1;
         } break;
         case 2: {
-            stopBits = UART_STOPBITS_2;
+            handler->stopBits = UART_STOPBITS_2;
         } break;
         default:
             return NULL;
         break;
     }
 
-    switch (dataBits) {
+    switch (handler->dataBits) {
         case 8: {
-            dataBits = UART_8BIT;
+            handler->dataBits = UART_8BIT;
         } break;
         case 9: {
-            dataBits = UART_9BIT;
+            handler->dataBits = UART_9BIT;
         } break;
         default:
             return NULL;
         break;
     }
 
-    ret = uart_drv_init(UART1_ID, dataBits);
+    ret = uart_drv_init(handler->id, handler->dataBits);
     APPLOG("uart_drv_init [%d] ", ret);
-    ret = uart_drv_set_opts(UART1_ID, parity, stopBits, flowCtrl);
+    ret = uart_drv_set_opts(handler->id, handler->parity, handler->stopBits, handler->flowCtrl);
     APPLOG("uart_drv_set_opts [%d] ", ret);
-    hdl = uart_drv_open(UART1_ID, baud);
+    hdl = uart_drv_open(handler->id, handler->baud);
     APPLOG("uart_drv_open [0x%p] ", hdl);
-
+    handler->handler = (void*)hdl;
     return hdl;
 }
 
-int halUartClose(void *dev) {
-    return uart_drv_close((mdev_t *)dev);
+int halUartClose(uartHandler_t* handler) {
+    return uart_drv_close((mdev_t *)handler->handler);
 }
 
 #define TO_DO_FOR_HONYAR_BUG    0
-int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
+int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
 #if TO_DO_FOR_HONYAR_BUG
     int i = 0;
 #endif
-    int ret = uart_drv_read((mdev_t *)dev, buf, len);
+    int ret = uart_drv_read((mdev_t *)handler->handler, buf, len);
     int tmpLen = 0;
     if (0 < ret) {
         do {
             tmpLen += ret;
             //APPLOG("snap [%d]", ret);
-            ret = uart_drv_read((mdev_t *)dev, buf + tmpLen, len - tmpLen);
+            ret = uart_drv_read((mdev_t *)handler->handler, buf + tmpLen, len - tmpLen);
         } while (0 < ret);
 #if TO_DO_FOR_HONYAR_BUG
         APPLOG("halUartRead tmpLen [%d]", tmpLen);
@@ -75,12 +76,12 @@ int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     return tmpLen;
 }
 
-int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
+int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
     int ret = 0;
 #if TO_DO_FOR_HONYAR_BUG
     int i = 0;
 #endif
-    ret = uart_drv_write((mdev_t *)dev, buf, len);
+    ret = uart_drv_write((mdev_t *)handler->handler, buf, len);
 #if TO_DO_FOR_HONYAR_BUG
     APPLOG("---------------------------------------------------------");
     APPLOG("uart_drv_write [%d] ", ret);
@@ -94,87 +95,70 @@ int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
     return ret;
 }
 
-static struct _gpioTable{
-    int8_t id;
-    int8_t gpio;
-    int8_t used;
-    GPIO_PinMuxFunc_Type fun;
-} gpioTable[] = {
-    {1, 48, 0, GPIO48_GPIO48}, // key
-    {2, 49, 0, GPIO49_GPIO49}, // led
-    {3, 39, 0, GPIO39_GPIO39}, // hub
-};
-#define GPIO_SUPPORT_NUM   ((int)(sizeof(gpioTable)/sizeof(gpioTable[0])))
+mdev_t *g_gpio_dev = NULL;
+
+void halCommonInit(commonManager_t* dev) {
+    int i = 0;
+    gpio_drv_init();
+    if(!(g_gpio_dev = gpio_drv_open("MDEV_GPIO"))) {
+        return;
+    }
+    for(i=0; i<dev->num; i++) {
+        GPIO_PinMuxFun(dev->table[i].id, dev->table[i].mux);
+    }
+}
 
 void* halGPIOInit(void) {
-    mdev_t *gpio_dev;
-
-    gpio_drv_init();
-    if(!(gpio_dev = gpio_drv_open("MDEV_GPIO"))) {
-        return NULL;
-    }
-    return (void *)gpio_dev;
+    return (void *)g_gpio_dev;
 }
 
-int halGPIOOpen(int8_t id, int8_t dir, int8_t mode) {
-    int i;
-    struct _gpioTable *p;
-
-    for(i = 0, p = gpioTable; i < GPIO_SUPPORT_NUM; i++, p++) {
-        if(p->id == id && !p->used) {
-            break;
-        }
-    }
-    if(i == GPIO_SUPPORT_NUM) {
-        return -1;
-    }
-    GPIO_PinMuxFun(p->gpio, p->fun);
-    switch(dir)
+int halGPIOOpen(gpioHandler_t* handler) {
+    handler->handler = (void *)g_gpio_dev;
+    switch(handler->dir)
     {
         case GPIO_DIR_INPUT:
-            GPIO_SetPinDir(p->gpio, GPIO_INPUT);
+            GPIO_SetPinDir(handler->id, GPIO_INPUT);
             break;
         case GPIO_DIR_OUTPUT:
-            GPIO_SetPinDir(p->gpio, GPIO_OUTPUT);
+            GPIO_SetPinDir(handler->id, GPIO_OUTPUT);
             break;
         default:
             return -1;
     }
-    switch(mode)
+    switch(handler->mode)
     {
         case GPIO_MODE_DEFAULT:
-            GPIO_PinModeConfig(p->gpio, PINMODE_DEFAULT);
+            GPIO_PinModeConfig(handler->id, PINMODE_DEFAULT);
             break;
         case GPIO_MODE_PULLUP:
-            GPIO_PinModeConfig(p->gpio, PINMODE_PULLUP);
+            GPIO_PinModeConfig(handler->id, PINMODE_PULLUP);
             break;
         case GPIO_MODE_PULLDOWN:
-            GPIO_PinModeConfig(p->gpio, PINMODE_PULLDOWN);
+            GPIO_PinModeConfig(handler->id, PINMODE_PULLDOWN);
             break;
         case GPIO_MODE_NOPULL:
-            GPIO_PinModeConfig(p->gpio, PINMODE_NOPULL);
+            GPIO_PinModeConfig(handler->id, PINMODE_NOPULL);
             break;
         case GPIO_MODE_RISTATE:
-            GPIO_PinModeConfig(p->gpio, PINMODE_TRISTATE);
+            GPIO_PinModeConfig(handler->id, PINMODE_TRISTATE);
             break;
         default:
             return -1;
     }
-    p->used = 1;
-    return p->gpio;
+    return handler->id;
 }
 
-int halGPIOClose(void *dev) {
-    if(!dev) {
+int halGPIOClose(gpioHandler_t* handler) {
+    if(!g_gpio_dev) {
         return -1;
     }
-    gpio_drv_close(dev);
+    gpio_drv_close(g_gpio_dev);
+    g_gpio_dev = NULL;
     return 0;
 }
 
-int halGPIORead(void *dev, int gpio, int *val) {
-    int ret = gpio_drv_read((mdev_t *)dev, gpio, val);
-
+int halGPIORead(gpioHandler_t* handler, int *val) {
+    int ret = gpio_drv_read((mdev_t *)handler->handler, handler->id, val);
     if (0 > ret) {
         return -1;
     }
@@ -182,12 +166,35 @@ int halGPIORead(void *dev, int gpio, int *val) {
     return sizeof(*val);
 }
 
-int halGPIOWrite(void *dev, int gpio, const int val) {
+int halGPIOWrite(gpioHandler_t* handler, const int val) {
     int v;
-
     v = (val ==  GPIO_STATE_LOW) ? GPIO_IO_LOW : GPIO_IO_HIGH;
-    gpio_drv_write((mdev_t *)dev, gpio, v);
+    gpio_drv_write((mdev_t *)handler->handler, handler->id, v);
     return sizeof(val);
+}
+
+void halPWMWrite(pwmHandler_t *handler, uint32_t percent) {
+
+}
+
+void halPWMRead(pwmHandler_t *handler, uint32_t *percent) {
+
+}
+
+void halPWMSetFrequency(pwmHandler_t *handler) {
+
+}
+
+int halPWMClose(pwmHandler_t *handler) {
+    return 0;
+}
+
+int halPWMOpen(pwmHandler_t *handler) {
+    return 0;
+}
+
+void* halPWMInit(int clock) {
+    return 0xffffffff;
 }
 
 void *halPipeOpen(char *name) {

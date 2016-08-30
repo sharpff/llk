@@ -66,7 +66,7 @@ int halHttpOpen(OTAInfo_t *info, const char *url) {
     ret = httpclient_connect(&g_fota_httpclient, get_url, HTTP_PORT);
 
 	if (ret) {
-        APPLOG("[FOTA CLI] http client connect error. \r");
+        APPLOGE("[FOTA CLI] http client connect error. \r");
     }
     
 	info->session = (void *)&g_fota_httpclient;
@@ -96,8 +96,7 @@ static int32_t _fota_http_retrieve_get_for_lelink(char* get_url, char* buf, uint
 
 	ret = httpclient_send_request(&g_fota_httpclient, get_url, HTTPCLIENT_GET, &client_data);
 	if (ret < 0) {
-		
-		 APPLOG("[FOTA CLI] http client fail to send request.");
+		APPLOGE("[FOTA CLI] http client fail to send request.");
 		return ret;
 	}
 
@@ -111,31 +110,21 @@ static int32_t _fota_http_retrieve_get_for_lelink(char* get_url, char* buf, uint
 			recv_temp = client_data.response_content_len;
 		}
 
-		//APPLOG("[FOTA CLI]retrieve_len = %d", client_data.retrieve_len);
 		data_len = recv_temp - client_data.retrieve_len;
-		//APPLOG("[FOTA CLI]data_len = %u", data_len);
-		
+
 		count += data_len;
 		recv_temp = client_data.retrieve_len;
 		vTaskDelay(100);/* Print log may block other task, so sleep some ticks */
-		//APPLOG("[FOTA CLI]total data received %u", count);
-		//client_data.response_buf[5] = '\0';
-		//if (strcmp(string_table[seg++], client_data.response_buf) != 0) {
-		//	  return -1;
-		//}
 		write_ret = fota_write(FOTA_PARITION_TMP, (const uint8_t*)client_data.response_buf, data_len);
 		if (FOTA_STATUS_OK != write_ret) {
-			 APPLOG("fail to write flash, write_ret = %d", write_ret);
+			 APPLOGE("fail to write flash, write_ret = %d", write_ret);
 			return ret;
 		}
-
-		//APPLOG("[FOTA CLI] download progrses = %u", count * 100 / client_data.response_content_len);
-		
 	} while (ret == HTTPCLIENT_RETRIEVE_MORE_DATA);
 
 	//APPLOG("[FOTA CLI]total length: %d", client_data.response_content_len);
 	if (count != client_data.response_content_len || httpclient_get_response_code(&g_fota_httpclient) != 200) {
-		 APPLOG("[FOTA CLI]data received not completed, or invalid error code");
+		 APPLOGE("[FOTA CLI]data received not completed, or invalid error code");
 		return -1;
 	}
 
@@ -147,12 +136,12 @@ int halUpdateFirmware(OTAInfo_t *info) {
 	int32_t ret = HTTPCLIENT_ERROR_CONN;
 
 	if (fota_init(&fota_flash_default_config) != FOTA_STATUS_OK) {
-		 APPLOG("[FOTA CLI] fota init fail. \n");
+		 APPLOGE("[FOTA CLI] fota init fail. \n");
 		return -2;
 	}
 	char* buf = pvPortMalloc(FOTA_BUF_SIZE);
 	if (buf == NULL) {
-		 APPLOG("buf malloc failed.");
+		 APPLOGE("buf malloc failed.");
 		return -3;
 	}
 
@@ -163,13 +152,9 @@ int halUpdateFirmware(OTAInfo_t *info) {
 	if (!ret) {
 		ret = _fota_http_retrieve_get_for_lelink(get_url, buf, FOTA_BUF_SIZE);
 	}else {
-		 APPLOG("[FOTA CLI] http client connect error. ");
+		 APPLOGE("[FOTA CLI] http client connect error. ");
 	}
-
 	APPLOG("Download result = %d", (int)ret);
-
-	//httpclient_close(()info->session, HTTP_PORT);
-
 	vPortFree(buf);
 	buf = NULL;
 
@@ -177,7 +162,7 @@ int halUpdateFirmware(OTAInfo_t *info) {
     	//ret = lelinkVerify(p->start, info->imgLen);
      
     } else {
-    	APPLOG("lelinkVerify error!");
+    	APPLOGE("lelinkVerify error!");
     	return -1;
     }
 
@@ -187,10 +172,10 @@ int halUpdateFirmware(OTAInfo_t *info) {
 		err = fota_trigger_update();
 		if (0 == err ) {
 			hal_sys_reboot(HAL_SYS_REBOOT_MAGIC, WHOLE_SYSTEM_REBOOT_COMMAND);
-			 APPLOG("Reboot device!");
+			 APPLOGE("Reboot device!");
 			return 0;
 		} else {
-			 APPLOG("Trigger FOTA error!");
+			 APPLOGE("Trigger FOTA error!");
 			return -1;
 		}
 		return 0;
@@ -213,19 +198,16 @@ uint32_t halUpdate(OTAInfo_t *info, uint8_t *buf, uint32_t bufLen) {
 	ret = httpclient_send_request(&g_fota_httpclient, get_url, HTTPCLIENT_GET, &client_data);
 
 	if (ret < 0) {
-		
-		APPLOG("[FOTA CLI] http client fail to send request.\n");
+		APPLOGE("[FOTA CLI] http client fail to send request.\n");
 		return ret;
 	}
 
     if(info == NULL || buf == NULL) {
-        //APPLOGE("Update script paremeter error!");
-        APPLOG("Update script paremeter error!");
+        APPLOGE("Update script paremeter error!");
         return -1;
     }
     if(info->imgLen > MAX_PROFILE_SIZE) {
-        //APPLOGE("Script too large!");
-        APPLOG("Update script paremeter error!");
+        APPLOGE("Update script paremeter error!");
         return -2;
     }
 
@@ -238,14 +220,8 @@ uint32_t halUpdate(OTAInfo_t *info, uint8_t *buf, uint32_t bufLen) {
 		if (recv_temp == 0) {
 			recv_temp = client_data.response_content_len;
 		}
-
-		 APPLOG("[FOTA CLI]retrieve_len = %d", client_data.retrieve_len);
-		
 		data_len = recv_temp - client_data.retrieve_len;
-		 APPLOG("[FOTA CLI]data_len = %u", data_len);
-		
 		recv_temp = client_data.retrieve_len;
-		
         if (nSize + data_len > bufLen) {
             break;
         }
@@ -253,12 +229,8 @@ uint32_t halUpdate(OTAInfo_t *info, uint8_t *buf, uint32_t bufLen) {
     } while (ret == HTTPCLIENT_RETRIEVE_MORE_DATA);
 	
     if(nSize != info->imgLen) {
-        //APPLOGE("Get script data wrong, need %d bytes, but now %d bytes", info->imgLen, nSize);
-        APPLOG("Get script data wrong, need %d bytes, but now %d bytes", info->imgLen, nSize);
-        //return -3;
+        APPLOGE("Get script data wrong, need %d bytes, but now %d bytes", info->imgLen, nSize);
     }
-    //APPLOG("Update script successed [%d]", nSize);
     APPLOG("Update script successed [%d]", nSize);
-	
     return nSize;
 }

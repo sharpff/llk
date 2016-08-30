@@ -8,6 +8,7 @@
 #include "queue.h"
 #include "nvdm.h"
 
+//#define HW_AES
 
 #define DEBUG_APP
 #ifdef DEBUG_APP

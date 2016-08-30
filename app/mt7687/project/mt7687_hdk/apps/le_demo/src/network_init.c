@@ -556,7 +556,6 @@ static int32_t system_config_init(sys_config_t *sys_config)
 
 static void ip_change_call_back(struct netif *netif)
 {
-    uint8_t op_mode = 0;
     LOG_I(common, "ip_change_call_back");
     if (!ip4_addr_isany_val(netif->ip_addr)) {
         char ip_addr[17] = {0};
@@ -668,8 +667,6 @@ static void process_softap(void)
 
 void network_init(void)
 {
-    lwip_tcpip_config_t tcpip_config = {{0}, {0}, {0}, {0}, {0}, {0}};
-
     if (0 != system_config_init(&g_sys_config)) {
         LOG_E(common, "sys config init fail");
         return;

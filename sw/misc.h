@@ -71,10 +71,10 @@ typedef enum {
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port);
 int syncUTC(const char *json, int jsonLen);
-int getUartInfo(const char *json, int jsonLen, uartHand_t* uartHand);
-int getGPIOInfo(const char *json, int jsonLen, gpioHand_t *table, int n);
+int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler);
+int getGPIOInfo(const char *json, int jsonLen, gpioHandler_t *table, int n);
 int getPipeInfo(const char *json, int jsonLen, char *name, int size);
-int getPWMInfo(const char *json, int jsonLen, pwmHand_t *table, int n);
+int getPWMInfo(const char *json, int jsonLen, pwmHandler_t *table, int n);
 int getWhatCvtType(const char *json, int jsonLen);
 int getJsonUTC32(char *json, int jsonLen/*, const char *rmtJson, int rmtJsonLen*/);
 

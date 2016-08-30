@@ -42,7 +42,7 @@ int halSha1Start() {
 }
 
 int halSha1Update(const uint8_t *input, size_t ilen) {
-    hal_sha1_append( &ginSha1Ctx, input, ilen );
+    hal_sha1_append( &ginSha1Ctx, (uint8_t *)input, ilen );
     return 0;
 }
 

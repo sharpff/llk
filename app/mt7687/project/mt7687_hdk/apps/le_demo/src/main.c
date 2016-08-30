@@ -133,7 +133,9 @@ static int platform_launch_lelink_start(void) {
 		LOG_E(common, "create user task fail");
 		return -1;
 	}
+#ifdef HW_AES
     aes_task_init();
+#endif
     return 0;
 }
 

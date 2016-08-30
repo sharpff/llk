@@ -166,7 +166,7 @@ int getWhatCvtType(const char *json, int jsonLen) {
     return whatCvtType;
 }
 
-int getUartInfo(const char *json, int jsonLen, uartHand_t* uartHand) {
+int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler) {
     int ret = -1, num = 0, tmp, i = 0;
     char strBaud[96] = {0};
     jsontok_t jsonToken[NUM_TOKENS];
@@ -184,7 +184,7 @@ int getUartInfo(const char *json, int jsonLen, uartHand_t* uartHand) {
                 return -2;
             }
             if((ret = json_get_val_int(&jobj, JSON_NAME_UART_ID, &tmp)) == WM_SUCCESS) {
-                uartHand->id = tmp;
+                handler->id = tmp;
                 LELOG("getUartInfo id[%d]", tmp);
             }
             if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_UART_BAUD, strBaud, sizeof(strBaud))) {
@@ -194,12 +194,12 @@ int getUartInfo(const char *json, int jsonLen, uartHand_t* uartHand) {
     }
     // TODO: to support multi-uart
     LELOG("getUartInfo baud[%s]", strBaud);
-    sscanf(strBaud, "%u-%u%c%u", &uartHand->baud, &uartHand->dataBits, &uartHand->parity, &uartHand->stopBits);
-    LELOG("getUartInfo baud[%d] [%d] [%d] [%d]", uartHand->baud, uartHand->dataBits, uartHand->parity, uartHand->stopBits);
+    sscanf(strBaud, "%u-%u%c%u", &handler->baud, &handler->dataBits, &handler->parity, &handler->stopBits);
+    LELOG("getUartInfo baud[%d] [%d] [%d] [%d]", handler->baud, handler->dataBits, handler->parity, handler->stopBits);
     return 0;
 }
 
-int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
+int getGPIOInfo(const char *json, int jsonLen,  gpioHandler_t *table, int n)
 {
     jobj_t jobj;
     int i, num, ret, tmp, j = -1;
@@ -273,7 +273,7 @@ int getPipeInfo(const char *json, int jsonLen, char *name, int size) {
     return 0;
 }
 
-int getPWMInfo(const char *json, int jsonLen,  pwmHand_t *table, int n)
+int getPWMInfo(const char *json, int jsonLen,  pwmHandler_t *table, int n)
 {
     jobj_t jobj;
     int i = -1, num, ret, tmp;

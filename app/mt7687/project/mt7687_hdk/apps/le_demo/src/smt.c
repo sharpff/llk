@@ -17,7 +17,7 @@
 #include "syslog.h"
 #include "wifi_rx_desc.h"
 #include "nvdm.h"
-
+#include "os.h"
 #include "wlan.h"
 #include "airconfig.h"
 
@@ -43,7 +43,8 @@ extern int gin_airconfig_channel_cared[MAX_CHANNEL_CARE];
 extern int8_t gin_airconfig_sniffer_got;
 
 extern smtcn_info   saved_smtcn_info;
-
+extern int airconfig_stop();
+extern void atomic_write_smtcn_flag(uint8_t flag_value);
 
 static TimerHandle_t lelink_lock_timer = NULL;
 
@@ -210,10 +211,7 @@ int lelink_recv(char *p, int len)
 
 static int lelink_get_info(void)
 {
-
     xTimerStop(lelink_lock_timer, tmr_nodelay);
-
-
     atomic_write_smtcn_flag(SMTCN_FLAG_FIN);
     return 0;
 }

@@ -27,6 +27,7 @@ unsigned int halGetUTC(void)
     return 1234;
 }
 
+#if 0
 void *halCalloc(int n, size_t size) {
     void *ptr = malloc(n*size);
     if (ptr) {
@@ -40,11 +41,6 @@ void *halMalloc(size_t size) {
     return ptr;
 }
 
-void *halCalloc(int n, size_t size) {
-    void *ptr;
-    return ptr;
-}
-
 void *halRealloc(void *ptr, size_t size) {
     void *ptr1;
     return ptr1;
@@ -54,6 +50,34 @@ void halFree(void *ptr) {
     if (ptr)
         free(ptr);
 }
+#else
+void *halMallocEx(size_t size, char* filename, uint32_t line) {
+    void *ptr;
+    return ptr;
+}
+
+void *halCallocEx(int n, size_t size, char* filename, uint32_t line) {
+    void *ptr = malloc(n*size);
+    if(ptr==NULL) {
+        APPLOG("halCallocEx:%d",  n*size);
+    }
+    if (ptr) {
+        memset(ptr, 0x00, n*size);
+    }
+    return ptr;
+}
+
+void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line) {
+    void *ptr1;
+    return ptr1;
+}
+
+void halFreeEx(void *ptr, char* filename, uint32_t line) {
+    //APPLOG("halFreeEx:[0x%x][%d][%s]", ptr, line, filename);
+    if (ptr)
+        free(ptr);
+}
+#endif
 
 int halReboot() {
     return 0;
