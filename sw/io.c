@@ -51,9 +51,9 @@ static pwmManager_t ginPWMManager;
 static commonManager_t ginCommonManager;
 static uartHandler_t uartHandler;
 
-static void gpioCheckInput(gpioHandler_t *p);
-static void gpioCheckState(gpioManager_t *mgr, int index);
-static void pwmCheckState(pwmHandler_t *p);
+static void gpioCheckInput(gpioHandler_t *ptr);
+static void gpioCheckState(gpioHandler_t *ptr);
+static void pwmCheckState(pwmHandler_t *ptr);
 static void gpioInitState(gpioManager_t *mgr);
 
 static IOHDL ginIOHdl[] = {
@@ -754,6 +754,9 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
                     (q->dir == GPIO_DIR_INPUT) && (q->oldState == val)) {
                     gpioCheckInput(q);
                 }
+                if(q->type == GPIO_TYPE_OUTPUT_RESET && (q->dir == GPIO_DIR_OUTPUT)) {
+                    gpioCheckState(q);
+                }
                 if(q->oldState != val && q->oldState != q->state) {
                     data[k++] = q->id;
                     data[k++] = val;
@@ -848,47 +851,37 @@ static void pwmCheckState(pwmHandler_t *ptr) {
             count = 0;
         }
     }
-
 }
 
-static void gpioCheckState(gpioManager_t *mgr, int index) {
-
-    gpioHandler_t *ptr = &mgr->table[index];
-
-    if(ptr->type) {
-        if(ptr->dir == GPIO_DIR_INPUT) {
-            if(ptr->type == GPIO_TYPE_INPUT_RESET) {
-                if(s_resetLevel < RLED_STATE_ZIGBEE && ptr->gpiostate == GPIO_STATE_HIGH && ptr->keepHighTimes > ptr->shortTime) {
-                    s_resetLevel = (ptr->keepHighTimes > ptr->longTime) ? RLED_STATE_ZIGBEE : RLED_STATE_WIFI;
-                    LELOG("gpioCheckState key input [%d] [%d] [%d]",s_resetLevel, ptr->longTime, ptr->keepHighTimes);
-                }
+static void gpioCheckState(gpioHandler_t *ptr) {
+    static uint32_t count = 0;
+    if(s_resetLevel > RLED_STATE_FREE) {
+        count++;
+        if(s_resetLevel == RLED_STATE_ZIGBEE) {
+            if(count >= ptr->shortTime) {
+                ptr->state = !ptr->state;
+                LELOG("halGPIOWrite RLED_STATE_ZIGBEE [%d][%d]\n", ptr->id, ptr->state);
+                halGPIOWrite(ptr, ptr->state);
+                count = 0;
+            }
+        } else if(s_resetLevel == RLED_STATE_WIFI) {
+            if(count >= ptr->longTime) {
+                ptr->state = !ptr->state;
+                LELOG("halGPIOWrite RLED_STATE_WIFI [%d][%d]\n", ptr->id, ptr->state);
+                halGPIOWrite(ptr, ptr->state);
+                count = 0;
             }
         } else {
-            if(ptr->type == GPIO_TYPE_OUTPUT_RESET) {
-                ptr->state = (s_resetLevel == RLED_STATE_FREE) ? ptr->freestate : GPIO_STATE_BLINK;
-            }
-
-            if(ptr->state == GPIO_STATE_BLINK) {
-                uint8_t kt = ptr->blink;
-                uint8_t times = (ptr->gpiostate == GPIO_STATE_LOW) ? ptr->keepLowTimes : ptr->keepHighTimes;
-
-                if(ptr->type == GPIO_TYPE_OUTPUT_RESET && s_resetLevel > RLED_STATE_FREE) {
-                    kt = (s_resetLevel == RLED_STATE_WIFI) ? ptr->shortTime : ptr->longTime;
-                }
-                if(kt > 0 && times > kt) {
-                    halGPIOWrite(ptr, !ptr->gpiostate);
-                }
-            }
-        } 
+            count = 0;
+            LELOG("gpioCheckState error\n");
+        }
+    } else {
+        if (!ptr->state) {
+            ptr->state = 1;
+            halGPIOWrite(ptr, 0);
+        }
+        count = 0;
     }
-    if(ptr->dir == GPIO_DIR_OUTPUT) {
-        if(ptr->state == GPIO_STATE_LOW || ptr->state == GPIO_STATE_HIGH) {
-            if(ptr->state != ptr->gpiostate) {
-                halGPIOWrite(ptr, ptr->state);
-            }
-        } 
-    }
-    
 }
 
 void ioDeinit(int ioType, void *hdl) {
