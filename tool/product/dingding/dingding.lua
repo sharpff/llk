@@ -113,7 +113,7 @@ end
 ]]
 function s1CvtPri2Std(bin)
 	local dataTbl = {}
-	local str = '{"switcher":%d}'
+	local str = '{"mode":%d}'
 	dataTbl = stringToTable(bin)
 	-- for i = 1, #bin
 	-- 		 (bin[i])
