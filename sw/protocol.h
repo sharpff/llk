@@ -53,6 +53,7 @@ enum
 typedef enum
 {
     LELINK_CMD_ASYNC_OTA_REQ = 1,
+    LELINK_CMD_ASYNC_OTA_RSP,
     /*
      * send this cmd only for a case that getting AP connection 
      * by the wlan configure info in the air 
@@ -189,6 +190,7 @@ typedef enum
      * handle the async request
      */
     LELINK_SUBCMD_ASYNC_OTA_REQ = 1,
+    LELINK_SUBCMD_ASYNC_OTA_RSP
 }E_LELINK_SUBCMD;
 
 
