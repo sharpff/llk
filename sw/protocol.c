@@ -180,6 +180,7 @@ static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
 static int cbCloudIndMsgLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 
 static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbAsyncOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 
 
 static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHeaderInfo *cmdInfo);
@@ -270,6 +271,7 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_MSG_RSP, NULL, cbCloudIndMsgLocalRsp},
 
     { LELINK_CMD_ASYNC_OTA_REQ, LELINK_SUBCMD_ASYNC_OTA_REQ, cbAsyncOTALocalReq, NULL },
+    { LELINK_CMD_ASYNC_OTA_RSP, LELINK_SUBCMD_ASYNC_OTA_RSP, cbAsyncOTARemoteRsp, NULL },
 
     { 0, 0, 0, 0 }
 };
@@ -865,7 +867,7 @@ static int doQ2ARemoteReq(void *ctx,
         ((CmdHeaderInfo *)cmdInfo)->subCmdId++;
         ret = ((CBLocalRsp) localRspPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen, nwBufOut, nwBufLen); // do sth local rsp
         if (0 >= ret) {
-            LELOGE("CBLocalRsp ret 0, it is impossible");
+            LELOGE("CBLocalRsp ret 0, it is impossible [%d]", ret);
             return -0xC;
         }
         if (repeat > 1) {
@@ -1199,8 +1201,9 @@ static int isNeedDelCB(NodeData *currNode) {
                 strcpy(node.ndIP, currNode->ndIP);
                 node.ndPort = currNode->ndPort;
                 node.reserved2 = (0 == --currNode->reserved2) ? 0xFF : currNode->reserved2;
+                memcpy(node.uuid, currNode->uuid, MAX_UUID);
                 lelinkNwPostCmdExt(&node);
-                LELOG("RETRY doing... retry[%d]", node.reserved2);
+                LELOG("RETRY doing... retry[%d] uuid[%s]", node.reserved2, node.uuid);
             }
         }
 
@@ -1942,7 +1945,7 @@ static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInf
     } else {
         NodeData node = {0};
         type = getJsonOTAType(data + RSA_LEN, len - RSA_LEN, url, sizeof(url));
-        LELOG("TOTOAL[%d] type[%d] json[%d][%s]", len, type, len - RSA_LEN, (char *)data + RSA_LEN);
+        LELOG("TOTOAL[%d] type[%d] json[%d][%s] url[%s]", len, type, len - RSA_LEN, (char *)data + RSA_LEN, url);
 
     	{
     		int i = 0; 
@@ -2178,6 +2181,10 @@ static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
 
     LELOG("cbAsyncOTALocalReq -e");
     return 0;
+}
+
+static void cbAsyncOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    
 }
 
 
