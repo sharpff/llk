@@ -959,7 +959,6 @@ int sengineHasDevs(void) {
 }
 
 int s1apiGetCurrCvtType(lua_State *L) {
-    //LELOG("[SENGINE] s1apiGetCurrCvtType %d", ginCurrCvtType);
     lua_pushnumber(L, ginCurrCvtType);    //key  
     return 1;
 }
@@ -1174,7 +1173,7 @@ int s2apiGetLatestStatus(lua_State *L) {
 }
 
 int sengineSetStatus(char *json, int jsonLen) {
-    int ret = 0;
+    int ret = 0, i, type, size;
     uint8_t bin[512] = {0};
     char jsonMerged[2*MAX_BUF] = {0};
     // char *jsonOut = json;
@@ -1225,11 +1224,15 @@ int sengineSetStatus(char *json, int jsonLen) {
             bytes2hexStr(bin, ret, hexStr, sizeof(hexStr));
             LELOG("bin[%s]", hexStr);
         }
-
-        ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, bin, ret);
-        if (ret <= 0) {
-            LELOGW("sengineSetStatus ioWrite [%d]", ret);
-            continue;
+        for(i=0; i<ret; ) {
+            type = bin[i];
+            size = bin[i+1];
+            if(type == ioHdl[x].ioType) {
+                ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &bin[i+2], size);
+                LELOG("sengineSetStatus ioWrite [%d]", size);
+                break;
+            }
+            i = i+ size + 2;
         }
     FOR_EACH_IO_HDL_END;
     
@@ -1270,10 +1273,9 @@ int sengineQuerySlave(QuerieType_t type)
     FOR_EACH_IO_HDL_START;
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
                 (uint8_t *)&type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
-        
-        //LELOGW("sengineQuerySlave query [%d][%d]", ret, ioHdl[x].ioType);
+
         if (ret <= 0) {
-            //LELOGW("sengineQuerySlave sengineCall("S1_GET_QUERIES") [%d][%d]", ret, ioHdl[x].ioType);
+            //LELOGW("sengineQuerySlave sengineCall("S1_GET_QUERIES") [%d]", ret);
             continue;
         }
 
@@ -1281,7 +1283,7 @@ int sengineQuerySlave(QuerieType_t type)
             memcpy(&currLen, &queries.arrQueriesCounts[i], 2);
             ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &(queries.arrQueries[appendLen]), currLen);
             if (ret <= 0) {
-                //LELOGW("sengineQuerySlave ioWrite [%d]", ret);
+                LELOGW("sengineQuerySlave ioWrite [%d]", ret);
                 break;
             }
         }
@@ -1399,7 +1401,7 @@ int senginePollingSlave(void) {
                         int len = 0;
                         len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                                 &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
-                        // LELOG("sengineCall len = %d. [%s]", len, status);
+                        // LELOGE("sengineCall len = %d. [%s]", len, status);
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else if (cacheIsChanged(status, len)) {

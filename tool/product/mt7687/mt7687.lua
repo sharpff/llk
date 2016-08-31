@@ -103,14 +103,25 @@ end
 function s1CvtStd2Pri(json)
     local i = 0, val
     local j = 0
-    local cmdtb = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    local cmdtb = {16, 8, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 0, 0, 0, 0}
     local tb = cjson.decode(json)
     local ctrl = tb["pwm"]
+    local ctrl1 = tb["gpio"]
+    i = i + 2
     for j = 1, 4 do
 	val = ctrl[j]["id"]
         i = i + 1
         cmdtb[i] = val
         val = ctrl[j]["val"]
+        i = i + 1
+        cmdtb[i] = val
+    end
+    i = i + 2
+    for j = 1, 2 do
+	val = ctrl1[j]["id"]
+        i = i + 1
+        cmdtb[i] = val
+        val = ctrl1[j]["val"]
         i = i + 1
         cmdtb[i] = val
     end
@@ -157,9 +168,9 @@ function s1CvtPri2Std(bin)
                 end
             end
             if datatb[8] == 0 then
-                str = string.format(status, datatb[1], datatb[2], datatb[3], datatb[4], datatb[5], datatb[6], datatb[7], 255, datatb[9], datatb[10], datatb[11], 1)
+                str = string.format(status, datatb[1], datatb[2], datatb[3], datatb[4], datatb[5], datatb[6], datatb[7], 255, datatb[9], datatb[10], datatb[11], 0)
             else
-                str = string.format(status, datatb[1], datatb[2], datatb[3], datatb[4], datatb[5], datatb[6], datatb[7], 0, datatb[9], datatb[10], datatb[11], 0)
+                str = string.format(status, datatb[1], datatb[2], datatb[3], datatb[4], datatb[5], datatb[6], datatb[7], 0, datatb[9], datatb[10], datatb[11], 1)
             end
         end
     end

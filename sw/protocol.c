@@ -1638,7 +1638,7 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
     } else {
         syncUTC((const char *)dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
-        halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+        halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
         changeStateId(E_STATE_CLOUD_AUTHED);
     }
     LELOG("cbCloudAuthRemoteRsp -e");
@@ -1874,14 +1874,14 @@ static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdIn
     	LEPRINTF("\r\n");
     }
     otaSetLatestSig(dataIn);
-    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
     LELOG("cbCloudReportOTAQueryRemoteRsp -e");
     return;
 }
 
 static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    char rmtCtrl[1024] = {0};
+    char rmtCtrl[MAX_BUF] = {0};
     LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -s");
 
     if (otaGetLatestSig()) {
@@ -1933,7 +1933,7 @@ static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInf
     // uint8_t sig[RSA_LEN] = {0};
     CmdHeaderInfo* tmpCmdInfo = (CmdHeaderInfo *)cmdInfo;
     const char *urlPtr = otaGetLatestUrl();
-    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp url[0x%p] -s", urlPtr);
+    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp url[0x%p] lenWithRSA[%d] -s", urlPtr, len);
 
 
     if (NULL != urlPtr) {

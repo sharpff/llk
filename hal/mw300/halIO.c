@@ -11,7 +11,6 @@
 #endif
 
 void *halUartOpen(uartHandler_t* handler) {
-//void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
     int ret = 0;
     mdev_t *hdl = NULL;
     switch (handler->stopBits) {
