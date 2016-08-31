@@ -1224,16 +1224,13 @@ int sengineSetStatus(char *json, int jsonLen) {
             bytes2hexStr(bin, ret, hexStr, sizeof(hexStr));
             LELOG("bin[%s]", hexStr);
         }
-        for(i=0; i<ret; ) {
-            type = bin[i];
-            size = bin[i+1];
-            if(type == ioHdl[x].ioType) {
-                ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &bin[i+2], size);
-                LELOG("sengineSetStatus ioWrite [%d]", size);
-                break;
-            }
-            i = i+ size + 2;
+
+        ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, bin, ret);
+        if (ret <= 0) {
+            LELOGW("sengineSetStatus ioWrite [%d]", ret);
+            continue;
         }
+
     FOR_EACH_IO_HDL_END;
     
     // }

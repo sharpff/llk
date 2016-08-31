@@ -105,25 +105,28 @@ function s1CvtStd2Pri(json)
     local j = 0
     local cmdtb = {16, 8, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 0, 0, 0, 0}
     local tb = cjson.decode(json)
-    local ctrl = tb["pwm"]
-    local ctrl1 = tb["gpio"]
-    i = i + 2
-    for j = 1, 4 do
-	val = ctrl[j]["id"]
-        i = i + 1
-        cmdtb[i] = val
-        val = ctrl[j]["val"]
-        i = i + 1
-        cmdtb[i] = val
+    local cvtType = s1apiGetCurrCvtType()
+    if cvtType == 16 then
+        local ctrl = tb["pwm"]
+        for j = 1, 4 do
+	    val = ctrl[j]["id"]
+            i = i + 1
+            cmdtb[i] = val
+            val = ctrl[j]["val"]
+            i = i + 1
+            cmdtb[i] = val
+        end
     end
-    i = i + 2
-    for j = 1, 2 do
-	val = ctrl1[j]["id"]
-        i = i + 1
-        cmdtb[i] = val
-        val = ctrl1[j]["val"]
-        i = i + 1
-        cmdtb[i] = val
+    if cvtType == 2 then
+        local ctrl1 = tb["gpio"]
+        for j = 1, 2 do
+	    val = ctrl1[j]["id"]
+            i = i + 1
+            cmdtb[i] = val
+            val = ctrl1[j]["val"]
+            i = i + 1
+            cmdtb[i] = val
+        end
     end
     local cmd = tableToString(cmdtb)
     return i, cmd
