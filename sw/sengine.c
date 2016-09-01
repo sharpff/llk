@@ -1173,7 +1173,7 @@ int s2apiGetLatestStatus(lua_State *L) {
 }
 
 int sengineSetStatus(char *json, int jsonLen) {
-    int ret = 0, i, type, size;
+    int ret = 0;
     uint8_t bin[512] = {0};
     char jsonMerged[2*MAX_BUF] = {0};
     // char *jsonOut = json;

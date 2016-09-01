@@ -44,7 +44,7 @@ void *halUartOpen(uartHandler_t* handler) {
     hdl = uart_drv_open(handler->id, handler->baud);
     APPLOG("uart_drv_open [0x%p] ", hdl);
     handler->handler = (void*)hdl;
-    return hdl;
+    return handler;
 }
 
 int halUartClose(uartHandler_t* handler) {
@@ -193,7 +193,7 @@ int halPWMOpen(pwmHandler_t *handler) {
 }
 
 void* halPWMInit(int clock) {
-    return 0xffffffff;
+    return (void *)0xffffffff;
 }
 
 void *halPipeOpen(char *name) {
