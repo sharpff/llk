@@ -80,7 +80,9 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                     status = halUpdate((void *)&info, (uint8_t *)(tmpScriptCfg->data.script), sizeof(tmpScriptCfg->data.script));
                     if(0 < status) {
                         tmpScriptCfg->data.size = status;
-                        ret = lelinkVerifyBuf(tmpScriptCfg->data.script, sizeof(tmpScriptCfg->data.script));
+                        ret = lelinkVerifyBuf(tmpScriptCfg->data.script, strlen(tmpScriptCfg->data.script));
+                        // test only
+                        // ret = 0;
                         if (0 > ret) { // recover the fw script, for ia script, it is no need to recover. cause ginScriptCfg2 is just a tmp var.
                             if (OTA_TYPE_FW_SCRIPT == type) {
                                 ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);

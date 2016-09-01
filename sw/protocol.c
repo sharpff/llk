@@ -911,9 +911,9 @@ int lelinkNwPostCmd(void *ctx, const void *node)
         node_p->timeoutRef = 1;
     }
     if (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId) {
-        node_p->timeoutRef = 2;
+        node_p->timeoutRef = 3;
     }
-    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort);
+    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef);
 
     // if (node_p->ndPort) {
     //     memcpy(node.ndIP, ipTmp, MAX_IPLEN);
@@ -952,7 +952,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
 }
 
 static int isFromRemote(const CommonCtx *ctx, const char *ip, uint16_t len, uint16_t port) {
-    return 0 == memcmp(ip, ctx->remoteIP, len) ? 1 : 0;
+    return 0 == strcmp(ip, ctx->remoteIP) ? 1 : 0;
 }
 
 // static int isCommingFromItself(const CommonCtx *ctx, const char *ip, uint16_t port) {
@@ -1908,7 +1908,7 @@ static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInf
     return ret;
 }
 static void cbCloudMsgCtrlC2RDoOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -s");
+    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp status[%d] -s", cmdInfo->status);
     if (0 < dataLen) {
         LELOG("[%d][%s]", dataLen, (char *)dataIn);
     }
@@ -1928,7 +1928,7 @@ static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdIn
     return 1;
 }
 
-static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     int type = 0;
     char url[MAX_BUF] = {0};
@@ -1947,44 +1947,50 @@ static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInf
         type = getJsonOTAType(data + RSA_LEN, len - RSA_LEN, url, sizeof(url));
         LELOG("TOTOAL[%d] type[%d] json[%d][%s] url[%s]", len, type, len - RSA_LEN, (char *)data + RSA_LEN, url);
 
-    	{
-    		int i = 0; 
-    		LELOG("---------------signature remote----------------");
-    		for (i = 0; i < RSA_LEN; i++) {
-    			LEPRINTF("%02x ", data[i]);
-    			if (0 == (i + 1)%16) {
-    				LEPRINTF("\r\n");
-    			}
-    		}
-    		LEPRINTF("\r\n");
-    	}
-        node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
-        node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
-        ret = lelinkNwPostCmd(ctx, &node);
-        if (!ret) {
-            tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
-        }
-        if (0 <= type && ret) {
-            switch (type) {
-                case OTA_TYPE_FW:
-                case OTA_TYPE_FW_SCRIPT:
-                case OTA_TYPE_IA_SCRIPT: {
-			        LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp type[%d], ret[%d]", type, ret);
-                    otaSetLatestSig(data);
-                }break;
-                case OTA_TYPE_PRIVATE:
-                case OTA_TYPE_AUTH: {
-                    otaSetLatestSig(NULL);
-                }break;
-                default:
-                    break;
+        {
+            int i = 0; 
+            LELOG("---------------signature remote----------------");
+            for (i = 0; i < RSA_LEN; i++) {
+                LEPRINTF("%02x ", data[i]);
+                if (0 == (i + 1)%16) {
+                    LEPRINTF("\r\n");
+                }
             }
-            otaSetLatestType(type);
-            otaSetLatestUrl(url, strlen(url));
+            LEPRINTF("\r\n");
         }
-    }
 
-    
+        switch (type) {
+            case OTA_TYPE_FW:
+            case OTA_TYPE_FW_SCRIPT:
+            case OTA_TYPE_IA_SCRIPT: {
+                LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp type[%d], ret[%d]", type, ret);
+                otaSetLatestSig(data);
+            }break;
+            case OTA_TYPE_PRIVATE:
+            case OTA_TYPE_AUTH: {
+                otaSetLatestSig(NULL);
+            }break;
+            default:
+                tmpCmdInfo->status = LELINK_ERR_PARAM_INVALID;
+            break;
+        }
+        if (LELINK_ERR_SUCCESS == tmpCmdInfo->status) {                
+            node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
+            node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
+            ret = lelinkNwPostCmd(ctx, &node);
+            if (!ret) {
+                tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
+            } else {
+                otaSetLatestType(type);
+                otaSetLatestUrl(url, strlen(url));
+            }
+        }      
+    }
+}
+
+static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    intDoOTA(ctx, cmdInfo, data, len, dataOut, dataLen);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp [%d] -e", ret);
     return ret;
@@ -2098,8 +2104,8 @@ static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
 static int cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     LELOG("cbCloudIndOTALocalRsp -s");
-    // halCBLocalRsp(ctx, cmdInfo, dataIn, dataLen);
-    ret = cbCloudMsgCtrlR2TDoOTALocalRsp(ctx, cmdInfo, data, len, dataOut, dataLen);
+    intDoOTA(ctx, cmdInfo, data, len, dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
     LELOG("cbCloudIndOTALocalRsp [%d] -e", ret);
     return ret;
 }
