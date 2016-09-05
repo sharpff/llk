@@ -809,29 +809,26 @@ static void gpioCheckInput(gpioHandler_t *ptr) {
 
 static void pwmCheckState(pwmHandler_t *ptr) {
     static uint32_t count = 0;
+    uint32_t val = 0;
     if(ptr->type == PWM_TYPE_OUTPUT_RESET) {
+        halPWMRead(ptr, &val);
         //LELOG("pwmCheckState type [%d] [%d] [%d]",s_resetLevel, count,ptr->state);
         if(s_resetLevel > RLED_STATE_FREE) {
-            uint8_t duty = 0;
             count++;
             if(s_resetLevel == RLED_STATE_ZIGBEE) {
                 if(count >= ptr->shortTime) {
-                    if(ptr->state)
-                        duty = 255;
+                    if(val)
+                        halPWMWrite(ptr, 0);
                     else
-                        duty = 0;
-                    ptr->state = !ptr->state;
-                    halPWMWrite(ptr, duty);
+                        halPWMWrite(ptr, ptr->duty);
                     count = 0;
                 }    
             } else if(s_resetLevel == RLED_STATE_WIFI) {
                 if(count >= ptr->longTime) {
-                    if(ptr->state)
-                        duty = 255;
+                    if(val)
+                        halPWMWrite(ptr, 0);
                     else
-                        duty = 0;
-                    ptr->state = !ptr->state;
-                    halPWMWrite(ptr, duty);
+                        halPWMWrite(ptr, ptr->duty);
                     count = 0;  
                 }    
             } else {
@@ -839,8 +836,7 @@ static void pwmCheckState(pwmHandler_t *ptr) {
                 LELOG("pwmCheckState error\n");
             }
         } else {
-            if (!ptr->state) {
-                ptr->state = 1;
+            if (val) {
                 halPWMWrite(ptr, 0);
             }
             count = 0;
@@ -850,18 +846,18 @@ static void pwmCheckState(pwmHandler_t *ptr) {
 
 static void gpioCheckState(gpioHandler_t *ptr) {
     static uint32_t count = 0;
+    int val = 0;
+    halGPIORead(ptr, &val);
     if(s_resetLevel > RLED_STATE_FREE) {
         count++;
         if(s_resetLevel == RLED_STATE_ZIGBEE) {
             if(count >= ptr->shortTime) {
-                ptr->state = !ptr->state;
-                halGPIOWrite(ptr, ptr->state);
+                halGPIOWrite(ptr, !val);
                 count = 0;
             }
         } else if(s_resetLevel == RLED_STATE_WIFI) {
             if(count >= ptr->longTime) {
-                ptr->state = !ptr->state;
-                halGPIOWrite(ptr, ptr->state);
+                halGPIOWrite(ptr, !val);
                 count = 0;
             }
         } else {
@@ -869,9 +865,8 @@ static void gpioCheckState(gpioHandler_t *ptr) {
             LELOG("gpioCheckState error\n");
         }
     } else {
-        if (!ptr->state) {
-            ptr->state = 1;
-            halGPIOWrite(ptr, 0);
+        if (val != ptr->state) {
+            halGPIOWrite(ptr, ptr->state);
         }
         count = 0;
     }
