@@ -13,7 +13,7 @@ static size_t httpFetchData(void *priv, void *buf, size_t max_len);
 int halHttpOpen(OTAInfo_t *info, const char *url)
 {
     int status = -1;
-    char tmpurl[512];
+    char tmpurl[MAX_BUF] = {0};
     http_resp_t *resp;
     http_session_t session;
 
@@ -82,7 +82,7 @@ int halUpdateFirmware(OTAInfo_t *info) {
     }
     ret = lelinkVerify(p->start, info->imgLen);
     APPLOG("halUpdateFirmware lelinkVerify[%d]", ret);
-    // // test only 
+    // test only 
     // update_complete();
     // return 0;
     if (0 == ret) {

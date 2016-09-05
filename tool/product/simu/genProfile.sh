@@ -1,8 +1,8 @@
 #!/bin/bash
 MAIN_PATH="../.."
 $MAIN_PATH/lelinkTool.py \
-    -a 115.182.63.167 \
-    -p 9002 \
+    -a iot.fineat.com \
+    -p 9011 \
     -u d05bca44feb34aeca2dd \
     -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC2KZCgOOr9hefZxOWJ8Uk2LfcsLJ5OdYFcLbUSdrho704MSfsd/75LfqwWSazHbDjoUfbNCB5SywOMpZv/ab8G8LhlgoiZf5Eh1dSdpq609jd7fgsbelPtVeag1twsrZYc3H+++fJ+l56vnE7WcMFKryiuIfnKKMQIbGTzwRf9lQIDAQAB \
     -s QtuBVU7gq27dtbwrSKuy/2IMPkCnTISfyDq+QgarLbKRra4h6IE+USdua0yfBOuvg2Hka/NhzvPIADAElhuIKLlRmxmlJm0+Ji2OSgcNrF8yJGtpi+REWhlrRcTlIRQ/Tm3okTs6Bug53o7cvwfPiNfVvKtkwIHv7XHP2d4ntEk= \
@@ -27,6 +27,9 @@ $MAIN_PATH/lelinkTool.py \
     # 测试
     #-a 10.154.252.130 \
     #-p 5546 \
+    
+    # -a iot.fineat.com \
+    # -p 9011 \
 
     # 外网, 内网ip
     #-a 10.182.192.19 \

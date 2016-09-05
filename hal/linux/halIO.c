@@ -126,7 +126,7 @@ int halPWMOpen(pwmHandler_t *handler) {
 }
 
 void* halPWMInit(int clock) {
-    return 0xffffffff;
+    return (void *)0xffffffff;
 }
 
 void halCommonInit(commonManager_t* dev) {
