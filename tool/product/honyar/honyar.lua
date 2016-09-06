@@ -73,8 +73,7 @@ function s1GetCvtType()
     {"whatCvtType":3,
      "common":[{"num":6,"id":"44-45-24-39-49-48","mux":"2-2-1-0-0-0"}],
      "uart":[{"id":1, "baud":"9600-8N1"}],  
-     "gpio":[{"id":48,"dir":0,"mode":1,"state":1,"type":1,"longTime":12,"shortTime":3},
-             {"id":39,"dir":1,"mode":0,"state":0,"type":1,"longTime":8,"shortTime":1}]
+     "gpio":[{"id":48,"dir":1,"mode":0,"state":0,"type":1,"longTime":8,"shortTime":1}]
     }
     ]]
 	local delay = 5
