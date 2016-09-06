@@ -62,10 +62,10 @@ function s1GetCvtType()
      "uart":[{"id":1, "baud":"9600-8N1"}],  
      "gpio":[{"id":0,"dir":0,"mode":2,"state":0,"type":1,"longTime":30,"shortTime":3},
              {"id":6,"dir":1,"mode":0,"state":0,"type":1,"longTime":6,"shortTime":1}],
-     "pwm":[{"id":33,"type":0,"clock":1,"frequency":1024,"duty":255},
-            {"id":34,"type":0,"clock":1,"frequency":1024,"duty":255},
-            {"id":35,"type":0,"clock":1,"frequency":1024,"duty":255},
-            {"id":18,"type":1,"clock":1,"frequency":1024,"duty":255,"blink":2,"longTime":6,"shortTime":1}]
+     "pwm":[{"id":33,"type":0,"clock":1,"state":255,"frequency":1024,"duty":255},
+            {"id":34,"type":0,"clock":1,"state":255,"frequency":1024,"duty":255},
+            {"id":35,"type":0,"clock":1,"state":255,"frequency":1024,"duty":255},
+            {"id":18,"type":1,"clock":1,"state":255,"frequency":1024,"duty":255,"blink":2,"longTime":6,"shortTime":1}]
     }
     ]]
     local delay = 5
@@ -150,24 +150,24 @@ function s1CvtPri2Std(bin)
         local id = bin:byte(1)
         if id == 0 and bin:byte(2) == 0 then
             if lenStatus > 2 then
-	        local tb = cjson.decode(currStatus)
-	        local pwm = tb["pwm"]
-	        local gpio = tb["gpio"]
-	        for j = 1, 4 do
-		    val = pwm[j]["id"]
-		    i = i + 1
-		    datatb[i] = val
-		    val = pwm[j]["val"]
-		    i = i + 1
-		    datatb[i] = val
-	        end
+    	        local tb = cjson.decode(currStatus)
+    	        local pwm = tb["pwm"]
+    	        local gpio = tb["gpio"]
+    	        for j = 1, 4 do
+        		    val = pwm[j]["id"]
+        		    i = i + 1
+        		    datatb[i] = val
+        		    val = pwm[j]["val"]
+        		    i = i + 1
+        		    datatb[i] = val
+    	        end
                 for j = 1, 2 do
-	            val = gpio[j]["id"]
-	            i = i + 1
-	            datatb[i] = val
-	            val = gpio[j]["val"]
-	            i = i + 1
-	            datatb[i] = val
+    	            val = gpio[j]["id"]
+    	            i = i + 1
+    	            datatb[i] = val
+    	            val = gpio[j]["val"]
+    	            i = i + 1
+    	            datatb[i] = val
                 end
             end
             if datatb[8] == 0 then

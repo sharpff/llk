@@ -1280,7 +1280,7 @@ int sengineQuerySlave(QuerieType_t type)
             memcpy(&currLen, &queries.arrQueriesCounts[i], 2);
             ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &(queries.arrQueries[appendLen]), currLen);
             if (ret <= 0) {
-                LELOGW("sengineQuerySlave ioWrite [%d]", ret);
+                // LELOGW("sengineQuerySlave ioWrite [%d]", ret);
                 break;
             }
         }

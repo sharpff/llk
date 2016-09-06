@@ -299,6 +299,9 @@ int getPWMInfo(const char *json, int jsonLen,  pwmHandler_t *table, int n)
             if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_CLOCK, &tmp)) == WM_SUCCESS) {
                 table[i].clock = tmp;
             }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_STATE, &tmp)) == WM_SUCCESS) {
+                table[i].state = tmp;
+            }
             if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_FREQUENCY, &tmp)) == WM_SUCCESS) {
                 table[i].frequency = tmp;
             }

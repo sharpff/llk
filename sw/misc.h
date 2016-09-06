@@ -33,6 +33,7 @@
 #define JSON_NAME_PWM_ID            "id"
 #define JSON_NAME_PWM_TYPE          "type"
 #define JSON_NAME_PWM_CLOCK         "clock"
+#define JSON_NAME_PWM_STATE         "state"
 #define JSON_NAME_PWM_FREQUENCY     "frequency"
 #define JSON_NAME_PWM_DUTY          "duty"
 #define JSON_NAME_PWM_BLINK         "blink"

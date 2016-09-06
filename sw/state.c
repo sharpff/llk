@@ -167,11 +167,11 @@ static int changeState(int direction, StateContext *cntx, int idx) {
             case E_STATE_SNIFFER_GOT:
             //case E_STATE_AP_CONNECTING:
                 sengineQuerySlave(QUERIETYPE_CONNECTING);
-                setResetLed(RLED_STATE_ZIGBEE);
+                setResetLed(RLED_STATE_CONNECTING);
                 break;
             case E_STATE_AP_CONNECTED:
                 sengineQuerySlave(QUERIETYPE_CONNECTED);
-                setResetLed(RLED_STATE_FREE);
+                setResetLed(RLED_STATE_RUNNING);
                 break;
             case E_STATE_CLOUD_LINKED:
             //case E_STATE_CLOUD_AUTHED:
@@ -241,11 +241,11 @@ static int stateProcStart(StateContext *cntx) {
 
     LELOG("flag = %02x", ginPrivateCfg.data.devCfg.flag);
     if (0 == ret) {
-        if(getDevFlag(DEV_FLAG_RESET)) {
+        if(!getDevFlag(DEV_FLAG_RESET) && !wifiConfigByMonitor) {
             wifiConfigByMonitor = 0;
             wifiConfigTimeout = WIFI_CFG_BY_SOFTAP_TIME;
-
         } else {
+            // TODO: wait for mt7687 flash ready?
             halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
             wifiConfigByMonitor = 1;
@@ -278,6 +278,7 @@ static int stateProcConfiguring(StateContext *cntx) {
             ret = 0;
             LELOG("Configure wifi timeout!!!");
             wifiConfigByMonitor ?  halStopConfig() : softApStop();
+            setResetLed(RLED_STATE_FREE);
         } else {
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
         }

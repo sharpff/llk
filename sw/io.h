@@ -212,7 +212,8 @@ typedef enum {
     RLED_STATE_IGNORE = -1, // 忽略, 设置的时候返回当前状态
     RLED_STATE_FREE, // 空闲状态(正常运行)
     RLED_STATE_WIFI, // wifi配置中
-    RLED_STATE_ZIGBEE, // zigbee配置中
+    RLED_STATE_CONNECTING, // connecting
+    RLED_STATE_RUNNING // normally
 } RLED_STATE_t;
 RLED_STATE_t setResetLed(RLED_STATE_t st);
 
