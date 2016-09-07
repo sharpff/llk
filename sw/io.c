@@ -800,7 +800,7 @@ RLED_STATE_t setResetLed(RLED_STATE_t st)
 
 static void gpioCheckInput(gpioHandler_t *ptr) {
     ptr->keepHighTimes++;
-    LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
+    //LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
     if(ptr->keepHighTimes >= ptr->longTime) {
         int ret = resetConfigData();
         LELOG("resetConfigData [%d]", ret);
@@ -816,7 +816,7 @@ static void pwmCheckState(pwmHandler_t *ptr) {
     uint32_t val = 0;
     if(ptr->type == PWM_TYPE_OUTPUT_RESET) {
         halPWMRead(ptr, &val);
-        //LELOG("pwmCheckState type [%d] [%d] [%d]",s_resetLevel, count,ptr->state);
+        //LELOG("pwmCheckState duty [%d] [%d] [%d]",ptr->duty, count,ptr->state);
         if(s_resetLevel > RLED_STATE_FREE) {
             count++;
             if(s_resetLevel == RLED_STATE_WIFI) {
