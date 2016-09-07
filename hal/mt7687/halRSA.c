@@ -39,7 +39,6 @@ int halRsaInit() {
 }
 
 int halRsaExit() {
-
     mbedtls_ctr_drbg_free(&ginCtrDrbg);
     mbedtls_entropy_free(&ginEntropy);
     mbedtls_pk_free(&ginPK);
@@ -51,7 +50,6 @@ int halRsaEncrypt(const uint8_t *pubkey, int pubkeyLen, const uint8_t* input, in
     int ret;
     size_t olen = 0;
     const char *pers = "mbedtls_pk_encrypt";
-
     if(0 != (ret = mbedtls_ctr_drbg_seed(&ginCtrDrbg, mbedtls_entropy_func, &ginEntropy,
                                (const uint8_t *) pers,
                                strlen(pers)))) {
@@ -70,7 +68,6 @@ int halRsaEncrypt(const uint8_t *pubkey, int pubkeyLen, const uint8_t* input, in
         APPLOGE( " mbedtls_pk_encrypt returned -0x%04x\n", -ret );
         return ret;
     }
-    
     return olen;
 }
 
@@ -78,7 +75,6 @@ int halRsaDecrypt(const uint8_t *prikey, int prikeyLen, const uint8_t* input, in
     int ret;
     size_t olen = 0;
     const char *pers = "mbedtls_pk_decrypt";
-
     if(0 != (ret = mbedtls_ctr_drbg_seed(&ginCtrDrbg, mbedtls_entropy_func, &ginEntropy,
                                (const uint8_t *) pers,
                                strlen( pers )))) {
@@ -96,16 +92,13 @@ int halRsaDecrypt(const uint8_t *prikey, int prikeyLen, const uint8_t* input, in
         APPLOGE( " mbedtls_pk_decrypt returned -0x%04x\n", -ret );
         return ret;
     }
-
     return olen;
 }
 
 int halRsaVerify(const uint8_t* pubkey, int pubkeyLen, 
-    const uint8_t *raw, int rawLen, const uint8_t *sig, int sigLen)
-{
+    const uint8_t *raw, int rawLen, const uint8_t *sig, int sigLen) {
     int ret;
     unsigned char hash[32] = {0};
-
     if( ( ret = mbedtls_pk_parse_public_key( &ginPK, pubkey, pubkeyLen ) ) != 0 ) {
         APPLOGE( " mbedtls_pk_parse_public_key!! returned -0x%04x\n", -ret );
         return ret;
@@ -119,11 +112,9 @@ int halRsaVerify(const uint8_t* pubkey, int pubkeyLen,
     }
 
     if (0 != (ret = mbedtls_pk_verify( &ginPK, MBEDTLS_MD_MD5, hash, 0,
-                           sig, sigLen)))
-    {
+                           sig, sigLen))) {
         APPLOGE( " mbedtls_pk_verify returned -0x%04x\n", -ret );
         return ret;
     }
-
     return 0;
 }

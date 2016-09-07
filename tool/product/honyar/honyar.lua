@@ -1,6 +1,10 @@
+--[[ 
+	THIS IS FW SCRIPT
+  ]]
 --[[ INTERNAL
 	Table to string
   ]]
+
 function tableToString( cmd )
 	local strcmd = ""
 	local i
@@ -47,33 +51,30 @@ end
 	0x1. UART json <-> bin
 	0x2. GPIO
 	0x4. PIPE
-	0X8. SOCKET
+	0x8. SOCKET
+    0x10.PWM
 ]]
+-- MW300 GPIO CONFIGRATION
+-- int pinmux_drv_get_gpio_func(int pin)
+-- {
+--     if (pin < GPIO_0 || pin > GPIO_79)
+--         return -WM_E_INVAL;
+
+--     if (((pin >= GPIO_20) && (pin <= GPIO_26))
+--         || (pin == GPIO_57) || (pin == GPIO_58)) {
+--         return PINMUX_FUNCTION_1;
+--     } else {
+--         return PINMUX_FUNCTION_0;
+--     }
+-- }
 function s1GetCvtType()
-    -- combained uart(0x1) & gpio(0x2)
+    -- combained uart(0x1) & gpio(0x2) & pwm(0x10)
     local str = [[
-    {
-    "whatCvtType":3,
-    "uart":[
-    	{
-    		"id":1, 
-    		"baud":"9600-8N1"
-    	}
-    	]        
-    "gpio":[
-        {
-            "id":1,
-            "dir":1,
-            "mode":0,
-            "state":1,
-            "blink":2,
-            
-            "type":1,
-            "longTime":10,
-            "shortTime":1,
-        }
-        ]
-	}
+    {"whatCvtType":3,
+     "common":[{"num":6,"id":"44-45-24-39-49-48","mux":"2-2-1-0-0-0"}],
+     "uart":[{"id":1, "baud":"9600-8N1"}],  
+     "gpio":[{"id":48,"dir":1,"mode":0,"state":0,"type":1,"longTime":8,"shortTime":1}]
+    }
     ]]
 	local delay = 5
 
@@ -89,7 +90,8 @@ function s1GetQueries(queryType)
     local query = ""
     local queryCountLen = ""
 
-    if queryType == 1 then
+    local cvtType = s1apiGetCurrCvtType()
+    if queryType == 1 and cvtType == 1 then
         query = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0xb1, 0xc0, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00)
     end
     if string.len(query) ~= 0 then

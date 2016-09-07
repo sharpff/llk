@@ -21,6 +21,7 @@ typedef enum {
     IO_TYPE_GPIO = 0x2,
     IO_TYPE_PIPE = 0x4,
     IO_TYPE_SOCKET = 0x8,
+    IO_TYPE_PWM = 0x10,
 }IO_TYPE;
 
 #ifdef LELINK_PACK
@@ -172,7 +173,7 @@ typedef enum {
 
 typedef enum {
     GPIO_STATE_LOW = 0,
-    GPIO_STATE_HIGH, 
+    GPIO_STATE_HIGH,
     GPIO_STATE_BLINK,
 } GPIO_STATE_t;
 
@@ -184,39 +185,35 @@ typedef enum {
     GPIO_TYPE_OUTPUT_RESET = 1
 } GPIO_TYPE_OUTPUT_t;
 
-#define GPIO_MAX_ID     (4)
-typedef struct {
-    int8_t id;          // support 1, 2, 3 
-    int8_t num;         // gpio num
-    uint16_t dir:1;     // 0 - input; 1 - output
-    uint16_t mode:3;    // 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
-    uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
-    uint16_t type:3;    // 0 - stdio; input: 1 - reset; output: 1 - reset
-    uint16_t gpiostate:1;   // only : 0 - low; 1 - high
-    uint16_t freestate:1;   // only output reset: 0 - low; 1 - high
-    uint8_t blink;          // only output. ticks, blink frequency
-    // for input/output type reset
-    uint8_t longTime;
-    uint8_t shortTime;
-    // for output type reset
-    // TODO: only for internal
-    uint8_t keepLowTimes;   // ticks, gpiostat keep low times
-    uint8_t keepHighTimes;  // ticks, gpiostat keep high times
-    uint8_t reserved;   
-} gpioHand_t;
+typedef enum {
+   PWM_TYPE_OUTPUT_RESET = 1
+} PWM_TYPE_OUTPUT_t;
+
+typedef enum {
+    PWM_STATE_LOW = 0,
+    PWM_STATE_HIGH
+} PWM_STATE_t;
+
+#define GPIO_MAX_ID     (3)
 
 typedef struct {
-    void *handle;
     uint32_t num;
-    gpioHand_t table[GPIO_MAX_ID + 1];
+    gpioHandler_t table[GPIO_MAX_ID + 1];
 } gpioManager_t;
 
+#define PWM_MAX_ID     (4)
+
+typedef struct {
+    uint32_t num;
+    pwmHandler_t table[PWM_MAX_ID + 1];
+} pwmManager_t;
 
 typedef enum {
     RLED_STATE_IGNORE = -1, // 忽略, 设置的时候返回当前状态
     RLED_STATE_FREE, // 空闲状态(正常运行)
     RLED_STATE_WIFI, // wifi配置中
-    RLED_STATE_ZIGBEE, // zigbee配置中
+    RLED_STATE_CONNECTING, // connecting
+    RLED_STATE_RUNNING // normally
 } RLED_STATE_t;
 RLED_STATE_t setResetLed(RLED_STATE_t st);
 

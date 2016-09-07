@@ -12,7 +12,8 @@
  * it is just a test for remote ip(support in genProfile.sh) connection.
  * for standard case, ip shoudl be got from DNS only.
  */
-// #define DNS_IP_TEST
+
+#define DNS_IP_TEST
 
 #ifndef LOG_STATE
 #ifdef LELOG
@@ -166,11 +167,11 @@ static int changeState(int direction, StateContext *cntx, int idx) {
             case E_STATE_SNIFFER_GOT:
             //case E_STATE_AP_CONNECTING:
                 sengineQuerySlave(QUERIETYPE_CONNECTING);
-                setResetLed(RLED_STATE_ZIGBEE);
+                setResetLed(RLED_STATE_CONNECTING);
                 break;
             case E_STATE_AP_CONNECTED:
                 sengineQuerySlave(QUERIETYPE_CONNECTED);
-                setResetLed(RLED_STATE_FREE);
+                setResetLed(RLED_STATE_RUNNING);
                 break;
             case E_STATE_CLOUD_LINKED:
             //case E_STATE_CLOUD_AUTHED:
@@ -240,21 +241,21 @@ static int stateProcStart(StateContext *cntx) {
 
     LELOG("flag = %02x", ginPrivateCfg.data.devCfg.flag);
     if (0 == ret) {
-        if(getDevFlag(DEV_FLAG_RESET)) {
+        if(!getDevFlag(DEV_FLAG_RESET) && !wifiConfigByMonitor) {
+            wifiConfigByMonitor = 0;
+            wifiConfigTimeout = WIFI_CFG_BY_SOFTAP_TIME;
+        } else {
+            // TODO: wait for mt7687 flash ready?
+            halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
             wifiConfigByMonitor = 1;
             wifiConfigTimeout = WIFI_CFG_BY_MONITOR_TIME;
-        } else {
-            wifiConfigByMonitor = 0;
-            wifiConfigTimeout = WIFI_CFG_BY_SOFTAP_TIME;
         }
-        LELOG("wifiConfigTime(%d): %d - %d", ginMSDelay, wifiConfigTimeout, wifiConfigTime);
-        if(wifiConfigTime > wifiConfigTimeout) {
-            ret = 1; // loop in next
-        } else if(wifiConfigByMonitor) {
+        
+        if(wifiConfigByMonitor) {
             ret = halDoConfig(NULL, 0);
             LELOG("configure wifi by monitor(%d)", ret);
-        } else{
+        } else {
             ret = !softApStart();
             LELOG("configure wifi by softAp(%d)", ret);
         }
@@ -266,32 +267,32 @@ static int stateProcStart(StateContext *cntx) {
 
 static int stateProcConfiguring(StateContext *cntx) {
     int ret = 0;
-
-    // LELOG("stateProcConfiguring [%d] -s", ret);
     if (1 == ginConfigStatus) {
         ret = 1;
     }
-    // LELOG("stateProcConfiguring configStatus[%d] -s", ginConfigStatus);
     if (0 == ret) {
-        wifiConfigTime++;
-        if(wifiConfigTime > wifiConfigTimeout) {
+        if(wifiConfigTime <= wifiConfigTimeout) {
+            wifiConfigTime++;
+        }
+        if(wifiConfigTime == wifiConfigTimeout) {
             ret = 0;
-            wifiConfigTime--; // to prevent overflow
             LELOG("Configure wifi timeout!!!");
-        } else if(wifiConfigTime == wifiConfigTimeout) {
-            ret = 0;
             wifiConfigByMonitor ?  halStopConfig() : softApStop();
+            setResetLed(RLED_STATE_FREE);
         } else {
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
-        } 
+        }
     }
     return ret;
 }
+
 static int stateProcSnifferGot(StateContext *cntx) {
     int ret = 0;
 
-    softApStop();
-    halStopConfig();
+    if (0 == ginConfigStatus) {
+        softApStop();
+        halStopConfig();
+    }
     // ginPrivateCfg.data.nwCfg.configStatus = 0;
     lelinkStorageReadPrivateCfg(&ginPrivateCfg);
     if (ginPrivateCfg.csum != crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {

@@ -326,10 +326,10 @@ typedef unsigned int uint32_t;
 #define vsnprintf hal_vsnprintf
 #define strcoll hal_strcoll
 #define abort hal_abort
-#define malloc halMalloc
-#define calloc halCalloc
-#define realloc halRealloc
-#define free halFree
+#define malloc halMallocError
+#define calloc halCallocError
+#define realloc halReallocError
+#define free halFreeError
 #endif
 
 

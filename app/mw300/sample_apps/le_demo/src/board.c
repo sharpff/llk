@@ -213,11 +213,11 @@ WEAK int board_button_1()
 	return GPIO_26;
 }
 
-WEAK int board_button_2()
-{
-	GPIO_PinMuxFun(GPIO_24, GPIO24_GPIO24);
-	return GPIO_24;
-}
+// WEAK int board_button_2()
+// {
+// 	GPIO_PinMuxFun(GPIO_24, GPIO24_GPIO24);
+// 	return GPIO_24;
+// }
 
 WEAK int board_button_3()
 {

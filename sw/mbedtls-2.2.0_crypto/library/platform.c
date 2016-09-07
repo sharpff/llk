@@ -36,7 +36,7 @@
 // LELINK ADAPTOR
 static void *platform_calloc_uninit( size_t n, size_t size )
 {
-    void *p = (void *)calloc(n, size);
+    void *p = (void *)halCalloc(n, size);
     return p;
 }
 
@@ -47,7 +47,7 @@ static void *platform_calloc_uninit( size_t n, size_t size )
 // LELINK ADAPTOR
 static void platform_free_uninit(void *ptr)
 {
-    free(ptr);
+    halFree(ptr);
 }
 
 

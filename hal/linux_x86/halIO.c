@@ -2,19 +2,19 @@
 #include "halHeader.h"
 #include <errno.h>
 
-void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
+void *halUartOpen(uartHandler_t* handler) {
     return (void *)0xffffffff;
 }
 
-int halUartClose(void *dev) {
+int halUartClose(uartHandler_t* handler) {
     return 0;
 }
 
-int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
+int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
     return 0;
 }
 
-int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
+int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
     return len;
 }
 
@@ -22,20 +22,48 @@ void *halGPIOInit(void) {
     return NULL;
 }
 
-int halGPIOClose(void *dev) {
+int halGPIOClose(gpioHandler_t* handler) {
     return 0;
 }
 
-int halGPIOOpen(int8_t id, int8_t dir, int8_t mode) {
+int halGPIOOpen(gpioHandler_t* handler) {
     return -1;
 }
 
-int halGPIORead(void *dev, int gpioId, int *val) {
+int halGPIORead(gpioHandler_t* handler, int *val) {
     return 0;
 }
 
-int halGPIOWrite(void *dev, int gpioId, const int val) {
+int halGPIOWrite(gpioHandler_t* handler, const int val) {
     return 0;
+}
+
+void halPWMWrite(pwmHandler_t *handler, uint32_t percent) {
+    return;
+}
+
+void halPWMRead(pwmHandler_t *handler, uint32_t *percent) {
+    return;
+}
+
+void halPWMSetFrequency(pwmHandler_t *handler) {
+    return;
+}
+
+int halPWMClose(pwmHandler_t *handler) {
+    return 0;
+}
+
+int halPWMOpen(pwmHandler_t *handler) {
+    return 0;
+}
+
+void* halPWMInit(int clock) {
+    return 0xffffffff;
+}
+
+void halCommonInit(commonManager_t* dev) {
+    return;
 }
 
 int halFlashInit(void)

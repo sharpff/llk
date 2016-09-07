@@ -47,10 +47,20 @@ static uint32_t ginStartAddr;
 static uint32_t ginTotalSize;
 static uint32_t ginMinSize;
 static gpioManager_t ginGpioManager;
+static pwmManager_t ginPWMManager;
+static commonManager_t ginCommonManager;
+static uartHandler_t uartHandler;
+
+static void gpioCheckInput(gpioHandler_t *ptr);
+static void gpioCheckState(gpioHandler_t *ptr);
+static void pwmCheckState(pwmHandler_t *ptr);
+static void gpioInitState(gpioManager_t *mgr);
+
 static IOHDL ginIOHdl[] = {
     {IO_TYPE_UART, 0x0},
     {IO_TYPE_GPIO, 0x0},
     {IO_TYPE_PIPE, 0x0},
+    {IO_TYPE_PWM, 0x0},
 };
 
 /*
@@ -164,7 +174,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) 
     if (0 > ret) {
         return -3;
     }
-    // LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
+    LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
 
     *((uint8_t *)data + (size - 1)) = crc8(data, size - 1);
     ret = halFlashWrite(hdl, data, size, fr.addr + (idx*fr.size), 0);
@@ -172,7 +182,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) 
         return -4;
     }
     
-    // LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
+ LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
     halFlashClose(hdl);
     return 0; 
 }
@@ -410,7 +420,7 @@ int processStdMessage() {
 static void gpioSetDefault(gpioManager_t *mgr)
 {
     int i;
-    gpioHand_t *table;
+    gpioHandler_t *table;
 
     if(!mgr && !mgr->table) {
         return;
@@ -419,52 +429,71 @@ static void gpioSetDefault(gpioManager_t *mgr)
     memset(table, 0, sizeof(*table) * GPIO_MAX_ID);
     for( i = 0; i < GPIO_MAX_ID; i++ ) {
         table[i].id = 0;
-        table[i].num = -1;
         table[i].dir = GPIO_DIR_INPUT; 
         table[i].mode = GPIO_MODE_DEFAULT;
         table[i].state = GPIO_STATE_LOW;
+        table[i].oldState = 0;
         table[i].type = 0;
         table[i].gpiostate = 0;
         table[i].freestate = GPIO_STATE_LOW;
         table[i].blink = 0;
-        table[i].longTime = 0;
+        table[i].longTime = 5;
         table[i].shortTime = 0;
         table[i].keepLowTimes = 0;
         table[i].keepHighTimes = 0;
-        table[i].reserved = 0;
+        table[i].handler = NULL;
+        table[i].reserved1 = 0;
+        table[i].reserved2 = 0;
     }
 }
 
-static void gpioInitState(gpioManager_t *mgr);
+static void pwmSetDefault(pwmManager_t *mgr) {
+    int i;
+    pwmHandler_t *table;
+
+    if(!mgr && !mgr->table) {
+        return;
+    }
+    table = mgr->table;
+    memset(table, 0, sizeof(*table) * PWM_MAX_ID);
+    for( i = 0; i < PWM_MAX_ID; i++ ) {
+        table[i].id = 0;
+        table[i].type = 0;
+        table[i].state = 0;
+        table[i].oldState = 0;
+        table[i].longTime = 0;
+        table[i].shortTime = 0;
+        table[i].handler = NULL;
+        table[i].reserved1 = 0;
+        table[i].reserved2 = 0;
+    }
+}
+
 void *ioInit(int ioType, const char *json, int jsonLen) {
     int ret = 0;
     void *ioHdl = NULL;
 
+    LELOG("ioInt type[%d]\r\n", ioType);
+
     switch (ioType) {
         case IO_TYPE_UART: {
-            int baud = 0, dataBits = 0, stopBits = 0, flowCtrl = 0, PARITY = 0;
-            char parity = 0;
-            ret = getUartInfo(json, jsonLen, &baud, &dataBits, &stopBits, &parity, &flowCtrl);
+            ret = getUartInfo(json, jsonLen, &uartHandler);
             if (0 > ret) {
                 LELOGW("ioInit getUartInfo ret[%d]", ret);
                 return NULL;
             }
-            if(parity == 'N') // None
-                PARITY = 0;
-            else if(parity == 'O') // Odd
-                PARITY = 1;
+            if(uartHandler.parity == 'N') // None
+                uartHandler.parity = 0;
+            else if(uartHandler.parity == 'O') // Odd
+                uartHandler.parity = 1;
             else // Even
-                PARITY = 2;
-            ioHdl = (void *)halUartOpen(baud, dataBits, stopBits, PARITY, flowCtrl);
-            if (NULL == ioHdl) {
-                LELOGW("ioInit halUartInit halUartOpen[%p]", ioHdl);
-                return NULL;
-            }
+                uartHandler.parity = 2;
+            ioHdl = halUartOpen(&uartHandler);
             return ioHdl;
         }break;
         case IO_TYPE_GPIO: {
             int i;
-            gpioHand_t *table;
+            gpioHandler_t *table;
             gpioSetDefault(&ginGpioManager);
             ret = getGPIOInfo(json, jsonLen, ginGpioManager.table, GPIO_MAX_ID);
             if (0 >= ret) {
@@ -472,12 +501,10 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
                 return NULL;
             }
             ginGpioManager.num = ret;
-            if(!(ginGpioManager.handle = (void *)halGPIOInit())) {
-                LELOGW("ioInit halGPIOInit");
-                return NULL;
-            }
+            LELOGW("ioInit ginGpioManager.num ret[%d]", ginGpioManager.num);
+            halGPIOInit();
             for(i = 0, table = ginGpioManager.table; i < ginGpioManager.num; i++, table++) {
-                table->num =  halGPIOOpen(table->id, table->dir, table->mode);
+                halGPIOOpen(table);
             }
             ioHdl = &ginGpioManager;
             gpioInitState(&ginGpioManager);
@@ -500,6 +527,24 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
         case IO_TYPE_SOCKET: {
 
         }break;
+        case IO_TYPE_PWM: {
+            int i;
+            pwmHandler_t *table;
+            pwmSetDefault(&ginPWMManager);
+            ret = getPWMInfo(json, jsonLen, ginPWMManager.table, PWM_MAX_ID);
+            if (0 >= ret) {
+                LELOGW("ioInit getPWMInfo ret[%d]", ret);
+                return NULL;
+            }
+            ginPWMManager.num = ret;
+            halPWMInit(ginPWMManager.table->clock);
+            for(i = 0, table = ginPWMManager.table; i < ginPWMManager.num; i++, table++) {
+                halPWMSetFrequency(table);
+                halPWMOpen(table);
+            }
+            ioHdl = &ginPWMManager;
+            return ioHdl;
+        }break;
     }
     // halUartInit()
     return NULL;
@@ -508,16 +553,13 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
 static void gpioInitState(gpioManager_t *mgr)
 {
     int i;
-    gpioHand_t *table = mgr->table;
+    gpioHandler_t *table = mgr->table;
 
     for(i = 0; i < mgr->num; i++, table++) {
-        if(table->num < 0) {
-            continue;
-        }
-        LELOGE("IO id = %d, num = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
-                table->id, table->num, table->dir, table->mode, table->state, table->type, table->blink);
+        LELOG("IO id = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
+                table->id, table->dir, table->mode, table->state, table->type, table->blink);
         table->freestate = table->state;
-        halGPIOWrite(mgr->handle, table->num, !!table->state);
+        halGPIOWrite(table, !!table->state);
     }
 }
 
@@ -526,6 +568,7 @@ void **ioGetHdl(int *ioType) {
     char json[2560] = {0};
     int ret = 0;
     static int whatCvtType = -1;
+    LELOGW("ioGetHdl => ioGetHdl[%d]", whatCvtType);
     if (-1 == whatCvtType) {
         ret = sengineGetTerminalProfileCvtType(json, sizeof(json));
         if (0 >= ret) {
@@ -533,35 +576,46 @@ void **ioGetHdl(int *ioType) {
             return NULL;
         }
         whatCvtType = getWhatCvtType(json, ret);
+        LELOG("getWhatCvtType [%d] [%d]", ret, whatCvtType);
         if (0 > whatCvtType) {
             return NULL;
         }
     }
+    memset(&ginCommonManager, 0, sizeof(commonManager_t));
+    getCommonInfo(json, sizeof(json), &ginCommonManager, COMMON_MAX_ID);
+    if(ginCommonManager.num > 0) {
+        LELOG("halCommonInit ioInit [%d]", ginCommonManager.num);
+        halCommonInit(&ginCommonManager);
+    }
+
     ioType ? *(ioType) = whatCvtType : 0;
     switch (whatCvtType) {
         case IO_TYPE_UART: {
             if (NULL == ioHdl) {
-                LELOG("ioGetHdl IO_TYPE_UART ioInit [%d]", whatCvtType);
                 ioHdl = ioInit(whatCvtType, json, ret);
             }
             return &ioHdl;
         }break;
         case IO_TYPE_GPIO: {
             if (NULL == ioHdl) {
-                LELOG("ioGetHdl IO_TYPE_GPIO ioInit 2 [%d]", whatCvtType);
                 ioHdl = ioInit(whatCvtType, json, ret);
             }
             return &ioHdl;
         }break;
         case IO_TYPE_PIPE: {
             if (NULL == ioHdl) {
-                LELOG("ioGetHdl IO_TYPE_PIPE ioInit [%d]", whatCvtType);
                 ioHdl = ioInit(whatCvtType, json, ret);
             }
             return &ioHdl;
         }break;
         case IO_TYPE_SOCKET: {
 
+        }break;
+        case IO_TYPE_PWM: {
+            if (NULL == ioHdl) {
+                ioHdl = ioInit(whatCvtType, json, ret);
+            }
+            return &ioHdl;
         }break;
     }
     // halUartInit()
@@ -601,12 +655,19 @@ IOHDL *ioGetHdlExt() {
     } else {
         return ginIOHdl;
     }
-    // LELOGW("ioGetHdlExt => whatCvtType[%d]", whatCvtType);
+    LELOGW("ioGetHdlExt => whatCvtType[%d] [%d]", ret, whatCvtType);
+    memset(&ginCommonManager, 0, sizeof(commonManager_t));
+    getCommonInfo(json, ret, &ginCommonManager, COMMON_MAX_ID);
+    if(ginCommonManager.num > 0) {
+        LELOG("halCommonInit ioInit [%d]", ginCommonManager.num);
+        halCommonInit(&ginCommonManager);
+    }
 
     IO_INIT_START;
     IO_INIT_ITEM(IO_TYPE_UART, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_GPIO, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_PIPE, whatCvtType, json, ret);
+    IO_INIT_ITEM(IO_TYPE_PWM, whatCvtType, json, ret);
     IO_INIT_END;
 
     // {
@@ -624,26 +685,26 @@ int ioGetHdlCounts() {
 }
 
 int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
-
+    //LELOG("ioWrite ioType[%d] [%d]", ioType, dataLen);
     switch (ioType) {
         case IO_TYPE_UART: {
             return halUartWrite(hdl, data, dataLen);
         }break;
         case IO_TYPE_GPIO: {
-            gpioHand_t *p;
-            int i, j, id, val;
+            int i,j,ret = 0;
             gpioManager_t *mgr = ((gpioManager_t *)hdl);
-            for( i = 0; i < dataLen; i++ ) {
-                id = (data[i] >> 4) & 0xF;
-                val = (data[i] & 0xF);
-                for(j = 0, p = mgr->table; j < mgr->num; j++, p++) {
-                    if(id == p->id && p->dir == GPIO_DIR_OUTPUT) {
-                        p->state = val;
-                        break;
+            gpioHandler_t *q = NULL;
+            //LELOG("ioWrite gpio count [%d][%d]", mgr->num, dataLen);
+            for(i = 0; i < dataLen ; i+=2) {
+                q = mgr->table;
+                for(j = 0; j< mgr->num; j++, q++) {
+                    if(data[i] == q->id) {
+                        halGPIOWrite(q, data[i+1]);
+                        ret = 1;
                     }
                 }
             }
-            return dataLen;
+            return ret;
         }break;
         case IO_TYPE_PIPE: {
             return halPipeWrite(hdl, data, dataLen);
@@ -651,48 +712,77 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
         case IO_TYPE_SOCKET: {
 
         }break;
-    }    
+        case IO_TYPE_PWM: {
+            int i,j,ret = 0;
+            pwmManager_t *mgr = ((pwmManager_t *)hdl);
+            pwmHandler_t *q = NULL;
+            //LELOG("ioWrite pwm count [%d][%d]", mgr->num, dataLen);
+            for(i = 0; i < dataLen ; i+=2) {
+                q = mgr->table;
+                for(j = 0; j< mgr->num; j++,q++) {
+                    if(data[i] == q->id) {
+                        halPWMWrite(q, data[i+1]);
+                        ret = 1;
+                    }
+                }
+            }
+            return ret;
+        }break;
+    }
     return 0;
 }
 
-static void gpioCheckState(gpioManager_t *mgr, int index);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
     switch (ioType) {
         case IO_TYPE_UART: {
             return halUartRead(hdl, data, dataLen);
         }break;
         case IO_TYPE_GPIO: {
-            int val, i, j;
-            gpioHand_t *p;
-            uint8_t *pTimes;
+            int val, i, k = 0;
             gpioManager_t *mgr = ((gpioManager_t *)hdl);
-            for(i = j = 0, p = mgr->table; j < mgr->num && i < dataLen; j++, p++) {
-                if(p->num < 0) {
-                    continue;
+            gpioHandler_t *q = mgr->table;
+            for(i = 0; i < mgr->num; i++, q++) {
+                halGPIORead(q, &val);
+                if(val == q->state) {
+                    q->keepHighTimes = 0;
+                } else if(q->type == GPIO_TYPE_INPUT_RESET && 
+                    (q->dir == GPIO_DIR_INPUT) && (q->oldState == val)) {
+                    gpioCheckInput(q);
                 }
-                halGPIORead(mgr->handle, p->num, &val);
-                pTimes = (val == GPIO_STATE_LOW) ? &p->keepLowTimes : &p->keepHighTimes;
-                if(p->gpiostate != val) {
-                    *pTimes = 0;
-                } else if(*pTimes < 0xFF) {
-                    (*pTimes)++;
+                if(q->oldState != val && q->oldState != q->state) {
+                    data[k++] = q->id;
+                    data[k++] = val;
                 }
-                p->gpiostate = val;
-                if(p->state != GPIO_STATE_LOW && p->state != GPIO_STATE_HIGH) {
-                    val = p->state;
+                q->oldState = val;
+                if(q->type == GPIO_TYPE_OUTPUT_RESET && (q->dir == GPIO_DIR_OUTPUT)) {
+                    gpioCheckState(q);
                 }
-                data[i] = (p->id << 4) & 0xF0;
-                data[i] |= val & 0x0F;
-                gpioCheckState(mgr, j);
-                i++;
             }
-            return i;
+            return k;
         } break;
         case IO_TYPE_PIPE: {
             return halPipeRead(hdl, data, dataLen);
         }break;
         case IO_TYPE_SOCKET: {
 
+        }break;
+        case IO_TYPE_PWM: {
+            int i, k=0, val;
+            pwmManager_t *mgr = ((pwmManager_t *)hdl);
+            pwmHandler_t *q = mgr->table;
+            for(i = 0; i < mgr->num ; i++, q++) {
+                halPWMRead(q, (uint32_t*)&val);
+                if(q->oldState != val) {
+                    data[k++] = q->id;
+                    data[k++] = val;
+                    q->oldState = val;
+                }
+                if(q->type == PWM_TYPE_OUTPUT_RESET) {
+                    pwmCheckState(q);
+                }
+            }
+            //return k;
+            return 0; // not send any data
         }break;
     }    
     return 0;
@@ -701,49 +791,100 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
 static RLED_STATE_t s_resetLevel = RLED_STATE_FREE;
 RLED_STATE_t setResetLed(RLED_STATE_t st)
 {
-    if(st >= RLED_STATE_FREE && st <= RLED_STATE_ZIGBEE) {
+    LELOG("setResetLed state [%d]",st);
+    if(st >= RLED_STATE_FREE && st <= RLED_STATE_RUNNING) {
         s_resetLevel = st;
     }
     return s_resetLevel;
 }
 
-static void gpioCheckState(gpioManager_t *mgr, int index)
-{
-    gpioHand_t *p = &mgr->table[index];
-
-    if(p->type) {
-        if(p->dir == GPIO_DIR_INPUT) {
-            if(p->type == GPIO_TYPE_INPUT_RESET) {
-                if(s_resetLevel < RLED_STATE_ZIGBEE && p->gpiostate == GPIO_STATE_HIGH && p->keepHighTimes > p->shortTime) {
-                    s_resetLevel = (p->keepHighTimes > p->longTime) ? RLED_STATE_ZIGBEE : RLED_STATE_WIFI;
-                }
-            }
-        } else {
-            if(p->type == GPIO_TYPE_OUTPUT_RESET) {
-                p->state = (s_resetLevel == RLED_STATE_FREE) ? p->freestate : GPIO_STATE_BLINK;
-            }
-        }
-    } 
-    if(p->dir == GPIO_DIR_OUTPUT) {
-        if(p->state == GPIO_STATE_LOW || p->state == GPIO_STATE_HIGH) {
-            if(p->state != p->gpiostate) {
-                halGPIOWrite(mgr->handle, p->num, p->state);
-            }
-        } else if(p->state == GPIO_STATE_BLINK) {
-            uint8_t kt = p->blink;
-            uint8_t times = (p->gpiostate == GPIO_STATE_LOW) ? p->keepLowTimes : p->keepHighTimes;
-
-            if(p->type == GPIO_TYPE_OUTPUT_RESET && s_resetLevel > RLED_STATE_FREE) {
-                kt = (s_resetLevel == RLED_STATE_WIFI) ? p->shortTime : p->longTime;
-            }
-            if(kt > 0 && times > kt) {
-                halGPIOWrite(mgr->handle, p->num, !p->gpiostate);
-            }
+static void gpioCheckInput(gpioHandler_t *ptr) {
+    ptr->keepHighTimes++;
+    LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
+    if(ptr->keepHighTimes >= ptr->longTime) {
+        int ret = resetConfigData();
+        LELOG("resetConfigData [%d]", ret);
+        if (0 <= ret) {
+            setDevFlag(DEV_FLAG_RESET, 1);
+            halReboot();
         }
     }
 }
 
+static void pwmCheckState(pwmHandler_t *ptr) {
+    static uint32_t count = 0;
+    uint32_t val = 0;
+    if(ptr->type == PWM_TYPE_OUTPUT_RESET) {
+        halPWMRead(ptr, &val);
+        //LELOG("pwmCheckState type [%d] [%d] [%d]",s_resetLevel, count,ptr->state);
+        if(s_resetLevel > RLED_STATE_FREE) {
+            count++;
+            if(s_resetLevel == RLED_STATE_WIFI) {
+                if(count >= ptr->shortTime) {
+                    if(val)
+                        halPWMWrite(ptr, 0);
+                    else
+                        halPWMWrite(ptr, ptr->duty);
+                    count = 0;
+                }    
+            } else if(s_resetLevel == RLED_STATE_CONNECTING) {
+                if(count >= ptr->longTime) {
+                    if(val)
+                        halPWMWrite(ptr, 0);
+                    else
+                        halPWMWrite(ptr, ptr->duty);
+                }   
+            } else if(s_resetLevel == RLED_STATE_RUNNING) {
+                if (count >= ptr->longTime) {
+                    halPWMWrite(ptr, ptr->state);
+                    count = 0;
+                }
+            } else {
+                count = 0;
+                LELOG("pwmCheckState error\n");
+            }
+        } else {
+            halPWMWrite(ptr, ptr->state ? 0 : ptr->duty);
+            count = 0;
+        }
+    }
+}
+
+static void gpioCheckState(gpioHandler_t *ptr) {
+    static uint32_t count = 0;
+    int val = 0;
+    halGPIORead(ptr, &val);
+    if(s_resetLevel > RLED_STATE_FREE) {
+        count++;
+        if(s_resetLevel == RLED_STATE_WIFI) {
+            if(count >= ptr->shortTime) {
+                halGPIOWrite(ptr, !val);
+                count = 0;
+            }
+        } else if(s_resetLevel == RLED_STATE_CONNECTING) {
+            if(count >= ptr->longTime) {
+                halGPIOWrite(ptr, !val);
+                count = 0;
+            }
+        } else if(s_resetLevel == RLED_STATE_RUNNING) {
+            if (val != ptr->state) {
+                halGPIOWrite(ptr, ptr->state);
+            }
+        } else {
+            count = 0;
+            LELOG("gpioCheckState error\n");
+        }
+    } else {
+        // LELOG("gpioCheckState val[%d] state[%d]", val, ptr->state);
+        if (val == !!ptr->state) {
+            halGPIOWrite(ptr, !ptr->state);
+        }
+        count = 0;
+    }
+}
+
 void ioDeinit(int ioType, void *hdl) {
+    int i;
     switch (ioType) {
         case IO_TYPE_UART: {
             void **hdlUart = NULL; 
@@ -754,7 +895,11 @@ void ioDeinit(int ioType, void *hdl) {
         case IO_TYPE_GPIO: {
             void **hdlGPIO = NULL; 
             hdlGPIO = ioGetHdl(NULL);
-            halGPIOClose(((gpioManager_t *)hdl)->handle);
+            gpioManager_t *mgr = ((gpioManager_t *)hdlGPIO);
+            gpioHandler_t *q = mgr->table;
+            for(i = 0; i < mgr->num ; i++, q++) {
+                halGPIOClose(q);
+            }
             *hdlGPIO = NULL;
         }break;
         case IO_TYPE_PIPE: {
@@ -765,6 +910,16 @@ void ioDeinit(int ioType, void *hdl) {
         }break;
         case IO_TYPE_SOCKET: {
 
+        }break;
+        case IO_TYPE_PWM: {
+            void **hdlPWM = NULL; 
+            hdlPWM = ioGetHdl(NULL);
+            pwmManager_t *mgr = ((pwmManager_t *)hdlPWM);
+            pwmHandler_t *q = mgr->table;
+            for(i = 0; i < mgr->num ; i++, q++) {
+                halPWMClose(q);
+            }
+            *hdlPWM = NULL;
         }break;
     }    
     // return 0;

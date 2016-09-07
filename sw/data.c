@@ -101,13 +101,11 @@ int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
 }
 
-int getDevFlag(DEV_FLAG_t flag)
-{
-    return ~(ginPrivateCfg.data.devCfg.flag & flag) & flag;
+int getDevFlag(DEV_FLAG_t flag) {
+    return !(ginPrivateCfg.data.devCfg.flag & flag);
 }
 
-int setDevFlag(DEV_FLAG_t flag, int isSet)
-{
+int setDevFlag(DEV_FLAG_t flag, int isSet) {
     if(isSet) {
         ginPrivateCfg.data.devCfg.flag &= ~flag;
     } else {
@@ -355,13 +353,14 @@ int getSSID(char *ssid, int ssidLen) {
 }
 
 void setTerminalStatus(const char *status, int len) {
-    char val[MAX_BUF];
-    int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
+    char val[MAX_BUF] = {0};
+    //int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
+    int ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val));
+    LELOGW("setTerminalStatus [%d][%s]", ret, val);
     if (0 >= ret) {
         cloudMsgHandler(status, len);
         return;
     }
-    LELOGW("setTerminalStatus [%d][%s]", ret, val);
     sengineSetStatus((char *)val, ret);
 }
 
