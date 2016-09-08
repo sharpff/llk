@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 
 int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {

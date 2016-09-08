@@ -159,6 +159,28 @@ void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line);
 void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line);
 void halFreeEx(void *ptr, char* filename, uint32_t line);
 
+int printOut(const char *fmt, ...);
+
+
+#define applog(_mod_name_, _fmt_, ...) \
+    { \
+        const char * p = strrchr(__FILE__, '/'); \
+        printOut("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : __FILE__, __LINE__); \
+    }
+
+#define APPLOG(...) \
+    applog("LEAPP", ##__VA_ARGS__)
+
+#define APPLOGW(...) \
+    applog("LEAPP[W]", ##__VA_ARGS__)
+
+#define APPLOGE(...) \
+    applog("LEAPP[E]", ##__VA_ARGS__)
+
+#define APPPRINTF(...) \
+    printOut(__VA_ARGS__)
+
+
 #if 0
 void *_halMalloc(size_t size);
 void *_halCalloc(size_t n, size_t size);

@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 #include "sockets.h"
 #include "wifi_api.h"

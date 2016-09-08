@@ -120,7 +120,6 @@ typedef long long int64_t;
 #include <errno.h>
 #include <unistd.h>
 
-extern int printOut(const char *fmt, ...);
 
 #ifndef uint8_t
 typedef unsigned char uint8_t;
@@ -278,7 +277,27 @@ typedef unsigned int uint32_t;
 // #define LOG_AIRCONFIG_CTRL
 
 
-        
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#define memset hal_memset
+#define memcpy hal_memcpy
+#define memcmp hal_memcmp
+#define strlen hal_strlen
+#define strcmp hal_strcmp
+#define strncmp hal_strncmp
+#define strcpy hal_strcpy
+#define strtol hal_strtol
+#define strstr hal_strstr
+#define strrstr hal_strrstr
+#define sprintf hal_sprintf
+#define snprintf hal_snprintf
+#define vsnprintf hal_vsnprintf
+#define strcoll hal_strcoll
+#define abort hal_abort
+#define malloc halMallocError
+#define calloc halCallocError
+#define realloc halReallocError
+#define free halFreeError
+#endif
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
@@ -311,26 +330,7 @@ typedef unsigned int uint32_t;
     printOut(__VA_ARGS__)
 
 
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
-#define memset hal_memset
-#define memcpy hal_memcpy
-#define memcmp hal_memcmp
-#define strlen hal_strlen
-#define strcmp hal_strcmp
-#define strncmp hal_strncmp
-#define strcpy hal_strcpy
-#define strtol hal_strtol
-#define strstr hal_strstr
-#define sprintf hal_sprintf
-#define snprintf hal_snprintf
-#define vsnprintf hal_vsnprintf
-#define strcoll hal_strcoll
-#define abort hal_abort
-#define malloc halMallocError
-#define calloc halCallocError
-#define realloc halReallocError
-#define free halFreeError
-#endif
+
 
 
 #ifdef __cplusplus

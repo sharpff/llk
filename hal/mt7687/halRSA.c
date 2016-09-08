@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 
 #if !defined(MBEDTLS_CONFIG_FILE)

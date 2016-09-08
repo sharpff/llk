@@ -393,6 +393,7 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
     char *start, *end;
     char *tokenStart = "{", *tokenEnd = "}";
     int len = 0;
+    LELOG("getJsonObject [%d][%s] key[%s] obj[%s] objLen[%d]", jsonLen, json, key, obj, objLen);
     start = (char *)strstr(json, key);
     if (NULL == start) {
         return -1;
@@ -412,9 +413,11 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
     if (objLen < len) {
         return -4;
     }
+    LELOG("getJsonObject len[%d] start[%d] end[%d]", len, start, end);
 
     // start[len] = 0;
     strncpy(obj, start, len);
+    LELOG("getJsonObject obj[%s]", obj);
     return len;
 }
 
@@ -614,16 +617,16 @@ int cloudMsgHandler(const char *data, int len) {
 
     int ret = WM_SUCCESS, dir = 0;
     CloudMsgKey key;
-    //char buf[MAX_BUF] = {0};
-    memset(miscBuf, 0, MAX_BUF);
-    key = cloudMsgGetKey(data, len, miscBuf, sizeof(miscBuf), &ret);
+    char buf[MAX_BUF] = {0};
+    memset(buf, 0, MAX_BUF);
+    key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
     // SetLock();
     switch (key) {
         jsontok_t jsonToken[NUM_TOKENS];
         jobj_t jobj;
         case CLOUD_MSG_KEY_LOCK: {
             int locked = 0;
-            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)miscBuf, ret);
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
                 ret = LELINK_ERR_LOCK_UNLOCK;
                 break;
@@ -637,7 +640,7 @@ int cloudMsgHandler(const char *data, int len) {
         }break;
         case CLOUD_MSG_KEY_DO_IA: {
             char name[MAX_RULE_NAME] = {0};
-            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)miscBuf, ret);
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
                 ret = LELINK_ERR_IA_DELETE;
                 break;
@@ -662,14 +665,14 @@ int cloudMsgHandler(const char *data, int len) {
                 }        
             }
 
-            key = cloudMsgGetKey(data, len, miscBuf, sizeof(miscBuf), &ret);
-            LELOG("CLOUD_MSG_KEY_LOG2MASTER key[%d] [%s]", key, data);
+            key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
+            LELOG("CLOUD_MSG_KEY_LOG2MASTER key[%d] [%d][%s]", key, ret, buf);
             if (CLOUD_MSG_KEY_LOG2MASTER != key) {
                 LELOG("CLOUD_MSG_KEY_LOG2MASTER -e2");
                 ret = -2;
                 break;
             }
-            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)miscBuf, ret);
+            ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
                 LELOG("CLOUD_MSG_KEY_LOG2MASTER -e3");
                 ret = -3;

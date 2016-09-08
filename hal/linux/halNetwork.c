@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 #include <errno.h>
 
@@ -254,7 +255,7 @@ int halCastProbing(const char *mcastIP, const char *bcastIP, int port) {
     APPLOG("probing for mcast START");
     address.sin_addr.s_addr = inet_addr(mcastIP);
     isSupportMCast = intCastProbing(sock, &address);
-    APPLOG("probing for mcast [%d] END", isSupportMCast)
+    APPLOG("probing for mcast [%d] END", isSupportMCast);
     APPLOG("probing for bcast START");
     address.sin_addr.s_addr = inet_addr(bcastIP);
     isSupportBCast = intCastProbing(sock, &address);

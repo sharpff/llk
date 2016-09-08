@@ -60,7 +60,7 @@ int halPWMOpen(pwmHandler_t *handler) {
 }
 
 void* halPWMInit(int clock) {
-    return 0xffffffff;
+    return (void *)-1;
 }
 
 void halCommonInit(commonManager_t* dev) {
@@ -68,7 +68,7 @@ void halCommonInit(commonManager_t* dev) {
 }
 
 void *halPipeOpen(char *name) {
-    return (void *)0xffffffff;
+    return (void *)-1;
 }
 
 int halPipeClose(void *dev) {
@@ -95,7 +95,7 @@ int halFlashDeinit(void)
 
 void *halFlashOpen(void)
 {
-    return (void *)0xffffffff;
+    return (void *)-1;
 }
 
 int halFlashClose(void *dev)
@@ -132,6 +132,16 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
 
 void halPrint(const char *log) {
     /*ANDROID_LOG_DEBUG ANDROID_LOG_WARN ANDROID_LOG_ERROR*/
+    char *str = strstr(log, "[W]");
+    if (str) {
+        __android_log_print(ANDROID_LOG_WARN, TAG_LOG, log);
+        return;
+    }
+    str = strstr(log, "[E]");
+    if (str) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG_LOG, log);
+        return;
+    }
     __android_log_print(ANDROID_LOG_DEBUG, TAG_LOG, log);
 }
 

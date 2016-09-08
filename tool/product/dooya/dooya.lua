@@ -41,7 +41,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.1'
+	local str = '1.1.1'
 	return string.len(str), str
 end
 
@@ -54,15 +54,10 @@ end
 ]]
 function s1GetCvtType()
 	local str = [[
-    {
-    "whatCvtType":1,
-    "uart":[
-    	{
-    		"id":1, 
-    		"baud":"9600-8N1"
-    	}
-    	]
-	}
+    {"whatCvtType":1,
+     "common":[{"num":6,"id":"44-45","mux":"2-2"}],
+     "uart":[{"id":1, "baud":"9600-8N1"}]
+    }
     ]]
 	local delay = 5
 
@@ -150,8 +145,10 @@ function s1CvtStd2Pri(json)
 	elseif (ctrl["action"] == 3) then
 		cmdTbl[2] = 0x03
 	-- 测量
-	else
+	elseif (ctrl["action"] == 4) then
 		cmdTbl[2] = 0x05
+	else
+		cmdTbl = {}
 	end
 	LOGTBL(cmdTbl)
 

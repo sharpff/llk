@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include <rfget.h>
 #include <httpc.h>
 #if defined(__MRVL_SDK3_3__)
@@ -76,7 +77,7 @@ int halUpdateFirmware(OTAInfo_t *info) {
     APPLOG("halUpdateFirmware start");
     // ret = update_firmware(httpFetchData, (void *)info, info->imgLen, p);
     ret = update_and_validate_firmware_cust(httpFetchData, info, info->imgLen, p, 0);
-    APPLOG("halUpdateFirmware [%d] end p->start[%p] len[%d]", ret, p->start, info->imgLen);
+    // APPLOG("halUpdateFirmware [%d] end p->start[%p] len[%d]", ret, p->start, info->imgLen);
     if (WM_SUCCESS != ret) {
         return -2;
     }

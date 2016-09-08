@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 
 #include "FreeRTOS.h"
@@ -14,7 +15,7 @@ extern void vPortFree(void* pv);
 extern void* pvPortMalloc(size_t xWanteSize);
 extern void *pvPortRealloc( void *pv, size_t size );  
 
-int halLockInit(void *ptr, const char *file, int line) {
+int halLockInit(void) {
     //SemaphoreHandle_t m_mutex;
 
     // Semaphore cannot be used before a call to xSemaphoreCreateMutex().
@@ -32,7 +33,7 @@ int halLockInit(void *ptr, const char *file, int line) {
 	
 }
 
-int halLock(void *ptr, const char *file, int line) {
+int halLock(void) {
     if (NULL == g_m_mutex) {
         //assert(0);
         APPLOG("halLock() g_m_mutex is NULL.");
@@ -47,7 +48,7 @@ int halLock(void *ptr, const char *file, int line) {
         return -1;    
 }
 
-int halUnlock(void *ptr, const char *file, int line) {
+int halUnlock(void) {
     if (NULL == g_m_mutex) {
         //assert(0);
         APPLOG("halUnlock() g_m_mutex is NULL.");
@@ -84,7 +85,7 @@ void *halMallocEx(size_t size, char* filename, uint32_t line) {
     return ptr;
 }
 
-void *halCallocEx(int n, size_t size, char* filename, uint32_t line) {
+void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line) {
     void *ptr = pvPortMalloc(n*size);
     //APPLOG("calloc:[%d][%d][0x%x][%d][%s]", n*size,xPortGetFreeHeapSize(), ptr, line, filename);
     if(ptr==NULL) {

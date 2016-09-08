@@ -1,15 +1,20 @@
+#include "leconfig.h"
 #include "halHeader.h"
 #include "lwip/netdb.h"
 
-int halLockInit(void *ptr, const char *file, int line) {
+int halLockInit(void) {
 	return 0;
 }
 
-int halLock(void *ptr, const char *file, int line) {
+void halDeLockInit(void) {
+
+}
+
+int halLock(void) {
 	return 0;
 }
 
-int halUnlock(void *ptr, const char *file, int line) {
+int halUnlock(void) {
 	return 0;
 }
 
@@ -68,7 +73,7 @@ void *halMallocEx(size_t size, char* filename, uint32_t line) {
     return ptr;
 }
 
-void *halCallocEx(int n, size_t size, char* filename, uint32_t line) {
+void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line) {
     void *ptr = pvPortMalloc(n*size);
     //APPLOG("calloc:[%d][%d][0x%x][%d][%s]", n*size,xPortGetFreeHeapSize(), ptr, line, filename);
     if(ptr==NULL) {
