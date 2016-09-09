@@ -714,6 +714,7 @@ int printOut(const char *fmt, ...) {
     va_end(args);
     if (getLogDir()) {
         logToMaster(miscBuf);
+        halPrint(miscBuf);
     } else {
         halPrint(miscBuf);
     }
