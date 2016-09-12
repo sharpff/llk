@@ -84,7 +84,7 @@ extern smtcn_proto_ops elian_proto_ops;
 #elif (CFG_SUPPORT_SMNT_PROTO == 3)
 extern smtcn_proto_ops ak_proto_ops;
 #elif (CFG_SUPPORT_SMNT_PROTO == 6)
-extern uint8_t gin_airconfig_current_channel;
+//extern uint8_t gin_airconfig_current_channel;
 extern const smtcn_proto_ops lelink_proto_ops;
 #endif
 
@@ -234,9 +234,9 @@ static void switch_next_channel(TimerHandle_t tmr)
     smt_conn_st.cur_chanl = channel_list[smt_conn_st.search_idx];
     wifi_config_set_channel(WIFI_PORT_STA, smt_conn_st.cur_chanl);
 
-#if (CFG_SUPPORT_SMNT_PROTO == 6)
-    gin_airconfig_current_channel = smt_conn_st.cur_chanl;
-#endif
+//#if (CFG_SUPPORT_SMNT_PROTO == 6)
+//    gin_airconfig_current_channel = smt_conn_st.cur_chanl;
+//#endif
 #if (smtcn_debug == 1)
     channel_times[smt_conn_st.cur_chanl - 1]++;
     /*
@@ -772,12 +772,7 @@ static void smtcn_rcv_pkt_thread(void *pvParameters)
         if (xQueueReceive(smtcn_rx_queue, (void *)&pkt, portMAX_DELAY) == pdPASS) 
 		{
             /* process this raw packet */
-		  #if 1
             smtcn_raw_pkt_handler(pkt.payload, pkt.len);//parse packet data;
-		  #else
-		    //parse lelink packet data;
-		    lelink_raw_pkt_handler(pkt.payload, pkt.len);//parse packet data;
-		  #endif//0
 #ifndef USE_SMTCN_STATIC_BUF
             vPortFree(pkt.payload);
 #endif

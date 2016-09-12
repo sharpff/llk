@@ -1246,7 +1246,7 @@ int sengineGetStatus(char *status, int len) {
         strcpy(status, "{}");
         ret = 2;
     }
-    LELOG("sengineGetStatus [%d][%s]", ret, status);
+    //LELOG("sengineGetStatus [%d][%s]", ret, status);
     return ret;
 }
 
@@ -1373,7 +1373,6 @@ int senginePollingSlave(void) {
                 bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
                 LELOG("bin[%s]", hexStr);          
             }
-            
 
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     &datas.arrDatas[appendLen], currLen, (uint8_t *)&whatKind, sizeof(whatKind));

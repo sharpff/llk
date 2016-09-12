@@ -200,7 +200,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
             break;
         }
     }
-    
+
     TIMEOUT_BEGIN(200)
     senginePollingSlave();
     TIMEOUT_END
