@@ -102,12 +102,14 @@ static void mtk_thread_lelink_proc(void *args) {
     ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
     if (0 > ret) {
         APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
+        vTaskDelete(NULL);
         return;
     }
     // protocol
     ret = lelinkInit(NULL);
     if (0 > ret) {
         APPLOGE("lelinkInit ret[%d]\r\n", ret);
+        vTaskDelete(NULL);
         return;
     }
 
@@ -120,6 +122,7 @@ static void mtk_thread_lelink_proc(void *args) {
 
     lelinkNwDelete(ctxR2R);
     lelinkNwDelete(ctxQ2A);
+    vTaskDelete(NULL);
 }
 
 static int platform_launch_lelink_start(void) {
