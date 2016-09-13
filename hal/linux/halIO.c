@@ -46,7 +46,7 @@ void *halUartOpen(uartHandler_t* handler) {
     APPLOG("halUartOpen ok [%d]", fd);
     memcpy(&tmp, &fd, sizeof(fd));
     memcpy(&handler->handler, &fd, sizeof(fd));
-    return tmp;
+    return handler;
 }
 
 int halUartClose(uartHandler_t* handler) {

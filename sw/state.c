@@ -382,6 +382,7 @@ static int stateProcApConnected(StateContext *cntx) {
                 for (k = 0; k < 4; k++) {
                     LELOG("DNS OK [%s]", ip[k]);
                 }
+                memset(COMM_CTX(ginCtxR2R)->remoteIP, 0, MAX_IPLEN);
                 strcpy(COMM_CTX(ginCtxR2R)->remoteIP, ip[0]);
                 COMM_CTX(ginCtxR2R)->remotePort = authCfg.data.port;
                 #ifndef DNS_IP_TEST

@@ -453,7 +453,7 @@ int httpclient_recv(httpclient_t *client, char *buf, int min_len, int max_len, i
                 DBG("%s, recv [blocking] return:%d", __func__, ret);
             } else {
                 ret = recv(client->socket, buf + readLen, max_len - readLen, MSG_DONTWAIT);
-                DBG("%s, recv [not blocking] return:%d", __func__, ret);
+                // DBG("%s, recv [not blocking] return:%d", __func__, ret);
                 if (ret == -1 && errno == EWOULDBLOCK) {
                     DBG("%s, recv [not blocking] EWOULDBLOCK", __func__);
                     retry++;
@@ -499,7 +499,7 @@ int httpclient_recv(httpclient_t *client, char *buf, int min_len, int max_len, i
         }
     }
 
-    DBG("Read %d bytes", readLen);
+    // DBG("Read %d bytes", readLen);
     *p_read_len = readLen;
     buf[readLen] = '\0';
 
@@ -512,7 +512,7 @@ int httpclient_retrieve_content(httpclient_t *client, char *data, int len, httpc
     int templen = 0;
     int crlf_pos;
     /* Receive data */
-    DBG("Receiving data:%s", data);
+    // DBG("Receiving data:%s", data);
     client_data->is_more = true;
 
     if (client_data->response_content_len == -1 && client_data->is_chunked == false) {

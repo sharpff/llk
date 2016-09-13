@@ -3,6 +3,8 @@
 #include "sockets.h"
 #include "wifi_api.h"
 #include "os.h"
+#include "netdb.h"
+#include "ctype.h"
 
 extern uint8_t g_ipv4_addr[4];
 
@@ -107,5 +109,19 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
 }
 
 int halGetHostByName(const char *name, char ip[4][32], int len) { 
-    return -1;
+    struct hostent* hostinfo;
+    struct sockaddr_in tmp;
+    if (!isalpha((uint8_t)name[0])) {
+        return -1;
+    }
+    hostinfo = lwip_gethostbyname(name);
+    APPLOG("halGetHostByName name[%s] hostinfo[0x%p]", name, hostinfo);
+    if (NULL == hostinfo) {
+        return -2;
+    }
+    os_memset(&tmp, 0, sizeof(struct sockaddr_in));
+    os_memcpy(&tmp.sin_addr.s_addr, hostinfo->h_addr, hostinfo->h_length);
+    strcpy(ip[0], (const char *)inet_ntoa(tmp.sin_addr));
+    APPLOG("halGetHostByName [%s]", ip[0]);
+    return 0;
 }

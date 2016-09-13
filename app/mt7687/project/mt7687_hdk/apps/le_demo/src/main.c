@@ -98,7 +98,7 @@ static void mtk_thread_lelink_proc(void *args) {
     void *ctxQ2A;
 
     printForFac();
-
+    printf("Build Time: " __DATE__ " " __TIME__ "\r\n");
     ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
     if (0 > ret) {
         APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
