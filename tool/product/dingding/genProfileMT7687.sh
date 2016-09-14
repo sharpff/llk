@@ -18,7 +18,7 @@ $MAIN_PATH/lelinkTool.py \
     -o ./0x1c2000.bin
 
 $MAIN_PATH/lelinkTool.py \
-    -t ./dingding.lua \
+    -t ./dingdingMT7687.lua \
     -o ./0x1c3000.bin
 # $MAIN_PATH/lelinkTool.py \
 #     -t $MAIN_PATH/testLua/basic.lua \
@@ -38,7 +38,6 @@ $MAIN_PATH/lelinkTool.py \
     ./0x1c2000.bin 0x1000 \
     ./0x1c3000.bin 0x5000 \
     ./0x1c8000.bin 0x1000 \
-    ./0x1c9000.bin 0x5000 \
     -o ./cust.bin
 
 $MAIN_PATH/lelinkTool.py \
