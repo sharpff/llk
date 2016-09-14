@@ -44,6 +44,7 @@
  * for call. */
 static char locale_decimal_point = '.';
 
+#ifndef USE_INTERNAL_FPCONV
 /* In theory multibyte decimal_points are possible, but
  * Lua CJSON only supports UTF-8 and known locales only have
  * single byte decimal points ([.,]).
@@ -66,6 +67,7 @@ static void fpconv_update_locale()
 
     locale_decimal_point = buf[1];
 }
+#endif
 
 /* Check for a valid number character: [-+0-9a-yA-Y.]
  * Eg: -0.6e+5, infinity, 0xF0.F0pF0
@@ -126,7 +128,7 @@ double fpconv_strtod(const char *nptr, char **endptr)
     /* Duplicate number into buffer */
     if (buflen >= FPCONV_G_FMT_BUFSIZE) {
         /* Handle unusually large numbers */
-        buf = malloc(buflen + 1);
+        buf = (char *)malloc(buflen + 1);
         if (!buf) {
             //fprintf(stderr, "Out of memory");
             abort();

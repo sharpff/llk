@@ -52,7 +52,7 @@ typedef struct {
     uint16_t dir:1;     // 0 - input; 1 - output
     uint16_t mode:3;    // 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
     uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
-    uint16_t type:3;    // 0 - stdio; input: 1 - reset; output: 1 - reset
+    uint16_t type:3;    // 0 - stdio; 1 - reset
     uint16_t gpiostate:1;   // only : 0 - low; 1 - high
     uint16_t freestate:1;   // only output reset: 0 - low; 1 - high
     uint8_t blink;          // only output. ticks, blink frequency
@@ -88,11 +88,11 @@ typedef struct {
 
 typedef struct {
     int16_t id;          // support 1, 2, 3 
-    int32_t baud;
-    int8_t dataBits;
-    int8_t stopBits;
-    int8_t flowCtrl;
-    int8_t parity;
+    uint32_t baud;
+    uint8_t dataBits;
+    uint8_t stopBits;
+    uint8_t flowCtrl;
+    uint8_t parity;
     void* handler;
     uint32_t reserved1;
     uint32_t reserved2;

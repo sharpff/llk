@@ -255,13 +255,19 @@ int halGPIOOpen(gpioHandler_t* handler) {
 
 int halGPIORead(gpioHandler_t* handler, int *val) {
 	hal_gpio_data_t gpio_data;
-    hal_gpio_get_input(handler->id, &gpio_data);
+    if (GPIO_DIR_INPUT == handler->dir) {
+        hal_gpio_get_input(handler->id, &gpio_data);
+    } else if (GPIO_DIR_OUTPUT == handler->dir) {
+        hal_gpio_get_output(handler->id, &gpio_data);
+    }
     *val = (int)gpio_data;
+    // APPLOG("halGPIORead dir[%d] id [%d] v[%d]", handler->dir, handler->id, *val);
     return 0;
 }
 
 int halGPIOWrite(gpioHandler_t* handler, const int val) {
-	hal_gpio_set_output(handler->id, (hal_gpio_data_t)val);
+    // APPLOG("halGPIOWrite dir[%d] id [%d] v[%d]", handler->dir, handler->id, val);
+    hal_gpio_set_output(handler->id, (hal_gpio_data_t)val);
     return 0;
 }
 

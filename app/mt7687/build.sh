@@ -83,6 +83,7 @@ if [ "$1" != "clean" ]; then
 	do_copy "./middleware/third_party/cloud/lelink" "$MTSDK7687/middleware/third_party/cloud/lelink"
 	#$COPY main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
         $COPY ./project/mt7687_hdk/apps/le_demo/src/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+        cp ./project/mt7687_hdk/apps/le_demo/src/main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
         $COPY ./project/mt7687_hdk/template/download/flash_download.ini $MTSDK7687/project/mt7687_hdk/template/download
         $COPY ./project/mt7687_hdk/apps/le_demo/inc/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
         $COPY ./project/mt7687_hdk/apps/le_demo/inc/flash_map.h $MTSDK7687/project/mt7687_hdk/apps/bootloader/inc
@@ -109,6 +110,7 @@ if [ "$1" != "clean" ]; then
 	./build.sh mt7687_hdk le_demo
 	popd > /dev/null 2>&1
 	$COPY $MTSDK7687/out/mt7687_hdk/le_demo/*.bin ../../tool
+	$COPY $MTSDK7687/out/mt7687_hdk/le_demo/mt7687_le_demo.bin $MTSDK7687/tools/PC_tool_Win/FOTA/_Load/mt7687
 else
 	pushd $MTSDK7687 > /dev/null 2>&1
 	./build.sh mt7687_hdk le_demo clean

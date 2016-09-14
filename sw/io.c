@@ -800,7 +800,7 @@ RLED_STATE_t setResetLed(RLED_STATE_t st)
 
 static void gpioCheckInput(gpioHandler_t *ptr) {
     ptr->keepHighTimes++;
-    //LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
+    LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
     if(ptr->keepHighTimes >= ptr->longTime) {
         int ret = resetConfigData();
         LELOG("resetConfigData [%d]", ret);
