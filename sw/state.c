@@ -443,7 +443,7 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         s_first_heart = 0;
         return 0;
     }
-    TIMEOUT_BEGIN(15000)
+    TIMEOUT_BEGIN(10000)
         NodeData node = {0};
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;

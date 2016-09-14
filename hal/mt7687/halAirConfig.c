@@ -49,31 +49,33 @@ int halDoConfiguring(void *ptr, int ptrLen) {
 	return gin_airconfig_sniffer_got;
 }
 
-int wifi_connect_repeater_start(ap_passport_t *args) {
-    uint8_t *ssid = (uint8_t *)(args->ssid);
-    uint8_t *password = (uint8_t *)(args->psk);
-    APPLOG("Repeater mode connect to AP,  SSID[%s][%s]", ssid, password); 
-    wifi_set_opmode(WIFI_MODE_REPEATER);
-    wifi_config_set_ssid(WIFI_PORT_APCLI, ssid ,(uint8_t)os_strlen((char *)ssid));
-    wifi_config_set_wpa_psk_key(WIFI_PORT_APCLI, password, (uint8_t)os_strlen((char *)password));
-    wifi_config_set_security_mode(WIFI_PORT_APCLI, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
-    wifi_config_set_channel(WIFI_PORT_APCLI, 6);
-    wifi_config_set_bandwidth(WIFI_PORT_APCLI, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
-    wifi_config_set_wireless_mode(WIFI_PORT_APCLI, WIFI_PHY_11BG_MIXED);
-    wifi_config_set_ssid(WIFI_PORT_AP, (uint8_t *)"ff_repeater", strlen("ff_repeater"));
-    wifi_config_set_wpa_psk_key(WIFI_PORT_AP, (uint8_t *)"1234abcd", strlen("1234abcd"));
-    wifi_config_set_security_mode(WIFI_PORT_AP, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
-    wifi_config_set_channel(WIFI_PORT_AP, 6);
-    wifi_config_set_bandwidth(WIFI_PORT_AP, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
-    wifi_config_set_wireless_mode(WIFI_PORT_AP, WIFI_PHY_11BG_MIXED);
-    wifi_config_reload_setting();
-    network_dhcp_start(WIFI_MODE_REPEATER);
-    APPLOG("network_dhcp_start WIFI_MODE_REPEATER");
-    return 1;
-}
+// int wifi_connect_repeater_start(ap_passport_t *args) {
+//     uint8_t *ssid = (uint8_t *)(args->ssid);
+//     uint8_t *password = (uint8_t *)(args->psk);
+//     APPLOG("Repeater mode connect to AP,  SSID[%s][%s]", ssid, password); 
+//     wifi_set_opmode(WIFI_MODE_REPEATER);
+//     wifi_config_set_ssid(WIFI_PORT_APCLI, ssid ,(uint8_t)os_strlen((char *)ssid));
+//     wifi_config_set_wpa_psk_key(WIFI_PORT_APCLI, password, (uint8_t)os_strlen((char *)password));
+//     wifi_config_set_security_mode(WIFI_PORT_APCLI, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
+//     wifi_config_set_channel(WIFI_PORT_APCLI, 6);
+//     wifi_config_set_bandwidth(WIFI_PORT_APCLI, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
+//     wifi_config_set_wireless_mode(WIFI_PORT_APCLI, WIFI_PHY_11BG_MIXED);
+//     wifi_config_set_ssid(WIFI_PORT_AP, (uint8_t *)"ff_repeater", strlen("ff_repeater"));
+//     wifi_config_set_wpa_psk_key(WIFI_PORT_AP, (uint8_t *)"1234abcd", strlen("1234abcd"));
+//     wifi_config_set_security_mode(WIFI_PORT_AP, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
+//     wifi_config_set_channel(WIFI_PORT_AP, 6);
+//     wifi_config_set_bandwidth(WIFI_PORT_AP, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
+//     wifi_config_set_wireless_mode(WIFI_PORT_AP, WIFI_PHY_11BG_MIXED);
+//     wifi_config_reload_setting();
+//     network_dhcp_start(WIFI_MODE_REPEATER);
+//     APPLOG("network_dhcp_start WIFI_MODE_REPEATER");
+//     return 1;
+// }
 
 int wifi_connect_one_sta_start(uint8_t *ssid, uint8_t *password, uint8_t channel) {
-    APPLOG("Repeater mode connect to AP,  SSID[%s][%s]", ssid, password); 
+    char newSSID[64] = {0};
+    sprintf(newSSID, "%s_repeater", ssid);
+    APPLOG("Repeater mode connect to AP,  SSID[%s][%s]", ssid, password);
     wifi_set_opmode(WIFI_MODE_REPEATER);
     wifi_config_set_ssid(WIFI_PORT_APCLI, ssid ,(uint8_t)os_strlen((char *)ssid));
     wifi_config_set_wpa_psk_key(WIFI_PORT_APCLI, password, (uint8_t)os_strlen((char *)password));
@@ -81,8 +83,8 @@ int wifi_connect_one_sta_start(uint8_t *ssid, uint8_t *password, uint8_t channel
     wifi_config_set_channel(WIFI_PORT_APCLI, channel);
     wifi_config_set_bandwidth(WIFI_PORT_APCLI, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
     wifi_config_set_wireless_mode(WIFI_PORT_APCLI, WIFI_PHY_11BG_MIXED);
-    wifi_config_set_ssid(WIFI_PORT_AP, (uint8_t *)"ff_repeater", strlen("ff_repeater"));
-    wifi_config_set_wpa_psk_key(WIFI_PORT_AP, (uint8_t *)"1234abcd", strlen("1234abcd"));
+    wifi_config_set_ssid(WIFI_PORT_AP, (uint8_t *)newSSID, strlen(newSSID));
+    wifi_config_set_wpa_psk_key(WIFI_PORT_AP, (uint8_t *)password, strlen(password));
     wifi_config_set_security_mode(WIFI_PORT_AP, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
     wifi_config_set_channel(WIFI_PORT_AP, channel);
     wifi_config_set_bandwidth(WIFI_PORT_AP, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
