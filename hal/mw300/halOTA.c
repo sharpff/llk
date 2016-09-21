@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include <rfget.h>
 #include <httpc.h>
 #if defined(__MRVL_SDK3_3__)
@@ -13,7 +14,7 @@ static size_t httpFetchData(void *priv, void *buf, size_t max_len);
 int halHttpOpen(OTAInfo_t *info, const char *url)
 {
     int status = -1;
-    char tmpurl[512];
+    char tmpurl[MAX_BUF] = {0};
     http_resp_t *resp;
     http_session_t session;
 
@@ -64,15 +65,34 @@ void halHttpClose(OTAInfo_t *info)
     }
 }
 
-int halUpdateFirmware(OTAInfo_t *info)
-{
+int halUpdateFirmware(OTAInfo_t *info) {
+    int ret = 0;
     struct partition_entry *p = (struct partition_entry *)rfget_get_passive_firmware();
     /* Perform FW update later */
     if (p == NULL) {
         APPLOGE("Failed to get passive partition");
         return -1;
-    } 
-    return update_firmware(httpFetchData, (void *)info, info->imgLen, p);
+    }
+
+    APPLOG("halUpdateFirmware start");
+    // ret = update_firmware(httpFetchData, (void *)info, info->imgLen, p);
+    ret = update_and_validate_firmware_cust(httpFetchData, info, info->imgLen, p, 0);
+    // APPLOG("halUpdateFirmware [%d] end p->start[%p] len[%d]", ret, p->start, info->imgLen);
+    if (WM_SUCCESS != ret) {
+        return -2;
+    }
+    ret = lelinkVerify(p->start, info->imgLen);
+    APPLOG("halUpdateFirmware lelinkVerify[%d]", ret);
+    // test only 
+    // update_complete();
+    // return 0;
+    if (0 == ret) {
+        update_complete();
+    } else {
+        update_abort();
+        return -3;
+    }
+    return 0;
 }
 
 uint32_t halUpdate(OTAInfo_t *info, uint8_t *buf, uint32_t bufLen)

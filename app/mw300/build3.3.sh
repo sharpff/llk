@@ -52,6 +52,10 @@ fi
 
 touch "$MAIN_PATH/app/mw300/sample_apps/le_demo/src/app/mw300/main.c"
 pushd $WMSDK33 > /dev/null 2>&1
+VAR=$*
+VAR=${VAR% MYXPREFIX*}
+VAR=${VAR##*MYXPATH=}
+PATH=$PATH:$VAR
 make APP=$MAIN_PATH/app/mw300/sample_apps/le_demo/ $*
 popd > /dev/null 2>&1
 if [ "$1" != "clean" ]; then

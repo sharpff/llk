@@ -52,6 +52,43 @@ extern PrivateCfg ginPrivateCfg;
 
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
+int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
+    int i = 0;
+    uint8_t tmp[20] = {0};
+    halSha1Start();
+    halSha1Update(input, inputLen);
+    halSha1End(tmp);
+
+    {
+        LELOG("------ sha12key single ----------");
+        for (i = 0; i < sizeof(tmp); i++) {
+            LEPRINTF("%02x", tmp[i]);
+        }
+        LEPRINTF("\r\n");
+    }
+    memcpy(output, tmp, MD5_LEN);
+    return 0;
+}
+
+// int sha12keyMulti(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
+//     int i = 0;
+//     uint8_t tmp[20] = {0};
+//     halSha1Start();
+//     for (i = 0; i < inputLen; i++) {
+//         halSha1Update(input + i, 1);
+//     }
+//     halSha1End(tmp);
+
+//     {
+//         LELOG("------ sha12key multi ----------");
+//         for (i = 0; i < sizeof(tmp); i++) {
+//             LEPRINTF("%02x", tmp[i]);
+//         }
+//         LEPRINTF("\r\n");
+//     }
+//     memcpy(output, tmp, MD5_LEN);
+//     return 0;
+// }
 
 int setLock(int locked) {
     int ret = 0;
@@ -62,6 +99,19 @@ int setLock(int locked) {
 
 int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
+}
+
+int getDevFlag(DEV_FLAG_t flag) {
+    return !(ginPrivateCfg.data.devCfg.flag & flag);
+}
+
+int setDevFlag(DEV_FLAG_t flag, int isSet) {
+    if(isSet) {
+        ginPrivateCfg.data.devCfg.flag &= ~flag;
+    } else {
+        ginPrivateCfg.data.devCfg.flag |= flag;
+    }
+    return lelinkStorageWritePrivateCfg(&ginPrivateCfg);
 }
 
 void setTerminalUTC(uint64_t *utc) {
@@ -96,7 +146,8 @@ const uint8_t *getTerminalToken() {
     if (isCloudAuthed()) {
         if ((0 == ginTerminalToken[0]) || 
             (0 == memcmp(ginTerminalToken, getPreSharedToken(), AES_LEN))) {
-            md5(&ginRemoteUTC, sizeof(uint32_t), ginTerminalToken);
+            // md5(&ginRemoteUTC, sizeof(uint32_t), ginTerminalToken);
+            sha12key((uint8_t *)&ginRemoteUTC, sizeof(uint32_t), ginTerminalToken);
         }
         return ginTerminalToken;
     } else {
@@ -302,13 +353,14 @@ int getSSID(char *ssid, int ssidLen) {
 }
 
 void setTerminalStatus(const char *status, int len) {
-    char val[MAX_BUF];
-    int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
+    char val[MAX_BUF] = {0};
+    //int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
+    int ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val));
+    LELOGW("setTerminalStatus [%d][%s]", ret, val);
     if (0 >= ret) {
         cloudMsgHandler(status, len);
         return;
     }
-    LELOGW("setTerminalStatus [%d][%s]", ret, val);
     sengineSetStatus((char *)val, ret);
 }
 

@@ -69,19 +69,25 @@ typedef enum {
     // QUERIETYPE_SUBDEV_LIST = (1 << 16) & 0xFFFF0000, // 0xFFFF0001, query sub dev state
     // QUERIETYPE_SUBDEV_INFO = (2 << 16) & 0xFFFF0000, // 0xFFFF0001, query sub dev state
 }QuerieType_t;
+
+#ifdef LELINK_PACK
+#pragma pack(1)
+#endif
 /*
  * script info
  */
 typedef struct {
     int size;
     uint8_t script[MAX_SCRIPT_SIZE];
-}ALIGNED ScriptData;
+}LELINK_ALIGNED ScriptData;
 
 typedef struct {
     ScriptData data;
     uint8_t csum;
-}ALIGNED ScriptCfg;
-
+}LELINK_ALIGNED ScriptCfg;
+#ifdef LELINK_PACK
+#pragma pack()
+#endif
 
 typedef struct {
     uint16_t queriesLen;

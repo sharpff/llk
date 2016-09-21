@@ -54,12 +54,13 @@ end
 ]]
 function s1GetCvtType()
     -- combained uart(0x1) & gpio(0x2)
+    -- gpio 48 (id - 4)
     local str = [[
     {
     "whatCvtType":2,    
     "gpio":[
         {
-            "id":3,
+            "id":4,
             "dir":0,
             "mode":1,
             "state":0,
@@ -112,7 +113,7 @@ end
 ]]
 function s1CvtPri2Std(bin)
 	local dataTbl = {}
-	local str = '{"switcher":%d}'
+	local str = '{"mode":%d}'
 	dataTbl = stringToTable(bin)
 	-- for i = 1, #bin
 	-- 		 (bin[i])

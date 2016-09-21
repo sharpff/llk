@@ -4,6 +4,8 @@
 #include "jsgen.h"
 #include <stdarg.h>
 
+static char miscBuf[MAX_BUF] = {0};
+
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port) {
     int ret = -1;
     int dir = 0;
@@ -164,8 +166,8 @@ int getWhatCvtType(const char *json, int jsonLen) {
     return whatCvtType;
 }
 
-int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *stopBits, char *parity, int *flowCtrl) {
-    int ret = -1, num = 0, i = 0;
+int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler) {
+    int ret = -1, num = 0, tmp, i = 0;
     char strBaud[96] = {0};
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
@@ -181,24 +183,28 @@ int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *st
             if((ret = json_array_get_composite_object(&jobj, i)) != WM_SUCCESS) {
                 return -2;
             }
-
+            if((ret = json_get_val_int(&jobj, JSON_NAME_UART_ID, &tmp)) == WM_SUCCESS) {
+                handler->id = tmp;
+                LELOG("getUartInfo id[%d]", tmp);
+            }
             if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_UART_BAUD, strBaud, sizeof(strBaud))) {
                 return -3;
             }
         }
     }
     // TODO: to support multi-uart
-    sscanf(strBaud, "%u-%u%c%u", baud, dataBits, parity, stopBits);
-
+    LELOG("getUartInfo baud[%s]", strBaud);
+    sscanf(strBaud, "%u-%u%c%u", (unsigned int *)&handler->baud, (unsigned int *)&handler->dataBits, &handler->parity, (unsigned int *)&handler->stopBits);
+    LELOG("getUartInfo baud[%d] [%d] [%d] [%d]", handler->baud, handler->dataBits, handler->parity, handler->stopBits);
     return 0;
 }
 
-int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
+int getGPIOInfo(const char *json, int jsonLen,  gpioHandler_t *table, int n)
 {
     jobj_t jobj;
-    int i, k, num, ret, tmp, j = -1;
+    int i, num, ret, tmp, j = -1;
     jsontok_t jsonToken[NUM_TOKENS];
-
+    LELOG("getGPIOInfo size[%d]", n);
     if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
         return -1;
     }
@@ -209,17 +215,10 @@ int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
                 return -1;
             }
             if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_ID, &tmp)) != WM_SUCCESS) {
+                LELOG("getGPIOInfo json_get_val_int error");
                 return -1;
             }
-            for( k = 0; k < i; k++ ) {
-                if(table[k].id == tmp) {
-                    tmp = -1;
-                    break;
-                }
-            }
-            if(tmp <= 0 || tmp > n) {
-                continue;
-            }
+
             table[j].id = tmp;
             if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_DIR, &tmp)) == WM_SUCCESS) {
                 table[j].dir = tmp;
@@ -249,8 +248,8 @@ int getGPIOInfo(const char *json, int jsonLen,  gpioHand_t *table, int n)
                 }
                 table[j].longTime = tmp;
             }
-            /*LELOGE("IO id = %d, num = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", */
-                    /*table[j].id, table[j].num, table[j].dir, table[j].mode, table[j].state, table[j].type, table[j].blink);*/
+            LELOG("GPIO id = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
+                    table[j].id, table[j].dir, table[j].mode, table[j].state, table[j].type, table[j].blink);
             j++;
             json_release_composite_object(&jobj);
         }
@@ -274,10 +273,127 @@ int getPipeInfo(const char *json, int jsonLen, char *name, int size) {
     return 0;
 }
 
+int getPWMInfo(const char *json, int jsonLen,  pwmHandler_t *table, int n)
+{
+    jobj_t jobj;
+    int i = -1, num, ret, tmp;
+    jsontok_t jsonToken[NUM_TOKENS];
+    if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
+        LELOG("getPWMInfo json_init");
+        return -1;
+    }
+    if((ret = json_get_array_object(&jobj, JSON_NAME_PWM_CONF, &num))== WM_SUCCESS) {
+        num = num > n ? n : num;
+        LELOG("getPWMInfo num[%d]", num);
+        for( i = 0; i < num; i++ ) {
+            if((ret = json_array_get_composite_object(&jobj, i)) != WM_SUCCESS) {
+                LELOG("getPWMInfo json_array_get_composite_object");
+                return -1;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_ID, &tmp)) == WM_SUCCESS) {
+                table[i].id = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_TYPE, &tmp)) == WM_SUCCESS) {
+                table[i].type = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_CLOCK, &tmp)) == WM_SUCCESS) {
+                table[i].clock = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_STATE, &tmp)) == WM_SUCCESS) {
+                table[i].state = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_FREQUENCY, &tmp)) == WM_SUCCESS) {
+                table[i].frequency = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_DUTY, &tmp)) == WM_SUCCESS) {
+                table[i].duty = tmp;
+            }
+            if(table[i].type == PWM_TYPE_OUTPUT_RESET) {
+                if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_BLINK, &tmp)) != WM_SUCCESS || tmp < 1) {
+                    LELOGE("PWM blink value: %s = %d",  JSON_NAME_PWM_BLINK, (ret == WM_SUCCESS ? tmp : ret));
+                    continue;
+                }
+                table[i].blink = tmp;
+                if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_TIME_SHORT, &tmp)) != WM_SUCCESS || tmp < 1) {
+                    LELOGE("PWM wrong value: %s = %d",  JSON_NAME_PWM_TIME_SHORT, (ret == WM_SUCCESS ? tmp : ret));
+                    continue;
+                }
+                table[i].shortTime = tmp;
+                if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_TIME_LONG, &tmp)) != WM_SUCCESS || tmp <= table[i].shortTime) {
+                    LELOGE("PWM wrong value: %s = %d",  JSON_NAME_PWM_TIME_LONG, (ret == WM_SUCCESS ? tmp : ret));
+                    continue;
+                }
+                table[i].longTime = tmp;
+            }
+            LELOG("PWM id[%d], type[%d], clock[%d], fre[%d], duty[%d], blink[%d], short[%d], long[%d]", 
+                table[i].id, table[i].type, table[i].clock, table[i].frequency,
+                table[i].duty,table[i].blink,table[i].shortTime,table[i].longTime);
+            json_release_composite_object(&jobj);
+        }
+    }
+    LELOG("getPWMInfo e[%d]", i);
+    return i;
+}
+
+void convertStringToArray(char* str, commonManager_t *commonManager, uint8_t type) {
+    char temp[8] = {0};
+    int i, j = 0, count=0, len = strlen(str);
+    memset(temp, 0, sizeof(temp));
+    for(i=0; i<len+1; i++) {
+        if(str[i] != '-' && str[i] != '\0') {
+            temp[j++] = str[i];
+        } else {
+            if(type == 0) {
+                commonManager->table[count++].id = atoi(temp);
+            } else {
+                commonManager->table[count++].mux = atoi(temp);
+            }
+            if(str[i]=='\0')
+                return;
+            memset(temp, 0, sizeof(temp));
+            j = 0;
+        }
+    }
+}
+
+int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager, int n) {
+    jobj_t jobj;
+    int i, num, ret, tmp;
+    char strTemp[256] = {0};
+    jsontok_t jsonToken[NUM_TOKENS];
+    if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
+        return -1;
+    }
+    if((ret = json_get_array_object(&jobj, JSON_NAME_COMMON_CONF, &num))== WM_SUCCESS) {
+        num = num < 0 ? 0 : num;
+        for(i = 0; i < num; i++) {
+            if((ret = json_array_get_composite_object(&jobj, i)) != WM_SUCCESS) {
+                LELOG("json_array_get_composite_object error %d", ret);
+                return -2;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_COMMON_NUM, &tmp)) == WM_SUCCESS) {
+                commonManager->num = tmp;
+            }
+            if (WM_SUCCESS == json_get_val_str(&jobj, JSON_NAME_COMMON_ID, strTemp, sizeof(strTemp))) {
+                convertStringToArray(strTemp, commonManager, 0);
+                memset(strTemp, 0, sizeof(strTemp));
+            }
+            if (WM_SUCCESS == json_get_val_str(&jobj, JSON_NAME_COMMON_MUX, strTemp, sizeof(strTemp))) {
+                convertStringToArray(strTemp, commonManager, 1);
+            }
+        }
+    }
+    for(i=0; i<commonManager->num; i++) {
+        LELOG("Common index[%d] id[%d] mux[%d]", i, commonManager->table[i].id, commonManager->table[i].mux);
+    }
+    return i;
+}
+
 int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
     char *start, *end;
     char *tokenStart = "{", *tokenEnd = "}";
     int len = 0;
+    LELOG("getJsonObject [%d][%s] key[%s] obj[%s] objLen[%d]", jsonLen, json, key, obj, objLen);
     start = (char *)strstr(json, key);
     if (NULL == start) {
         return -1;
@@ -297,9 +413,11 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
     if (objLen < len) {
         return -4;
     }
+    LELOG("getJsonObject len[%d] start[%d] end[%d]", len, start, end);
 
     // start[len] = 0;
     strncpy(obj, start, len);
+    LELOG("getJsonObject obj[%s]", obj);
     return len;
 }
 
@@ -346,6 +464,44 @@ int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJso
     result[tmpLen] = '}'; 
     tmpLen += 1;       
     return tmpLen;
+}
+
+int getCtrlData(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
+    char *start, *end, *temp;
+    char *tokenStart = "{", *tokenEnd = "}";
+    int len = 0;
+    start = (char *)strstr(json, key);
+    if (NULL == start) {
+        return -1;
+    }
+
+    start = (char *)strstr(start, tokenStart);
+    if (NULL == start) {
+        return -2;
+    }
+
+    temp = start;
+
+    while (1) {
+        end = (char *)strstr(temp + 1, tokenEnd);
+        if (NULL == end) {
+            if(temp != start) {
+                end = temp;
+                break;
+            } else {
+                return -3;
+            }
+        }
+        temp = end;
+    }
+
+    len = end - start;
+    if (objLen < len) {
+        return -4;
+    }
+
+    strncpy(obj, start, len);
+    return len;
 }
 
 // TODO: timer start for heart beat, hal need to support
@@ -460,8 +616,10 @@ void logToMaster(const char *log) {
 int cloudMsgHandler(const char *data, int len) {
 
     int ret = WM_SUCCESS, dir = 0;
+    CloudMsgKey key;
     char buf[MAX_BUF] = {0};
-    CloudMsgKey key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
+    memset(buf, 0, MAX_BUF);
+    key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
     // SetLock();
     switch (key) {
         jsontok_t jsonToken[NUM_TOKENS];
@@ -508,7 +666,7 @@ int cloudMsgHandler(const char *data, int len) {
             }
 
             key = cloudMsgGetKey(data, len, buf, sizeof(buf), &ret);
-            LELOG("CLOUD_MSG_KEY_LOG2MASTER key[%d] [%s]", key, data);
+            LELOG("CLOUD_MSG_KEY_LOG2MASTER key[%d] [%d][%s]", key, ret, buf);
             if (CLOUD_MSG_KEY_LOG2MASTER != key) {
                 LELOG("CLOUD_MSG_KEY_LOG2MASTER -e2");
                 ret = -2;
@@ -549,15 +707,16 @@ int cloudMsgHandler(const char *data, int len) {
 }
 
 int printOut(const char *fmt, ...) {
-    char buf[MAX_BUF] = {0};
     va_list args;
+    memset(miscBuf, 0, MAX_BUF);
     va_start(args, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, args);
+    vsnprintf(miscBuf, sizeof(miscBuf), fmt, args);
     va_end(args);
     if (getLogDir()) {
-        logToMaster(buf);
+        logToMaster(miscBuf);
+        halPrint(miscBuf);
     } else {
-        halPrint(buf);
+        halPrint(miscBuf);
     }
     return 0;
 }

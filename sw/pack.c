@@ -114,12 +114,9 @@ int doUnpack(void *ctx,
             }
 
             {
-                int i = 0;
-                LEPRINTF("unpack encType [%d] :", commonHeader->encType);
-                for (i = 0; i < AES_LEN; i++) {
-                    LEPRINTF("%02X", key[i]);
-                }
-                LEPRINTF("\r\n");
+                uint8_t tmpStr[42] = {0};
+                bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
+                LELOG("unpack encType [%d]: [%s]", commonHeader->encType, tmpStr);
             }
 
             ret = aes(iv, 
@@ -181,7 +178,7 @@ int doUnpack(void *ctx,
                 key, 
                 tmpBuf + sizeof(CommonHeader),
                 &rawLenCmdHeader, /* in-len/out-enc size */
-                encLenPayload,
+                sizeof(tmpBuf) - sizeof(CommonHeader),
                 0);
             if (0 > ret) {
                 LELOGW("LELINK_ERR_DEC1_ERR [%d] ", LELINK_ERR_DEC1_ERR);
@@ -214,12 +211,9 @@ int doUnpack(void *ctx,
 
             memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
             {
-                int m = 0;
-                LEPRINTF("AESKEY: ");
-                for (m = 0; m < AES_LEN; m++) {
-                    LEPRINTF("%02X", key[m]);
-                }
-                LEPRINTF("\r\n");
+                uint8_t tmpStr[42] = {0};
+                bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
+                LELOG("AESKEY: [%s]", tmpStr);
             }
             ret = aes(iv, 
                 key, 
@@ -420,12 +414,9 @@ int doPack(void *ctx,
             ret = sizeof(CommonHeader) + encSize1;
             
             {
-                int i = 0;
-                LEPRINTF("pack encType [%d] :", commonHeader->encType);
-                for (i = 0; i < AES_LEN; i++) {
-                    LEPRINTF("%02X", key[i]);
-                }
-                LEPRINTF("\r\n");
+                uint8_t tmpStr[42] = {0};
+                bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
+                LELOG("pack encType [%d]: [%s]", commonHeader->encType, tmpStr);
             }
 
         }break;
@@ -513,12 +504,9 @@ int doPack(void *ctx,
                 memcpy(key, (void *)cmdInfo->token, AES_LEN); 
             }
             {
-                int m = 0;
-                LEPRINTF("AESKEY: ");
-                for (m = 0; m < AES_LEN; m++) {
-                    LEPRINTF("%02X", key[m]);
-                }
-                LEPRINTF("\r\n");
+                uint8_t tmpStr[42] = {0};
+                bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
+                LELOG("AESKEY: [%s]", tmpStr);
             }
             memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
             ret = aes(iv, 

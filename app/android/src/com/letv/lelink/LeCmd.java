@@ -96,6 +96,7 @@ public class LeCmd {
 	public class K {
 		public static final String PUBLIC_KEY = "public_key";
 		public static final String SIGNATURE = "signature";
+		public static final String APSSID = "apSsid";
 		public static final String TYPE = "type";
 		public static final String SSID = "ssid";
 		public static final String PASSWD = "passwd";
@@ -120,6 +121,8 @@ public class LeCmd {
 		public static final String ACCOUNT = "account";
 		public static final String SHARE = "share";
 		public static final String ACCEPTED = "accepted";
+		public static final String SDEV = "sDev";
+		public static final String ZMAC = "mac";
 	}
 	/** Json中的值 */
 	public class V {

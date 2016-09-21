@@ -61,7 +61,7 @@ void strbuf_init(strbuf_t *s, int len)
     s->reallocs = 0;
     s->debug = 0;
 
-    s->buf = malloc(size);
+    s->buf = halMalloc(size);
     if (!s->buf)
         die("Out of memory");
 
@@ -72,7 +72,7 @@ strbuf_t *strbuf_new(int len)
 {
     strbuf_t *s;
 
-    s = malloc(sizeof(strbuf_t));
+    s = halMalloc(sizeof(strbuf_t));
     if (!s)
         die("Out of memory");
 
@@ -108,11 +108,11 @@ void strbuf_free(strbuf_t *s)
     debug_stats(s);
 
     if (s->buf) {
-        free(s->buf);
+        halFree(s->buf);
         s->buf = NULL;
     }
     if (s->dynamic)
-        free(s);
+        halFree(s);
 }
 
 char *strbuf_free_to_string(strbuf_t *s, int *len)
@@ -174,7 +174,7 @@ void strbuf_resize(strbuf_t *s, int len)
     }
 
     s->size = newsize;
-    s->buf = realloc(s->buf, s->size);
+    s->buf = halRealloc(s->buf, s->size);
     if (!s->buf)
         die("Out of memory");
     s->reallocs++;

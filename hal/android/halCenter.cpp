@@ -55,7 +55,7 @@ int initTask(char *json)
         char *mac = gNativeContext.mac;
 
         s1 = base64_decode(s1);
-        memcpy(authCfg, s1.c_str(), s1.length());
+        memcpy(authCfg, s1.c_str(), sizeof(AuthCfg));
         p = s2.c_str();
         for(i = 0; i < 6; i++) {
             mac[i] = strtol(p, (char **)&p, 16);
@@ -76,6 +76,7 @@ int initTask(char *json)
         return ret;
     }
     getTerminalUUID(authCfg->data.uuid, MAX_UUID);
+    authCfg->csum = crc8((uint8_t *)&(authCfg->data), sizeof(authCfg->data));
 	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
@@ -204,13 +205,13 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
 	com_letv_lelink_LeLink_MSG_TYPE_LOCALREQUEST, getJsonCmdHeaderInfo(env, cmdInfo), jbytes);
 	if (ret > 0 && ret < len) {
 		jdata = env->GetByteArrayElements(jbytes, NULL);
-        if(cmdInfo->cmdId == LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ) {
-            data += RSA_LEN;
-        }
+  //       if(cmdInfo->cmdId == LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ) {
+  //           data += RSA_LEN;
+  //       }
 		memcpy(data, jdata, ret);
-        if(cmdInfo->cmdId == LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ) {
-            ret += RSA_LEN;
-        }
+  //       if(cmdInfo->cmdId == LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ) {
+  //           ret += RSA_LEN;
+  //       }
 		env->ReleaseByteArrayElements(jbytes, jdata, JNI_ABORT);
 		//data[ret++] = '\0';
 	}
@@ -223,10 +224,10 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data
 	int ret = 0;
 	JNIEnv *env;
 
-    if(cmdInfo->cmdId == LELINK_CMD_CLOUD_REPORT_RSP && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP) {
-        data += RSA_LEN;
-        len -= RSA_LEN;
-    }
+    // if(cmdInfo->cmdId == LELINK_CMD_CLOUD_REPORT_RSP && cmdInfo->subCmdId == LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP) {
+    //     data += RSA_LEN;
+    //     len -= RSA_LEN;
+    // }
     if(len < 0) {
         LELOGE("Error len(%d)", len);
         return;

@@ -761,13 +761,163 @@ static void modules_init()
     }
 	return;
 }
+#include <rfget.h>
+#include <partition.h>
+#include <firmware_structure.h>
+#include <secure_boot.h>
+#define FIRMWARE_UPDATE_BUFF_SIZE 256
+static update_desc_t ginUD;
+int update_and_validate_firmware_cust(data_fetch data_fetch_cb, void *priv,
+            size_t firmware_length, struct partition_entry *f,
+            data_validate data_validate_cb) {
+    uint32_t filesize, read_length;
+    int32_t size_read = 0;
+    int error;
+    struct img_hdr ih;
+    int hdr_size;
+    unsigned char buf[FIRMWARE_UPDATE_BUFF_SIZE];
+#ifdef CONFIG_CPU_MW300
+    img_sec_hdr ish;
+#endif
 
+    APPLOG(" Updating firmware at address 0x%0x"
+         , f->start);
+    APPLOG("@ address 0x%x len: %d", f->start, f->size);
+
+    if (firmware_length == 0) {
+        APPLOGE("Firmware binary zero length");
+        return -WM_E_RFGET_INVLEN;
+    }
+
+    /* Verify firmware length first before proceeding further */
+    if (firmware_length > f->size) {
+        APPLOGE("Firmware binary too large %d > %d",
+             firmware_length, f->size);
+        purge_stream_bytes(data_fetch_cb, priv, firmware_length,
+                   buf, FIRMWARE_UPDATE_BUFF_SIZE);
+        return -WM_E_RFGET_INVLEN;
+    }
+
+    /*
+     * Before erasing anything in flash, let's get the first
+     * firmware data buffer in order to validate it.
+     */
+    size_read = 0;
+#ifdef CONFIG_CPU_MW300
+    hdr_size = (sizeof(ih) > sizeof(ish)) ? sizeof(ih) : sizeof(ish);
+#else
+    hdr_size = sizeof(ih);
+#endif
+
+    while ((hdr_size - size_read) != 0) {
+        error = data_fetch_cb(priv, buf + size_read,
+                       sizeof(ih) - size_read);
+        if (error < 0) {
+            APPLOGE("Failed to get firmware data for "
+                 "initial validation");
+            error = -WM_FAIL;
+            goto out;
+        }
+        size_read += error;
+    }
+
+#ifdef CONFIG_CPU_MW300
+    memcpy(&ish, buf, sizeof(ish));
+    if (ish.magic == SEC_FW_MAGIC_SIG)
+        goto begin;
+#endif
+    memcpy(&ih, buf, sizeof(ih));
+
+    if (ih.magic_str != FW_MAGIC_STR || ih.magic_sig != FW_MAGIC_SIG) {
+        APPLOGE("File data is not a firmware file");
+        error = -WM_E_RFGET_INV_IMG;
+        purge_stream_bytes(data_fetch_cb, priv,
+                   firmware_length - size_read,
+                   buf, FIRMWARE_UPDATE_BUFF_SIZE);
+        goto out;
+    }
+
+#ifdef CONFIG_CPU_MW300
+begin:
+#endif
+    rfget_init();
+    error = rfget_update_begin(&ginUD, f);
+    if (error) {
+        APPLOGE("Failed to erase firmware area");
+        purge_stream_bytes(data_fetch_cb, priv,
+                   firmware_length - size_read,
+                   buf, FIRMWARE_UPDATE_BUFF_SIZE);
+        goto out;
+    }
+
+    filesize = 0;
+    read_length = FIRMWARE_UPDATE_BUFF_SIZE;
+    while (filesize < firmware_length) {
+        if (filesize != 0) {
+            /* we got the data the first time around */
+            if ((firmware_length - filesize) < sizeof(buf))
+                read_length = firmware_length - filesize;
+            size_read = data_fetch_cb(priv, buf, read_length);
+        }
+        if (size_read <= 0)
+            break;
+        error = rfget_update_data(&ginUD, (char *)buf, size_read);
+        if (error) {
+            APPLOGE("Failed to write firmware data");
+            goto cleanup;
+        }
+        filesize += size_read;
+    }
+    if (filesize != firmware_length) {
+        APPLOGE("Invalid size of receievd file size.");
+        error = -WM_FAIL;
+        goto cleanup;
+    }
+    if (data_validate_cb) {
+        APPLOG("Validating received data");
+        error = data_validate_cb(priv);
+        if (error != WM_SUCCESS)
+            goto cleanup;
+    }
+    APPLOG("Firmware verification start ... filesize = %d", filesize);
+    /* Then validate firmware data in flash */
+#ifdef CONFIG_CPU_MW300
+    if (ish.magic == SEC_FW_MAGIC_SIG)
+        /* we do not verify the secure firmware, leave it to boot2 */
+        error = 0;
+    else
+        error = verify_load_firmware(f->start, filesize);
+#else
+    error = verify_load_firmware(f->start, filesize);
+#endif
+    if (error) {
+        APPLOGE("Firmware verification failed with code %d",
+             error);
+        goto cleanup;
+    }
+
+    return WM_SUCCESS;
+cleanup:
+    rfget_update_abort(&ginUD);
+out:
+    return error;
+}
+
+void update_abort() {
+    APPLOG("Firmware verification done");
+    rfget_update_abort(&ginUD);  
+}
+
+void update_complete() {
+    APPLOG("Firmware verification done");
+    rfget_update_complete(&ginUD);    
+}
 
 int main()
 {
     modules_init();
 
-    if (1)
+    if (0)
     {
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x41}; // dooya
         // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya

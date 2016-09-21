@@ -37,12 +37,16 @@ char *hal_strstr(const char *haystack, const char *needle) {
     return os_strstr(haystack, needle);
 }
 
+char *hal_strrstr(const char *haystack, const char *needle) {
+    return os_strrstr(haystack, needle);
+}
+
 int hal_sprintf(char *buf, const char *fmt, ...) {
     va_list ap;
     int rv;
 
     va_start(ap, fmt);
-    rv = vsnprintf(buf, ~(size_t) 0, fmt, ap);
+    rv = vsnprintf(buf, 260, fmt, ap);
     va_end(ap);
     return rv;
 }

@@ -79,26 +79,38 @@ popd > /dev/null 2>&1
 if [ "$1" != "clean" ]; then
 	# for mt7687 sdk
 	echo "*****************"
-	cp ./config/chip/mt7687/chip.mk $MTSDK7687/config/chip/mt7687
+	$COPY ./config/chip/mt7687/chip.mk $MTSDK7687/config/chip/mt7687
 	do_copy "./middleware/third_party/cloud/lelink" "$MTSDK7687/middleware/third_party/cloud/lelink"
-	cp main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
-	cp $MAIN_PATH/hal/$PF/halHeader.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
-	cp $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
+	#$COPY main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+        $COPY ./project/mt7687_hdk/apps/le_demo/src/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+        cp ./project/mt7687_hdk/apps/le_demo/src/main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
+        $COPY ./project/mt7687_hdk/template/download/flash_download.ini $MTSDK7687/project/mt7687_hdk/template/download
+        $COPY ./project/mt7687_hdk/apps/le_demo/inc/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
+        $COPY ./project/mt7687_hdk/apps/le_demo/inc/flash_map.h $MTSDK7687/project/mt7687_hdk/apps/bootloader/inc
+        $COPY ./project/mt7687_hdk/apps/le_demo/GCC/feature.mk $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
+        $COPY ./project/mt7687_hdk/apps/le_demo/GCC/Makefile $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
+        $COPY ./project/mt7687_hdk/apps/le_demo/GCC/mt7687_flash.ld $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
+        $COPY ./middleware/MTK/smtcn/src/*.c $MTSDK7687/middleware/MTK/smtcn/src
+        $COPY ./middleware/MTK/smtcn/inc/*.h $MTSDK7687/middleware/MTK/smtcn/inc
+        $COPY ./middleware/third_party/httpclient/src/*.c   $MTSDK7687/middleware/third_party/httpclient/src/
+	$COPY $MAIN_PATH/hal/$PF/halHeader.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
+	$COPY $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
 	# for lelink
-	cp ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/
+	$COPY ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/
 	rm $MTSDK7687/out/mt7687_hdk/le_demo/*.bin
-	cp $MAIN_PATH/sw/airconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
-	cp $MAIN_PATH/sw/io.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
-	cp $MAIN_PATH/sw/leconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
-	cp $MAIN_PATH/sw/ota.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
-	cp $MAIN_PATH/sw/protocol.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
-	cp $MAIN_PATH/sw/state.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	$COPY $MAIN_PATH/sw/airconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	$COPY $MAIN_PATH/sw/io.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	$COPY $MAIN_PATH/sw/leconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	$COPY $MAIN_PATH/sw/ota.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	$COPY $MAIN_PATH/sw/protocol.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	$COPY $MAIN_PATH/sw/state.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	do_copy "$MAIN_PATH/sw/mbedtls-2.2.0_crypto/include/" "$MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw/mbedtls-2.2.0_crypto/include/"
 	echo "!!!!!!!!!!!!!!!!!"
 	pushd $MTSDK7687 > /dev/null 2>&1
 	./build.sh mt7687_hdk le_demo
 	popd > /dev/null 2>&1
-	cp $MTSDK7687/out/mt7687_hdk/le_demo/*.bin ../../tool
+	$COPY $MTSDK7687/out/mt7687_hdk/le_demo/*.bin ../../tool
+	$COPY $MTSDK7687/out/mt7687_hdk/le_demo/mt7687_le_demo.bin $MTSDK7687/tools/PC_tool_Win/FOTA/_Load/mt7687
 else
 	pushd $MTSDK7687 > /dev/null 2>&1
 	./build.sh mt7687_hdk le_demo clean

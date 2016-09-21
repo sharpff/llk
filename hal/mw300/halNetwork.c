@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 
 int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
@@ -114,6 +115,24 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
     const char *ip = "255.255.255.255";
     strcpy(broadcastAddr, ip);
     return strlen(ip);
+}
+
+int halGetHostByName(const char *name, char ip[4][32], int len) { 
+    struct hostent* hostinfo;
+    struct sockaddr_in tmp;
+    if (!isalpha((uint8_t)name[0])) {
+        return -1;
+    }
+    hostinfo = gethostbyname(name);
+    APPLOG("halGetHostByName name[%s] hostinfo[0x%p]", name, hostinfo);
+    if (NULL == hostinfo) {
+        return -2;
+    }
+    memset(&tmp, 0, sizeof(struct sockaddr_in));
+    memcpy(&tmp.sin_addr.s_addr, hostinfo->h_addr, hostinfo->h_length);
+    strcpy(ip[0], (const char *)inet_ntoa(tmp.sin_addr));
+    APPLOG("halGetHostByName [%s]", ip[0]);
+    return 0;
 }
 // #include <fcntl.h>
 // #include <errno.h>

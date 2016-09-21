@@ -14,6 +14,7 @@
 #define JSON_NAME_UTC "utc"
 #define JSON_NAME_WHATTYPE "whatCvtType"
 #define JSON_NAME_UART_CONF         "uart"
+#define JSON_NAME_UART_ID         "id"
 #define JSON_NAME_UART_BAUD "baud"
 #define JSON_NAME_UUID "uuid"
 #define JSON_NAME_URL "url"
@@ -28,6 +29,22 @@
 #define JSON_NAME_GPIO_TIME_SHORT   "shortTime"
 #define JSON_NAME_GPIO_TIME_LONG    "longTime"
 #define JSON_NAME_PIPE_NAME         "name"
+#define JSON_NAME_PWM_CONF          "pwm"
+#define JSON_NAME_PWM_ID            "id"
+#define JSON_NAME_PWM_TYPE          "type"
+#define JSON_NAME_PWM_CLOCK         "clock"
+#define JSON_NAME_PWM_STATE         "state"
+#define JSON_NAME_PWM_FREQUENCY     "frequency"
+#define JSON_NAME_PWM_DUTY          "duty"
+#define JSON_NAME_PWM_BLINK         "blink"
+#define JSON_NAME_PWM_TIME_SHORT    "shortTime"
+#define JSON_NAME_PWM_TIME_LONG     "longTime"
+
+#define JSON_NAME_COMMON_CONF       "common"
+#define JSON_NAME_COMMON_NUM        "num"
+#define JSON_NAME_COMMON_ID         "id"
+#define JSON_NAME_COMMON_MUX        "mux"
+
 #define JSON_NAME_KEY               "key"
 #define JSON_NAME_VAL               "val"
 #define JSON_NAME_NAME              "name"
@@ -64,9 +81,10 @@ typedef enum {
 
 int isNeedToRedirect(const char *json, int jsonLen, char ip[MAX_IPLEN], uint16_t *port);
 int syncUTC(const char *json, int jsonLen);
-int getUartInfo(const char *json, int jsonLen, int *baud, int *dataBits, int *stopBits, char *parity, int *flowCtrl);
-int getGPIOInfo(const char *json, int jsonLen, gpioHand_t *table, int n);
+int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler);
+int getGPIOInfo(const char *json, int jsonLen, gpioHandler_t *table, int n);
 int getPipeInfo(const char *json, int jsonLen, char *name, int size);
+int getPWMInfo(const char *json, int jsonLen, pwmHandler_t *table, int n);
 int getWhatCvtType(const char *json, int jsonLen);
 int getJsonUTC32(char *json, int jsonLen/*, const char *rmtJson, int rmtJsonLen*/);
 

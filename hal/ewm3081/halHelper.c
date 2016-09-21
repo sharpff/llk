@@ -25,6 +25,11 @@ long int hal_strtol(const char *str, char **c, int adecimal) {
 }
 
 char *hal_strstr(const char *haystack, const char *needle) {
+    return NULL;
+}
+
+char *hal_strrstr(const char *haystack, const char *needle) {
+    return NULL;
 }
 
 int hal_sprintf(char *buf, const char *fmt, ...) {

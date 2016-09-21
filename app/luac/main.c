@@ -51,7 +51,7 @@ static void usage(const char* message) {
 	else
 		fprintf(stderr, "%s: %s\n", progname, message);
 	fprintf(stderr,
-		"usage: %s [options] [filenames]\n"
+		"usage: %s [options] [filenames]   E.g. luac -s -o lua.out src.lua\n"
 		"Available options are:\n"
 		"  -l       list (use -l -l for full listing)\n"
 		"  -o name  output to file 'name' (default is \"%s\")\n"

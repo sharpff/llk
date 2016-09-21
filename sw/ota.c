@@ -79,24 +79,30 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                     memset(tmpScriptCfg, 0, sizeof(ScriptCfg));
                     status = halUpdate((void *)&info, (uint8_t *)(tmpScriptCfg->data.script), sizeof(tmpScriptCfg->data.script));
                     if(0 < status) {
-                        uint8_t pubkey[MAX_RSA_PUBKEY] = {0};
-                        int pubkeyLen = 0;
                         tmpScriptCfg->data.size = status;
-                        pubkeyLen = getTerminalPublicKey(pubkey, sizeof(pubkey));
-                        LELOG("signatrue [%d]", ret);
-                        ret = rsaVerify(pubkey, pubkeyLen, tmpScriptCfg->data.script, tmpScriptCfg->data.size, sig, sigLen);
-                        LELOG("rsaVerify [%d]", ret);
+                        ret = lelinkVerifyBuf(tmpScriptCfg->data.script, strlen(tmpScriptCfg->data.script));
+                        // test only
+                        // ret = 0;
+                        if (0 > ret) { // recover the fw script, for ia script, it is no need to recover. cause ginScriptCfg2 is just a tmp var.
+                            if (OTA_TYPE_FW_SCRIPT == type) {
+                                ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
+                                LELOGW("recover E_FLASH_TYPE_SCRIPT ret[%d]", ret);
+                            }
+                            status = -8;
+                            break;
+                        }
                         if (OTA_TYPE_FW_SCRIPT == type) {
                             ret = lelinkStorageWriteScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
                         } else if (OTA_TYPE_IA_SCRIPT == type) {
                             ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
                             if (0 > ret) {
+                                status = -7;
                                 break;
                             }
                         }
                         LELOG("OTA script type [%d] ret[%d] status[%d]", type, ret, status);
                     } else {
-                        status = -1;
+                        status = -6;
                     }
                 }
             }
@@ -140,7 +146,7 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                         status = -4;
                         break;
                     }
-                    ret = halFlashWrite(hdl, tmpPtr, flashSize, fr.addr);
+                    ret = halFlashWrite(hdl, tmpPtr, flashSize, fr.addr, 0);
                     if (0 > ret) {
                         halFree(tmpPtr);
                         status = -5;

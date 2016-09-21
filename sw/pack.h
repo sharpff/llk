@@ -75,8 +75,9 @@ typedef enum {
 }ENC_TYPE;
 
 
-
-
+#ifdef LELINK_PACK
+#pragma pack(1)
+#endif
 /* Common Header */
 typedef struct {
     uint32_t magic;
@@ -84,20 +85,22 @@ typedef struct {
     uint16_t len;
     uint8_t encType;
     uint8_t encsum;
-}ALIGNED CommonHeader; // 10 bytes
+}LELINK_ALIGNED CommonHeader; // 10 bytes
 
 /* CMD Header */
 typedef struct {
     CMD_HEADER_INFO_1ST;
     uint8_t encsum;
-}ALIGNED CmdHeader; // 45 bytes
+}LELINK_ALIGNED CmdHeader; // 45 bytes
 
 /* Payload Header */
 typedef struct {
     uint16_t subCmdId;
     uint16_t len;
-}ALIGNED PayloadHeader; // 4 bytes
-
+}LELINK_ALIGNED PayloadHeader; // 4 bytes
+#ifdef LELINK_PACK
+#pragma pack()
+#endif
 
 
 int doUnpack(void *ctx,

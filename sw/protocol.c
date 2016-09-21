@@ -180,6 +180,7 @@ static int cbCloudIndMsgRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
 static int cbCloudIndMsgLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 
 static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbAsyncOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 
 
 static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHeaderInfo *cmdInfo);
@@ -270,6 +271,7 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_MSG_RSP, NULL, cbCloudIndMsgLocalRsp},
 
     { LELINK_CMD_ASYNC_OTA_REQ, LELINK_SUBCMD_ASYNC_OTA_REQ, cbAsyncOTALocalReq, NULL },
+    { LELINK_CMD_ASYNC_OTA_RSP, LELINK_SUBCMD_ASYNC_OTA_RSP, cbAsyncOTARemoteRsp, NULL },
 
     { 0, 0, 0, 0 }
 };
@@ -395,6 +397,8 @@ void testRSA(void) {
     ret = rsaVerify(pubkey, pubkeyLen, beVerified, strlen(beVerified), signature, ret);
     LELOG("rsaVerify [%d]", ret);
 
+    // otaSetLatestSig()
+    // lelinkVerify(0x11111111, 428804);
 }
 #endif
 
@@ -773,6 +777,7 @@ int lelinkDoPollingR2R(void *ctx) {
         if (isFromRemote(pCtx, ipTmp, MAX_IPLEN, portTmp)) {
             len = doUnpack(pCtx, pCtx->nwBuf, len, pCtx->protocolBuf, UDP_MTU, &cmdInfo, (void *)findTokenByUUID);
             if (0 <= len) {
+                COMM_CTX(pCtx)->protocolBuf[len] = '\0';
                 if (cmdInfo.cmdId % 2) { // RemoteReq
                     doQ2AProcessing(pCtx, len, &cmdInfo, ipTmp, portTmp);
                 } else { // RemoteRsp
@@ -863,7 +868,7 @@ static int doQ2ARemoteReq(void *ctx,
         ((CmdHeaderInfo *)cmdInfo)->subCmdId++;
         ret = ((CBLocalRsp) localRspPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen, nwBufOut, nwBufLen); // do sth local rsp
         if (0 >= ret) {
-            LELOGE("CBLocalRsp ret 0, it is impossible");
+            LELOGE("CBLocalRsp ret 0, it is impossible [%d]", ret);
             return -0xC;
         }
         if (repeat > 1) {
@@ -907,9 +912,9 @@ int lelinkNwPostCmd(void *ctx, const void *node)
         node_p->timeoutRef = 1;
     }
     if (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId) {
-        node_p->timeoutRef = 2;
+        node_p->timeoutRef = 3;
     }
-    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort);
+    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef);
 
     // if (node_p->ndPort) {
     //     memcpy(node.ndIP, ipTmp, MAX_IPLEN);
@@ -948,7 +953,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
 }
 
 static int isFromRemote(const CommonCtx *ctx, const char *ip, uint16_t len, uint16_t port) {
-    return 0 == memcmp(ip, ctx->remoteIP, len) ? 1 : 0;
+    return 0 == strcmp(ip, ctx->remoteIP) ? 1 : 0;
 }
 
 // static int isCommingFromItself(const CommonCtx *ctx, const char *ip, uint16_t port) {
@@ -1059,7 +1064,7 @@ static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHead
         LELOGW("lelinkDoPolling doUnpack [%d]", ret);
         return -5;
     }
-
+    COMM_CTX(pCtx)->protocolBuf[ret] = '\0';
     return ret;
 }
 
@@ -1197,8 +1202,9 @@ static int isNeedDelCB(NodeData *currNode) {
                 strcpy(node.ndIP, currNode->ndIP);
                 node.ndPort = currNode->ndPort;
                 node.reserved2 = (0 == --currNode->reserved2) ? 0xFF : currNode->reserved2;
+                memcpy(node.uuid, currNode->uuid, MAX_UUID);
                 lelinkNwPostCmdExt(&node);
-                LELOG("RETRY doing... retry[%d]", node.reserved2);
+                LELOG("RETRY doing... retry[%d] uuid[%s]", node.reserved2, node.uuid);
             }
         }
 
@@ -1271,9 +1277,17 @@ MULTI_LOCAL_RSP:
 /* hello */
 static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    char helloReq[32] = {"{\"msg\":\"hello\"}"};
+    char helloReq[MAX_BUF] = {"{\"msg\":\"hello\""};
+    int helloReqLen = strlen(helloReq);
+    ret = getTerminalStatus(helloReq + helloReqLen, sizeof(helloReq) - helloReqLen);
+    if (ret > 0) {
+        helloReq[helloReqLen] = ',';
+    } else {
+        helloReq[helloReqLen] = '}';
+        helloReq[helloReqLen + 1] = 0;
+    }
+    LELOG("cbHelloLocalReq [%s] -s", helloReq);
     // CommonCtx *pCtx = COMM_CTX(ctx);
-    LELOG("cbHelloLocalReq -s");
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)helloReq, strlen(helloReq), dataOut, dataLen);
     LELOG("cbHelloLocalReq [%d] -e", ret);
     return ret;
@@ -1627,7 +1641,7 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
     } else {
         syncUTC((const char *)dataIn + RSA_LEN, dataLen - RSA_LEN);
         // startHeartBeat();
-        halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+        halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
         changeStateId(E_STATE_CLOUD_AUTHED);
     }
     LELOG("cbCloudAuthRemoteRsp -e");
@@ -1851,28 +1865,56 @@ static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo
 static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     LELOG("cbCloudReportOTAQueryRemoteRsp -s");
     LELOG("TOTOAL[%d] json[%d][%s]", dataLen, dataLen - RSA_LEN, (char *)dataIn + RSA_LEN);
-    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    {
+    	int i = 0; 
+    	LELOG("---------------signature set----------------");
+    	for (i = 0; i < RSA_LEN; i++) {
+    		LEPRINTF("%02x ", dataIn[i]);
+    		if (0 == (i + 1)%16) {
+    			LEPRINTF("\r\n");
+    		}
+    	}
+    	LEPRINTF("\r\n");
+    }
+    otaSetLatestSig(dataIn);
+    halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
     LELOG("cbCloudReportOTAQueryRemoteRsp -e");
     return;
 }
 
 static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    char rmtCtrl[1024] = {0};
+    char rmtCtrl[MAX_BUF] = {0};
     LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -s");
 
-    ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl, sizeof(rmtCtrl));
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret, dataOut, dataLen);
+    if (otaGetLatestSig()) {
+    	{
+    		int i = 0; 
+    		LELOG("---------------signature get----------------");
+    		for (i = 0; i < RSA_LEN; i++) {
+    			LEPRINTF("%02x ", otaGetLatestSig()[i]);
+    			if (0 == (i + 1)%16) {
+    				LEPRINTF("\r\n");
+    			}
+    		}
+    		LEPRINTF("\r\n");
+    	}
+	    memcpy(rmtCtrl, otaGetLatestSig(), RSA_LEN);
+    }
+    ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl + RSA_LEN, sizeof(rmtCtrl) - RSA_LEN);
+    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq halCBLocalReq[%d]", ret);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret + RSA_LEN, dataOut, dataLen);
 
-    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq -e");
+    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq [%d] -e", ret);
     return ret;
 }
 static void cbCloudMsgCtrlC2RDoOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
-    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -s");
+    LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp status[%d] -s", cmdInfo->status);
     if (0 < dataLen) {
         LELOG("[%d][%s]", dataLen, (char *)dataIn);
     }
     halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    otaInfoClean();
     LELOG("cbCloudMsgCtrlC2RDoOTARemoteRsp -e");
     return;
 }
@@ -1887,49 +1929,69 @@ static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdIn
     return 1;
 }
 
-static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     int type = 0;
     char url[MAX_BUF] = {0};
     // uint8_t sig[RSA_LEN] = {0};
     CmdHeaderInfo* tmpCmdInfo = (CmdHeaderInfo *)cmdInfo;
     const char *urlPtr = otaGetLatestUrl();
-    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp url[0x%p] -s", urlPtr);
+    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp url[0x%p] lenWithRSA[%d] -s", urlPtr, len);
 
 
     if (NULL != urlPtr) {
         tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
-    } else if (len > RSA_LEN) {
+    } else if (len <= RSA_LEN) {
+        tmpCmdInfo->status = LELINK_ERR_PARAM_INVALID;
+    } else {
         NodeData node = {0};
         type = getJsonOTAType(data + RSA_LEN, len - RSA_LEN, url, sizeof(url));
-        LELOG("TOTOAL[%d] type[%d] json[%d][%s]", len, type, len - RSA_LEN, (char *)data + RSA_LEN);
+        LELOG("TOTOAL[%d] type[%d] json[%d][%s] url[%s]", len, type, len - RSA_LEN, (char *)data + RSA_LEN, url);
 
-        node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
-        node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
-        ret = lelinkNwPostCmd(ctx, &node);
-        if (!ret) {
-            tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
-        }
-        if (0 <= type && ret) {
-            switch (type) {
-                case OTA_TYPE_FW_SCRIPT:
-                case OTA_TYPE_IA_SCRIPT: {
-                    otaSetLatestSig(data);
-                }break;
-                case OTA_TYPE_PRIVATE:
-                case OTA_TYPE_AUTH: 
-                case OTA_TYPE_FW:{
-                    otaSetLatestSig(NULL);
-                }break;
-                default:
-                    break;
+        {
+            int i = 0; 
+            LELOG("---------------signature remote----------------");
+            for (i = 0; i < RSA_LEN; i++) {
+                LEPRINTF("%02x ", data[i]);
+                if (0 == (i + 1)%16) {
+                    LEPRINTF("\r\n");
+                }
             }
-            otaSetLatestType(type);
-            otaSetLatestUrl(url, strlen(url));
+            LEPRINTF("\r\n");
         }
-    }
 
-    
+        switch (type) {
+            case OTA_TYPE_FW:
+            case OTA_TYPE_FW_SCRIPT:
+            case OTA_TYPE_IA_SCRIPT: {
+                LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp type[%d], ret[%d]", type, ret);
+                otaSetLatestSig(data);
+            }break;
+            case OTA_TYPE_PRIVATE:
+            case OTA_TYPE_AUTH: {
+                otaSetLatestSig(NULL);
+            }break;
+            default:
+                tmpCmdInfo->status = LELINK_ERR_PARAM_INVALID;
+            break;
+        }
+        if (LELINK_ERR_SUCCESS == tmpCmdInfo->status) {                
+            node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
+            node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
+            ret = lelinkNwPostCmd(ctx, &node);
+            if (!ret) {
+                tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
+            } else {
+                otaSetLatestType(type);
+                otaSetLatestUrl(url, strlen(url));
+            }
+        }      
+    }
+}
+
+static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    intDoOTA(ctx, cmdInfo, data, len, dataOut, dataLen);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp [%d] -e", ret);
     return ret;
@@ -2034,6 +2096,8 @@ static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
     // char uuid[64] = {0};
     // char query[128] = {0};
     LELOG("cbCloudIndOTARemoteReq -s");
+    // {"force":"0","type":2,"url":"http://g3.letv.cn/232/31/100/resolve-smart/0/le_demo.bin","uuid":"10000100091000610006111111111111"}
+    LELOG("[%d][%s]", dataLen - RSA_LEN, dataIn + RSA_LEN);
     LELOG("cbCloudIndOTARemoteReq -e");
     return 1;
 }
@@ -2041,7 +2105,7 @@ static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const
 static int cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     LELOG("cbCloudIndOTALocalRsp -s");
-    // halCBLocalRsp(ctx, cmdInfo, dataIn, dataLen);
+    intDoOTA(ctx, cmdInfo, data, len, dataOut, dataLen);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, NULL, 0, dataOut, dataLen);
     LELOG("cbCloudIndOTALocalRsp [%d] -e", ret);
     return ret;
@@ -2126,6 +2190,10 @@ static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
     return 0;
 }
 
+static void cbAsyncOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    
+}
+
 
 CmdRecord *getCmdRecord(uint32_t cmdId, uint32_t subCmdId) {
 
@@ -2169,3 +2237,69 @@ int lelinkDoConfig(const char *configInfo) {
     airconfig_delete(context);
     return 0;
 }
+
+int lelinkVerify(uint32_t startAddr, uint32_t size) {
+    int ret = 0, restSize = size;
+    uint8_t tPubkey[256] = {0};
+    uint8_t raw[512] = {0};
+    int tPubkeyLen = 0;
+    uint8_t tmp[20] = {0};
+    uint8_t tmpStr[42] = {0};
+    void *dev = NULL;
+    dev = halFlashOpen();
+    if (NULL == dev) {
+        LELOGE("lelinkVerify halFlashOpen failed");
+        return -0XAB;
+    }
+    halSha1Start();
+    for (;restSize > 0;) {
+        ret = halFlashRead(dev, raw, restSize < sizeof(raw) ? restSize : sizeof(raw), startAddr, size - restSize);
+        if (0 >= ret) {
+            LELOGE("lelinkVerify halFlashRead failed [%d]", ret);
+            break;
+        }
+        restSize -= ret;
+        halSha1Update(raw, ret);
+    }
+    halSha1End(tmp);
+    halFlashClose(dev);
+    
+    bytes2hexStr(tmp, sizeof(tmp), tmpStr, sizeof(tmpStr));
+    LELOG("sha1: [%s]", tmpStr);
+    if (!otaGetLatestSig()) {
+        LELOGE("lelinkVerify otaGetLatestSig failed");
+        return -0XAC;
+    }
+    tPubkeyLen = getTerminalPublicKey(tPubkey, sizeof(tPubkey));
+    ret = rsaVerify(tPubkey, tPubkeyLen, tmpStr, strlen(tmpStr), otaGetLatestSig(), RSA_LEN);
+    LELOG("lelinkVerify rsaVerify[%d]", ret);
+    otaInfoClean();
+    return ret;
+}
+
+int lelinkVerifyBuf(uint8_t *buf, uint32_t size) {
+    int ret = 0;
+    uint8_t tPubkey[256] = {0};
+    int tPubkeyLen = 0;
+    uint8_t tmp[20] = {0};
+    uint8_t tmpStr[42] = {0};
+    if (NULL == buf) {
+        return -0XAB;
+    }
+    halSha1Start();
+    halSha1Update(buf, size);
+    halSha1End(tmp);
+    
+    bytes2hexStr(tmp, sizeof(tmp), tmpStr, sizeof(tmpStr));
+    LELOG("sha1: [%s]", tmpStr);
+    if (!otaGetLatestSig()) {
+        LELOGE("lelinkVerify otaGetLatestSig failed");
+        return -0XAC;
+    }
+    tPubkeyLen = getTerminalPublicKey(tPubkey, sizeof(tPubkey));
+    ret = rsaVerify(tPubkey, tPubkeyLen, tmpStr, strlen(tmpStr), otaGetLatestSig(), RSA_LEN);
+    LELOG("lelinkVerify rsaVerify[%d]", ret);
+    otaInfoClean();
+    return ret;
+}
+

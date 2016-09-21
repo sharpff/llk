@@ -1,12 +1,14 @@
 #include "halHeader.h"
 #include <errno.h>
 #include <termios.h>
+#include "leconfig.h"
 
 #define DEVICE_ID1    "/dev/ttyUSB0" 
 // #define DEVICE_ID2    "/dev/ttyUSB1" 
 static void setSpeed(int fd, int speed); 
 static int setParity(int fd, int databits, int stopbits, int parity);
-void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl) {
+
+void *halUartOpen(uartHandler_t* handler) {
     int fd;
     void *tmp = NULL;
     char PARITY = '\0';
@@ -29,35 +31,36 @@ void *halUartOpen(int baud, int dataBits, int stopBits, int parity, int flowCtrl
     // options.c_lflag &= (~ECHO);
     // tcsetattr(fd,TCSANOW, &options); //设置串口设备的相关属性
 
-    setSpeed(fd, baud);
-    if(parity == 0) // None
+    setSpeed(fd, handler->baud);
+    if(handler->parity == 0) // None
         PARITY = 'N';
-    else if(parity == 1) // Odd
+    else if(handler->parity == 1) // Odd
         PARITY = 'O';
     else // Even
         PARITY = 'E';
-    if (!setParity(fd, dataBits, stopBits, PARITY))  {  
+    if (!setParity(fd, handler->dataBits, handler->stopBits, PARITY))  {  
         APPLOGE("halUartOpen Set Parity Error");
         close(fd);
         return NULL;  
     }
     APPLOG("halUartOpen ok [%d]", fd);
     memcpy(&tmp, &fd, sizeof(fd));
-    return tmp;
+    memcpy(&handler->handler, &fd, sizeof(fd));
+    return handler;
 }
 
-int halUartClose(void *dev) {
+int halUartClose(uartHandler_t* handler) {
     int fd;
-    memcpy(&fd, &dev, sizeof(fd));
+    memcpy(&fd, &handler->handler, sizeof(fd));
     close(fd);
     APPLOG("halUartClose ret");
     return 0;
 }
 
-int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
+int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
     int ret = 0, tmpLen = 0, fd;
-    memcpy(&fd, &dev, sizeof(fd));
-    ret = read(dev, buf, len);
+    memcpy(&fd, &handler->handler, sizeof(fd));
+    ret = read(handler->handler, buf, len);
     if (0 < ret) {
         do {
             tmpLen += ret;
@@ -74,9 +77,9 @@ int halUartRead(void *dev, uint8_t *buf, uint32_t len) {
     return tmpLen;
 }
 
-int halUartWrite(void *dev, const uint8_t *buf, uint32_t len) {
+int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
     int fd, ret = len;
-    memcpy(&fd, &dev, sizeof(fd));
+    memcpy(&fd, &handler->handler, sizeof(fd));
     ret = write(fd, buf, len);
     // APPLOG("halUartWrite ret [%d]", ret);
     return ret;
@@ -86,21 +89,49 @@ void *halGPIOInit(void) {
     return (void *)0xffffffff;
 }
 
-int halGPIOClose(void *dev) {
+int halGPIOClose(gpioHandler_t* handler) {
     return 0;
 }
 
-int halGPIOOpen(int8_t id, int8_t dir, int8_t mode) {
+int halGPIOOpen(gpioHandler_t* handler) {
     return -1;
 }
 
-int halGPIORead(void *dev, int gpioId, int *val) {
-    return 0;
-}
-int halGPIOWrite(void *dev, int gpioId, const int val) {
+int halGPIORead(gpioHandler_t* handler, int *val) {
     return 0;
 }
 
+int halGPIOWrite(gpioHandler_t* handler, const int val) {
+    return 0;
+}
+
+void halPWMWrite(pwmHandler_t *handler, uint32_t percent) {
+    return;
+}
+
+void halPWMRead(pwmHandler_t *handler, uint32_t *percent) {
+    return;
+}
+
+void halPWMSetFrequency(pwmHandler_t *handler) {
+    return;
+}
+
+int halPWMClose(pwmHandler_t *handler) {
+    return 0;
+}
+
+int halPWMOpen(pwmHandler_t *handler) {
+    return 0;
+}
+
+void* halPWMInit(int clock) {
+    return (void *)0xffffffff;
+}
+
+void halCommonInit(commonManager_t* dev) {
+    return;
+}
 
 int halFlashInit(void)
 {
@@ -129,7 +160,7 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size){
     return 0;
 }
 
-int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
+int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin){
     int fd, ret, append;
     char fileName[64] = {0};
     sprintf(fileName, "./0x%x.bin", startAddr);
@@ -138,7 +169,7 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
         APPLOG("WRITE FAILED [%d]\r\n", errno);
         return fd;
     }
-
+    lseek(fd, offsetToBegin, SEEK_SET);
     ret = write(fd, data, len);
     append = GET_PAGE_SIZE(len) - len;
     if (0 < append) {
@@ -152,7 +183,7 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
     return ret;
 }
 
-int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
+int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin){
     int fd, ret;
     char fileName[64] = {0};
     sprintf(fileName, "./0x%x.bin", startAddr);
@@ -162,6 +193,7 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
         // APPLOG("READ FAILED [%d]", errno);
         return fd;
     }
+    lseek(fd, offsetToBegin, SEEK_SET);
     ret = read(fd, data, len);
     close(fd);
     // APPLOG("READ OK [%s]", fileName);

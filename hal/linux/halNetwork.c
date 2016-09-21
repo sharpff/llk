@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 #include <errno.h>
 
@@ -254,7 +255,7 @@ int halCastProbing(const char *mcastIP, const char *bcastIP, int port) {
     APPLOG("probing for mcast START");
     address.sin_addr.s_addr = inet_addr(mcastIP);
     isSupportMCast = intCastProbing(sock, &address);
-    APPLOG("probing for mcast [%d] END", isSupportMCast)
+    APPLOG("probing for mcast [%d] END", isSupportMCast);
     APPLOG("probing for bcast START");
     address.sin_addr.s_addr = inet_addr(bcastIP);
     isSupportBCast = intCastProbing(sock, &address);
@@ -264,3 +265,47 @@ int halCastProbing(const char *mcastIP, const char *bcastIP, int port) {
     return isSupportMCast + isSupportBCast;
 }
 
+int halGetHostByName(const char *name, char ip[4][32], int len) { 
+    char **pptr;
+    struct hostent *hptr;
+    int i = 0;
+    struct sockaddr_in addr;
+
+    if (NULL == name || 
+        4*32 > len) {
+        APPLOGE("param error");
+        return -1;
+    }
+
+    if (inet_aton (name, &addr.sin_addr)) {
+        APPLOGE("not dns %s\n", name);
+        return -2;
+    }
+
+    /* 调用gethostbyname()。调用结果都存在hptr中 */  
+    if ((hptr = gethostbyname(name)) == NULL) {   
+        APPLOGE("gethostbyname error for host:%s\n", name);
+        return -3; /* 如果调用gethostbyname发生错误，返回1 */  
+    }   
+    /* 将主机的规范名打出来 */  
+    APPLOG("official hostname:%s\n",hptr->h_name);
+    /* 主机可能有多个别名，将所有别名分别打出来 */  
+    for (pptr = hptr->h_aliases; *pptr != NULL; pptr++)   
+        APPLOG(" alias:%s\n",*pptr);
+    /* 根据地址类型，将地址打出来 */  
+    switch(hptr->h_addrtype) {
+        case AF_INET:   
+        case AF_INET6:   
+            pptr=hptr->h_addr_list; 
+        /* 将刚才得到的所有地址都打出来。其中调用了inet_ntop()函数 */  
+        for (i = 0; *pptr != NULL && i < 4; pptr++, i++) {
+            inet_ntop(hptr->h_addrtype, *pptr, ip[i], sizeof(ip[i]));
+            APPLOG(" address:%s\n", ip[i]);
+        }
+        break;
+        default:   
+            APPLOG("unknown address type\n");
+        break;
+    }   
+    return 0;
+}

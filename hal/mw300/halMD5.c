@@ -21,3 +21,24 @@ void halMD5(unsigned char *input, unsigned int inputlen, unsigned char output[16
 #endif
 }
 
+
+#include "wolfssl/openssl/sha.h"
+
+static WOLFSSL_SHA_CTX ginSha1Ctx;
+
+int halSha1Start() {
+    SHA1_Init( &ginSha1Ctx );
+	return 0;
+}
+
+int halSha1Update(const uint8_t *input, size_t ilen) {
+    SHA1_Update( &ginSha1Ctx, input, ilen );
+	return 0;
+}
+
+int halSha1End(uint8_t output[20]) {
+	SHA1_Final(output, &ginSha1Ctx);
+	return 0;
+}
+
+

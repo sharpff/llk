@@ -70,24 +70,11 @@ void *lelinkNwNew(const char *remoteIP, int remotePort, int selfPort, void *ctx)
         return NULL;
     }
 
-    if (remoteIP) {
-        int ret = 0;
-        AuthCfg authCfg;
-        ret = lelinkStorageReadAuthCfg(&authCfg);
-        if (0 > ret) {
-            strcpy(ctx_p->remoteIP, remoteIP);
-            ctx_p->remotePort = remotePort;
-        } else {
-            if (authCfg.csum != crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data))) {
-                strcpy(ctx_p->remoteIP, remoteIP);
-                ctx_p->remotePort = remotePort;
-            } else {
-                strcpy(ctx_p->remoteIP, authCfg.data.remote);
-                ctx_p->remotePort = authCfg.data.port;
-            }
-        }
-    }
     ctx_p->sock = sock;
+    if (remoteIP) {
+        strcpy(ctx_p->remoteIP, remoteIP);
+        ctx_p->remotePort = remotePort;
+    }
     LELOG("socket [%d] rmt[%s:%d]", sock, remoteIP, remotePort);
 
     

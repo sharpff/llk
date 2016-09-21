@@ -26,22 +26,6 @@
 // #include <wmstdio.h>
 // #include <wmsysinfo.h> 
 
-#define DEBUG_APP
-#ifdef DEBUG_APP
-#define APPLOGE(...)             \
-    wmlog_e("APPLOG", ##__VA_ARGS__)
-#define APPLOGW(...)             \
-    wmlog_w("APPLOG", ##__VA_ARGS__)
-#define APPLOG(...)             \
-    wmlog("APPLOG", ##__VA_ARGS__)
-#define APPPRINTF(...) \
-    wmprintf(__VA_ARGS__)
-#else
-#define APPLOGE(...)
-#define APPLOGW(...)
-#define APPLOG(...)
-#define APPPRINTF(...)
-#endif /* ! DEBUG_APP */
 
 inline void* hal_memset(void *buf, int i, unsigned int len);
 inline void* hal_memcpy(void *dst, const void *src, unsigned int len);
