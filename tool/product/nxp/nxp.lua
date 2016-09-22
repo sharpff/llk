@@ -256,9 +256,9 @@ function s1GetValidKind(data)
 			end
 
 			if nil ~= string.find(data, string.char(0x01, 0x80, 0x45)) or 
-				nil ~= string.find(data, string.char(0x01, 0x80, 0x42)) or
-				nil ~= string.find(data, string.char(0x01, 0x80, 0x43)) then
-				-- (RSP) query ept, query man, query ept info
+				nil ~= string.find(data, string.char(0x01, 0x80, 0x43)) or
+				nil ~= string.find(data, string.char(0x01, 0x80, 0x42)) then
+				-- (RSP) query ept, query ept info, query man
 				print ("[LUA] s1GetValidKind - ENDPOINT list or info "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_INFO
 				break
@@ -498,12 +498,6 @@ function s1CvtPri2Std(bin)
 				strSubDev = string.sub(strSubDev,1,string.len(strSubDev) - 1)..']}'
 				break
 			end
-
-			-- (RSP) manufacture {"sDevQryMan":2,"idx":"DB8F","man":"1234"}
-			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x42)) then
-				strSubDev = '{"sDevQryMan":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","man":"'..bin2hex(string.sub(bin,11,12))..'"}'
-				break
-			end
 			
 			-- (RSP) ept info {"sDevQryEptInfo":2,"idx":"DB8F","pid":"0104","ept":1,"did":"0101","clu":["0000","0004"]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
@@ -515,12 +509,18 @@ function s1CvtPri2Std(bin)
 				break
 			end
 
+			-- (RSP) manufacture {"sDevQryMan":2,"idx":"DB8F","man":"1234"}
+			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x42)) then
+				strSubDev = '{"sDevQryMan":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","man":"'..bin2hex(string.sub(bin,11,12))..'"}'
+				break
+			end
+
 			-- INTERNAL -> EXTERNAL
 			-- (IND) join, leave
 			if nil ~= string.find(bin, string.char(0x01, 0x00, 0x4D)) then
 				-- {"sDevJoin":2,"sDev":{"idx":"DB8F","mac":"6FE34CE400A06FC0"}}
-				-- strSubDev = '{"sDevJoin":2,"sDev":{"idx":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
-				strSubDev = '{"sDevJoin":2,"sDev":{"idx":"DB8F","mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
+				strSubDev = '{"sDevJoin":2,"sDev":{"idx":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
+				-- strSubDev = '{"sDevJoin":2,"sDev":{"idx":"DB8F","mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
 				break
 			end
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x48)) then

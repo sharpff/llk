@@ -4,7 +4,7 @@
 #include "leconfig.h"
 
 #define DEVICE_ID1    "/dev/ttyUSB0" 
-// #define DEVICE_ID2    "/dev/ttyUSB1" 
+// #define DEVICE_ID1    "/dev/ttyUSB1" 
 static void setSpeed(int fd, int speed); 
 static int setParity(int fd, int databits, int stopbits, int parity);
 

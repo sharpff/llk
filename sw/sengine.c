@@ -303,19 +303,6 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
         if (0 < j) {
             arr[index].isSDevInfoDone |= 0x01;
         }
-    } else if (WM_SUCCESS == json_get_val_int(&jobj, JSON_NAME_SDEV_QUERY_MAN, &val) && 2 == val) {
-        // 0x02. man done(node descriptor response)
-        if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAN, str, sizeof(str))) {
-            LELOGE("sdevInfoRsp [%s] NOT FOUND", JSON_NAME_SDEV_MAN);
-            return -5;
-        }
-        strcpy(arr[index].sdevInfo, str);
-        arr[index].sdevInfo[strlen(str)] = 0;
-        // json_str_init(&jstr, arr[index].sdevInfo, sizeof(arr[index].sdevInfo));
-        // json_start_object(&jstr);
-        // json_set_val_str(&jstr, JSON_NAME_SDEV_MAN, str);
-        // json_close_object(&jstr);
-        arr[index].isSDevInfoDone |= 0x02;
     } else if (WM_SUCCESS == json_get_val_int(&jobj, JSON_NAME_SDEV_QUERY_INFO, &val) && 2 == val) {
         // 0x04. cluster done(simple descriptor response)
         char tmpMan[64] = {0};
@@ -359,7 +346,20 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
         json_close_object(&jstr);
         arr[index].isSDevInfoDone |= 0x04;
 
-    }
+    } else if (WM_SUCCESS == json_get_val_int(&jobj, JSON_NAME_SDEV_QUERY_MAN, &val) && 2 == val) {
+        // 0x02. man done(node descriptor response)
+        if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAN, str, sizeof(str))) {
+            LELOGE("sdevInfoRsp [%s] NOT FOUND", JSON_NAME_SDEV_MAN);
+            return -5;
+        }
+        strcpy(arr[index].sdevInfo, str);
+        arr[index].sdevInfo[strlen(str)] = 0;
+        // json_str_init(&jstr, arr[index].sdevInfo, sizeof(arr[index].sdevInfo));
+        // json_start_object(&jstr);
+        // json_set_val_str(&jstr, JSON_NAME_SDEV_MAN, str);
+        // json_close_object(&jstr);
+        arr[index].isSDevInfoDone |= 0x02;
+    } 
 
     return 0;
 }
@@ -1665,11 +1665,9 @@ int senginePollingSlave(void) {
                                 LELOGE("sdevInsert is FAILED");
                                 break;
                             }
-                            sdevInfoReq(tmpArr, ioHdl[x].ioType, ioHdl[x].hdl);
                         } else if (WHATKIND_SUB_DEV_INFO == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_INFO");
                             sdevInfoRsp(tmpArr, status, len);
-                            sdevInfoReq(tmpArr, ioHdl[x].ioType, ioHdl[x].hdl);
                         } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_DATA");
                             // if (0 > sdevUpdate(tmpArr, status, len)) {
