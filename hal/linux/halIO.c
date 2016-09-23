@@ -43,7 +43,7 @@ void *halUartOpen(uartHandler_t* handler) {
         close(fd);
         return NULL;  
     }
-    APPLOG("halUartOpen ok [%d]", fd);
+    APPLOG("halUartOpen ok [%d] baud[%d] parity[%c]/[%d] dataBits[%d] stopBits[%d]", fd, handler->baud, PARITY, handler->parity, handler->dataBits, handler->stopBits);
     memcpy(&tmp, &fd, sizeof(fd));
     memcpy(&handler->handler, &fd, sizeof(fd));
     return handler;
@@ -60,7 +60,7 @@ int halUartClose(uartHandler_t* handler) {
 int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
     int ret = 0, tmpLen = 0, fd;
     memcpy(&fd, &handler->handler, sizeof(fd));
-    ret = read(handler->handler, buf, len);
+    ret = read(fd, buf, len);
     if (0 < ret) {
         do {
             tmpLen += ret;

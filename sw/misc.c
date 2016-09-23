@@ -171,6 +171,7 @@ int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler) {
     char strBaud[96] = {0};
     jsontok_t jsonToken[NUM_TOKENS];
     jobj_t jobj;
+    char tmpStrMix[8] = {0};
 
     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
     if (WM_SUCCESS != ret) {
@@ -194,8 +195,10 @@ int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler) {
     }
     // TODO: to support multi-uart
     LELOG("getUartInfo baud[%s]", strBaud);
-    sscanf(strBaud, "%u-%u%c%u", (unsigned int *)&handler->baud, (unsigned int *)&handler->dataBits, &handler->parity, (unsigned int *)&handler->stopBits);
-    LELOG("getUartInfo baud[%d] [%d] [%d] [%d]", handler->baud, handler->dataBits, handler->parity, handler->stopBits);
+    sscanf(strBaud, "%u-%u%s", (unsigned int *)&handler->baud, (unsigned int *)&handler->dataBits, tmpStrMix);
+    handler->parity = tmpStrMix[0];
+    handler->stopBits = tmpStrMix[1] - 0x30;
+    LELOG("getUartInfo baud[%d] [%d] [%c] [%d] [%s]", handler->baud, handler->dataBits, handler->parity, handler->stopBits, tmpStrMix);
     return 0;
 }
 
