@@ -1546,8 +1546,9 @@ static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, cons
 
 static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    uint8_t signature[RSA_LEN] = {0};
+    uint8_t signature[MAX_BUF] = {0};
     int lenSignature = 0;
+
     // CommonCtx *pCtx = COMM_CTX(ctx);
     // CmdHeaderInfo cmdInfo = {0};
     LELOG("cbCloudGetTargetLocalReq -s");
@@ -1558,7 +1559,9 @@ static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     // cmdInfo.seqId = 0;
 
     lenSignature = getTerminalSignature(signature, RSA_LEN);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, signature, lenSignature, dataOut, dataLen);
+    sprintf(signature + RSA_LEN, "{\"lock\":%d}", getLock());
+    LELOG("test sig len[%d], total len[%d] [%s]", lenSignature, lenSignature + strlen(signature + RSA_LEN), signature + RSA_LEN);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, signature, lenSignature + strlen(signature + RSA_LEN), dataOut, dataLen);
     
     if(ret <= 0) {
         changeStateId(E_STATE_AP_CONNECTED);
