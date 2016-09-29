@@ -133,11 +133,18 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
 
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
         ginRegion[i].type = i;
-        ginRegion[i].size = getSize(i, minSize);
-        LELOG("[%d] [%d]", i, ginRegion[i].size);
+        tmpTotal = getSize(i, minSize);
+        LELOG("[%d] [%d]", i, tmpTotal);
         ginRegion[i].addr = ginStartAddr + tmpSize;
-        tmpSize += ginRegion[i].size;
-        LELOG("idx[%d] addr[0x%x] size[0x%x] type[%d]", i, ginRegion[i].addr, ginRegion[i].size, ginRegion[i].type);
+        if (E_FLASH_TYPE_SCRIPT2 == i) {
+            ginRegion[i].size = tmpTotal/MAX_IA;
+        } else if (E_FLASH_TYPE_SDEV_INFO == i) {
+            ginRegion[i].size = tmpTotal/MAX_SDEV_NUM;
+        } else {
+            ginRegion[i].size = tmpTotal;
+        }
+        tmpSize += tmpTotal;
+        LELOG("idx[%d] addr[0x%x] size[0x%x] type[%d]", i, ginRegion[i].addr, tmpTotal, ginRegion[i].type);
     }
 
     return 0;

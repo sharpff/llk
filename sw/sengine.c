@@ -121,10 +121,10 @@ static void loadSDevInfo(SDevNode *arr, int num) {
     for (i = 0; i < num; i++) {
         if (0 != lelinkStorageReadSDevInfoCfg(&sdevInfoCfg, i) ||
             sdevInfoCfg.csum != crc8((const uint8_t *)&(sdevInfoCfg.data), sizeof(sdevInfoCfg.data))) {
-            LELOGW("loadSDevInfo break");
+            LELOG("loadSDevInfo continue --------- [%d]", i);
             continue;
         }
-        memcpy(arr[i].sdevInfo, &(sdevInfoCfg.data), sizeof(sdevInfoCfg.data));
+        memcpy(&arr[i], &(sdevInfoCfg.data), sizeof(sdevInfoCfg.data));
         LELOG("loadSDevInfo load --------- [%d]", i);
         LELOG("=======> SDevInfoCfg mac[%s] ", arr[i].mac);
         LELOG("=======> SDevInfoCfg idx[%s] ", arr[i].idx);
@@ -286,14 +286,17 @@ static void postStatusChanged(int plusIdx) {
 //     return 0;
 // }
 
-static void sdevInfoSerilized(const SDevNode *sdev, int index) {
+static int sdevInfoSerilized(const SDevNode *sdev, int index) {
     int ret = 0;
     SDevInfoCfg *sdevInfoCfg = (SDevInfoCfg *)sdev;
     ret = lelinkStorageWriteSDevInfoCfg(sdevInfoCfg, index);
     {
-        SDevInfoCfg tmp = {0};
-        ret = lelinkStorageReadSDevInfoCfg(&tmp, index);
-        ret = 0;
+        // SDevInfoCfg tmp = {0};
+        // ret = lelinkStorageReadSDevInfoCfg(&tmp, index);
+        // uint8_t csum = crc8(&(tmp.data), sizeof(tmp.data));
+        // if (!ret && tmp.csum != csum) {
+        //     LELOGE("SUM FAILED [0x%02x] cmp [0x%02x]", tmp.csum, csum);
+        // }
         // LELOG("sdevInfoSerilized =======> SDevInfoCfg csum[%02x], sdevInfo[%s] ", index, arr[index].sdevInfo);
         // LELOG("sdevInfoSerilized =======> SDevInfoCfg mac[%s] ", arr[index].mac);
         // LELOG("sdevInfoSerilized =======> SDevInfoCfg idx[%s] ", arr[index].idx);
@@ -302,6 +305,8 @@ static void sdevInfoSerilized(const SDevNode *sdev, int index) {
         //     arr[index].sdevEpt[4], arr[index].sdevEpt[5], arr[index].sdevEpt[6], arr[index].sdevEpt[7]);
         // LELOG("sdevInfoSerilized =======> SDevInfoCfg sdevMan[%s] ", arr[index].sdevMan);
     }
+
+    return ret;
 }
 
 static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
@@ -456,7 +461,13 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
     if (isCompleted) {
         if (arr[index].sdevMan[0]) {
             sdevInfoSerilized(&arr[index], index);
-            LELOG("COMPLETED =======> sdevInfoRsp mac[%s], idx[%s], sdevMan[%s]", arr[index].mac, arr[index].idx, arr[index].sdevMan);
+            LELOG("COMPLETED =======> sdevInfoRsp[%d] mac[%s], idx[%s], sdevMan[%s]", index, arr[index].mac, arr[index].idx, arr[index].sdevMan);
+            // // test only
+
+            // for (i = 1; i < MAX_SDEV_NUM; i++) {
+            //     arr[index].idx[3] = i + 0x30;
+            //     sdevInfoSerilized(&arr[index], i);
+            // }
         }
     }
 
