@@ -279,9 +279,16 @@ int json_set_object_value(json_string_t *jptr, const char *name,
 		tmp = str[value];
 		buff = (char *)str + value ;
 		*buff = 0;
-		snprintf(&jptr->buff[jptr->free_ptr],
-			jptr->len - jptr->free_ptr, "\"%s\":%s",
-			name, str);
+		if (NULL == name) {
+			jptr->free_ptr--;
+			snprintf(&jptr->buff[jptr->free_ptr],
+				jptr->len - jptr->free_ptr, "%s",
+				str);	
+		} else {
+			snprintf(&jptr->buff[jptr->free_ptr],
+				jptr->len - jptr->free_ptr, "\"%s\":%s",
+				name, str);			
+		}
 		*buff = tmp;
 		break;
 

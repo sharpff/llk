@@ -16,6 +16,7 @@ class Param(object):
         self.base64_sig = ""
         self.fws = ""
         self.genpriv = False
+        self.gensdev = False
         self.ssid = ""
         self.passwd = ""
         self.of = "out.bin"
@@ -41,6 +42,9 @@ class Param(object):
         parser.add_option("--genpriv",
                       action="store_true", dest="genpriv", default=self.genpriv,
                       help="Generate private info")
+        parser.add_option("--gensdev",
+                      action="store_true", dest="gensdev", default=self.gensdev,
+                      help="Generate private info")
         parser.add_option("--ssid", type="string",
                       action="store", dest="ssid", default=self.ssid,
                       help="wifi ssid")
@@ -59,6 +63,7 @@ class Param(object):
         self.base64_sig = options.base64_sig
         self.fws = options.fws;
         self.genpriv = options.genpriv;
+        self.gensdev = options.gensdev;
         self.ssid = options.ssid;
         self.passwd = options.passwd;
         self.of = options.of;
@@ -191,7 +196,7 @@ class PrivateInfo(object):
        self.content = ''
        self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE)
        self.content += struct.pack("<I", self.config)
-
+ 
        self.content += struct.pack("<%ds" % (len(self.ssid) + 1), self.ssid)
        self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.ssid) - 1)
        self.content += struct.pack("<%ds" % (len(self.passwd) + 1), self.passwd)
@@ -210,6 +215,17 @@ class PrivateInfo(object):
        self.content += packPad(self.PACK_PAD, (self.DEV_CFG_SIZE + self.NET_CFG_SIZE + self.IA_CFG_SIZE - len(self.content)))
        self.content += struct.pack("<B", strCrc(self.content))
        self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
+
+class SDevInfo(object):
+    def __init__(self):
+       self.TOTAL_PAD = '\xFF'
+       self.TOTAL_SIZE = (1024*8) # 6K(384 * 16) to 8K
+
+    def pack(self):
+       self.content = ''
+       self.content += packPad(self.TOTAL_PAD, self.TOTAL_SIZE)
+
+
 
 if __name__ == '__main__':
     content = ''
@@ -246,6 +262,13 @@ if __name__ == '__main__':
         pricfg.pack()
         content += pricfg.content
         print "PrivateInfo: %d, " % len(pricfg.content),
+        print("Total: %d" % len(content))
+    # sdev info
+    if param.gensdev:
+        sdev = SDevInfo()
+        sdev.pack()
+        content += sdev.content
+        print "SDevInfo: %d, " % len(sdev.content),
         print("Total: %d" % len(content))
     # save to outfile
     outfile = open(param.of, "wb")

@@ -40,10 +40,7 @@ extern "C"
 #define MAX_IA_BUF 64
 #define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
 
-#define SDEV_MAX_INFO MAX_BUF/4
 #define SDEV_MAX_STATUS MAX_BUF/2
-#define SDEV_MAX_MAC 24
-#define SDEV_MAX_EPT 8
 
 /*
  * 这些enum值通过FW脚本中的s1GetValidKind进行处理并返回
@@ -103,26 +100,18 @@ typedef struct {
     uint16_t arrDatasCounts[MAX_QUERY_COUNTS];
 }Datas;
 
-#define CACHE_NODE_HEADER \
-    uint16_t flag; \
-    uint16_t nodeReserved;
-
 typedef struct {
-    CACHE_NODE_HEADER;
-    char mac[SDEV_MAX_MAC];
+    CACHE_NODE_NBASE;
     char sdevStatus[SDEV_MAX_STATUS]; // as json object "sDevStatus"
-    char sdevInfo[SDEV_MAX_INFO]; // as json object "sDev"
-    uint8_t sdevEpt[SDEV_MAX_EPT]; // the element - 1 is the real ept
-    uint8_t idx[SDEV_MAX_MAC/4]; // short mac or index
     uint8_t occupied;
     /* 
      * isSDevInfoDone identify the mask of these info
      * 0x01. endpoint list(active response)
-     * 0x02. man done(node descriptor response)
-     * 0x04. cluster done(simple descriptor response)
+     * 0x02. cluster done(simple descriptor response)
+     * 0x04. man done(node descriptor response)
      * 0x08. timeout 
      */
-    uint8_t isSDevInfoDone; 
+    uint8_t isSDevInfoDone;
 }SDevNode;
 
 typedef struct {

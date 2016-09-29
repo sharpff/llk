@@ -47,6 +47,11 @@ inline char *hal_strstr(const char *haystack, const char *needle)
     return strstr(haystack, needle);
 }
 
+inline char *hal_strrstr(const char *haystack, const char *needle)
+{
+    return strrstr(haystack, needle);
+}
+
 inline int hal_sprintf(char *buf, const char *fmt, ...) {
     va_list ap;
     int rv;

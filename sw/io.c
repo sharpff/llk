@@ -85,10 +85,10 @@ static uint32_t getSize(E_FLASH_TYPE type, uint32_t minSize) {
             ret = GET_PAGE_SIZE(sizeof(PrivateCfg), minSize);
         } break;
         case E_FLASH_TYPE_SCRIPT2: {
-            ret = GET_PAGE_SIZE(sizeof(ScriptCfg), minSize);
+            ret = GET_PAGE_SIZE(sizeof(ScriptCfg)*MAX_IA, minSize);
         } break;
-        case E_FLASH_TYPE_TEST: {
-            ret = GET_PAGE_SIZE(0x400, minSize);
+        case E_FLASH_TYPE_SDEV_INFO: {
+            ret = GET_PAGE_SIZE(sizeof(SDevInfoCfg)*MAX_SDEV_NUM, minSize);
         } break;
         default:
             break;
@@ -134,7 +134,7 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
         ginRegion[i].type = i;
         ginRegion[i].size = getSize(i, minSize);
-        // LELOG("[%d] [%d]", i, ginRegion[i].size);
+        LELOG("[%d] [%d]", i, ginRegion[i].size);
         ginRegion[i].addr = ginStartAddr + tmpSize;
         tmpSize += ginRegion[i].size;
         LELOG("idx[%d] addr[0x%x] size[0x%x] type[%d]", i, ginRegion[i].addr, ginRegion[i].size, ginRegion[i].type);
@@ -364,7 +364,21 @@ int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     return ret;
 }
 
+int lelinkStorageWriteSDevInfoCfg(const SDevInfoCfg *sdevInfo, int idx) {
+    int ret = 0;
 
+    ret = storageWrite(E_FLASH_TYPE_SDEV_INFO, sdevInfo, sizeof(SDevInfoCfg), idx);
+
+    return ret;
+}
+
+int lelinkStorageReadSDevInfoCfg(SDevInfoCfg *sdevInfo, int idx) {
+    int ret = 0;
+
+    ret = storageRead(E_FLASH_TYPE_SDEV_INFO, sdevInfo, sizeof(SDevInfoCfg), idx);
+
+    return ret;
+}
 
 
 // int flashWritePrivateCfg(const PrivateCfg *privateCfg) {
