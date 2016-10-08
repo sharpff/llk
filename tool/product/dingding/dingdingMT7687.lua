@@ -42,7 +42,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.1.1'
+	local str = '1.1.2'
 	return string.len(str), str
 end
 
@@ -75,7 +75,7 @@ function s1GetCvtType()
      "uart":[{"id":1, "baud":"9600-8N1"}],  
      "gpio":[{"id":39,"dir":0,"mode":1,"state":1,"type":1,"longTime":12,"shortTime":3},
              {"id":34,"dir":1,"mode":0,"state":0,"type":1,"longTime":8,"shortTime":1},
-             {"id":33,"dir":1,"mode":1,"state":0,"type":0}]
+             {"id":33,"dir":1,"mode":1,"state":1,"type":0}]
     }
     ]]
 	local delay = 5
