@@ -33,7 +33,29 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
  * cmdInfo is retmote
  */
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
-    return 0;
+    int ret = 0;
+    char buf[512] = {0};
+    APPLOG("halCBRemoteReq -s");
+    memcpy(buf, payloadBody, sizeof(buf) > len ? len : sizeof(buf) - 1);
+    APPLOG("halCBRemoteReq len[%d/%d][%s]", len, sizeof(buf), buf);
+
+    switch (cmdInfo->cmdId) {
+        case LELINK_CMD_HELLO_REQ: {
+            if (LELINK_SUBCMD_HELLO_REQ == cmdInfo->subCmdId) {
+                // TODO: SDK got a new device
+                ret = 1;
+            }
+        }break;
+        case LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ: {
+            if (LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_REQ == cmdInfo->subCmdId) {
+                // if u have got the RemoteReq, set ret as 1
+                // cmdInfo->uuid
+                ret = 1;
+            }
+        }break;
+    }
+
+    return ret;
 }
 
 /* 
