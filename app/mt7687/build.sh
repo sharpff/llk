@@ -1,3 +1,4 @@
+# ./build.sh MYXPATH=/home/lf/dev/mtk/slimV3.3.1/tools/gcc/gcc-arm-none-eabi/bin/ MYXPREFIX=arm-none-eabi- && cp ~/dev/mtk/slimV3.3.1/out/mt7687_hdk/le_demo/mt7687_le_demo.bin ~/dev/mtk/slimV3.3.1/tools/PC_tool_Win/FOTA/_Load/mt7687/ && cp ../../tool/product/dingding/cust.bin ~/dev/mtk/slimV3.3.1/out/mt7687_hdk/le_demo/
 RM="rm -f"
 COPY="cp -prf"
 MKDIR="mkdir -p"
@@ -93,7 +94,7 @@ if [ "$1" != "clean" ]; then
         $COPY ./middleware/MTK/smtcn/src/*.c $MTSDK7687/middleware/MTK/smtcn/src
         $COPY ./middleware/MTK/smtcn/inc/*.h $MTSDK7687/middleware/MTK/smtcn/inc
         $COPY ./middleware/third_party/httpclient/src/*.c   $MTSDK7687/middleware/third_party/httpclient/src/
-	$COPY $MAIN_PATH/hal/$PF/halHeader.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
+	$COPY $MAIN_PATH/hal/$PF/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
 	$COPY $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
 	# for lelink
 	$COPY ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/

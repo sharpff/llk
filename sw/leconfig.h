@@ -150,6 +150,7 @@ void halDeLockInit(void);
 int halLock(void);
 int halUnlock(void);
 unsigned int halGetTimeStamp(void);
+void halDelayms(int ms);
 unsigned int halGetUTC(void);
 int halReboot();
 uint32_t halGetCurrentTaskId(void);
