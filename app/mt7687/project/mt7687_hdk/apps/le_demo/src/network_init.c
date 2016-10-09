@@ -630,6 +630,7 @@ static int32_t wifi_station_disconnected_event_handler(wifi_event_t event,
                                                        uint8_t *payload,
                                                        uint32_t length)
 {
+    #if 0
     uint8_t opmode  = 0;
     LOG_HEXDUMP_I(wifi, "event id: %d", payload, length, event);
     wifi_config_get_opmode(&opmode);
@@ -643,6 +644,25 @@ static int32_t wifi_station_disconnected_event_handler(wifi_event_t event,
         }
     }
     return 1;
+    #else
+    uint8_t opmode = 0; 
+    LOG_HEXDUMP_I(wifi, "event id: %d", payload, length, event); 
+    wifi_config_get_opmode(&opmode); 
+    if ((WIFI_MODE_AP_ONLY != opmode) && WIFI_EVENT_IOT_DISCONNECTED == event) { 
+        uint8_t link_status = 1; 
+        wifi_connection_get_link_status(&link_status); 
+        if(link_status == 0) { 
+            LOG_I(common, "wifi disconnect, %d", event); 
+            if (STA_IP_MODE_DHCP == g_sys_config.tcpip_config.sta_ip_mode) { 
+                struct netif *sta_if = netif_find("st2"); 
+                netif_set_status_callback(sta_if, NULL); 
+                netif_set_link_down(sta_if); 
+                netif_set_addr(sta_if, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY); 
+            } 
+        } 
+    } 
+    return 1; 
+    #endif
 }
 
 #if 0 /* WIFI_EVENT_IOT_CONNECT_FAIL event is not ready yet, turn it off by default.*/
