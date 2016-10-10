@@ -9,7 +9,6 @@
 #include "nvdm.h"
 
 
-
 void* hal_memset(void *buf, int i, unsigned int len);
 void* hal_memcpy(void *dst, const void *src, unsigned int len);
 int hal_memcmp(const void *buf1, const void *buf2, unsigned int len);

@@ -337,30 +337,37 @@ int halFlashClose(void *dev) {
 }
 
 int halFlashErase(void *dev, uint32_t startAddr, uint32_t size) {
-     int ret = 0;
+    int ret = 0;
 
-     int sector_to_erase = startAddr >> 12;//4K address align;
-     int sector_count = size >> 12;//4K*n;
-    
-     while(sector_count--) {        
-           APPLOG("[Lelink]: ==>starting erase 0x%x",sector_to_erase << 12);
-	       ret = hal_flash_erase(sector_to_erase << 12, HAL_FLASH_BLOCK_4K);
-	       if(ret != HAL_FLASH_STATUS_OK) {
-	                //LOG_ERROR("erase flash sector error, %s\r\n",__func__);
-	                APPLOG("[Lelink]: erase flash sector error, %s",__func__);
-	                return ret;
-	       }
-		   //LOG_DEBUG("==>ending erase 0x%x",sector_to_erase << 12);
-		   APPLOG("[Lelink]: ==>ending erase 0x%x",sector_to_erase << 12);
-	       sector_to_erase ++;
-     }
-     return ret;
+    int sector_to_erase = startAddr >> 12;//4K address align;
+    int sector_count = size >> 12;//4K*n;
+
+    fota_port_isr_disable();
+    while(sector_count--) {        
+        APPLOG("[Lelink]: ==>starting erase 0x%x",sector_to_erase << 12);
+        ret = hal_flash_erase(sector_to_erase << 12, HAL_FLASH_BLOCK_4K);
+        if(ret != HAL_FLASH_STATUS_OK) {
+        //LOG_ERROR("erase flash sector error, %s\r\n",__func__);
+            APPLOG("[Lelink]: erase flash sector error, %s",__func__);
+            fota_port_isr_enable();
+            return ret;
+        }
+        //LOG_DEBUG("==>ending erase 0x%x",sector_to_erase << 12);
+        APPLOG("[Lelink]: ==>ending erase 0x%x",sector_to_erase << 12);
+        sector_to_erase ++;
+    }
+    fota_port_isr_enable();
+    return ret;
 }
 
 int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin) {
     hal_flash_status_t ret;
 
-	ret = hal_flash_write(startAddr + offsetToBegin, data, len);
+    fota_port_isr_disable();
+    ret = hal_flash_write(startAddr + offsetToBegin, data, len);
+    fota_port_isr_enable();
+    APPLOG("[Lelink]: ==>hal_flash_write ret[%d], startAddr[0x%x] offsetToBegin[0x%x] len[%d/0x%x] [0x%02x 0x%02x 0x%02x 0x%02x]", ret, startAddr, offsetToBegin, len, len, 
+        data[0], data[1], data[2], data[3]);
 
 	if (ret < HAL_FLASH_STATUS_OK)
       	return ret;
