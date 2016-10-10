@@ -85,10 +85,10 @@ static uint32_t getSize(E_FLASH_TYPE type, uint32_t minSize) {
             ret = GET_PAGE_SIZE(sizeof(PrivateCfg), minSize);
         } break;
         case E_FLASH_TYPE_SCRIPT2: {
-            ret = GET_PAGE_SIZE(sizeof(ScriptCfg)*MAX_IA, minSize);
+            ret = GET_PAGE_SIZE(sizeof(ScriptCfg), minSize);
         } break;
         case E_FLASH_TYPE_SDEV_INFO: {
-            ret = GET_PAGE_SIZE(sizeof(SDevInfoCfg)*MAX_SDEV_NUM, minSize);
+            ret = GET_PAGE_SIZE(sizeof(SDevInfoCfg), minSize);
         } break;
         default:
             break;
@@ -116,7 +116,7 @@ int getRegion(E_FLASH_TYPE type, FlashRegion *region) {
 
 int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) {
     int i = 0;
-    uint32_t tmpTotal = 0, tmpSize = 0;
+    uint32_t tmpTotal = 0, singleSize = 0, tmpSize = 0;
     // uint32_t tmpStartAddr = startAddr;
     LELOG("lelinkStorageInit -s\r\n");
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
@@ -133,18 +133,16 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
 
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
         ginRegion[i].type = i;
-        tmpTotal = getSize(i, minSize);
-        LELOG("[%d] [%d]", i, tmpTotal);
+        singleSize = getSize(i, minSize);
         ginRegion[i].addr = ginStartAddr + tmpSize;
+        ginRegion[i].size = singleSize;
         if (E_FLASH_TYPE_SCRIPT2 == i) {
-            ginRegion[i].size = tmpTotal/MAX_IA;
-        } else if (E_FLASH_TYPE_SDEV_INFO == i) {
-            ginRegion[i].size = tmpTotal/MAX_SDEV_NUM;
+            tmpTotal = singleSize*MAX_IA;
         } else {
-            ginRegion[i].size = tmpTotal;
+            tmpTotal = singleSize;
         }
         tmpSize += tmpTotal;
-        LELOG("idx[%d] addr[0x%x] size[0x%x] type[%d]", i, ginRegion[i].addr, tmpTotal, ginRegion[i].type);
+        LELOG("idx[%d] addr[0x%x] size[0x%x*%d=0x%x] type[%d]", i, ginRegion[i].addr, ginRegion[i].size, ginRegion[i].size ? tmpTotal/ginRegion[i].size : 0, tmpTotal, ginRegion[i].type);
     }
 
     return 0;
@@ -181,7 +179,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) 
     if (0 > ret) {
         return -3;
     }
-    LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
+    // LELOG("flashWritePrivateCfg halFlashErase [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
 
     *((uint8_t *)data + (size - 1)) = crc8(data, size - 1);
     ret = halFlashWrite(hdl, data, size, fr.addr + (idx*fr.size), 0);
@@ -189,7 +187,7 @@ static int storageWrite(E_FLASH_TYPE type, const void *data, int size, int idx) 
         return -4;
     }
     
- LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
+    // LELOG("flashWritePrivateCfg halFlashWrite [0x%x] [0x%x][0x%x]", hdl, fr.addr, fr.size);
     halFlashClose(hdl);
     return 0; 
 }
@@ -371,18 +369,98 @@ int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     return ret;
 }
 
-int lelinkStorageWriteSDevInfoCfg(const SDevInfoCfg *sdevInfo, int idx) {
-    int ret = 0;
+int lelinkStorageWriteSDevInfoCfg(const void *sdevArr) {
+    int ret = 0, written = 0, i = 0;
+    FlashRegion fr;
+    uint8_t csum = 0;
+    const SDevNode *arr = (SDevNode *)sdevArr; 
+    if (NULL == arr) {
+        return -1;
+    }
 
-    ret = storageWrite(E_FLASH_TYPE_SDEV_INFO, sdevInfo, sizeof(SDevInfoCfg), idx);
+    ret = getRegion(E_FLASH_TYPE_SDEV_INFO, &fr);
+    if (0 > ret) {
+        return -2;
+    }
 
-    return ret;
+    void *hdl = (void *)halFlashOpen();
+    if (NULL == hdl) {
+        return -3;
+    }
+
+    ret = halFlashErase(hdl, fr.addr, fr.size);
+    if (0 > ret) {
+        return -4;
+    }
+
+    for (i = 0; i < MAX_SDEV_NUM; i++) {
+        SDevNBase *base = (SDevNBase *)&(arr[i]);
+        ret = halFlashWrite(hdl, (const uint8_t *)base, sizeof(SDevNBase), fr.addr, i*sizeof(SDevNBase));
+        if (0 > ret) {
+            halFlashClose(hdl);
+            return -5;
+        }
+        csum += crc8(base, sizeof(SDevNBase));
+        written += sizeof(SDevNBase);
+    }
+    ret = halFlashWrite(hdl, (const uint8_t *)&csum, 1, fr.addr, i*sizeof(SDevNBase));
+    if (0 > ret) {
+        halFlashClose(hdl);
+        return -6;
+    }
+    LELOG("lelinkStorageWriteSDevInfoCfg [0x%x] [0x%x][0x%x]", csum, fr.addr, fr.size);
+    halFlashClose(hdl);
+
+    return written;
 }
 
-int lelinkStorageReadSDevInfoCfg(SDevInfoCfg *sdevInfo, int idx) {
-    int ret = 0;
+int lelinkStorageReadSDevInfoCfg(void *sdevArr) {
+    int ret = 0, read = 0, i = 0;
+    FlashRegion fr;
+    uint8_t csum = 0, tmp = 0;
+    void * hdl;
+    SDevNode *arr = (SDevNode *)sdevArr; 
+    if (NULL == arr) {
+        return -1;
+    }
 
-    ret = storageRead(E_FLASH_TYPE_SDEV_INFO, sdevInfo, sizeof(SDevInfoCfg), idx);
+    ret = getRegion(E_FLASH_TYPE_SDEV_INFO, &fr);
+    if (0 > ret) {
+        return -2;
+    }
+
+    hdl = (void *)halFlashOpen();
+    if (NULL == hdl) {
+        return -3;
+    }
+
+    for (i = 0; i < MAX_SDEV_NUM; i++) {
+        SDevNBase *base = (SDevNBase *)&(arr[i]);
+        ret = halFlashRead(hdl, (uint8_t *)base, sizeof(SDevNBase), fr.addr, i*sizeof(SDevNBase));
+        if (0 > ret) {
+            halFlashClose(hdl);
+            return -4;
+        }
+        csum += crc8(base, sizeof(SDevNBase));
+        read += sizeof(SDevNBase);
+    }
+    ret = halFlashRead(hdl, (uint8_t *)&tmp, 1, fr.addr, i*sizeof(SDevNBase));
+    if (0 > ret) {
+        halFlashClose(hdl);
+        return -5;
+    }
+    if (csum != tmp) {
+        halFlashClose(hdl);
+        for (i = 0; i < MAX_SDEV_NUM; i++) {
+            SDevNBase *base = (SDevNBase *)&(arr[i]);
+            memset(base, 0, sizeof(SDevNBase));
+        }
+        return -6;
+    }
+
+    LELOG("lelinkStorageReadSDevInfoCfg [0x%x] [0x%x][0x%x]", csum, fr.addr, fr.size);
+    halFlashClose(hdl);
+
 
     return ret;
 }

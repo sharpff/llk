@@ -118,7 +118,7 @@ typedef struct {
 
 typedef struct
 {
-    SDevNBase data;
+    SDevNBase data[MAX_SDEV_NUM];
     uint8_t csum;
 }LELINK_ALIGNED SDevInfoCfg;
 
@@ -176,8 +176,8 @@ int lelinkStorageReadAuthCfg(AuthCfg *authCfg);
 int lelinkStorageWriteScriptCfg(const void *scriptCfg, int flashType, int idx);
 int lelinkStorageReadScriptCfg(void* scriptCfg, int flashType, int idx);
 
-int lelinkStorageWriteSDevInfoCfg(const SDevInfoCfg *sdevInfoCfg, int idx);
-int lelinkStorageReadSDevInfoCfg(SDevInfoCfg *sdevInfoCfg, int idx);
+int lelinkStorageWriteSDevInfoCfg(const void *sdevArr);
+int lelinkStorageReadSDevInfoCfg(void *sdevArr);
 
 void lelinkStorageDeinit(void);
 

@@ -103,7 +103,6 @@ typedef struct {
 typedef struct {
     CACHE_NODE_NBASE;
     char sdevStatus[SDEV_MAX_STATUS]; // as json object "sDevStatus"
-    uint8_t occupied;
     /* 
      * isSDevInfoDone identify the mask of these info
      * 0x01. endpoint list(active response)
@@ -111,6 +110,7 @@ typedef struct {
      * 0x04. man done(node descriptor response)
      * 0x08. timeout 
      */
+    uint8_t occupied;
     uint8_t isSDevInfoDone;
 }SDevNode;
 

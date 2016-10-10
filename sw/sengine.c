@@ -90,7 +90,7 @@ ScriptCfg *ginScriptCfg;
 ScriptCfg *ginScriptCfg2;
 static uint32_t ginDelayMS;
 static int ginCurrCvtType;
-static void loadSDevInfo(SDevNode *arr, int num);
+static void loadSDevInfo(SDevNode *arr);
 
 PCACHE sdevCache() {
     static CACHE cache;
@@ -106,7 +106,7 @@ SDevNode *sdevArray() {
             sdevCache()->maxsize = MAX_SDEV_NUM;
             sdevCache()->singleSize = sizeof(SDevNode);
             sdevCache()->pBase = ginArrSDev;
-            loadSDevInfo(ginArrSDev, MAX_SDEV_NUM);
+            loadSDevInfo(ginArrSDev);
         } else {
             LELOGE("Heap is not enough!!!");
         }
@@ -115,24 +115,23 @@ SDevNode *sdevArray() {
     return ginArrSDev;
 }
 
-static void loadSDevInfo(SDevNode *arr, int num) {
+static void loadSDevInfo(SDevNode *arr) {
     int i = 0;
-    SDevInfoCfg sdevInfoCfg;
-    for (i = 0; i < num; i++) {
-        if (0 != lelinkStorageReadSDevInfoCfg(&sdevInfoCfg, i) ||
-            sdevInfoCfg.csum != crc8((const uint8_t *)&(sdevInfoCfg.data), sizeof(sdevInfoCfg.data))) {
-            LELOG("loadSDevInfo continue --------- [%d]", i);
-            continue;
+    if (0 > lelinkStorageReadSDevInfoCfg(arr)) {
+        LELOGE("loadSDevInfo FAILED");
+        return;
+    }
+    for (i = 0; i < MAX_SDEV_NUM; i++) {
+        if (arr[i].idx[0]) {            
+            LELOG("loadSDevInfo load --------- [%d]", i);
+            LELOG("=======> SDevInfoCfg mac[%s] ", arr[i].mac);
+            LELOG("=======> SDevInfoCfg idx[%s] ", arr[i].idx);
+            LELOG("=======> SDevInfoCfg sdevInfo[%s] ", arr[i].sdevInfo);
+            LELOG("=======> SDevInfoCfg sdevEpt[%02x%02x%02x%02x%02x%02x%02x%02x] ", 
+                arr[i].sdevEpt[0], arr[i].sdevEpt[1], arr[i].sdevEpt[2], arr[i].sdevEpt[3],
+                arr[i].sdevEpt[4], arr[i].sdevEpt[5], arr[i].sdevEpt[6], arr[i].sdevEpt[7]);
+            LELOG("=======> SDevInfoCfg sdevMan[%s] ", arr[i].sdevMan);
         }
-        memcpy(&arr[i], &(sdevInfoCfg.data), sizeof(sdevInfoCfg.data));
-        LELOG("loadSDevInfo load --------- [%d]", i);
-        LELOG("=======> SDevInfoCfg mac[%s] ", arr[i].mac);
-        LELOG("=======> SDevInfoCfg idx[%s] ", arr[i].idx);
-        LELOG("=======> SDevInfoCfg sdevInfo[%s] ", arr[i].sdevInfo);
-        LELOG("=======> SDevInfoCfg sdevEpt[%02x%02x%02x%02x%02x%02x%02x%02x] ", 
-            arr[i].sdevEpt[0], arr[i].sdevEpt[1], arr[i].sdevEpt[2], arr[i].sdevEpt[3],
-            arr[i].sdevEpt[4], arr[i].sdevEpt[5], arr[i].sdevEpt[6], arr[i].sdevEpt[7]);
-        LELOG("=======> SDevInfoCfg sdevMan[%s] ", arr[i].sdevMan);
     }
 }
 
@@ -286,10 +285,13 @@ static void postStatusChanged(int plusIdx) {
 //     return 0;
 // }
 
-static int sdevInfoSerilized(const SDevNode *sdev, int index) {
-    int ret = 0;
-    SDevInfoCfg *sdevInfoCfg = (SDevInfoCfg *)sdev;
-    ret = lelinkStorageWriteSDevInfoCfg(sdevInfoCfg, index);
+static int sdevInfoSerilized(const SDevNode *arr) {
+    int ret = 0, i = 0;
+    // SDevInfoCfg *sdevInfoCfg = (SDevInfoCfg *)arr;
+    for (i = 0; i < MAX_SDEV_NUM; i++) {
+
+    }
+    ret = lelinkStorageWriteSDevInfoCfg(arr);
     {
         // SDevInfoCfg tmp = {0};
         // ret = lelinkStorageReadSDevInfoCfg(&tmp, index);
@@ -460,10 +462,9 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
     }
     if (isCompleted) {
         if (arr[index].sdevMan[0]) {
-            sdevInfoSerilized(&arr[index], index);
+            sdevInfoSerilized(arr);
             LELOG("COMPLETED =======> sdevInfoRsp[%d] mac[%s], idx[%s], sdevMan[%s]", index, arr[index].mac, arr[index].idx, arr[index].sdevMan);
             // // test only
-
             // for (i = 1; i < MAX_SDEV_NUM; i++) {
             //     arr[index].idx[3] = i + 0x30;
             //     sdevInfoSerilized(&arr[index], i);

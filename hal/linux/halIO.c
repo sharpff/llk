@@ -3,7 +3,7 @@
 #include <termios.h>
 #include "leconfig.h"
 
-#define DEVICE_ID1    "/dev/ttyUSB3" 
+#define DEVICE_ID1    "/dev/ttyUSB0" 
 // #define DEVICE_ID1    "/dev/ttyUSB1" 
 static void setSpeed(int fd, int speed); 
 static int setParity(int fd, int databits, int stopbits, int parity);
@@ -157,29 +157,38 @@ int halFlashClose(void *dev)
     return 0;
 }
 int halFlashErase(void *dev, uint32_t startAddr, uint32_t size){
-    return 0;
+    int fd, ret, append;
+    char fileName[64] = {0};
+    sprintf(fileName, "./0x%x.bin", startAddr);
+    fd = open(fileName, O_WRONLY | O_CREAT);
+    if (0 >= fd) {
+        APPLOG("ERASE FAILED [%d]", errno);
+        return fd;
+    }
+    if (0 < size) {
+        uint8_t byte = 0xFF;
+        while (size--) {
+            ret += write(fd, &byte, 1);
+        }
+    }
+    close(fd);
+    APPLOG("ERASE OK [%s] size[0x%x]", fileName, ret);
+    return ret;
 }
 
 int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin){
     int fd, ret, append;
     char fileName[64] = {0};
     sprintf(fileName, "./0x%x.bin", startAddr);
-    fd = open(fileName, O_WRONLY | O_CREAT);
+    fd = open(fileName, O_WRONLY);
     if (0 >= fd) {
-        APPLOG("WRITE FAILED [%d]\r\n", errno);
+        APPLOG("WRITE FAILED [%d]", errno);
         return fd;
     }
     lseek(fd, offsetToBegin, SEEK_SET);
     ret = write(fd, data, len);
-    append = GET_PAGE_SIZE(len) - len;
-    if (0 < append) {
-        uint8_t byte = 0xFF;
-        while (append--) {
-            ret += write(fd, &byte, 1);
-        }
-    }
     close(fd);
-    APPLOG("WRITE OK [%s] size[0x%x]\r\n", fileName, ret);
+    APPLOG("WRITE OK [%s] size[0x%x]", fileName, ret);
     return ret;
 }
 

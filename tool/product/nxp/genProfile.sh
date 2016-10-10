@@ -22,21 +22,21 @@ $MAIN_PATH/lelinkTool.py \
 $MAIN_PATH/lelinkTool.py \
     -o ./0x1c9000.bin
 $MAIN_PATH/lelinkTool.py \
-    ./0x1c9000.bin 0x11000 \
+    ./0x1c9000.bin 0x14000 \
     -o ./0x1c9000.bin
 
 # sub devs
 $MAIN_PATH/lelinkTool.py \
     --gensdev \
-    -o ./0x1da000.bin
+    -o ./0x1dd000.bin
 
-# 0x1da000.bin is 6k for sub devs info, so it has ocuppied 8k
+# 0x1dd000.bin is 6k for sub devs info, so it has ocuppied 8k
 $MAIN_PATH/lelinkTool.py \
     ./0x1c2000.bin 0x1000 \
     ./0x1c3000.bin 0x5000 \
     ./0x1c8000.bin 0x1000 \
-    ./0x1c9000.bin 0x11000 \
-    ./0x1da000.bin 0x2000 \
+    ./0x1c9000.bin 0x14000 \
+    ./0x1dd000.bin 0x2000 \
     -o ./cust.bin
 
 # TODO: master should be mt7687
@@ -46,6 +46,6 @@ $MAIN_PATH/lelinkTool.py \
      $MAIN_PATH/boardMW300/psm.bin 0x4000 \
      $WMSDK/sample_apps/le_demo/bin/le_demo.bin 0x154000 \
      $MAIN_PATH/boardMW300/300_WIFI.bin 0x64000 \
-     ./cust.bin 0x1A000 \
+     ./cust.bin 0x1D000 \
      -o ./image.bin
 
