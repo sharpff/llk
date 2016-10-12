@@ -11,6 +11,7 @@
 #include "airconfig_ctrl.h"
 #include "sengine.h"
 #include "misc.h"
+#define RETRY_HEARTBEAT 2
 
 // lftp letv:1q2w3e4r@115.182.63.167:21
 // 115.182.94.173 <=> 10.204.28.134
@@ -207,6 +208,10 @@ static int doQ2AProcessing(CommonCtx *pCtx,
     const CmdHeaderInfo *cmdInfo, 
     char ip[MAX_IPLEN], 
     uint16_t port);
+static uint8_t ginFlagHeartBeat = RETRY_HEARTBEAT;
+static void flagHeartBeatReset(void);
+static int flagHeartBeatMinus(void);
+
 
 
 static CmdRecord tblCmdType[] = {
@@ -1203,6 +1208,7 @@ static int isNeedDelCB(NodeData *currNode) {
                 node.ndPort = currNode->ndPort;
                 node.reserved2 = (0 == --currNode->reserved2) ? 0xFF : currNode->reserved2;
                 memcpy(node.uuid, currNode->uuid, MAX_UUID);
+                memcpy(node.token, currNode->token, AES_LEN);
                 lelinkNwPostCmdExt(&node);
                 LELOG("RETRY doing... retry[%d] uuid[%s]", node.reserved2, node.uuid);
             }
@@ -1211,7 +1217,10 @@ static int isNeedDelCB(NodeData *currNode) {
         switch (currNode->cmdId) {
             case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
                 if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ) {
-                    changeStateId(E_STATE_AP_CONNECTED);
+                    if (!flagHeartBeatMinus()) {
+                        changeStateId(E_STATE_AP_CONNECTED);
+                        flagHeartBeatReset();
+                    }
                 }
             }
             break;
@@ -1677,6 +1686,7 @@ static void cbCloudHeartBeatRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCloudHeartBeatRemoteRsp -s");
+    flagHeartBeatReset();
     // LELOG("Now version: %s-%s", __DATE__, __TIME__);
     // LELOG("[%d][%s]", dataLen, dataIn);
 	halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
@@ -2306,3 +2316,11 @@ int lelinkVerifyBuf(uint8_t *buf, uint32_t size) {
     return ret;
 }
 
+static void flagHeartBeatReset(void) {
+    ginFlagHeartBeat = RETRY_HEARTBEAT;
+}
+
+static int flagHeartBeatMinus(void) {
+    LELOG("**********flagHeartBeatMinus [%d]************", ginFlagHeartBeat);
+    return ginFlagHeartBeat--;
+}

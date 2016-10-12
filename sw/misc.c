@@ -392,11 +392,10 @@ int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager
     return i;
 }
 
-int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
-    char *start, *end;
-    char *tokenStart = "{", *tokenEnd = "}";
-    int len = 0;
-    LELOG("getJsonObject [%d][%s] key[%s] obj[%s] objLen[%d]", jsonLen, json, key, obj, objLen);
+static int getJsonByToken(const char *json, int jsonLen, const char *key, char *obj, int objLen, const char *tokenStart, const char *tokenEnd, int fromBack) {
+    char *start, *end, *oldEnd;
+    int len = 0, max = 5;
+    LELOG("getJsonByToken [%d][%s] key[%s] obj[%s] objLen[%d]", jsonLen, json, key, obj, objLen);
     start = (char *)strstr(json, key);
     if (NULL == start) {
         return -1;
@@ -407,7 +406,21 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
         return -2;
     }
 
-    end = (char *)strstr(start + 1, tokenEnd);
+    if (fromBack) {
+        oldEnd = end = start;
+        do {
+            oldEnd = end;
+            end = (char *)strstr(end + 1, tokenEnd);
+        } while (end && max--);
+        if (oldEnd == start) {
+            end = NULL;
+        } else {
+            end = oldEnd;
+        }
+    } else {
+        end = (char *)strstr(start + 1, tokenEnd);
+    }
+
     if (NULL == end) {
         return -3;
     }
@@ -416,12 +429,25 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
     if (objLen < len) {
         return -4;
     }
-    LELOG("getJsonObject len[%d] start[%d] end[%d]", len, start, end);
+    LELOG("getJsonByToken len[%d] start[%d] end[%d]", len, start, end);
 
     // start[len] = 0;
     strncpy(obj, start, len);
-    LELOG("getJsonObject obj[%s]", obj);
-    return len;
+    LELOG("getJsonByToken obj[%s]", obj);
+    return len;    
+}
+int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
+    char *tokenStart = "{", *tokenEnd = "}";
+    return getJsonByToken(json, jsonLen, key, obj, objLen, tokenStart, tokenEnd, 0);
+}
+
+int getJsonArray(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
+    char *tokenStart = "[", *tokenEnd = "]";
+    int ret = getJsonByToken(json, jsonLen, key, obj, objLen, tokenStart, tokenEnd, 1);
+    if (2 >= ret) {
+        return 0;
+    }
+    return ret;
 }
 
 int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen) {
@@ -645,12 +671,12 @@ int cloudMsgHandler(const char *data, int len) {
             char name[MAX_RULE_NAME] = {0};
             ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
-                ret = LELINK_ERR_IA_DELETE;
+                ret = LELINK_ERR_PARAM_INVALID;
                 break;
             }
 
             if (WM_SUCCESS != (ret = json_get_val_str(&jobj, JSON_NAME_NAME, name, sizeof(name)))) {
-                ret = LELINK_ERR_IA_DELETE;
+                ret = LELINK_ERR_PARAM_INVALID;
                 break;
             }
             if (0 >= sengineRemoveRules(name)) {
@@ -701,7 +727,7 @@ int cloudMsgHandler(const char *data, int len) {
             }
 
             setLogDir(dir);
-            LELOG("CLOUD_MSG_KEY_LOG2MASTER -e");
+            LELOG("CLOUD_MSG_KEY_LOG2MASTER [%d] -e", dir);
         }break;
         default:
         break;
