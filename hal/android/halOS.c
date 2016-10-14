@@ -1,8 +1,9 @@
-#include <unistd.h>
+#include "leconfig.h"
 #include "halHeader.h"
+#include <unistd.h>
 static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
 
-int halLockInit(void *ptr, const char *file, int line) {
+int halLockInit(void) {
 	return 0;
 }
 
@@ -44,7 +45,7 @@ void *halMallocEx(size_t size, char* filename, uint32_t line) {
     return ptr;
 }
 
-void *halCallocEx(int n, size_t size, char* filename, uint32_t line) {
+void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line) {
     void *ptr = malloc(n*size);
     if (ptr) {
         memset(ptr, 0x00, n*size);

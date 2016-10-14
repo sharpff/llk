@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 #include "halCenter.h"
 #include <errno.h>

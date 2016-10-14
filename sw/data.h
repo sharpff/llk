@@ -1,6 +1,11 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "io.h"
 
 extern uint8_t terminalAES[];
@@ -147,5 +152,9 @@ extern const int ginPrikeyDevKindDerLen;
 "QSXVZXr3zhm5HB8h463hmMLzCCLQ7VoGj921iC9IwDWqkuBJrEQkuG2gmInT7nE3\r\n" \
 "0oZaJjp3xn8k8rmfHQIDAQAB\r\n" \
 "-----END PUBLIC KEY-----\r\n"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

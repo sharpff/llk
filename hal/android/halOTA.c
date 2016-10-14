@@ -1,4 +1,5 @@
 #include "leconfig.h"
+#include "halHeader.h"
 #include "ota.h"
 
 int halHttpOpen(OTAInfo_t *info, const char *url)

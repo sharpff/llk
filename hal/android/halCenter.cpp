@@ -4,21 +4,21 @@
  *  Created on: Jan 7, 2016
  *      Author: fei
  */
+#include "leconfig.h"
 #include <pthread.h>
 #include "version.h"
 #include "json.h"
 #include "state.h"
 #include "base64.h"
 #include "utility.h"
-#include "leconfig.h"
 #include "halHeader.h"
 #include "jniLeLink.h"
 #include "halCenter.h"
 #include "airconfig_ctrl.h"
 #include "protocol.h"
+#include "data.h"
 
 extern "C" {
-    int getTerminalUUID(uint8_t *uuid, int len);
     int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout);
 };
 
@@ -38,52 +38,51 @@ int initTask(char *json)
 	int i, ret, authLen;
     std::string s, s1, s2;
     AuthCfg *authCfg = &(gNativeContext.authCfg);
-    LELOGE("------------ initTask ------------");
 
- //    s = std::string(static_cast<char *>(json));
-	// if (!reader.parse(s, value)) {
-	// 	LELOGE("initTask parse error!\n");
-	// 	return -1;
-	// }
- //    s1 = value[FJK_AUTH].asString();
- //    s2 = value[FJK_MAC].asString();
- //    if(s1.length() <= 0 || s2.length() <= 0) {
-	// 	LELOGE("initTask parameter error!\n");
- //        return -1;
- //    }
- //    { // AuthCfg, 初始得到 public_key, signatrue, uuid. server_addr, server_port
- //        const char *p;
- //        char *mac = gNativeContext.mac;
+    s = std::string(static_cast<char *>(json));
+	if (!reader.parse(s, value)) {
+		LELOGE("initTask parse error!\n");
+		return -1;
+	}
+    s1 = value[FJK_AUTH].asString();
+    s2 = value[FJK_MAC].asString();
+    if(s1.length() <= 0 || s2.length() <= 0) {
+		LELOGE("initTask parameter error!\n");
+        return -1;
+    }
+    { // AuthCfg, 初始得到 public_key, signatrue, uuid. server_addr, server_port
+        const char *p;
+        char *mac = gNativeContext.mac;
 
- //        s1 = base64_decode_cpp(s1);
- //        memcpy(authCfg, s1.c_str(), sizeof(AuthCfg));
- //        p = s2.c_str();
- //        for(i = 0; i < 6; i++) {
- //            mac[i] = strtol(p, (char **)&p, 16);
- //            p++;
- //        }
- //    }
- //    { // PrivateCfg 
- //        PrivateCfg *privateCfg = &gNativeContext.privateCfg;
- //        privateCfg->data.nwCfg.configStatus = 2;
- //        privateCfg->csum = crc8((uint8_t *)(&privateCfg->data), sizeof(privateCfg->data));
- //    }
- //    if((ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000))) {
- //        LELOGE("Fialed to lelinkStorageInit\n");
- //        return -1;
- //    }
- //    if((ret = lelinkInit()) < 0) {
- //        LELOGE("Fialed to lelinkInit\n");
- //        return ret;
- //    }
- //    getTerminalUUID(authCfg->data.uuid, MAX_UUID);
- //    authCfg->csum = crc8((uint8_t *)&(authCfg->data), sizeof(authCfg->data));
-	// gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
-	// gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
-	// if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
- //        LELOGE("Fialed to pthread_create\n");
-	// 	return ret;
-	// }
+        s1 = base64_decode_cpp(s1);
+        memcpy(authCfg, s1.c_str(), sizeof(AuthCfg));
+        p = s2.c_str();
+        for(i = 0; i < 6; i++) {
+            mac[i] = strtol(p, (char **)&p, 16);
+            p++;
+        }
+    }
+    { // PrivateCfg 
+        PrivateCfg *privateCfg = &gNativeContext.privateCfg;
+        privateCfg->data.nwCfg.configStatus = 2;
+        privateCfg->csum = crc8((uint8_t *)(&privateCfg->data), sizeof(privateCfg->data));
+    }
+    if((ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000))) {
+        LELOGE("Fialed to lelinkStorageInit\n");
+        return -1;
+    }
+    if((ret = lelinkInit()) < 0) {
+        LELOGE("Fialed to lelinkInit\n");
+        return ret;
+    }
+    getTerminalUUID(authCfg->data.uuid, MAX_UUID);
+    authCfg->csum = crc8((uint8_t *)&(authCfg->data), sizeof(authCfg->data));
+	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
+	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
+	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
+        LELOGE("Fialed to pthread_create\n");
+		return ret;
+	}
 	return ret;
 }
 

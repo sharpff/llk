@@ -1,5 +1,6 @@
 #include <errno.h>
 // #include <android/log.h>
+#include "leconfig.h"
 #include "halHeader.h"
 #include "halCenter.h"
 
@@ -137,7 +138,7 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
 #define ANDROID_LOG_WARN 2
 #define ANDROID_LOG_ERROR 3
 #define TAG_LOG 0
-#define androidLog(l, t, i) printf("level[%d] type[%d] [%s]\n", l, t, i);
+#define androidLog(l, t, i) printf("%s", i);
 #endif
 void halPrint(const char *log) {
     /*ANDROID_LOG_DEBUG ANDROID_LOG_WARN ANDROID_LOG_ERROR*/

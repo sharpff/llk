@@ -12,9 +12,8 @@
 extern "C" {
 #endif
 // #include <android/log.h>
-#include "halHeader.h"
-#include "io.h"
 #include "leconfig.h"
+#include "io.h"
 #include "protocol.h"
 #include "jnitls.h"
 #include "network.h"

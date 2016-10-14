@@ -1,6 +1,11 @@
 #ifndef __MISC_H__
 #define __MISC_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "leconfig.h"
 #include "network.h"
 #include "io.h"
@@ -96,5 +101,8 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
 int cloudMsgHandler(const char *data, int len);
 int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen);
 int printOut(const char *fmt, ...);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
