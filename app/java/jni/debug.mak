@@ -11,10 +11,9 @@ LD := $(CXX)
 AR := ar
 OBJCOPY := objcopy
 
-JHOME = /home/lf/tool/jdk1.7.0_80
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG LINUX PF_VAL=3 __LE_SDK__
-INCLUDE_DIRS := ../../../sw ../../../sw/mbedtls-2.2.0_crypto/include ../../../sw/sengine ../../../sw/jsmn ../../../sw/crypto ../../../hal/android/jsoncpp/json $(JHOME)/include /home/lf/tool/jdk1.7.0_80/include/linux
+INCLUDE_DIRS := ../../../sw ../../../sw/mbedtls-2.2.0_crypto/include ../../../sw/sengine ../../../sw/jsmn ../../../sw/crypto ../../../hal/android/jsoncpp/json $(JAVA_HOME)/include $(JAVA_HOME)/include/linux /home/lf/tool/jdk1.7.0_80/include/linux
 LIBRARY_DIRS := 
 LIBRARY_NAMES := 
 ADDITIONAL_LINKER_INPUTS := 
