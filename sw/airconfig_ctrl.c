@@ -152,7 +152,7 @@ static int inner_airconfig_do_config_sync(airconfig_ctx_t *ctx) {
     }
     while (count--) {
         inner_airconfig_sendto(ctx, gin_base + count % 4 + 1);
-        delayms(ctx->delay);
+        halDelayms(ctx->delay);
     };
     return 1;
 }
@@ -212,7 +212,7 @@ static int inner_airconfig_do_config_head(airconfig_ctx_t *ctx) {
             data = hdata | ldata;
 
             inner_airconfig_sendto(ctx, gin_base + data);
-            delayms(ctx->delay);
+            halDelayms(ctx->delay);
         }
     }
 
@@ -248,7 +248,7 @@ static int inner_airconfig_do_config_data(airconfig_ctx_t *ctx) {
     buf[0] = crc8((buf + 1), passwd_len + 1 + ssid_len);
     while (repeat--) {
         LELOG("====================>");
-        delayms(ctx->delay);
+        halDelayms(ctx->delay);
         for (i = 0; i < total_blocks; i++) {
             int bytes = (i+1) == total_blocks ? last_bytes : 4;
             uint16_t data = 0;
@@ -260,11 +260,11 @@ static int inner_airconfig_do_config_data(airconfig_ctx_t *ctx) {
                 //data = 0x0080 | (crc8((uint8_t*)&i, 1) + crc8(buf + i*bytes, bytes));
                 data = 0x0080 | crc8((uint8_t *)tmp_buf, bytes + 1);
                 inner_airconfig_sendto(ctx, gin_base + data); // crc 
-                delayms(ctx->delay);
+                halDelayms(ctx->delay);
                 inner_airconfig_sendto(ctx, (gin_base + i) | 0x0080); // seq id
                 for (j = 0; j < bytes; j++) {
                     inner_airconfig_sendto(ctx, (gin_base + buf[i*4 + j]) | 0x0100);
-                    delayms(ctx->delay);
+                    halDelayms(ctx->delay);
                 }
             }
         }

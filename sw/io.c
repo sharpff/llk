@@ -2,6 +2,9 @@
 #include "io.h"
 #include "sengine.h"
 #include "ota.h"
+#include "utility.h"
+#include "misc.h"
+#include "data.h"
 
 #ifndef LOG_IO
 #ifdef LELOG
@@ -41,7 +44,7 @@
 
 extern void *halFlashOpen(void);
 extern int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSelfRuleName, int *whereToPut);
-
+extern int resetConfigData(void);
 static FlashRegion ginRegion[E_FLASH_TYPE_MAX];
 static uint32_t ginStartAddr;
 static uint32_t ginTotalSize;
@@ -120,7 +123,7 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     // uint32_t tmpStartAddr = startAddr;
     LELOG("lelinkStorageInit -s\r\n");
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
-        tmpTotal += getSize(i, minSize);
+        tmpTotal += getSize((E_FLASH_TYPE)i, minSize);
     }
 
     if (tmpTotal > totalSize) {
@@ -132,8 +135,8 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     ginMinSize = minSize;
 
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
-        ginRegion[i].type = i;
-        ginRegion[i].size = getSize(i, minSize);
+        ginRegion[i].type = (E_FLASH_TYPE)i;
+        ginRegion[i].size = getSize((E_FLASH_TYPE)i, minSize);
         // LELOG("[%d] [%d]", i, ginRegion[i].size);
         ginRegion[i].addr = ginStartAddr + tmpSize;
         tmpSize += ginRegion[i].size;
@@ -289,13 +292,13 @@ int lelinkStorageReadScriptCfg(void *scriptCfg, int flashType, int idx){
     return ret;
 }
 
-int lelinkStorageWriteScriptCfg2(const ScriptCfg *scriptCfg) {
+int lelinkStorageWriteScriptCfg2(const void *scriptCfg) {
     int ret = 0, lenSelfRuleName = 0, whereToPut = -1, found = 0;
     PrivateCfg privCfg;
     char strSelfRuleName[MAX_RULE_NAME] = {0};
     LELOG("lelinkStorageWriteScriptCfg2 -s ");
 
-    lenSelfRuleName = sengineCall((const char *)scriptCfg->data.script, scriptCfg->data.size, S2_GET_SELFNAME,
+    lenSelfRuleName = sengineCall((const char *)((ScriptCfg *)scriptCfg)->data.script, ((ScriptCfg *)scriptCfg)->data.size, S2_GET_SELFNAME,
         NULL, 0, (uint8_t *)&strSelfRuleName, sizeof(strSelfRuleName));
     if (0 > lenSelfRuleName) {
         LELOGW("lelinkStorageWriteScriptCfg2 sengineCall("S2_GET_SELFNAME") [%d]", lenSelfRuleName);

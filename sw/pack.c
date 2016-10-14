@@ -4,6 +4,9 @@
 #include "network.h"
 #include "data.h"
 #include "utility.h"
+#include "aesWrapper.h"
+#include "state.h"
+#include "rsaWrapper.h"
 
 #ifndef LOG_PACK
 #ifdef LELOG
@@ -455,7 +458,7 @@ int doPack(void *ctx,
                     LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] ", LELINK_ERR_BUFFER_SPACE_ERR);
                     return LELINK_ERR_BUFFER_SPACE_ERR;
                 }
-                if (encSize1 != rsaEncrypt(pubkey, pubkeyLen, beingEncBuf, beingEncLen, cmdHeader, nwLen - sizeof(CommonHeader))) {
+                if (encSize1 != rsaEncrypt(pubkey, pubkeyLen, beingEncBuf, beingEncLen, (uint8_t *)cmdHeader, nwLen - sizeof(CommonHeader))) {
                     LELOGW("LELINK_ERR_ENC4_ERR [%d] ", LELINK_ERR_ENC4_ERR);
                     return LELINK_ERR_ENC4_ERR;
                 }

@@ -8,7 +8,7 @@
 #ifndef HALCENTER_H_
 #define HALCENTER_H_
 
-#include <android/log.h>
+// #include <android/log.h>
 #include "halHeader.h"
 #include "io.h"
 #include "leconfig.h"

@@ -22,8 +22,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifdef WIN32
 #include "lprefix.h"
+#ifdef WIN32
 #include <stdio.h>
 #endif
 // #include "lprefix.h"
@@ -222,12 +222,12 @@ void strbuf_append_fmt(strbuf_t *s, int len, const char *fmt, ...)
 void strbuf_append_fmt_retry(strbuf_t *s, const char *fmt, ...)
 {
     va_list arg;
-    int fmt_len, try;
+    int fmt_len, try1;
     int empty_len;
 
     /* If the first attempt to append fails, resize the buffer appropriately
      * and try again */
-    for (try = 0; ; try++) {
+    for (try1 = 0; ; try1++) {
         va_start(arg, fmt);
         /* Append the new formatted string */
         /* fmt_len is the length of the string required, excluding the
@@ -239,7 +239,7 @@ void strbuf_append_fmt_retry(strbuf_t *s, const char *fmt, ...)
 
         if (fmt_len <= empty_len)
             break;  /* SUCCESS */
-        if (try > 0)
+        if (try1 > 0)
             die("BUG: length of formatted string changed");
 
         strbuf_resize(s, s->length + fmt_len);

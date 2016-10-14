@@ -137,6 +137,8 @@ int lelinkStorageReadAuthCfg(AuthCfg *authCfg);
 int lelinkStorageWriteScriptCfg(const void *scriptCfg, int flashType, int idx);
 int lelinkStorageReadScriptCfg(void* scriptCfg, int flashType, int idx);
 
+int lelinkStorageWriteScriptCfg2(const void *scriptCfg);
+
 void lelinkStorageDeinit(void);
 
 

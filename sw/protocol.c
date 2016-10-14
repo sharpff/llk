@@ -2,7 +2,6 @@
 #include "protocol.h"
 #include "network.h"
 #include "pack.h"
-#include "convertor.h"
 #include "io.h"
 #include "data.h"
 #include "ota.h"
@@ -11,6 +10,8 @@
 #include "airconfig_ctrl.h"
 #include "sengine.h"
 #include "misc.h"
+#include "rsaWrapper.h"
+#include "ota.h"
 #define RETRY_HEARTBEAT 2
 
 // lftp letv:1q2w3e4r@115.182.63.167:21
@@ -502,7 +503,7 @@ void testFlash() {
             LELOG("read [%d][%s]", ret, buf);
             flash_drv_close(fl_dev);
 
-            delayms(2000);
+            halDelayms(2000);
         }
     }
     else 

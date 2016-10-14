@@ -12,7 +12,7 @@
 
 //Attach主线程
 #define THREAD_ATTACH(JVM, ENV) \
-	(JVM->AttachCurrentThread(&ENV, NULL) != JNI_OK)
+	(JVM->AttachCurrentThread((void **)&ENV, NULL) != JNI_OK)
 //Detach主线程
 #define THREAD_DETACH(JVM) \
 	(JVM->DetachCurrentThread() != JNI_OK)

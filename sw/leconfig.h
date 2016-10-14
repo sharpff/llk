@@ -160,8 +160,46 @@ void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line);
 void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line);
 void halFreeEx(void *ptr, char* filename, uint32_t line);
 
-int printOut(const char *fmt, ...);
+int halSoftApStart(char *ssid, char *wpa2_passphrase);
+int halSoftApStop(void);
 
+int halGetBroadCastAddr(char *broadcastAddr, int len);
+int halCastProbing(const char *mcastIP, const char *bcastIP, int port);
+int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *len, uint32_t maxLen, int isPKCS5, int type);
+int halRsaInit();
+int halRsaExit();
+int halRsaEncrypt(const uint8_t *pubkey, int pubkeyLen, const uint8_t* input, int inputLen, uint8_t *out, int outLen);
+int halRsaDecrypt(const uint8_t *prikey, int prikeyLen, const uint8_t* input, int inputLen, uint8_t *out, int outLen);
+int halRsaVerify(const uint8_t* pubkey, int pubkeyLen, 
+    const uint8_t *raw, int rawLen, const uint8_t *sig, int sigLen);
+
+int halSha1Start();
+int halSha1Update(const uint8_t *input, size_t ilen);
+int halSha1End(uint8_t output[20]);
+
+int halGetSelfAddr(char *ip, int size, int *port);
+
+int printOut(const char *fmt, ...);
+void halPrint(const char *log);
+int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int len);
+int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable);
+int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint16_t *port);
+int halNwDelete(int sock);
+
+int halAESInit(void);
+void halDeAESInit(void);
+int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *len, uint32_t maxLen, int isPKCS5, int type);
+
+int halDoConfig(void *ptr, int ptrLen);
+int halStopConfig(void);
+int halDoConfiguring(void *ptr, int ptrLen);
+int halDoApConnect(void *ptr, int ptrLen);
+int halDoApConnecting(void *ptr, int ptrLen);
+int halSoftApStart(char *ssid, char *wpa2_passphrase);
+int halSoftApStop(void);
+
+int halGetHostByName(const char *name, char ip[4][32], int len);
+uint16_t halRand();
 
 #define applog(_mod_name_, _fmt_, ...) \
     { \

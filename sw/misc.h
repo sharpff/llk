@@ -87,9 +87,14 @@ int getPipeInfo(const char *json, int jsonLen, char *name, int size);
 int getPWMInfo(const char *json, int jsonLen, pwmHandler_t *table, int n);
 int getWhatCvtType(const char *json, int jsonLen);
 int getJsonUTC32(char *json, int jsonLen/*, const char *rmtJson, int rmtJsonLen*/);
+int getJsonUTC(char *json, int jsonLen);
+int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager, int n);
+int getUUIDFromJson(const char *json, int jsonLen, char *uuid, int uuidLen);
+int getJsonOTAType(const char *json, int jsonLen, char *url, int urlLen);
+int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen);
 
 int cloudMsgHandler(const char *data, int len);
-
+int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen);
 int printOut(const char *fmt, ...);
 
 #endif

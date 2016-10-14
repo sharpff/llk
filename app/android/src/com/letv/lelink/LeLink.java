@@ -57,7 +57,6 @@ public class LeLink {
 	private String mWaitGetUuid = null;
 	private Map<String, JSONObject> mFindDevs = new HashMap<String, JSONObject>(); // uuid
 	// for send
-	private int mMinSeqId = -1;
 	private Lock mGetLock = new ReentrantLock();
 	private Map<String, String> mWaitSendCmds = new HashMap<String, String>(); // seqid
 	// for ctrl
@@ -477,18 +476,21 @@ public class LeLink {
 	 * @hide
 	 */
 	private synchronized boolean send(JSONObject cmdJson, String dataStr) {
+		mSeqId++;
+		if (mSeqId >= 0xFF) {
+			mSeqId = 0;
+		}
 		synchronized (mWaitSendCmds) {
 			String keyStr;
-			int min = mMinSeqId;
+			int min = 1;
 			if (mWaitSendCmds.size() >= MAX_WAIT_CMD) {
-				for (; min != mSeqId; min++) {
+				for (min = 1; min < mSeqId; min++) {
 					keyStr = String.valueOf(min);
 					if (mWaitSendCmds.get(keyStr) != null) {
 						mWaitSendCmds.remove(keyStr);
 						break;
 					}
 				}
-				mMinSeqId = min + 1;
 			}
 			if (dataStr != null) {
 				String jsonStr;
@@ -503,7 +505,6 @@ public class LeLink {
 				mWaitSendCmds.put(String.valueOf(mSeqId + 1), jsonStr);
 			}
 		}
-		mSeqId++;
 		try {
 			cmdJson.put(LeCmd.K.SEQID, mSeqId);
 		} catch (JSONException e) {

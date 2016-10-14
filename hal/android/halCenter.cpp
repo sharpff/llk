@@ -16,6 +16,7 @@
 #include "jniLeLink.h"
 #include "halCenter.h"
 #include "airconfig_ctrl.h"
+#include "protocol.h"
 
 extern "C" {
     int getTerminalUUID(uint8_t *uuid, int len);

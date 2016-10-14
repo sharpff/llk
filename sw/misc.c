@@ -3,6 +3,8 @@
 #include "jsonv2.h"
 #include "jsgen.h"
 #include <stdarg.h>
+#include "data.h"
+#include "sengine.h"
 
 static char miscBuf[MAX_BUF] = {0};
 
@@ -748,8 +750,4 @@ int printOut(const char *fmt, ...) {
         halPrint(miscBuf);
     }
     return 0;
-}
-
-void delayms(int ms) {
-    halDelayms(ms);
 }

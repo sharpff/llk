@@ -27,6 +27,11 @@ void setTerminalStatus(const char *status, int len);
 int getTerminalStatus(char *status, int len);
 void cacheSetTerminalStatus(const char *status, int len);
 int cacheGetTerminalStatus(char *status, int len);
+void getTerminalUTC(int64_t *utc);
+void setTerminalUTC(uint64_t *utc);
+int getTerminalStatusS2(char *statusS2, int len);
+int cacheIsChanged(const char *status, int len);
+void setSSID(const char *ssid, int ssidLen);
 
 int setLock(int locked);
 int getLock();
