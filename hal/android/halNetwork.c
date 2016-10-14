@@ -180,7 +180,7 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
 static int intCastProbing(int sock, struct sockaddr_in *address) {
     #define PROB_TIMES 4
     int times = PROB_TIMES, ret = 0, isSupport = 0;
-    uint16_t data = genRand(), sendData = 0, recvData = 0;
+    uint16_t data = halRand(), sendData = 0, recvData = 0;
     while (times--) {
         int retryTimes = 3;
         sendData = data + times;

@@ -31,13 +31,13 @@ public class testLelink {
 			// new testLelink(bytes);
 			System.out.printf("start testLelink\n");
 			System.out.printf(LeLink.getSdkInfo());
-			// mLeLink = LeLink.getInstance();
-			// LeLink.setContext("abc", "11:22:33:44:55:66");
-			// if (LeLink.setContext("abc", "11:22:33:44:55:66")) {
-			// 	mLeLink = LeLink.getInstance();
-			// } else {
-
-			// }
+			mLeLink = LeLink.getInstance();
+			if (LeLink.setContext("abc", "11:22:33:44:55:66")) {
+				// mLeLink = LeLink.getInstance();
+				System.out.printf("111111\n");
+			} else {
+				System.out.printf("222222\n");
+			}
 			System.out.printf("end testLelink\n");
 		}
 		catch (Exception e) {

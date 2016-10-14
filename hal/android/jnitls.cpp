@@ -40,7 +40,7 @@ char* js2c(JNIEnv *env, jstring jstr)
 	jsize alen = env->GetArrayLength(barr);
 	jbyte* b = env->GetByteArrayElements(barr, JNI_FALSE);
 	if (alen > 0) {
-		rtn = (char*) halMalloc(alen + 1);
+		rtn = (char*) malloc(alen + 1);
 		memcpy(rtn, b, alen);
 		rtn[alen] = 0;
 	}

@@ -17,8 +17,7 @@ int halUnlock(void *ptr, const char *file, int line) {
     return pthread_mutex_unlock(&ginMutex);
 }
 
-unsigned int halGetTimeStamp(void)
-{
+unsigned int halGetTimeStamp(void) {
 	return (unsigned int)time(NULL);
 }
 

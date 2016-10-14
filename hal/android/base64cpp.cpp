@@ -41,7 +41,7 @@ static inline bool is_base64(unsigned char c)
 	return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
+std::string base64_encode_cpp(unsigned char const* bytes_to_encode, unsigned int in_len)
 {
 	std::string ret;
 	int i = 0;
@@ -85,7 +85,7 @@ std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_
 
 }
 
-std::string base64_decode(std::string const& encoded_string)
+std::string base64_decode_cpp(std::string const& encoded_string)
 {
 	int in_len = encoded_string.size();
 	int i = 0;
@@ -133,8 +133,8 @@ int test()
 {
 	const std::string s = "ADP GmbH\nAnalyse Design & Programmierung\nGesellschaft mit beschränkter Haftung";
 
-	std::string encoded = base64_encode(reinterpret_cast<const unsigned char*>(s.c_str()), s.length());
-	std::string decoded = base64_decode(encoded);
+	std::string encoded = base64_encode_cpp(reinterpret_cast<const unsigned char*>(s.c_str()), s.length());
+	std::string decoded = base64_decode_cpp(encoded);
 
 	std::cout << "encoded: " << encoded << std::endl;
 	std::cout << "decoded: " << decoded << std::endl;
