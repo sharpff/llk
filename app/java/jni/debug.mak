@@ -13,7 +13,7 @@ OBJCOPY := objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG LINUX PF_VAL=3 __LE_SDK__
-INCLUDE_DIRS := /home/lf/tool/jdk1.7.0_80/include /home/lf/tool/jdk1.7.0_80/include/linux ../../../sw ../../../sw/mbedtls-2.2.0_crypto/include ../../../sw/sengine ../../../sw/jsmn ../../../sw/crypto ../../../hal/android/jsoncpp/json
+INCLUDE_DIRS := $(JAVA_HOME)/include $(JAVA_HOME)/include/linux ../../../sw ../../../sw/mbedtls-2.2.0_crypto/include ../../../sw/sengine ../../../sw/jsmn ../../../sw/crypto ../../../hal/android/jsoncpp/json
 LIBRARY_DIRS := 
 LIBRARY_NAMES := 
 ADDITIONAL_LINKER_INPUTS := 
