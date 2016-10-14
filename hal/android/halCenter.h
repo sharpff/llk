@@ -8,6 +8,9 @@
 #ifndef HALCENTER_H_
 #define HALCENTER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 // #include <android/log.h>
 #include "halHeader.h"
 #include "io.h"
@@ -55,9 +58,7 @@ int initTask(char *json);
 int airConfig(void *ptr, char *json);
 int cmdSend(void *ptr, char *json);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len);
 void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len);
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len);
