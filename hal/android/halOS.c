@@ -10,11 +10,11 @@ int halLockInit(void) {
 void halDeLockInit(void) {
 }
 
-int halLock(void *ptr, const char *file, int line) {
+int halLock(void) {
     return pthread_mutex_lock(&ginMutex);
 }
 
-int halUnlock(void *ptr, const char *file, int line) {
+int halUnlock(void) {
     return pthread_mutex_unlock(&ginMutex);
 }
 

@@ -865,7 +865,7 @@ public class LeLink {
 	private LeLink(String info) {
 		mPtr = init(info);
 		isAuthed = (mPtr != 0);
-		LOGE("init: " + (isAuthed ? "ok" : "error"));
+		LOGI("init: " + (isAuthed ? "ok" : "error"));
 	}
 
 	private static final int MSG_TYPE_LOCALREQUEST = 1;

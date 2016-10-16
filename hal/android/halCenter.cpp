@@ -68,11 +68,11 @@ int initTask(char *json)
         privateCfg->csum = crc8((uint8_t *)(&privateCfg->data), sizeof(privateCfg->data));
     }
     if((ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000))) {
-        LELOGE("Fialed to lelinkStorageInit\n");
+        LELOGE("Failed to lelinkStorageInit\n");
         return -1;
     }
     if((ret = lelinkInit()) < 0) {
-        LELOGE("Fialed to lelinkInit\n");
+        LELOGE("Failed to lelinkInit\n");
         return ret;
     }
     getTerminalUUID(authCfg->data.uuid, MAX_UUID);
@@ -80,7 +80,7 @@ int initTask(char *json)
 	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
-        LELOGE("Fialed to pthread_create\n");
+        LELOGE("Failed to pthread_create\n");
 		return ret;
 	}
 	return ret;
