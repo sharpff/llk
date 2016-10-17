@@ -45,12 +45,12 @@ public class testLelink {
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
-	private static String mTestDevUUID = "10000100101000010007C80E77ABCD5A"; // 插排
+	private static String mTestDevUUID = "10000100201001310023C89346E02342"; // test
 //	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
-//	private static String mTestTevToken = "A9B864558E3CC920DEEDD13A6B1DE4FF"; // auto set by uuid, depend on TEST_GET_STATE
-	private static String mTestTevToken = null; // auto set by uuid, depend on TEST_GET_STATE
-	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
-//	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"action\":1}}"); // 窗帘
+	private static String mTestTevToken = "FDD0E416F9C1D9BADEB6BF3E524D935D"; // auto set by uuid, depend on TEST_GET_STATE
+	// private static String mTestTevToken = null; // auto set by uuid, depend on TEST_GET_STATE
+	// private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
+	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"pwr\":1}}"); // 窗帘
 	private static int mWifiConfigTimeout = (60 * 5);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;
@@ -129,6 +129,7 @@ public class testLelink {
 						}
 						String retData = mLeLink.ctrl(jsonCmd.toString(), dataStr);
 						if (retData != null) {
+							retData += "\n";
 							Log.w(TAG, "ctrl return:\n" + retData);
 						} else {
 							Log.e(TAG, "Can't ctrl");

@@ -1463,7 +1463,7 @@ static int cbCtrlGetStatusLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlGetStatusLocalReq -s");
 
-    // ret = halCBLocalReq(ctx, cmdInfo, reqCtrlGetStatus, sizeof(reqCtrlGetStatus));
+    // ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)reqCtrlGetStatus, sizeof(reqCtrlGetStatus));
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)NULL, 0, dataOut, dataLen);
     
     LELOG("cbCtrlGetStatusLocalReq [%d] -e", ret);
@@ -1485,7 +1485,7 @@ static int cbCtrlCmdLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *d
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdLocalReq -s");
 
-    ret = halCBLocalReq(ctx, cmdInfo, reqCtrlCmd, sizeof(reqCtrlCmd));
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)reqCtrlCmd, sizeof(reqCtrlCmd));
     encType = cmdInfo->token[0] ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)reqCtrlCmd, ret, dataOut, dataLen);
     
@@ -1763,7 +1763,7 @@ static int cbCloudMsgCtrlC2RLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, ui
     // memcpy(&tmpCmdInfo, cmdInfo, sizeof(CmdHeaderInfo));
     // getUUIDFromJson(rmtCtrl, sizeof(getUUIDFromJson), tmpCmdInfo.uuid);
 
-    len = ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl, sizeof(rmtCtrl));
+    len = ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)rmtCtrl, sizeof(rmtCtrl));
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret, dataOut, dataLen);
 
     LELOG("cbCloudMsgCtrlC2RLocalReq [%d][%s] -e", len, rmtCtrl);
@@ -1807,6 +1807,7 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     // setCurrentR2T
     setTerminalStatus((const char *)dataIn, dataLen);
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
+    ret = -1;
     LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
     return ret > 0 ? 1 : -1;
 }
@@ -1836,7 +1837,7 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
     // getqueryFromJson(query, sizeof(getqueryFromJson), tmpCmdInfo.query);
 
 
-    ret = halCBLocalReq(ctx, cmdInfo, query, sizeof(query));
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)query, sizeof(query));
     // sprintf(report, "{\"query\":\"%s\"}", query);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
 
@@ -1862,7 +1863,7 @@ static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo
     // int verPos = 0;
     LELOG("cbCloudReportOTAQueryLocalReq -s");
 
-    ret = halCBLocalReq(ctx, cmdInfo, query, sizeof(query));
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)query, sizeof(query));
     // getTerminaluuidAndType((uint8_t *)uuidAndType, MAX_UUID);
     // getVer(ver, sizeof(ver));
     // if (strlen(query) > 0) {
@@ -1915,8 +1916,8 @@ static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInf
     	}
 	    memcpy(rmtCtrl, otaGetLatestSig(), RSA_LEN);
     }
-    ret = halCBLocalReq(ctx, cmdInfo, rmtCtrl + RSA_LEN, sizeof(rmtCtrl) - RSA_LEN);
-    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq halCBLocalReq[%d]", ret);
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)rmtCtrl + RSA_LEN, sizeof(rmtCtrl) - RSA_LEN);
+    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq halCBLocalReq[%d]", (uint8_t *)ret);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret + RSA_LEN, dataOut, dataLen);
 
     LELOG("cbCloudMsgCtrlC2RDoOTALocalReq [%d] -e", ret);
@@ -1959,7 +1960,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         tmpCmdInfo->status = LELINK_ERR_PARAM_INVALID;
     } else {
         NodeData node = {0};
-        type = getJsonOTAType(data + RSA_LEN, len - RSA_LEN, url, sizeof(url));
+        type = getJsonOTAType((char *)data + RSA_LEN, len - RSA_LEN, url, sizeof(url));
         LELOG("TOTOAL[%d] type[%d] json[%d][%s] url[%s]", len, type, len - RSA_LEN, (char *)data + RSA_LEN, url);
 
         {
@@ -2017,7 +2018,7 @@ static int cbCloudMsgCtrlC2RTellShareLocalReq(void *ctx, const CmdHeaderInfo* cm
     char buf[MAX_BUF] = {0};
 
     LELOG("cbCloudMsgCtrlC2RTellShareLocalReq -s");
-    ret = halCBLocalReq(ctx, cmdInfo, buf, sizeof(buf));
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)buf, sizeof(buf));
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)buf, ret, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlC2RTellShareLocalReq -e");
 
@@ -2063,7 +2064,7 @@ static int cbCloudMsgCtrlC2RConfirmShareLocalReq(void *ctx, const CmdHeaderInfo*
     char buf[MAX_BUF] = {0};
 
     LELOG("cbCloudMsgCtrlC2RConfirmShareLocalReq -s");
-    ret = halCBLocalReq(ctx, cmdInfo, buf, sizeof(buf));
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)buf, sizeof(buf));
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)buf, ret, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlC2RConfirmShareLocalReq -e");
 

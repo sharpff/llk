@@ -131,7 +131,7 @@ public class LeLink {
 			mInitInfo = jsonObj.toString();
 			sLeLink = new LeLink(mInitInfo);
 			mSdkInfo = getSDKInfo();
-			LOGI(mSdkInfo);
+			// LOGI(mSdkInfo);
 			try {
 				jsonObj = new JSONObject(mSdkInfo);
 				jsonObj.put(LeCmd.K.JARVER, VERSION);
@@ -139,7 +139,7 @@ public class LeLink {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			LOGI(mSdkInfo);
+			// LOGI(mSdkInfo);
 		}
 		return isAuthed;
 	}
@@ -639,7 +639,7 @@ public class LeLink {
 		case MSG_TYPE_REMOTERESPOND:
 			try {
 				dataStr = new String(buf, "UTF-8");
-				LOGI("Json(" + buf.length + "):\n" + dataStr);
+				// LOGI("Json(" + buf.length + "):%s\n", dataStr);
 				if (cmd == LeCmd.CTRL_RSP || cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP) {
 					if (uuid.indexOf(mWaitCtrlUuid) < 0) {
 						LOGW("Ctrl respond, but uuid: " + uuid + ", need: " + mWaitCtrlUuid);

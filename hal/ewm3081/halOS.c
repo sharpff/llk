@@ -51,12 +51,12 @@ void halFree(void *ptr) {
         free(ptr);
 }
 #else
-void *halMallocEx(size_t size, char* filename, uint32_t line) {
+void *halMallocEx(size_t size, const char *filename, uint32_t line) {
     void *ptr;
     return ptr;
 }
 
-void *halCallocEx(int n, size_t size, char* filename, uint32_t line) {
+void *halCallocEx(int n, size_t size, const char *filename, uint32_t line) {
     void *ptr = malloc(n*size);
     if(ptr==NULL) {
         APPLOG("halCallocEx:%d",  n*size);
@@ -67,12 +67,12 @@ void *halCallocEx(int n, size_t size, char* filename, uint32_t line) {
     return ptr;
 }
 
-void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line) {
+void *halReallocEx(void *ptr, size_t size, const char *filename, uint32_t line) {
     void *ptr1;
     return ptr1;
 }
 
-void halFreeEx(void *ptr, char* filename, uint32_t line) {
+void halFreeEx(void *ptr, const char *filename, uint32_t line) {
     //APPLOG("halFreeEx:[0x%x][%d][%s]", ptr, line, filename);
     if (ptr)
         free(ptr);
