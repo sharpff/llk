@@ -36,8 +36,9 @@ int initTask(char *json)
 	Json::Value value;
 	Json::Reader reader;
 	int i, ret, authLen;
-    std::string s, s1, s2;
+    std::string s, s1, s2, script;
     AuthCfg *authCfg = &(gNativeContext.authCfg);
+    ScriptCfg *scriptCfg = &(gNativeContext.scriptCfg);
 
     s = std::string(static_cast<char *>(json));
 	if (!reader.parse(s, value)) {
@@ -45,6 +46,7 @@ int initTask(char *json)
 		return -1;
 	}
     s1 = value[FJK_AUTH].asString();
+    script = value[FJK_SCRIPT].asString();
     s2 = value[FJK_MAC].asString();
     if(s1.length() <= 0 || s2.length() <= 0) {
 		LELOGE("initTask parameter error!\n");
@@ -61,6 +63,10 @@ int initTask(char *json)
             mac[i] = strtol(p, (char **)&p, 16);
             p++;
         }
+    }
+    { // ScriptCfg
+        script = base64_decode_cpp(script);
+        memcpy(scriptCfg, script.c_str(), sizeof(ScriptCfg));
     }
     { // PrivateCfg 
         PrivateCfg *privateCfg = &gNativeContext.privateCfg;

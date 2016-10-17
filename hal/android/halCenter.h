@@ -17,6 +17,7 @@ extern "C" {
 #include "protocol.h"
 #include "jnitls.h"
 #include "network.h"
+#include "sengine.h"
 
 typedef struct _nativeContext {
 	const char *version;
@@ -28,6 +29,7 @@ typedef struct _nativeContext {
 	jmethodID onMessage;
     AuthCfg authCfg;
     PrivateCfg privateCfg;
+    ScriptCfg scriptCfg;
     char mac[6];
 } nativeContext_t;
 
@@ -40,6 +42,7 @@ typedef struct _nativeContext {
 #define FJK_DELAY		"delay" // ms
 #define FJK_TIMEOUT		"timeout" // sec
 #define FJK_AUTH        "auth"
+#define FJK_SCRIPT      "script"
 #define FJK_MAC         "mac"
 
 /* protocol's json key */

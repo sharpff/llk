@@ -116,6 +116,7 @@ public class LeCmd {
 		public static final String IAID = "iaId";
 		public static final String JARVER = "jarver";
 		public static final String LIBVER = "version";
+		public static final String SCRIPT = "script";
 		public static final String AUTH = "auth";
 		public static final String MAC = "mac";
 		public static final String ACCOUNT = "account";

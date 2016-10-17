@@ -93,7 +93,7 @@ public class LeLink {
 	 * 
 	 * @return true - 设置正确; false - 设置失败 
 	 */
-	public static boolean setContext(String authStr, String macStr) {
+	public static boolean setContext(String scriptStr, String authStr, String macStr) {
 //		String macStr = "11:22:33:44:55:66";
 		JSONObject jsonObj = null;
 		
@@ -121,6 +121,7 @@ public class LeLink {
 			// mListener = listener;
 			jsonObj = new JSONObject();
 			try {
+				jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
 				jsonObj.put(LeCmd.K.AUTH, authStr);
 				jsonObj.put(LeCmd.K.MAC, macStr);
 			} catch (JSONException e1) {

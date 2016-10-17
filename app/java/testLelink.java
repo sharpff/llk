@@ -60,6 +60,7 @@ public class testLelink {
 		bytes[0] = (byte)0x01;
 		bytes[1] = (byte)0x02;
 		String authStr;
+		String scriptStr;
 		try {
 			// new testLelink(bytes);
 			System.out.printf("start testLelink\n");
@@ -67,6 +68,7 @@ public class testLelink {
 				int count = 0;
 				int read = 0;
 				byte buffer[] = new byte[4*1024];
+				byte bufferScript[] = new byte[20*1024];
 				// Path path = Paths.get("./0x1c2000.bin");
 				// buffer = Files.readAllBytes(path);
 
@@ -76,22 +78,19 @@ public class testLelink {
 				}
 				in.close();
 
-				// FileOutputStream out = new FileOutputStream("./0x1c2000.bin.out");
-				// out.write(buffer);
-				// out.close();
-				// System.out.printf("read bytes [%d]\n", buffer.length);
-
-				// File file = new File("./0x1c2000.bin");;
-				// FileInputStream inputFile = new FileInputStream(file);
-				// byte[] buffer1 = new byte[(int) file.length()];
-				// inputFile.read(buffer1);
-				// inputFile.close();
+				read = 0;
+				in = new FileInputStream("./0x1c3000.bin");
+				while((count = in.read(bufferScript)) != -1){ 
+					read += count;
+				}
+				in.close();
+				scriptStr = new BASE64Encoder().encode(bufferScript);
 				authStr = new BASE64Encoder().encode(buffer);
 			} catch (IOException e) {
 				e.printStackTrace();
 				return;
 			}
-			if (LeLink.setContext(authStr, "11:22:33:44:55:66")) {
+			if (LeLink.setContext(scriptStr, authStr, "11:22:33:44:55:66")) {
 				System.out.printf(LeLink.getSdkInfo() + "\n");
 				// System.out.printf("111111" + LeLink.getSdkUUID());
 				mLeLink = LeLink.getInstance();
@@ -109,11 +108,34 @@ public class testLelink {
 			e.printStackTrace();
 		}
 		try {
-	        System.out.println("请输入：");  
-	        int i = 0;  
-	        while(i != -1){//读取输入流中的字节直到流的末尾返回1  
-	            i = System.in.read();  
-	            System.out.println(i);  
+			JSONObject jsonCmd;
+	        int c = 0;  
+	        while(c != -1){//读取输入流中的字节直到流的末尾返回1  
+	            c = System.in.read();  
+	            switch (c) {
+	            	case '7': {
+						String dataStr = mTestCtrlCmd;
+						Log.e(TAG, "Control device test...\n" + dataStr);
+						try {
+							jsonCmd = new JSONObject();
+							jsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_DEV_CMD);
+							jsonCmd.put(LeCmd.K.UUID, mTestDevUUID);
+							jsonCmd.put(LeCmd.K.TOKEN, mTestTevToken);
+							jsonCmd.put(LeCmd.K.TIMEOUT, mOtherTimeout);
+		//					jsonCmd.put(LeCmd.K.ADDR, "192.168.3.238");
+						} catch (JSONException e) {
+							e.printStackTrace();
+							return;
+						}
+						String retData = mLeLink.ctrl(jsonCmd.toString(), dataStr);
+						if (retData != null) {
+							Log.w(TAG, "ctrl return:\n" + retData);
+						} else {
+							Log.e(TAG, "Can't ctrl");
+							return;
+						}
+	            	}break;
+	            }
 	        }  
 		}
 		catch (IOException e) {
@@ -121,53 +143,6 @@ public class testLelink {
 		}
 	}
 
-	// public testLelink(byte[] bytes) {
-	// 	System.out.printf("start testLelink\n");
-	// 	System.out.printf(LeLink.getSdkInfo());
-	// 	if (LeLink.setContext("abc", "11:22:33:44:55:66")) {
-	// 		mLeLink = LeLink.getInstance();
-	// 	} else {
-	// 	}
-
-	// 	// mLeLink = LeLink.getInstance();
-	// 	System.out.printf("end testLelink\n");
-	// }
-
-	// public static byte[] toByteArray(String filename, int[] pTotal){
-		
-	// 	File f = new File(filename);
-	// 	/*
-	// 	if(!f.exists()){
-	// 		throw new FileNotFoundException(filename);
-	// 	}
-	// 	*/
-	// 	ByteArrayOutputStream bos = new ByteArrayOutputStream((int)f.length());
-	// 	BufferedInputStream in = null;
-	// 	try{
-	// 		in = new BufferedInputStream(new FileInputStream(f));
-	// 		int buf_size = 10*1024;
-	// 		byte[] buffer = new byte[buf_size];
-	// 		int len = 0;
-	// 		int total = 0;
-	// 		while(-1 != (len = in.read(buffer,0,buf_size))){
-	// 			bos.write(buffer,0,len);
-	// 			total += len;
-	// 		}
-	// 		pTotal[0] = total;
-	// 		return bos.toByteArray();
-	// 	}catch (IOException e) {
-	// 		e.printStackTrace();
-	// 		//throw e;
-	// 	}finally{
-	// 		try{
-	// 			in.close();
-	// 		}catch (IOException e) {
-	// 			e.printStackTrace();
-	// 		}
-	// 		//bos.close();
-	// 		return bos.toByteArray();
-	// 	}
-	// }
 	private Thread mTestThread = new Thread(new Runnable() {
 
 		@Override

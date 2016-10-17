@@ -121,6 +121,10 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
             ret = sizeof(gNativeContext.authCfg);
             memcpy((char *)data, &gNativeContext.authCfg, ret);
             break;
+        case 0x1C3000:
+            ret = sizeof(gNativeContext.scriptCfg);
+            memcpy((char *)data, &gNativeContext.scriptCfg, ret);
+            break;
         case 0x1C8000:
             ret = sizeof(gNativeContext.privateCfg);
             memcpy((char *)data, &gNativeContext.privateCfg, ret);
@@ -142,13 +146,13 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
 #endif
 void halPrint(const char *log) {
     /*ANDROID_LOG_DEBUG ANDROID_LOG_WARN ANDROID_LOG_ERROR*/
-    char *str = strstr(log, "[W]");
-    if (str) {
+    const char *str1 = strstr(log, "[W]");
+    if (str1) {
         androidLog(ANDROID_LOG_WARN, TAG_LOG, log);
         return;
     }
-    str = strstr(log, "[E]");
-    if (str) {
+    const char *str2 = strstr(log, "[E]");
+    if (str2) {
         androidLog(ANDROID_LOG_ERROR, TAG_LOG, log);
         return;
     }
