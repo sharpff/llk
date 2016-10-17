@@ -6,6 +6,7 @@ COPY="cp -prf"
 MKDIR="mkdir -p"
 RENAME="mv -f"
 MAIN_PATH="`pwd`/../../"
+PF=mw300
 
 if [ ! -n "$WMSDK" ]; then
     echo "Please set SDK path first. \$WMSDK"
@@ -68,3 +69,7 @@ $MKDIR $WMSDK/sample_apps/le_demo/obj/hal/mw300
 make -C $WMSDK XIP=1 APPS=le_demo $*
 $RM $WMSDK/build.sh
 $COPY $WMSDK/bin/mw300_rd/le_demo.bin ../../tool
+
+if [ "$1" == "clean" ]; then
+    rm ../../lib/Debug-$PF -Rfr
+fi

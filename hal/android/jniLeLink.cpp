@@ -4,6 +4,7 @@
  *  Created on: Jan 7, 2016
  *      Author: fei
  */
+#include "leconfig.h"
 #include <stdio.h>
 #include <string.h>
 #include "json.h"

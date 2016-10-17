@@ -108,12 +108,15 @@ public class testLelink {
 			System.out.printf("Error for java");
 			e.printStackTrace();
 		}
-		try{
-			System.out.println("I'm going to bed");
-			Thread.sleep(100000);
-			System.out.println("I wake up");
+		try {
+	        System.out.println("请输入：");  
+	        int i = 0;  
+	        while(i != -1){//读取输入流中的字节直到流的末尾返回1  
+	            i = System.in.read();  
+	            System.out.println(i);  
+	        }  
 		}
-		catch(InterruptedException e) {
+		catch (IOException e) {
 
 		}
 	}
