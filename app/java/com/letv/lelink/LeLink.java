@@ -39,7 +39,7 @@ public class LeLink {
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
-	private static final int MAX_WAIT_CMD = 10;
+	private static final int MAX_WAIT_CMD = 5;
 	private static final int DEFAULT_TIMEOUT = 3;
 	private static final int DEFAULT_AIRCONFIG_DELAY = 10;
 	private static final long SEND_HEART_TIME = 1000 * 20;
@@ -477,17 +477,20 @@ public class LeLink {
 	 */
 	private synchronized boolean send(JSONObject cmdJson, String dataStr) {
 		mSeqId++;
-		if (mSeqId >= 0xFF) {
-			mSeqId = 0;
+		if (mSeqId >= 0xFFFF) {
+			mSeqId = 1;
+			mWaitSendCmds.clear();
 		}
 		synchronized (mWaitSendCmds) {
 			String keyStr;
 			int min = 1;
+			// LOGI("------------------ send ----------------- mSeqId is " + mSeqId + ", size is " + mWaitSendCmds.size() + "\n");
 			if (mWaitSendCmds.size() >= MAX_WAIT_CMD) {
 				for (min = 1; min < mSeqId; min++) {
 					keyStr = String.valueOf(min);
 					if (mWaitSendCmds.get(keyStr) != null) {
 						mWaitSendCmds.remove(keyStr);
+						// LOGI("================mWaitSendCmds removed from cache ==> " + keyStr + "\n");
 						break;
 					}
 				}
@@ -502,7 +505,8 @@ public class LeLink {
 					e.printStackTrace();
 					return false;
 				}
-				mWaitSendCmds.put(String.valueOf(mSeqId + 1), jsonStr);
+				mWaitSendCmds.put(String.valueOf(mSeqId), jsonStr);
+				// LOGI("*********mWaitSendCmds input <== " + jsonStr);
 			}
 		}
 		try {
@@ -533,7 +537,8 @@ public class LeLink {
 		synchronized (mWaitSendCmds) {
 			dataJson = mWaitSendCmds.get(keyStr);
 			if (dataJson != null) {
-				mWaitSendCmds.remove(keyStr);
+				// LOGI("*********mWaitSendCmds removed ==> " + keyStr);
+				// mWaitSendCmds.remove(keyStr);
 			}
 		}
 		return dataJson;

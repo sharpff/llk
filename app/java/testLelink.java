@@ -45,9 +45,9 @@ public class testLelink {
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
-	private static String mTestDevUUID = "10000100201001310023C89346E02342"; // test
+	private static String mTestDevUUID = "d05bca44feb34aeca2dd111111111111"; // test
 //	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
-	private static String mTestTevToken = "FDD0E416F9C1D9BADEB6BF3E524D935D"; // auto set by uuid, depend on TEST_GET_STATE
+	private static String mTestTevToken = "7407820EC324845DC59C7A2072EF3A15"; // auto set by uuid, depend on TEST_GET_STATE
 	// private static String mTestTevToken = null; // auto set by uuid, depend on TEST_GET_STATE
 	// private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
 	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"pwr\":1}}"); // 窗帘
@@ -133,7 +133,7 @@ public class testLelink {
 							Log.w(TAG, "ctrl return:\n" + retData);
 						} else {
 							Log.e(TAG, "Can't ctrl");
-							return;
+							// return;
 						}
 	            	}break;
 	            }
