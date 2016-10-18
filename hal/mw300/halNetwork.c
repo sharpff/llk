@@ -52,7 +52,6 @@ int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int l
     to_addr.sin_port = htons(port);
     to_addr.sin_addr.s_addr = inet_addr(ip);
     ret = sendto(sock, buf, len, 0, (struct sockaddr *)&to_addr, sizeof(to_addr));
- 
     return ret;
 }
 

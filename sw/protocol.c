@@ -1807,7 +1807,6 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     // setCurrentR2T
     setTerminalStatus((const char *)dataIn, dataLen);
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
-    ret = -1;
     LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
     return ret > 0 ? 1 : -1;
 }

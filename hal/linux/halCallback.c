@@ -80,7 +80,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 }
                 ret = len < strlen(cmdCtrl) ? len : strlen(cmdCtrl);
                 memcpy(data, cmdCtrl, ret);
-                APPLOG("C2R req[%d][%s]", ret, cmdCtrl);
+                APPLOG("================> C2R req[%d][%s] seqId[%d]", ret, cmdCtrl, cmdInfo->seqId);
             } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ == cmdInfo->subCmdId) {
                 int type = 0, sizeOTA = 0;
                 // sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
@@ -92,8 +92,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 // type = OTA_TYPE_PRIVATE;
                 switch (type) {
                     case OTA_TYPE_FW: {
-                        // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0xa000.bin", type, 35);
-                            sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mt7687_fota_le_demo.bin", type, 35);
+                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mt7687_fota_le_demo.bin", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo.bin", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/le_demo.bin", type, 35);
                     } break;
@@ -158,7 +157,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
             if (LELINK_SUBCMD_CLOUD_REPORT_REQ == cmdInfo->subCmdId) {
                 strcpy(uuid, ginCtrlUUID);
                 ret = sprintf(data, "{\"uuid\":\"%s\"}", uuid);
-                // ret = sprintf(data, "{\"uuid\":\"%s\",\"userData\":{\"bind\":0,\"terType\":\"1\"}}", uuid);
+                // ret = sprintf(data, "{\"uuid\":\"%s\",\"userData\":{\"bind\":1,\"terType\":\"1\"}}", uuid);
                 
                 // ret = sprintf(data, "{\"uuid\":\"%s\",\"mac\":\"3B9A011A0477DFF8\"}", uuid);
                 ret = strlen(data);
