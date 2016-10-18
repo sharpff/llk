@@ -18,41 +18,41 @@
 
 
 /* Define GETINT to get a integer value */
-#define GETINT(L, n)   (luaL_checkinteger((L), (n)))
+// #define GETINT(L, n)   (luaL_checkinteger((L), (n)))
 
-#define MONADIC(name, op)							\
-int bit ## name(lua_State *L) {						\
-	lua_pushinteger(L, op GETINT(L, 1));				\
-	return 1;										\
-}
+// #define MONADIC(name, op)							\
+// int bit ## name(lua_State *L) {						\
+// 	lua_pushinteger(L, op GETINT(L, 1));				\
+// 	return 1;										\
+// }
 
-#define VARIADIC(name, op)                      \
-int bit ## name(lua_State *L) {					\
-	int n = lua_gettop(L), i;                   \
-	lua_Integer w = GETINT(L, 1);                \
-	for (i = 2; i <= n; i++)                    \
-		w op GETINT(L, i);						\
-	lua_pushinteger(L, w);                      \
-	return 1;                                   \
-}
+// #define VARIADIC(name, op)                      \
+// int bit ## name(lua_State *L) {					\
+// 	int n = lua_gettop(L), i;                   \
+// 	lua_Integer w = GETINT(L, 1);                \
+// 	for (i = 2; i <= n; i++)                    \
+// 		w op GETINT(L, i);						\
+// 	lua_pushinteger(L, w);                      \
+// 	return 1;                                   \
+// }
 
-#define LOGICAL_SHIFT(name, op)						\
-int bit ## name(lua_State *L) {						\
-	lua_pushinteger(L, (size_t)GETINT(L, 1) op		\
-	(unsigned)luaL_checknumber(L, 2));				\
-	return 1;										\
-}
+// #define LOGICAL_SHIFT(name, op)						\
+// int bit ## name(lua_State *L) {						\
+// 	lua_pushinteger(L, (size_t)GETINT(L, 1) op		\
+// 	(unsigned)luaL_checknumber(L, 2));				\
+// 	return 1;										\
+// }
 
-//int bitshift(lua_State *L);
-//int bitor(lua_State *L);
-//int bitand(lua_State *L);
+// //int bitshift(lua_State *L);
+// //int bitor(lua_State *L);
+// //int bitand(lua_State *L);
 
-VARIADIC(and, &= )
-VARIADIC(or, |= )
-VARIADIC(xor, ^= )
-MONADIC(nor, ~ )
-LOGICAL_SHIFT(shift, >> )
-LOGICAL_SHIFT(shiftL, << )
+// VARIADIC(and, &= )
+// VARIADIC(or, |= )
+// VARIADIC(xor, ^= )
+// MONADIC(nor, ~ )
+// LOGICAL_SHIFT(shift, >> )
+// LOGICAL_SHIFT(shiftL, << )
 
 
 /*int bitshift(lua_State *L)

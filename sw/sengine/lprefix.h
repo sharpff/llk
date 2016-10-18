@@ -7,6 +7,8 @@
 #ifndef lprefix_h
 #define lprefix_h
 
+#include "lctype.h"
+
 
 /*
 ** Allows POSIX/XSI stuff

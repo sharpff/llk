@@ -1,6 +1,11 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "io.h"
 
 extern uint8_t terminalAES[];
@@ -27,6 +32,11 @@ void setTerminalStatus(const char *status, int len);
 int getTerminalStatus(char *status, int len);
 void cacheSetTerminalStatus(const char *status, int len);
 int cacheGetTerminalStatus(char *status, int len);
+void getTerminalUTC(int64_t *utc);
+void setTerminalUTC(uint64_t *utc);
+int getTerminalStatusS2(char *statusS2, int len);
+int cacheIsChanged(const char *status, int len);
+void setSSID(const char *ssid, int ssidLen);
 
 int setLock(int locked);
 int getLock();
@@ -142,5 +152,9 @@ extern const int ginPrikeyDevKindDerLen;
 "QSXVZXr3zhm5HB8h463hmMLzCCLQ7VoGj921iC9IwDWqkuBJrEQkuG2gmInT7nE3\r\n" \
 "0oZaJjp3xn8k8rmfHQIDAQAB\r\n" \
 "-----END PUBLIC KEY-----\r\n"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

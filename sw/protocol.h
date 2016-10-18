@@ -246,6 +246,13 @@ int lelinkNwDelete(void *ctx);
 
 int lelinkDoConfig(const char *configInfo);
 int lelinkVerify(uint32_t startAddr, uint32_t size);
+int lelinkVerifyBuf(uint8_t *buf, uint32_t size);
+
+
+int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len);
+void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
+int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
+int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, char *nw, int nwLenOut);
 
 #ifdef __cplusplus
 }

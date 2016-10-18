@@ -1,6 +1,7 @@
 #include "ota.h"
 #include "io.h"
 #include "sengine.h"
+#include "protocol.h"
 
 extern int getFlashMinSize();
 extern int getRegion(E_FLASH_TYPE type, FlashRegion *region);

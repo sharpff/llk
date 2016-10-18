@@ -4,6 +4,7 @@
  *  Created on: Jan 7, 2016
  *      Author: fei
  */
+#include "leconfig.h"
 #include <stdio.h>
 #include <string.h>
 #include "json.h"
@@ -13,10 +14,8 @@
 JNIEXPORT jstring JNICALL Java_com_letv_lelink_LeLink_getSDKInfo(JNIEnv *env, jclass jcls)
 {
 	Json::Value root;
-
 	root["version"] = gNativeContext.version;
     root["uuid"] = std::string((char *)(gNativeContext.authCfg.data.uuid), 0, MAX_UUID);
-
 	return c2js(env, root.toStyledString().c_str());
 }
 
@@ -33,7 +32,7 @@ JNIEXPORT jlong JNICALL Java_com_letv_lelink_LeLink_init(JNIEnv *env, jobject jo
 	gNativeContext.onMessage = env->GetMethodID(cls, "onMessage", "(ILjava/lang/String;[B)I"); //	C++ 中映射非静态
 	str = js2c(env, jstr);
 	ret = initTask(str);
-	free(str);
+	halFree(str);
 	return (ret < 0) ? 0 : (long) &gNativeContext;
 }
 
@@ -43,7 +42,7 @@ JNIEXPORT jint JNICALL Java_com_letv_lelink_LeLink_airConfig(JNIEnv *env, jobjec
 	char *str = js2c(env, jstr);
 
 	ret = airConfig((void *) ptr, str);
-	free(str);
+	halFree(str);
     return ret;
 }
 
@@ -53,7 +52,7 @@ JNIEXPORT jint JNICALL Java_com_letv_lelink_LeLink_send(JNIEnv *env, jobject job
 	char *str = js2c(env, jstr);
 
 	ret = cmdSend((void *) ptr, str);
-	free(str);
+	halFree(str);
     return ret;
 }
 

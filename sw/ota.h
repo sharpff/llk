@@ -30,9 +30,12 @@ typedef struct _updateInfo {
 // hal
 int halHttpOpen(OTAInfo_t *info, const char *url);
 void halHttpClose(OTAInfo_t *info);
+int halUpdateFirmware(OTAInfo_t *info);
+uint32_t halUpdate(OTAInfo_t *info, uint8_t *buf, uint32_t bufLen);
 
 // sw
 int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen);
+void otaInfoClean();
 
 #ifdef __cplusplus
 }

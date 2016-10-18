@@ -76,7 +76,7 @@ unsigned int halGetUTC(void) {
     return 1234;
 }
 
-void *halMallocEx(size_t size, char* filename, uint32_t line) {
+void *halMallocEx(size_t size, const char *filename, uint32_t line) {
     void *ptr = pvPortMalloc(size);
     //APPLOG("malloc:[%d][0x%x][%d][%s]", size, ptr, line, filename);
     if(ptr==NULL) {
@@ -85,7 +85,7 @@ void *halMallocEx(size_t size, char* filename, uint32_t line) {
     return ptr;
 }
 
-void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line) {
+void *halCallocEx(size_t n, size_t size, const char *filename, uint32_t line) {
     void *ptr = pvPortMalloc(n*size);
     //APPLOG("calloc:[%d][%d][0x%x][%d][%s]", n*size,xPortGetFreeHeapSize(), ptr, line, filename);
     if(ptr==NULL) {
@@ -97,7 +97,7 @@ void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line) {
     return ptr;
 }
 
-void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line) {
+void *halReallocEx(void *ptr, size_t size, const char *filename, uint32_t line) {
     void *ptr1 = pvPortRealloc(ptr, size);
     //APPLOG("realloc:[%d][0x%x][%d][%s]", size, ptr1, line, filename);
     //APPLOG("realloc:[%d][0x%x]", size, ptr1);
@@ -107,7 +107,7 @@ void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line) {
     return ptr1;
 }
 
-void halFreeEx(void *ptr, char* filename, uint32_t line) {
+void halFreeEx(void *ptr, const char *filename, uint32_t line) {
     //APPLOG("halFreeEx:[0x%x][%d][%s]", ptr, line, filename);
     if (ptr)
         vPortFree(ptr);

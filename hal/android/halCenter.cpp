@@ -4,21 +4,21 @@
  *  Created on: Jan 7, 2016
  *      Author: fei
  */
-
+#include "leconfig.h"
 #include <pthread.h>
 #include "version.h"
 #include "json.h"
 #include "state.h"
 #include "base64.h"
 #include "utility.h"
-#include "leconfig.h"
 #include "halHeader.h"
 #include "jniLeLink.h"
 #include "halCenter.h"
 #include "airconfig_ctrl.h"
+#include "protocol.h"
+#include "data.h"
 
 extern "C" {
-    int getTerminalUUID(uint8_t *uuid, int len);
     int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout);
 };
 
@@ -36,8 +36,9 @@ int initTask(char *json)
 	Json::Value value;
 	Json::Reader reader;
 	int i, ret, authLen;
-    std::string s, s1, s2;
+    std::string s, s1, s2, script;
     AuthCfg *authCfg = &(gNativeContext.authCfg);
+    ScriptCfg *scriptCfg = &(gNativeContext.scriptCfg);
 
     s = std::string(static_cast<char *>(json));
 	if (!reader.parse(s, value)) {
@@ -45,6 +46,7 @@ int initTask(char *json)
 		return -1;
 	}
     s1 = value[FJK_AUTH].asString();
+    script = value[FJK_SCRIPT].asString();
     s2 = value[FJK_MAC].asString();
     if(s1.length() <= 0 || s2.length() <= 0) {
 		LELOGE("initTask parameter error!\n");
@@ -54,7 +56,7 @@ int initTask(char *json)
         const char *p;
         char *mac = gNativeContext.mac;
 
-        s1 = base64_decode(s1);
+        s1 = base64_decode_cpp(s1);
         memcpy(authCfg, s1.c_str(), sizeof(AuthCfg));
         p = s2.c_str();
         for(i = 0; i < 6; i++) {
@@ -62,17 +64,21 @@ int initTask(char *json)
             p++;
         }
     }
+    { // ScriptCfg
+        script = base64_decode_cpp(script);
+        memcpy(scriptCfg, script.c_str(), sizeof(ScriptCfg));
+    }
     { // PrivateCfg 
         PrivateCfg *privateCfg = &gNativeContext.privateCfg;
         privateCfg->data.nwCfg.configStatus = 2;
         privateCfg->csum = crc8((uint8_t *)(&privateCfg->data), sizeof(privateCfg->data));
     }
     if((ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000))) {
-        LELOGE("Fialed to lelinkStorageInit\n");
+        LELOGE("Failed to lelinkStorageInit\n");
         return -1;
     }
     if((ret = lelinkInit()) < 0) {
-        LELOGE("Fialed to lelinkInit\n");
+        LELOGE("Failed to lelinkInit\n");
         return ret;
     }
     getTerminalUUID(authCfg->data.uuid, MAX_UUID);
@@ -80,7 +86,7 @@ int initTask(char *json)
 	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
-        LELOGE("Fialed to pthread_create\n");
+        LELOGE("Failed to pthread_create\n");
 		return ret;
 	}
 	return ret;

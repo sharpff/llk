@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "sengine.h"
 #include "network.h"
+#include "utility.h"
 
 /*
  * it is just a test for remote ip(support in genProfile.sh) connection.
@@ -220,7 +221,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
         TIMEOUT_END
     }
 
-    delayms(msDelay);
+    halDelayms(msDelay);
     return changeState(ret, &ginStateCntx, i);
 }
 
@@ -230,7 +231,7 @@ static int stateProcStart(StateContext *cntx) {
     LELOG("stateProcStart [%d] -s", ret);
     if (0 == lelinkStorageReadPrivateCfg(&ginPrivateCfg)) {
         LELOG("lelinkStorageReadPrivateCfg [%d]", ginPrivateCfg.data.nwCfg.configStatus);
-        if (ginPrivateCfg.csum == crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
+        if (ginPrivateCfg.csum == crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
             LELOG("csum [0x%02x]", ginPrivateCfg.csum);
             if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
                 ret = ginPrivateCfg.data.nwCfg.configStatus;
@@ -295,7 +296,7 @@ static int stateProcSnifferGot(StateContext *cntx) {
     }
     // ginPrivateCfg.data.nwCfg.configStatus = 0;
     lelinkStorageReadPrivateCfg(&ginPrivateCfg);
-    if (ginPrivateCfg.csum != crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
+    if (ginPrivateCfg.csum != crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
         ginPrivateCfg.data.nwCfg.configStatus = 0;
     }
 
@@ -344,7 +345,7 @@ static int stateProcApConnected(StateContext *cntx) {
     // only for backup
     // LELOG("***** start stateProcApConnected ginPrivateCfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus, ginConfigStatus);
     lelinkStorageReadPrivateCfg(&ginPrivateCfg);
-    if (ginPrivateCfg.csum != crc8(&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
+    if (ginPrivateCfg.csum != crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
         ginPrivateCfg.data.nwCfg.configStatus = 2;
     }
     // LELOG("***** end stateProcApConnected ginPrivateCfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus, ginConfigStatus);

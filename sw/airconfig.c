@@ -2,7 +2,7 @@
 #include "utility.h"
 #include "airconfig.h"
 #include "io.h"
-
+#include "data.h"
 // #define AIRCONFIG_DEBUG_LEVEL1
 // #define AIRCONFIG_DEBUG_BASIC
 // #define AIRCONFIG_DEBUG_VERBOSE
@@ -815,10 +815,10 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
                     cfg.data.nwCfg.config.psk, 
                     cfg.data.nwCfg.configStatus);
                 // if (0 != cfg.data.nwCfg.configStatus) {
-                    strcpy(cfg.data.nwCfg.config.ssid, passport->ssid);
+                    strcpy((char *)cfg.data.nwCfg.config.ssid, (const char *)passport->ssid);
                     cfg.data.nwCfg.config.ssid_len = strlen(passport->ssid);
                     cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
-                    strcpy(cfg.data.nwCfg.config.psk, passport->psk);
+                    strcpy((char *)cfg.data.nwCfg.config.psk, (const char *)passport->psk);
                     cfg.data.nwCfg.config.psk_len = strlen(passport->psk);
                     cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
                     cfg.data.nwCfg.configStatus = 1;
@@ -973,11 +973,11 @@ int softApCheck(void)
                 cfg.data.nwCfg.config.ssid,
                 cfg.data.nwCfg.config.psk, 
                 cfg.data.nwCfg.configStatus);
-        strcpy(cfg.data.nwCfg.config.ssid, wc.ssid);
-        cfg.data.nwCfg.config.ssid_len = strlen(wc.ssid);
+        strcpy((char *)cfg.data.nwCfg.config.ssid, (const char *)wc.ssid);
+        cfg.data.nwCfg.config.ssid_len = strlen((const char *)wc.ssid);
         cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
-        strcpy(cfg.data.nwCfg.config.psk, wc.wap2passwd);
-        cfg.data.nwCfg.config.psk_len = strlen(wc.wap2passwd);
+        strcpy((char *)cfg.data.nwCfg.config.psk, (const char *)wc.wap2passwd);
+        cfg.data.nwCfg.config.psk_len = strlen((const char *)wc.wap2passwd);
         cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
         cfg.data.nwCfg.configStatus = 1;
         ret = lelinkStorageWritePrivateCfg(&cfg);
@@ -1005,7 +1005,7 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout)
     wc.checksum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
     for( i = 0; i < count; i++ ) {
         LELOG("Send wifi configure, [%s:%s][%d]...", ssid, passwd, delay);
-        delayms(delay);
+        halDelayms(delay);
         ret = nwUDPSendto(ctx, ipaddr, port, (uint8_t *)&wc, sizeof(wc));
         if(ret <= 0 ) {
             LELOGE("nwUDPSendto ret = %d", ret);

@@ -13,6 +13,7 @@
 #define SW_VERSION "0.9.9"
 #endif
 
+int getCtrlData(const char *json, int jsonLen, const char *key, char *obj, int objLen);
 
 /* built-in global rsa pubkey */
 const uint8_t ginPubkeyGlobalDer[] =
@@ -348,8 +349,8 @@ int getSSID(char *ssid, int ssidLen) {
     if (NULL == ssid || MAX_STR_LEN > ssidLen) {
         return 0;
     }
-    strcpy(ssid, ginSSID);
-    return strlen(ginSSID);
+    strcpy(ssid, (const char *)ginSSID);
+    return strlen((const char *)ginSSID);
 }
 
 void setTerminalStatus(const char *status, int len) {

@@ -1,24 +1,24 @@
-#include <unistd.h>
+#include "leconfig.h"
 #include "halHeader.h"
+#include <unistd.h>
 static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
 
-int halLockInit(void *ptr, const char *file, int line) {
+int halLockInit(void) {
 	return 0;
 }
 
 void halDeLockInit(void) {
 }
 
-int halLock(void *ptr, const char *file, int line) {
+int halLock(void) {
     return pthread_mutex_lock(&ginMutex);
 }
 
-int halUnlock(void *ptr, const char *file, int line) {
+int halUnlock(void) {
     return pthread_mutex_unlock(&ginMutex);
 }
 
-unsigned int halGetTimeStamp(void)
-{
+unsigned int halGetTimeStamp(void) {
 	return (unsigned int)time(NULL);
 }
 
@@ -40,12 +40,12 @@ void halFree(void *ptr) {
         free(ptr);
 }
 #else
-void *halMallocEx(size_t size, char* filename, uint32_t line) {
+void *halMallocEx(size_t size, const char *filename, uint32_t line) {
     void *ptr = malloc(size);
     return ptr;
 }
 
-void *halCallocEx(int n, size_t size, char* filename, uint32_t line) {
+void *halCallocEx(size_t n, size_t size, const char *filename, uint32_t line) {
     void *ptr = malloc(n*size);
     if (ptr) {
         memset(ptr, 0x00, n*size);
@@ -53,12 +53,12 @@ void *halCallocEx(int n, size_t size, char* filename, uint32_t line) {
     return ptr;
 }
 
-void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line) {
+void *halReallocEx(void *ptr, size_t size, const char *filename, uint32_t line) {
     void *ptr1 = realloc(ptr, size);
     return ptr1;
 }
 
-void halFreeEx(void *ptr, char* filename, uint32_t line) {
+void halFreeEx(void *ptr, const char *filename, uint32_t line) {
     if (ptr)
         free(ptr);
 }

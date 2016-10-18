@@ -9,7 +9,9 @@
 #define JNITLS_H_
 
 #include <jni.h>
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 //Attach主线程
 #define THREAD_ATTACH(JVM, ENV) \
 	(JVM->AttachCurrentThread(&ENV, NULL) != JNI_OK)
@@ -21,4 +23,7 @@ jbyteArray c2bytes(JNIEnv *env, const char *ptr, int size);
 jstring c2js(JNIEnv *env, const char *str);
 char* js2c(JNIEnv *env, jstring jstr); // jstring ----->char*, 需要free返回值
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* JNITLS_H_ */

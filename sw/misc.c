@@ -3,6 +3,8 @@
 #include "jsonv2.h"
 #include "jsgen.h"
 #include <stdarg.h>
+#include "data.h"
+#include "sengine.h"
 
 static char miscBuf[MAX_BUF] = {0};
 
@@ -392,7 +394,7 @@ int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager
     return i;
 }
 
-static getJsonByToken(const char *json, int jsonLen, const char *key, char *obj, int objLen, const char *tokenStart, const char *tokenEnd, int fromBack) {
+static int getJsonByToken(const char *json, int jsonLen, const char *key, char *obj, int objLen, const char *tokenStart, const char *tokenEnd, int fromBack) {
     char *start, *end, *oldEnd;
     int len = 0, max = 5;
     LELOG("getJsonByToken [%d][%s] key[%s] obj[%s] objLen[%d]", jsonLen, json, key, obj, objLen);
@@ -727,7 +729,7 @@ int cloudMsgHandler(const char *data, int len) {
             }
 
             setLogDir(dir);
-            LELOG("CLOUD_MSG_KEY_LOG2MASTER -e");
+            LELOG("CLOUD_MSG_KEY_LOG2MASTER [%d] -e", dir);
         }break;
         default:
         break;
@@ -748,8 +750,4 @@ int printOut(const char *fmt, ...) {
         halPrint(miscBuf);
     }
     return 0;
-}
-
-void delayms(int ms) {
-    halDelayms(ms);
 }

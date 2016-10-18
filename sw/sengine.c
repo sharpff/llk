@@ -13,6 +13,7 @@
 #include "misc.h"
 #include "jsonv2.h"
 #include "jsgen.h"
+#include "utility.h"
 
 #ifndef LOG_SENGINE
 #ifdef LELOG

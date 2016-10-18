@@ -116,6 +116,7 @@ else
 	pushd $MTSDK7687 > /dev/null 2>&1
 	./build.sh mt7687_hdk le_demo clean
 	popd > /dev/null 2>&1
+	rm ../../lib/Debug-$PF -Rfr
 fi
 echo done
 

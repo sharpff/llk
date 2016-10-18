@@ -14,8 +14,7 @@
 #include <net/if.h>
 #include <pthread.h>
 
-
-#include <android/log.h>
+// #include <android/log.h>
 
 #define delayMS(ms) \
     usleep(ms*1000)
