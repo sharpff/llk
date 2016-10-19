@@ -60,7 +60,7 @@ function s1GetCvtType()
     {"whatCvtType":19,
      "common":[{"num":8,"id":"36-37-32-33-34-35-0-6","mux":"7-7-9-9-9-9-8-8"}],
      "uart":[{"id":1, "baud":"9600-8N1"}],  
-     "gpio":[{"id":0,"dir":0,"mode":2,"state":0,"type":1,"longTime":30,"shortTime":3},
+     "gpio":[{"id":0,"dir":0,"mode":2,"state":1,"type":1,"longTime":30,"shortTime":3},
              {"id":6,"dir":1,"mode":0,"state":0,"type":1,"longTime":6,"shortTime":1}],
      "pwm":[{"id":33,"type":0,"clock":1,"state":255,"frequency":1024,"duty":255},
             {"id":34,"type":0,"clock":1,"state":255,"frequency":1024,"duty":255},

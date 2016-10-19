@@ -147,13 +147,13 @@ static int changeState(int direction, StateContext *cntx, int idx) {
     if (0 > direction) {
         if (E_STATE_NONE != ginStateTbl[idx].stateIdPrev) {
             ginStateCntx.stateIdCurr = ginStateTbl[idx].stateIdPrev;
-            LELOG("changeState to prev");
+            LELOG("changeState to prev [%d]", ginStateCntx.stateIdCurr);
             ret = direction;
         }
     } else if (0 < direction) {
         if (E_STATE_NONE != ginStateTbl[idx].stateIdNext) {
             ginStateCntx.stateIdCurr = ginStateTbl[idx].stateIdNext;
-            LELOG("changeState to next");
+            LELOG("changeState to next [%d]", ginStateCntx.stateIdCurr);
             ret = direction;
         }
     }
