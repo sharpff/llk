@@ -818,11 +818,11 @@ static int lf_s1CvtStd2Pri(lua_State *L, uint8_t *output, int outputLen) {
     const uint8_t *tmp = (const uint8_t *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        LEPRINTF("[SENGINE]_s1CvtStd2Pri_[%d]_cmd: ", size);
-        for (i = 0; i < size; i++) {
-            LEPRINTF("%02x ", output[i]);
-        }
-        LEPRINTF("\r\n");
+        // LEPRINTF("[SENGINE]_s1CvtStd2Pri_[%d]_cmd: ", size);
+        // for (i = 0; i < size; i++) {
+        //     LEPRINTF("%02x ", output[i]);
+        // }
+        // LEPRINTF("\r\n");
     } else {
         size = 0;
     }
