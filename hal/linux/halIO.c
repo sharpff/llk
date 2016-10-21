@@ -98,6 +98,8 @@ int halGPIOOpen(gpioHandler_t* handler) {
 }
 
 int halGPIORead(gpioHandler_t* handler, int *val) {
+    *val = 1;
+    // APPLOG("halGPIORead [%d]", *val);
     return 0;
 }
 

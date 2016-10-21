@@ -245,8 +245,8 @@ void thread_input_check(void *arg) {
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0, 
 
-//#define DO_AIR_CONFIG    
-//#define ENABLE_WIFI_SOFT_AP 1
+// #define DO_AIR_CONFIG    
+// #define ENABLE_WIFI_SOFT_AP 1
 
 #ifndef DO_AIR_CONFIG
 int main(int argc, char *argv[]) {
@@ -383,7 +383,7 @@ int main(int argc, char** argv) {
 
 #if  ENABLE_WIFI_SOFT_AP
     while (1) {
-        ret = softApDoConfig(ssid, passwd, delay);
+        ret = softApDoConfig(ssid, passwd, delay, "157e835e6c0bc55474abcd91e00e6979");
     }
 #else
     while (1) {

@@ -39,6 +39,7 @@ typedef struct _nativeContext {
 #define FJK_TYPE		"type"
 #define FJK_SSID		"ssid"
 #define FJK_PASSWD		"passwd"
+#define FJK_AESKEY		"aesKey"
 #define FJK_DELAY		"delay" // ms
 #define FJK_TIMEOUT		"timeout" // sec
 #define FJK_AUTH        "auth"

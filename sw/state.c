@@ -52,8 +52,8 @@
 
 /* for softAp */
 #define SEC2LETICK(x)               ((x) * 1000 / ginMSDelay)
-#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 3)
-#define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 3)
+#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 2)
+#define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 2)
 static uint8_t wifiConfigByMonitor = 0;
 static uint32_t wifiConfigTime = 0;
 static uint32_t wifiConfigTimeout = 0;
