@@ -112,7 +112,11 @@ int airConfig(void *ptr, char *json)
 	delay = value[FJK_DELAY].asInt();
 	ssid = value[FJK_SSID].asCString();
 	passwd = value[FJK_PASSWD].asCString();
-	aesKey = value[FJK_AESKEY].asCString();
+	if (value.isMember(FJK_AESKEY)) {
+		aesKey = value[FJK_AESKEY].asCString();
+	} else {
+		aesKey = "157e835e6c0bc55474abcd91e00e6979";
+	}
 
     if(type < 3) {
         sprintf(configInfo, configFmt, ssid, passwd, aesKey, type, delay);
