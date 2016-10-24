@@ -1627,13 +1627,14 @@ int senginePollingSlave(void) {
                         int len = 0;
                         len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                                 &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
-                        // LELOGE("sengineCall len = %d. [%s]", len, status);
+                        LELOGE("sengineCall len = %d. [%s]", len, status);
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
+                        } else if (len & (1<<31)) {
+                            sengineSetStatus((char *)status, len);
                         } else if (cacheIsChanged(status, len)) {
                             postStatusChanged(0);
                             cacheSetTerminalStatus(status, len);
-                            sengineSetStatus((char *)status, len);
                         }
                     }
                     break;

@@ -94,7 +94,7 @@ int halSoftApStart(char *ssid, char *wpa2_passphrase) {
  * 返回值:
  *      0 - 成功启动, 其它表示失败
  */
-int halSoftApStop(void) {
+int halSoftApStop(int success) {
     return 0;
 }
 

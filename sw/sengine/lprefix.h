@@ -130,7 +130,7 @@
 // #if !defined(lua_writeline)
 // #define lua_writeline(...)
 // #endif
-#elif defined(EWM3081)
+#elif defined(EMW3081)
 // #include <stdarg.h>
 // #include <stdlib.h>
 // #include <string.h>

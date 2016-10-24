@@ -99,7 +99,7 @@ int halSoftApStart(char *ssid, char *wpa2_passphrase)
     return ret;
 }
 
-int halSoftApStop(void)
+int halSoftApStop(int success)
 {
     return app_uap_stop();
 }

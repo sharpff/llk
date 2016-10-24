@@ -26,7 +26,7 @@ int halSoftApStart(char *ssid, char *wpa2_passphrase) {
     return 0;
 }
 
-int halSoftApStop(void) {
+int halSoftApStop(int success) {
     return 0;
 }
 

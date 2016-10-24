@@ -59,7 +59,7 @@ static uint32_t wifiConfigTime = 0;
 static uint32_t wifiConfigTimeout = 0;
 extern int softApStart(void);
 extern int softApCheck(void);
-extern int softApStop(void);
+extern int softApStop(int success);
 
 extern PCACHE sdevCache();
 extern SDevNode *sdevArray();
@@ -278,7 +278,7 @@ static int stateProcConfiguring(StateContext *cntx) {
         if(wifiConfigTime == wifiConfigTimeout) {
             ret = 0;
             LELOG("Configure wifi timeout!!!");
-            wifiConfigByMonitor ?  halStopConfig() : softApStop();
+            wifiConfigByMonitor ?  halStopConfig() : softApStop(0);
             setResetLed(RLED_STATE_FREE);
         } else {
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
@@ -291,8 +291,8 @@ static int stateProcSnifferGot(StateContext *cntx) {
     int ret = 0;
 
     if (0 == ginConfigStatus) {
-        softApStop();
-        halStopConfig();
+		wifiConfigByMonitor ?  halStopConfig() : softApStop(1);
+		LELOG("stateProcSnifferGot right");
     }
     // ginPrivateCfg.data.nwCfg.configStatus = 0;
     lelinkStorageReadPrivateCfg(&ginPrivateCfg);

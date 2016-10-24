@@ -333,9 +333,8 @@ int main(int argc, char *argv[]) {
 #else
 
 int main(int argc, char** argv) {
-
     char configInfo[256] = {0};
-    int delay = 10, type = 2;
+    int delay = 10, type = 1;
     const char *configFmt = "SSID=%s,PASSWD=%s,AES=%s,TYPE=%d,DELAY=%d";
     int ret = 0;
     //test();
