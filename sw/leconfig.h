@@ -201,6 +201,9 @@ int halSoftApStop(void);
 int halGetHostByName(const char *name, char ip[4][32], int len);
 uint16_t halRand();
 
+int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey);
+
+
 #define applog(_mod_name_, _fmt_, ...) \
     { \
         const char * p = strrchr(__FILE__, '/'); \

@@ -3,6 +3,7 @@
 #include "airconfig.h"
 #include "io.h"
 #include "data.h"
+#include "aesWrapper.h"
 // #define AIRCONFIG_DEBUG_LEVEL1
 // #define AIRCONFIG_DEBUG_BASIC
 // #define AIRCONFIG_DEBUG_VERBOSE
@@ -948,22 +949,48 @@ int softApCheck(void)
     LELOG("Checking wifi configure...");
     ret = nwUDPRecvfrom(ginApNetCtx, (uint8_t *)buf, UDP_MTU, ipaddr, sizeof(ipaddr), &port);
     if(ret <= 0 ) {
-        return -1;
+        return -2;
     }
-    LELOG("nwUDPRecvfrom ret = %d", ret);
-    if(ret != sizeof(wc)) {
+    LELOG("nwUDPRecvfrom ret = %d sizeof(wc)[%d]", ret, sizeof(wc));
+    if(ret != ENC_SIZE(AES_LEN, sizeof(wc) + 1)) {
         LELOGE("wrong len = %d", ret);
-        return -1;
+        return -3;
     }
-    memcpy(&wc, buf, ret);
+
+{
+    uint8_t iv[AES_LEN] = { 0 };
+    uint8_t key[AES_LEN] = { 0 };
+    uint32_t decLen = ENC_SIZE(AES_LEN, sizeof(wc) + 1);
+    memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
+    memcpy(key, getPreSharedToken(), AES_LEN);
+    {
+        extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
+        uint8_t  hexStr[96] = {0};
+        bytes2hexStr(key, AES_LEN, hexStr, sizeof(hexStr));
+        LELOG("key[%s]", hexStr);
+    }
+
+    ret = aes(iv, 
+        key, 
+        (uint8_t *)&buf,
+        &decLen, /* in-len/out-enc size */
+        sizeof(wc),
+        0);
+    LELOG("dec ret[%d] [%d/%d]", ret, ENC_SIZE(AES_LEN, sizeof(wc) + 1), decLen);
+    if (0 > ret) {
+        return -4;
+    }
+    memcpy(&wc, buf, sizeof(wc));
+}
+
     if(wc.magic != WIFICONFIG_MAGIC) {
         LELOGE("magic = %d", wc.magic);
-        return -1;
+        return -5;
     }
     sum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
     if(wc.checksum != sum) {
         LELOGE("checksum = %d", wc.magic);
-        return -1;
+        return -6;
     }
     LELOG("Get ssid[%s] passwd[%s]", wc.ssid, wc.wap2passwd);
     {
@@ -986,27 +1013,64 @@ int softApCheck(void)
     return ret;
 }
 
-int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout)
+int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey)
 {
     void *ctx;
     uint16_t port = 4911;
     int i, ret, count, delay = 1000; // ms
     char ipaddr[32] = "192.168.10.1";
     wificonfig_t wc = { WIFICONFIG_MAGIC, WIFICONFIG_VERSION, 0 };
+    uint8_t iv[AES_LEN] = { 0 };
+    uint8_t key[AES_LEN] = { 0 };
+    uint8_t beEncData[ENC_SIZE(AES_LEN, sizeof(wc) + 1)] = {0};
+    uint32_t encLen = sizeof(wc);
+
+    if (NULL == aesKey) {
+        LELOGE("New link error");
+        return -1;
+    }
 
     ctx  = lelinkNwNew(NULL, 0, 0, NULL);
     if(!ctx) {
         LELOGE("New link error");
-        return -1;
+        return -2;
     }
     count = timeout / delay + 1;
     strncpy((char *)wc.ssid, ssid, sizeof(wc.ssid));
     strncpy((char *)wc.wap2passwd, passwd, sizeof(wc.wap2passwd));
     wc.checksum = crc8((uint8_t *)&(wc.reserved), WIFICONFIG_CKSUM_LEN);
+
+
+    memcpy(beEncData, &wc, sizeof(wc));
+    memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
+    LELOG("AES %s", aesKey);
+    hexStr2bytes(aesKey, key, AES_LEN);
+    ret = aes(iv, 
+        key, 
+        (uint8_t *)&beEncData,
+        &encLen, /* in-len/out-enc size */
+        sizeof(wc),
+        1);
+    LELOG("enc ret[%d] [%d/%d] sizeof(wc)[%d]", ret, ENC_SIZE(AES_LEN, sizeof(wc) + 1), encLen, sizeof(wc));
+    if (0 > ret) {
+        lelinkNwDelete(ctx);
+        return -3;
+    }
+#if 0
+        ret = aes(iv, 
+            key, 
+            (uint8_t *)&beEncData,
+            &encLen, /* in-len/out-enc size */
+            sizeof(wc),
+            0);
+        LELOG("dec ret[%d]", ret);
+        memcpy(&wc, beEncData, sizeof(wc));
+#endif
+
     for( i = 0; i < count; i++ ) {
         LELOG("Send wifi configure, [%s:%s][%d]...", ssid, passwd, delay);
         halDelayms(delay);
-        ret = nwUDPSendto(ctx, ipaddr, port, (uint8_t *)&wc, sizeof(wc));
+        ret = nwUDPSendto(ctx, ipaddr, port, (uint8_t *)beEncData, encLen);
         if(ret <= 0 ) {
             LELOGE("nwUDPSendto ret = %d", ret);
         }
