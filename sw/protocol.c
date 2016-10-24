@@ -1916,7 +1916,7 @@ static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInf
 	    memcpy(rmtCtrl, otaGetLatestSig(), RSA_LEN);
     }
     ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)rmtCtrl + RSA_LEN, sizeof(rmtCtrl) - RSA_LEN);
-    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq halCBLocalReq[%d]", (uint8_t *)ret);
+    LELOG("cbCloudMsgCtrlC2RDoOTALocalReq halCBLocalReq [%d]", ret);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret + RSA_LEN, dataOut, dataLen);
 
     LELOG("cbCloudMsgCtrlC2RDoOTALocalReq [%d] -e", ret);

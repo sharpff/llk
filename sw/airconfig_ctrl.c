@@ -329,20 +329,28 @@ void *airconfig_new(const char *param) {
 
 int airconfig_do_config(void *context) {
     airconfig_ctx_t *ctx = (airconfig_ctx_t *)context;
-    
+
+    // current ssid + psk len should be <= 46
+    // data content is [crc + psk + rand + ssid] = 48 bytes, crc & rand are all 1 byte.
+    if ((strlen(ctx->ssid) + strlen(ctx->passwd)) > 46) {
+        LELOGE("airconfig_do_config param error ssid len[%d] psk len[%d]", strlen(ctx->ssid), strlen(ctx->passwd));
+        return -1;
+    }
     //int i = 0;
     //LELOG("AES:");
     //for (i = 0; i < AES_128; i++) {
         //LELOG("%02x", ctx->aes[i]);
     //}
     //LELOG("");
-    
+    LELOGE("111111");
     while (!inner_airconfig_do_config_sync(ctx))
         ;
     
+    LELOGE("222222");
     while (!inner_airconfig_do_config_head(ctx))
         ;
     
+    LELOGE("333333");
     while (!inner_airconfig_do_config_data(ctx))
         ;
     

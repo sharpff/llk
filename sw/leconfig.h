@@ -192,8 +192,9 @@ int halStopConfig(void);
 int halDoConfiguring(void *ptr, int ptrLen);
 int halDoApConnect(void *ptr, int ptrLen);
 int halDoApConnecting(void *ptr, int ptrLen);
-int halSoftApStart(char *ssid, char *wpa2_passphrase);
+int halSoftApStart(const char *ssid, char *wpa2_passphrase, uint8_t *aesKey, int aesKeyLen);
 int halSoftApStop(int success);
+
 
 int halGetHostByName(const char *name, char ip[4][32], int len);
 uint16_t halRand();
