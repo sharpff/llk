@@ -48,6 +48,16 @@
     if (0 < ((ot * ginMSDelay) / ms)) {\
         ot = 0;
 
+#define TIMEOUT_BEGIN_SEC(ss) {\
+    static uint8_t tsStart;\
+    static uint8_t tsEnd;\
+    tsEnd = halGetTimeStamp(); \
+    if (0 == tsStart) { \
+        tsStart = tsEnd; \
+    } \
+    if (ss <= ((tsEnd - tsStart))) {\
+        tsStart = tsEnd = 0;
+
 #define TIMEOUT_END }}
 
 /* for softAp */
@@ -59,7 +69,7 @@ static uint32_t wifiConfigTime = 0;
 static uint32_t wifiConfigTimeout = 0;
 extern int softApStart(void);
 extern int softApCheck(void);
-extern int softApStop(void);
+extern int softApStop(int success);
 
 extern PCACHE sdevCache();
 extern SDevNode *sdevArray();
@@ -278,7 +288,7 @@ static int stateProcConfiguring(StateContext *cntx) {
         if(wifiConfigTime == wifiConfigTimeout) {
             ret = 0;
             LELOG("Configure wifi timeout!!!");
-            wifiConfigByMonitor ?  halStopConfig() : softApStop();
+            wifiConfigByMonitor ?  halStopConfig() : softApStop(0);
             setResetLed(RLED_STATE_FREE);
         } else {
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
@@ -291,8 +301,8 @@ static int stateProcSnifferGot(StateContext *cntx) {
     int ret = 0;
 
     if (0 == ginConfigStatus) {
-        softApStop();
-        halStopConfig();
+		wifiConfigByMonitor ?  halStopConfig() : softApStop(1);
+		LELOG("stateProcSnifferGot right");
     }
     // ginPrivateCfg.data.nwCfg.configStatus = 0;
     lelinkStorageReadPrivateCfg(&ginPrivateCfg);
@@ -301,7 +311,7 @@ static int stateProcSnifferGot(StateContext *cntx) {
     }
 
     if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
-        setSSID(ginPrivateCfg.data.nwCfg.config.ssid, ginPrivateCfg.data.nwCfg.config.ssid_len);
+        setSSID((const char *)&(ginPrivateCfg.data.nwCfg.config.ssid), ginPrivateCfg.data.nwCfg.config.ssid_len);
         ret = halDoApConnect(&ginPrivateCfg, sizeof(PrivateCfg));
     } else {
         ret = halDoApConnect(NULL, 0);
@@ -420,8 +430,9 @@ static int stateProcCloudLinked(StateContext *cntx) {
     }
     LELOG("stateProcCloudLinked");
 
-    TIMEOUT_BEGIN(8000)
-        LELOGW("stateProcCloudLinked timeout");
+    TIMEOUT_BEGIN_SEC(8)
+    // TIMEOUT_BEGIN(8000)
+        LELOGW("stateProcCloudLinked timeout *****************************");
         return -1;
     TIMEOUT_END
 
@@ -444,7 +455,8 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         s_first_heart = 0;
         return 0;
     }
-    TIMEOUT_BEGIN(10000)
+    TIMEOUT_BEGIN_SEC(12)
+    // TIMEOUT_BEGIN(12000)
         NodeData node = {0};
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
@@ -465,6 +477,7 @@ static int stateProcCloudAuthed(StateContext *cntx) {
             if (lelinkNwPostCmd(ginCtxR2R, &node)) {
             }
         }
+        LELOGW("stateProcCloudAuthed timeout *****************************");
     TIMEOUT_END
 
     return 0;

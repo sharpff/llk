@@ -115,7 +115,7 @@ int airConfig(void *ptr, char *json)
 	if (value.isMember(FJK_AESKEY)) {
 		aesKey = value[FJK_AESKEY].asCString();
 	} else {
-		aesKey = "157e835e6c0bc55474abcd91e00e6979";
+		aesKey = NULL;
 	}
 
     if(type < 3) {

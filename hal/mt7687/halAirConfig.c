@@ -19,7 +19,6 @@ extern int8_t gin_airconfig_sniffer_got;
 extern int8_t gin_airconfig_ap_connected;
 extern void network_dhcp_start(uint8_t opmode);
 extern wifi_scan_list_item_t g_ap_list[8];
-extern int softApCheck(void);
 
 static int g_softap_start = 0;
 
@@ -245,14 +244,16 @@ void lelink_softap_exit(void) {
     dhcp_start(sta_if);
 }
 
-int halSoftApStart(char *ssid, char *wpa2_passphrase) {
+int halSoftApStart(const char *ssid, char *wpa2_passphrase, uint8_t *aesKey, int aesKeyLen) {
 	int ret = 0;
 	/* prepare and setup softap */
+    // const static uint8_t testKey[] = { 0x4d, 0x90, 0xc5, 0x2b, 0xea, 0x52, 0x59, 0xb9, 0x5b, 0x53, 0xd3, 0x3c, 0x63, 0xa7, 0x06, 0xe2 }; 
+    // os_memcpy(aesKey, testKey, aesKeyLen);
 	lelink_softap_setup(ssid, wpa2_passphrase);
 	return ret;
 }
 
-int halSoftApStop(void) {
+int halSoftApStop(int success) {
     lelink_softap_exit();
     return 0;
 }

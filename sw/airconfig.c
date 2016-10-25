@@ -17,6 +17,7 @@
 // #define MAX_HEADER_MAGIC 4
 // #define MAX_HEADER_PREFIX 4
 #define MAX_INFO_LEN (64/4) + 1 // 32 + 32 + 1(rand) bytes for psk
+#define MAX_SSID 32
 enum {
     AIRCONFIG_STATE_GET_HEADER,
     AIRCONFIG_STATE_GET_DATA
@@ -36,16 +37,25 @@ typedef struct {
     uint8_t data[4];
 }aiconfig_info_t;
 
+typedef struct {
+    uint8_t data[128];
+    uint8_t flag[128];
+}aiconfig_note_t;
+
+aiconfig_note_t gin_temp_data;
+
 static uint8_t gin_airconfig_state = AIRCONFIG_STATE_GET_HEADER;
 /* row flags for header, col[0] is the flags col[1] is the current counts */
 static uint8_t gin_airconfig_flag_header[MAX_HEADER_FLAG];
 static uint8_t gin_ssid_len;
 static uint8_t gin_ssid_crc;
 static uint8_t gin_psk_len;
-static uint8_t gin_psk_crc;
+static uint8_t gin_head_crc;
 static uint8_t gin_info_idx, gin_info_block_remain, gin_info_block_total, gin_one_remain, gin_spencial_total;
 static aiconfig_info_t gin_info_tmp;
 static aiconfig_info_t gin_info[MAX_INFO_LEN];
+static uint8_t ginSSIDOptimized[MAX_SSID];
+
 
 static target_node_t gin_node_set[MAX_NODE_SET];
 
@@ -54,7 +64,7 @@ int airconfig_reset() {
     gin_ssid_len = 0;
     gin_ssid_crc = 0;
     gin_psk_len = 0;
-    gin_psk_crc = 0;
+    gin_head_crc = 0;
     gin_info_idx = 0;
     gin_info_block_remain = 0;
     gin_one_remain = 0;
@@ -63,34 +73,46 @@ int airconfig_reset() {
     memset(gin_info, 0, sizeof(gin_info));
     memset(gin_node_set, 0, sizeof(gin_node_set));
     memset(gin_airconfig_flag_header, 0, sizeof(gin_airconfig_flag_header));
+    memset(ginSSIDOptimized, 0, sizeof(ginSSIDOptimized));
     return 0;
 }
 
 int isHeaderReady(void) {
     int i = 0;
+    uint8_t buff[3];
     for (i = 0; i < MAX_HEADER_FLAG; i++) {
-        if (MAX_COUNT_HEADER >= gin_airconfig_flag_header[i]) {
+        if (0 == gin_airconfig_flag_header[i]) {
             return 0;
         }
+    }
+    
+    LELOG("HeaderReady");
+    buff[0] = gin_ssid_crc;
+    buff[1] = gin_ssid_len;
+    buff[2] = gin_psk_len;
+    if (gin_head_crc != crc8(buff, 3)) {
+      LELOG("isHeaderReady crc error [%d][%d]", gin_ssid_len, gin_psk_len);
+      airconfig_reset();
+      return 0;
     }
     return 1;
 }
 
-static int inner_airconfig_reset_data(aiconfig_info_t *info) {
-    int tmp_remain = 0, i = 0;
-    if (!info) {
-        return tmp_remain;
-    }
-    for (i = 0; i < sizeof(info->data); i++) {
-        if (info->data[i]) {
-            info->data[i] = 0;
-            tmp_remain++;
-        }
-    }
-    // with out the seq flags, only reset the data part.
-    info[gin_info_idx].flag &= 0x3;
-    return tmp_remain;
-}
+// static int inner_airconfig_reset_data(aiconfig_info_t *info) {
+//     int tmp_remain = 0, i = 0;
+//     if (!info) {
+//         return tmp_remain;
+//     }
+//     for (i = 0; i < sizeof(info->data); i++) {
+//         if (info->data[i]) {
+//             info->data[i] = 0;
+//             tmp_remain++;
+//         }
+//     }
+//     // with out the seq flags, only reset the data part.
+//     info[gin_info_idx].flag &= 0x3;
+//     return tmp_remain;
+// }
 
 static target_node_t *inner_airconfig_shoot_to_node(const target_item_t *item) {
     int i = 0;
@@ -384,6 +406,10 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
                     node->count[i]);
             }
             *base = node->base - MAX_ITEM_SET / 2;
+            for(i=0; i<128; i++) {
+                gin_temp_data.flag[i] = 0;
+                gin_temp_data.data[i] = 0;
+            }
             return AIRCONFIG_NW_STATE_CHANNEL_LOCKED;
         }
 
@@ -434,16 +460,57 @@ void logprint(void)
     }
 }
 
+static void airconfig_bin2str(uint8_t* src, uint16_t src_len, uint8_t* dst, uint16_t dst_len) {
+    uint16_t i, temp_len;
+    // uint8_t half_data;
+
+    temp_len = (src_len*3)/8;
+
+    if(temp_len != dst_len) {
+        LELOGE("lelink_bin2str dst len not right [%d] [%d]", temp_len, dst_len);
+    }
+
+    for(i=0; i<src_len; i++) {
+        src[i] = src[i] & 0x07;
+    }
+
+    //APPLOGE("lelink_bin2str src=[%d] dst=[%d]\r\n ", src_len,dst_len);
+
+    for(i=0; i<dst_len; i++) {
+      uint8_t a = (i*8%3); 
+      uint8_t c = i*8/3;
+      //APPLOGE("lelink_bin2str a=[%d] c=[%d]\r\n ", a,c);
+      if(a==0) {
+        dst[i] = src[c] << 5;
+        dst[i] |= (src[c+1] << 2);
+        dst[i] |= (src[c+2] >> 1);
+        //APPLOGE("lelink_bin2str a=0 [%d] [%c]\r\n ", i, dst[i]);
+      } else if(a==1) {
+        dst[i] = src[c] << 6;
+        dst[i] |= (src[c+1] << 3);
+        dst[i] |= (src[c+2]);
+        //APPLOGE("lelink_bin2str a=1 [%d] [%c]\r\n ", i, dst[i]);
+      } else {
+        dst[i] = src[c] << 7;
+        dst[i] |= (src[c+1] << 4);
+        dst[i] |= (src[c+2] << 1);
+        dst[i] |= (src[c+3] >> 2);
+        //APPLOGE("lelink_bin2str a=2 [%d] [%c]\r\n ", i, dst[i]);
+      }
+    }
+    //APPLOGE("lelink_bin2str return\r\n ");
+}
+
 int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *currSSID, int currSSIDLen) {
-    // PrivateCfg cfg;
+// PrivateCfg cfg;
 #ifdef AIRCONFIG_DEBUG_LEVEL1
     LELOG("len[%d] base[%d] data[%d][0x%04x]", len, base, len - base, len - base);
 #endif
-    // comming from the same src. but maybe multi-channel or multi-bssid
-    // for Air Kiss, it presumes comming from the same bssid
+// comming from the same src. but maybe multi-channel or multi-bssid
+// for Air Kiss, it presumes comming from the same bssid
 
-    // for magic and prefix
-    // static uint16_t header[MAX_HEADER_MAGIC + MAX_HEADER_PREFIX] = { 0 };
+// for magic and prefix
+// static uint16_t header[MAX_HEADER_MAGIC + MAX_HEADER_PREFIX] = { 0 };
 
     uint16_t data = (len - base);
 
@@ -453,87 +520,56 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
         // 4 bit
         uint8_t ldata = (uint8_t)(data & 0x000F);
         switch (hdata) {
-            // magic part start
-        case 0x00: { // high 4 bits of ssid len
-            if (gin_airconfig_flag_header[MAX_HEADER_FLAG-1]) { 
+            case 0x00: {
                 gin_airconfig_flag_header[hdata]++;
-                if (MAX_COUNT_HEADER != gin_airconfig_flag_header[hdata]) 
-                    break;
+                gin_head_crc |= (ldata << 4);
+            }break;
+            case 0x01: {
+                gin_airconfig_flag_header[hdata]++;
+                gin_head_crc |= ldata;
+                //LELOG("0x01 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
+            }break;
+            case 0x02: {
+                gin_airconfig_flag_header[hdata]++;
+                gin_ssid_crc |= (ldata << 4);
+                //LELOG("0x02 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
+            }break;
+            case 0x03: {
+                gin_airconfig_flag_header[hdata]++;
+                gin_ssid_crc |= ldata;
+                //LELOG("0x03 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
+            }break;
+            case 0x04: {
+                gin_airconfig_flag_header[hdata]++;
                 gin_ssid_len |= (ldata << 4);
-                LELOG("0x00 counts[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
-                // gin_airconfig_flag_header[hdata] = 1;
-            }
-        }break;
-        case 0x01: { // low 4 bits of ssid len
-            gin_airconfig_flag_header[hdata]++;
-            if (MAX_COUNT_HEADER != gin_airconfig_flag_header[hdata]) 
-                break;
-            gin_ssid_len |= ldata;
-            // gin_airconfig_flag_header[hdata] = 1;
-            LELOG("0x01 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
-        }break;
-        case 0x02: { // high 4 bits of ssid crc
-            gin_airconfig_flag_header[hdata]++;
-            if (MAX_COUNT_HEADER != gin_airconfig_flag_header[hdata]) 
-                break;
-            gin_ssid_crc |= (ldata << 4);
-            // gin_airconfig_flag_header[hdata] = 1;
-            LELOG("0x02 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
-        }break;
-        case 0x03: { // low 4 bits of ssid crc
-            gin_airconfig_flag_header[hdata]++;
-            if (MAX_COUNT_HEADER != gin_airconfig_flag_header[hdata]) 
-                break;
-            gin_ssid_crc |= ldata;
-            // gin_airconfig_flag_header[hdata] = 1;
-            LELOG("0x03 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
-        }break;
-            // magic part end
-            // prefix part start
-        case 0x04: { // high 4 bits of psk len
-            gin_airconfig_flag_header[hdata]++;
-            if (MAX_COUNT_HEADER != gin_airconfig_flag_header[hdata]) 
-                break;
-            gin_psk_len |= (ldata << 4);
-            // gin_airconfig_flag_header[hdata] = 1;
-            LELOG("0x04 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
-        }break;
-        case 0x05: { // low 4 bits of psk len
-            gin_airconfig_flag_header[hdata]++;
-            if (MAX_COUNT_HEADER != gin_airconfig_flag_header[hdata]) 
-                break;
-            gin_psk_len |= ldata;
-            // gin_airconfig_flag_header[hdata] = 1;
-            LELOG("0x05 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
-        }break;
-        case 0x06: { // high 4 bits of psk crc
-            gin_airconfig_flag_header[hdata]++;
-            if (MAX_COUNT_HEADER != gin_airconfig_flag_header[hdata]) 
-                break;
-            gin_psk_crc |= (ldata << 4);
-            // gin_airconfig_flag_header[hdata] = 1;
-            LELOG("0x06 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
-        }break;
-        case 0x07: { // low 4 bits of psk crc
-            gin_airconfig_flag_header[hdata]++;
-            if (MAX_COUNT_HEADER != gin_airconfig_flag_header[hdata]) 
-                break;
-            gin_psk_crc |= ldata;
-            // gin_airconfig_flag_header[hdata] = 1;
-            LELOG("0x07 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
-        }break;
-        
-        // prefix part end
-        default: {
-            int i = 0;
-            LEPRINTF("EXCEPTION AIRCONFIG_STATE_GET_HEADER [0x%04x] => \n", data);
-            for (i = 0; i < MAX_HEADER_FLAG; i++) {
+                //LELOG("0x04 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
+            }break;
+            case 0x05: {
+                gin_airconfig_flag_header[hdata]++;
+                gin_ssid_len |= ldata;
+                //LELOG("0x05 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
+            }break;
+            case 0x06: {
+                gin_airconfig_flag_header[hdata]++;
+                gin_psk_len |= (ldata << 4);
+                //LELOG("0x06 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
+            }break;
+            case 0x07: {
+                gin_airconfig_flag_header[hdata]++;
+                gin_psk_len |= ldata;
+                //LELOG("0x07 flag_header[%d] [0x%x] ", gin_airconfig_flag_header[hdata], gin_ssid_len);
+            }break;
+            default: {
+                #if 0
+                int i = 0;
+                LEPRINTF("EXCEPTION AIRCONFIG_STATE_GET_HEADER [0x%04x] => \n", data);
+                for (i = 0; i < MAX_HEADER_FLAG; i++) {
                 LEPRINTF("idx[%d] counts[%d]\n", i, gin_airconfig_flag_header[i]);
-            }
-            LEPRINTF("<= EXCEPTION HEADER \n");
-        }break;
-    }
-        // if ((0xFF == gin_airconfig_flag_header)) {
+                }
+                LEPRINTF("<= EXCEPTION HEADER \n");
+                #endif
+            }break;
+        }
         if ((isHeaderReady())) {
             int i = 0;
             gin_airconfig_state = AIRCONFIG_STATE_GET_DATA;
@@ -552,303 +588,131 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
             // gin_one_remain = gin_psk_len%4 ? gin_psk_len%4 : 4;
             #ifdef AIRCONFIG_DEBUG_LEVEL1
             LELOG("DONE AIRCONFIG_STATE_GET_HEADER ssid[0x%02x][%d] psk[0x%02x][%d] remain block[%d] ", 
-                gin_ssid_crc, gin_ssid_len, gin_psk_crc, gin_psk_len, gin_info_block_remain);
+                gin_ssid_crc, gin_ssid_len, gin_head_crc, gin_psk_len, gin_info_block_remain);
             #endif
         }
-    }
-    else if (AIRCONFIG_STATE_GET_DATA == gin_airconfig_state) {
-        uint8_t ret_crc8 = 0;
+    } else if (AIRCONFIG_STATE_GET_DATA == gin_airconfig_state) {
+        int total_bytes = 1 + gin_psk_len + 1 + gin_ssid_len;
+        int total_bin;
+        uint8_t index = (data & 0x3F8) >> 3;
+        uint8_t bufCheck[1+32+1+32] = {0};
+        uint8_t i;
 
-        // PRE CAP the SSID
-        if (currSSID && 0 < currSSIDLen) {
-            uint8_t tmpCRC8 = crc8((const uint8_t *)currSSID, currSSIDLen);
-            if (tmpCRC8 == gin_ssid_crc) {
-                // int tmpLen = currSSIDLen > (sizeof(passport->ssid)-1) ? (sizeof(passport->ssid)-1) : currSSIDLen;
-                // memcpy(passport->ssid, currSSID, tmpLen);
-                // passport->ssid[tmpLen] = '\0';
-                int ssidIdx = (1 + gin_psk_len)%4 + 1;
-                int i, j, k = 0;
-                int startBlockIdx = (1 + gin_psk_len)/4;
-                int last_bytes = gin_spencial_total%4 ? gin_spencial_total%4 : 4;
-                for (i = startBlockIdx; i < gin_info_block_total; i++) {
-                    int bytes = ((i+1) == gin_info_block_total) ? last_bytes : 4;
-                    for (j = ((i == startBlockIdx) ? ssidIdx : 0); j < bytes; j++) {
-                        gin_info[i].data[j] = currSSID[k++];
-                    }
-                }
-                
-                // calculate the total in really needs.
-                if (gin_psk_len%4) {
-                    gin_spencial_total = 1 + gin_psk_len + 1 + (gin_ssid_len >= (4 - ssidIdx) ? (4 - ssidIdx) : gin_ssid_len);
-                } else {
-                    gin_spencial_total = 1 + gin_psk_len;
-                }
-                gin_info_block_remain = (gin_spencial_total - 1)/4 + 1;
-                // gin_one_remain = gin_psk_len%4 ? gin_psk_len%4 : 4;
-                LELOG("DONE PRE SSID [%s] ssid[0x%02x][%d] psk[0x%02x][%d] remain block[%d] total[%d]", currSSID,
-                    gin_ssid_crc, gin_ssid_len, gin_psk_crc, gin_psk_len, gin_info_block_remain, gin_spencial_total);
-                gin_ssid_crc = 0;
-
-
-                LELOG("DONE PRE CAP SSID => ");
-                for (i = 0; i < gin_info_block_total; i++) {
-                    LEPRINTF("idx[%d] => ", i);
-                    for (j = 0; j < 4; j++) {
-                        LEPRINTF("%02x ", gin_info[i].data[j]);
-                    }
-                    LEPRINTF("\r\n");
-                }
-                // LELOG("SSID[%s] pwd[%s]", passport->ssid, passport->psk);
-                LELOG("DONE PRE CAP SSID ");
-            }
-        }
-
-        // only for sequence
-        // if (!(data & 0x100)) {
-        if (0x3 != (0x3 & gin_info_tmp.flag)) {
-        seqStart:
-            if (data & 0x80) {
-                if (!(gin_info_tmp.flag & 0x1)) {
-                    gin_info_tmp.sequence[0] = 0x7F & data;
-                    gin_info_tmp.flag |= 0x1;
-                    #ifdef AIRCONFIG_DEBUG_LEVEL1
-                    LELOG("START seq [0x%04x] seq[0]->[0x%02x] seq[1]->[0x%02x]", 
-                        data, gin_info_tmp.sequence[0], gin_info_tmp.sequence[1]);
-                    #endif
-                }
-                else if (!(gin_info_tmp.flag & 0x2)) {
-                    // reset seq flags, impossible index
-                    if (gin_info_block_total <= (0x7F & data)) {
-                        gin_info_tmp.flag &= ~0x3;
-                    #ifdef AIRCONFIG_DEBUG_LEVEL1
-                        LELOG("EXCEPTION seq2 [0x%04x] seq[0]->[0x%02x] seq[1]->[0x%02x]", 
-                            data, gin_info_tmp.sequence[0], gin_info_tmp.sequence[1]);
-                    #endif
-                        goto seqStart;
-                    } else  { // normal seq id
-                        gin_info_tmp.sequence[1] = 0x7F & data;
-                        gin_info_tmp.flag |= 0x2;
-
-                        // if matched the last one
-                        if ((gin_info_block_total - 1) == gin_info_tmp.sequence[1]) {
-                            gin_one_remain = gin_spencial_total%4 ? gin_spencial_total%4 : 4;
-                        } else {
-                            gin_one_remain = 4;
-                        }
-                        // reset data
-                        inner_airconfig_reset_data(&gin_info_tmp);
-                    #ifdef AIRCONFIG_DEBUG_LEVEL1
-                        LELOG("DONE sequence flag[0x%02x] crc[0x%02x] seq[%d] gin_one_remain[%d]", 
-                            gin_info_tmp.flag, gin_info_tmp.sequence[0], gin_info_tmp.sequence[1], gin_one_remain);
-                    #endif
-                    }
-                } else { // reset all seq flags
-                    // gin_info_tmp.flag &= ~0x3;
-                    // if (gin_info_block_total <= data) {
-                    //     gin_info_tmp.sequence[0] = 0x7F & data;
-                    //     gin_info_tmp.flag |= 0x1;
-                    // }
-                    // LELOG("EXCEPTION sequence2 [0x%04x] [0x%02x] [0x%02x]", 
-                    //     data, gin_info_tmp.sequence[0], gin_info_tmp.sequence[1]);
-                }
-            }
-        // only for data
+        if((total_bytes*8)%3 > 0) {
+            total_bin = (total_bytes*8)/3;
+            total_bin++;
         } else {
-        // } else if (0x3 == (0x3 & gin_info_tmp.flag)) {
-#ifdef AIRCONFIG_DEBUG_LEVEL1
-            LELOG("GETTING data [0x%04x] ", data);
-#endif
-            // reset to new seq
-            if (!(data & 0x100) && (0 < gin_one_remain)) {
-                gin_info_tmp.flag &= ~0x2F;
-                gin_one_remain = 4;
-                LELOG("GOTO seqStart ");
-                goto seqStart;
-            }
+            total_bin = (total_bytes*8)/3;
+        }
 
-            if (!(gin_info_tmp.flag & 0x4)) {
-                gin_info_tmp.data[0] = 0xFF & data;
-                gin_info_tmp.flag |= 0x4;
-                gin_one_remain--;
-            }
-            else if (!(gin_info_tmp.flag & 0x8)) {
-                gin_info_tmp.data[1] = 0xFF & data;
-                gin_info_tmp.flag |= 0x8;
-                gin_one_remain--;
-            }
-            else if (!(gin_info_tmp.flag & 0x10)) {
-                gin_info_tmp.data[2] = 0xFF & data;
-                gin_info_tmp.flag |= 0x10;
-                gin_one_remain--;
-            }
-            else if (!(gin_info_tmp.flag & 0x20)) {
-                gin_info_tmp.data[3] = 0xFF & data;
-                gin_info_tmp.flag |= 0x20;
-                gin_one_remain--;
-            }
-            else {
-                //LELOG("EXCEPTION NOWAY data1 [0x%04x] ", data);
+        //LELOG("got index[%d] data[%d] total_bytes[%d] total_bin[%d]!!!!!", index, data, total_bytes, total_bin);
+
+        if(index < total_bin) {
+            gin_temp_data.data[index] = data;
+            gin_temp_data.flag[index]++;
+        }
+
+        // optimized
+        if (!ginSSIDOptimized[0] && gin_ssid_crc == crc8((const uint8_t *)currSSID, currSSIDLen)) {
+            memcpy(ginSSIDOptimized, currSSID, gin_ssid_len > MAX_SSID ? MAX_SSID : gin_ssid_len);
+            LELOG("DONE PRE CAP SSID & CACHED[%s]", currSSID);
+            // index = ((1 + gin_psk_len + 1)*8)%3;
+            // switch (index) {
+            //     case 0:
+            //     break;
+            //     case 1:
+            //         {
+
+            //         }
+            //     break;
+            //     case 2:
+            //     break;
+            // }
+
+            // for (kk = 0; kk < tmpCurrLen; kk++) {
+            //     gin_temp_data.data[2 + gin_psk_len + kk] = ginSSIDOptimized[kk];
+            //     gin_temp_data.flag[2 + gin_psk_len + kk]++;
+            // }
+
+            // gin_temp_data.data[2 + gin_psk_len + kk] = '\0';
+            // restBinLen = total_bin - total_bytes*8
+            total_bytes = 1 + gin_psk_len + 1;
+            if((total_bytes*8)%3 > 0) {
+                total_bin = (total_bytes*8)/3;
+                total_bin++;
+            } else {
+                total_bin = (total_bytes*8)/3;
             }
         }
 
+        for(i=0; i<total_bin; i++) {
+            if(gin_temp_data.flag[i] == 0)
+                break;
+        }
 
-        // one has read completed
-        if (!gin_one_remain) {
-            int tmp_remain;
-            // if it is the last one
-            if ((gin_info_block_total - 1) == gin_info_tmp.sequence[1]) {
-                tmp_remain = gin_spencial_total%4 ? gin_spencial_total%4 : 4;
-                // LELOG("DONE last one ");
-            } else {
-                tmp_remain = 4;
+
+        if(i >= total_bin) {
+            memset(bufCheck, 0, 66);
+            if (ginSSIDOptimized[0]) {
+                memcpy(&bufCheck[gin_psk_len+2], ginSSIDOptimized, gin_ssid_len > MAX_SSID ? MAX_SSID : gin_ssid_len);
+                LELOG("PRE ssid is copied");
             }
-            ret_crc8 = crc8(&(gin_info_tmp.sequence[1]), tmp_remain + 1);
-            #ifdef AIRCONFIG_DEBUG_LEVEL1
-            LELOG("DONE one seq[%d][0x%02x, 0x%02x, 0x%02x, 0x%02x] crc8[0x%02x]rmt[0x%02x] ", 
-                gin_info_tmp.sequence[1], 
-                gin_info_tmp.data[0], 
-                gin_info_tmp.data[1], 
-                gin_info_tmp.data[2], 
-                gin_info_tmp.data[3],
-                ret_crc8, gin_info_tmp.sequence[0]);
-            #endif
-            gin_info_tmp.flag &= ~0x2F;
-            gin_one_remain = 4;
-
-            if ((ret_crc8 & 0x7F) == gin_info_tmp.sequence[0]) {
-                if (memcmp(&gin_info[gin_info_tmp.sequence[1]], &gin_info_tmp, sizeof(aiconfig_info_t))) {
-                    int tmpTotalBlocks = (gin_spencial_total - 1)/4 + 1;
-                    if (tmpTotalBlocks > gin_info_tmp.sequence[1]) {
-                        memcpy(&gin_info[gin_info_tmp.sequence[1]], &gin_info_tmp, sizeof(aiconfig_info_t));
-                        gin_info_block_remain--;
-                        #ifdef AIRCONFIG_DEBUG_LEVEL1
-                        LELOG("DONE GOT [%d] still[%d] [0x%02x, 0x%02x, 0x%02x, 0x%02x]", 
-                            gin_info_tmp.sequence[1], gin_info_block_remain,
-                            gin_info[gin_info_tmp.sequence[1]].data[0],
-                            gin_info[gin_info_tmp.sequence[1]].data[1],
-                            gin_info[gin_info_tmp.sequence[1]].data[2],
-                            gin_info[gin_info_tmp.sequence[1]].data[3]);
-                        #endif
+            airconfig_bin2str(gin_temp_data.data, total_bin, bufCheck, total_bytes);
+            LELOG("got complete [%s][%s]!!!!!",  &bufCheck[1], &bufCheck[gin_psk_len+2]);
+            if(bufCheck[0] == (crc8(&bufCheck[1], gin_psk_len+gin_ssid_len+1))) {
+                LELOG("got right data in TOTAL");
+                gin_info_block_remain = 0;
+            } else {
+                if (ginSSIDOptimized[0]) {
+                    memcpy(&bufCheck[2 + gin_psk_len], ginSSIDOptimized, gin_ssid_len > MAX_SSID ? MAX_SSID : gin_ssid_len);
+                    if(bufCheck[0] == (crc8(&bufCheck[1], gin_psk_len+gin_ssid_len+1))) {
+                        LELOG("got right data in OPTIMIZED(ssid)");
+                        gin_info_block_remain = 0;
                     }
-                } else {
-                    #ifdef AIRCONFIG_DEBUG_LEVEL1
-                    LELOG("REPEAT GOT [%d/%d]", gin_info_tmp.sequence[1], gin_info_block_remain);
-                    #endif
                 }
+            }
+            for(i=0; i<total_bin; i++) {
+                gin_temp_data.flag[i] = 0;
+                gin_temp_data.data[i] = 0;
             }
         }
 
         if (!gin_info_block_remain) {
-            int last_bytes;
-            int i, j;
-            int m = 0, n = 0, x = 0;
-            uint8_t bufCheck[1+32+1+32] = {0};
-            // recover the data
-            gin_spencial_total = 1 + gin_psk_len + 1 + gin_ssid_len;
-            gin_info_block_total = (gin_spencial_total - 1)/4 + 1;
-            last_bytes = gin_spencial_total%4 ? gin_spencial_total%4 : 4;
+            memcpy(passport->psk, &bufCheck[1], gin_psk_len);
+            memcpy(passport->ssid, &bufCheck[gin_psk_len + 2], gin_ssid_len);
+            passport->psk[gin_psk_len] = '\0';
+            passport->ssid[gin_ssid_len] = '\0';
 
-            LELOG("DONE ok gin_info_block_total[%d] gin_psk_len[%d] gin_ssid_len[%d] last_bytes[%d]", 
-                gin_info_block_total, gin_psk_len, gin_ssid_len, last_bytes);
-
-            for (i = 0; i < gin_info_block_total; i++) {
-                int bytes = ((i+1) == gin_info_block_total) ? last_bytes : 4;
-                for (j = 0; j < bytes; j++) {
-                    if (i*4 + j <= gin_psk_len) {
-                        // passport->psk[m++] = gin_info[i].data[j];
-                        if (i != 0 || j != 0)
-                            m++;
-                    } else if (i*4 + j > (1 + gin_psk_len)) {
-                        // passport->ssid[n++] = gin_info[i].data[j];
-                        n++;
-                    }
-                    bufCheck[x++] = gin_info[i].data[j];
-
-                }
-            }
-            LEPRINTF("bufCheck => m[%d] n[%d]\r\n", m, n);
-            for (i = 0; i < (1 + m + 1 + n); i++) {
-                LEPRINTF("[0x%02x], [%c]\r\n", bufCheck[i], bufCheck[i]);
-            }
-            LEPRINTF("<=== \r\n");
-
-            if (bufCheck[0] == crc8(&bufCheck[1], m+1+n)) {
-                LELOG("bufCheck OK => ");
-            } else {
-                LELOG("bufCheck NOT OK => ");
-                airconfig_reset();
-                return 0;
-            }
-            if (0 < m) {
-                memcpy(passport->psk, &bufCheck[1], m);
-            }
-            memcpy(passport->ssid, &bufCheck[1 + m + 1], n);
-            passport->psk[m] = '\0';
-            passport->ssid[n] = '\0';
-
-            // LELOG("DONE PASSPORT SSID => ");
-            // for (i = 0; i < gin_info_block_total; i++) {
-            //     LEPRINTF("idx[%d] => ", i);
-            //     for (j = 0; j < 4; j++) {
-            //         LEPRINTF("%02x ", gin_info[i].data[j]);
-            //     }
-            //     LEPRINTF("\r\n");
-            // }
-            //     // LELOG("SSID[%s] pwd[%s]", passport->ssid, passport->psk);
-            // LELOG("DONE PASSPORT SSID");
             LELOG("DONE passport =>");
             LELOG("passport->psk [%s]", passport->psk);
             LELOG("passport->ssid [%s]", passport->ssid);
-            // for (i = 0; i < gin_info_block_total; i++) {
-            //     for (j = 0; j < 4; j++) {
-            //         LEPRINTF("%c", gin_info[i].data[j]);
-            //     }
-            // }
-            // LEPRINTF("\r\n");
             {
                 PrivateCfg cfg;
                 int ret = 0;
-                // flashWritePrivateCfg(&cfg);
-                // static int flag = 0;
                 lelinkStorageReadPrivateCfg(&cfg);
                 LELOG("read last ssid[%s], psk[%s], configStatus[%d]", 
                     cfg.data.nwCfg.config.ssid,
                     cfg.data.nwCfg.config.psk, 
                     cfg.data.nwCfg.configStatus);
-                // if (0 != cfg.data.nwCfg.configStatus) {
-                    strcpy((char *)cfg.data.nwCfg.config.ssid, (const char *)passport->ssid);
-                    cfg.data.nwCfg.config.ssid_len = strlen(passport->ssid);
-                    cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
-                    strcpy((char *)cfg.data.nwCfg.config.psk, (const char *)passport->psk);
-                    cfg.data.nwCfg.config.psk_len = strlen(passport->psk);
-                    cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
-                    cfg.data.nwCfg.configStatus = 1;
-                    ret = lelinkStorageWritePrivateCfg(&cfg);
-                    LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
-
-                    // // test only
-                    // ret = lelinkStorageReadPrivateCfg(&cfg);
-                    // LELOG("lelinkStorageReadPrivateCfg[%d] ssid[%s], psk[%s], configStatus[%d]", 
-                    //     ret, 
-                    //     cfg.data.nwCfg.config.ssid,
-                    //     cfg.data.nwCfg.config.psk, 
-                    //     cfg.data.nwCfg.configStatus);
-                    // if (cfg.csum != crc8((const uint8_t *)&(cfg.data), sizeof(cfg.data))) {
-                    //     LELOG("lelinkStorageReadPrivateCfg csum failed");
-                    // }
-                // }
-
+                strcpy(cfg.data.nwCfg.config.ssid, passport->ssid);
+                cfg.data.nwCfg.config.ssid_len = strlen(passport->ssid);
+                cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
+                strcpy(cfg.data.nwCfg.config.psk, passport->psk);
+                cfg.data.nwCfg.config.psk_len = strlen(passport->psk);
+                cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
+                cfg.data.nwCfg.configStatus = 1;
+                ret = lelinkStorageWritePrivateCfg(&cfg);
+                LELOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
             }
 
-            // LELOG("SSID[%s] pwd[%s]", passport->ssid, passport->psk);
+            LELOG("SSID[%s] pwd[%s]", passport->ssid, passport->psk);
             LELOG("DONE psk ");
             return 1;
         }
-
     } else {
-            // LELOG("EXCEPTION type [0x%04x] ", data);
+    // LELOG("EXCEPTION type [0x%04x] ", data);
     }
-    
+
 
     return 0;
 }
@@ -857,7 +721,7 @@ int airconfig_get_info(int len, int base, ap_passport_t *passport, const char *c
 
 #define WIFICONFIG_LISTEN_PORT      (4911)
 #define WIFICONFIG_MAGIC            (0x7689)
-#define WIFICONFIG_VERSION          (1)
+#define WIFICONFIG_SOFTAP_VER       (1)
 //#define WIFICONFIG_CKSUM_LEN        ((uint32_t)&(((wificonfig_t *)0)->reserved))
 #define WIFICONFIG_CKSUM_LEN        (2 + 32 + 32)
 
@@ -872,9 +736,10 @@ typedef struct {
 
 int softApStart(void);
 int softApCheck(void);
-int softApStop(void);
+int softApStop(int success);
 
 static void *ginApNetCtx = NULL;
+static uint8_t ginSoftAPAESKey[AES_LEN] = {0};
 /*
  * 功能: 启动softap
  *
@@ -889,13 +754,14 @@ int softApStart(void)
     char uuid[32] = {0};
     char wpa2_passphrase[32] = "00000000";
 
-    softApStop();
+    softApStop(0);
     if((ret = getTerminalUUID((uint8_t *)uuid, sizeof(uuid))) < 0) {
         LELOGE("getTerminalUUID ret[%d]", ret);
         goto out;
     }
-    snprintf(ssid, sizeof(ssid), "-lelink%03d-%s", WIFICONFIG_VERSION, uuid);
-    if((ret = halSoftApStart(ssid, wpa2_passphrase))) {
+    snprintf(ssid, sizeof(ssid), "-lelink%03d-%s", WIFICONFIG_SOFTAP_VER, uuid);
+    memset(ginSoftAPAESKey, 0, AES_LEN);
+    if((ret = halSoftApStart(ssid, wpa2_passphrase, ginSoftAPAESKey, AES_LEN))) {
         LELOGE("halSoftApStart ret[%d]", ret);
         goto out;
     }
@@ -906,7 +772,7 @@ int softApStart(void)
     }
     return 0;
 out:
-    softApStop();
+    softApStop(0);
     return ret;
 }
 
@@ -917,9 +783,9 @@ out:
  *      0 表示停止AP成功
  *
  */
-int softApStop(void)
+int softApStop(int success)
 {
-    halSoftApStop();
+    halSoftApStop(success);
     if(ginApNetCtx) {
         lelinkNwDelete(ginApNetCtx);
         ginApNetCtx = NULL;
@@ -962,7 +828,11 @@ int softApCheck(void)
     uint8_t key[AES_LEN] = { 0 };
     uint32_t decLen = ENC_SIZE(AES_LEN, sizeof(wc) + 1);
     memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
-    memcpy(key, getPreSharedToken(), AES_LEN);
+    if (ginSoftAPAESKey[0]) {
+        memcpy(key, ginSoftAPAESKey, AES_LEN);
+    } else {
+        memcpy(key, getPreSharedToken(), AES_LEN);
+    }
     {
         extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
         uint8_t  hexStr[96] = {0};
@@ -1019,15 +889,14 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, c
     uint16_t port = 4911;
     int i, ret, count, delay = 1000; // ms
     char ipaddr[32] = "192.168.10.1";
-    wificonfig_t wc = { WIFICONFIG_MAGIC, WIFICONFIG_VERSION, 0 };
+    wificonfig_t wc = { WIFICONFIG_MAGIC, WIFICONFIG_SOFTAP_VER, 0 };
     uint8_t iv[AES_LEN] = { 0 };
     uint8_t key[AES_LEN] = { 0 };
     uint8_t beEncData[ENC_SIZE(AES_LEN, sizeof(wc) + 1)] = {0};
     uint32_t encLen = sizeof(wc);
 
     if (NULL == aesKey) {
-        LELOGE("New link error");
-        return -1;
+        aesKey = "157e835e6c0bc55474abcd91e00e6979";
     }
 
     ctx  = lelinkNwNew(NULL, 0, 0, NULL);

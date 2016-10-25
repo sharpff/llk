@@ -22,11 +22,11 @@ int halDoApConnecting(void *ptr, int ptrLen) {
 }
 
 
-int halSoftApStart(char *ssid, char *wpa2_passphrase) {
+int halSoftApStart(const char *ssid, char *wpa2_passphrase, uint8_t *aesKey, int aesKeyLen) {
     return 0;
 }
 
-int halSoftApStop(void) {
+int halSoftApStop(int success) {
     return 0;
 }
 

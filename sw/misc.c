@@ -63,7 +63,7 @@ int syncUTC(const char *json, int jsonLen) {
     if (WM_SUCCESS != json_get_val_int64(&jobj, JSON_NAME_UTC, &utc)) {
         return -3;
     }
-    setTerminalUTC(&utc);
+    setTerminalUTC((uint64_t *)&utc);
 
     return 0;
     // json_close_object(&jretobj);
@@ -641,7 +641,7 @@ int getLogDir(void) {
 }
 
 void logToMaster(const char *log) {
-    halNwUDPSendto(ginLogSock, ginIP, ginPort, log, strlen(log));
+    halNwUDPSendto(ginLogSock, ginIP, ginPort, (const uint8_t *)log, strlen(log));
 }
 
 int cloudMsgHandler(const char *data, int len) {

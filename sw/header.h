@@ -234,7 +234,7 @@ typedef unsigned int uint32_t;
 //     usleep(ms*1000)
     
 //#define LELOG(...)
-#elif defined (EWM3081)
+#elif defined (EMW3081)
 //#define PF_VAL 7
 #include <stdint.h>
 #include <stdio.h>

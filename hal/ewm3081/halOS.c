@@ -1,92 +1,113 @@
 #include "halHeader.h"
-static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
+//static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
+#include "debug.h"
+#include "MICORTOS.h"
+#include "MICOPLATFORM.h"
+#include "mico.h"
 
+static mico_mutex_t os_mutex;
 int halLockInit(void *ptr, const char *file, int line) {
-	return 0;
+    mico_rtos_init_mutex(&os_mutex);
+    return 0;
 }
 
 void halDeLockInit(void) {
-	
+    
 }
 
 int halLock(void *ptr, const char *file, int line) {
-    return pthread_mutex_lock(&ginMutex);
+    mico_rtos_lock_mutex(&os_mutex);
+    return 0;
 }
 
 int halUnlock(void *ptr, const char *file, int line) {
-    return pthread_mutex_unlock(&ginMutex);
+    mico_rtos_unlock_mutex(&os_mutex);
+    return 0;
 }
 
-unsigned int halGetTimeStamp(void)
-{
-	return (unsigned int)time(NULL);
+/**
+ * 返回系统开机后的秒数
+ */
+unsigned int halGetTimeStamp(void) {
+    return mico_get_time()/1000;
 }
 
-unsigned int halGetUTC(void)
-{
+unsigned int halGetUTC(void) {
+    //problem
     return 1234;
 }
-
+////////////////////////////////////////////////////////////////////////////////
 #if 0
 void *halCalloc(int n, size_t size) {
-    void *ptr = malloc(n*size);
-    if (ptr) {
-        memset(ptr, 0x00, n*size);
+    void *ptr = calloc(n,size);
+    if(NULL==ptr){
+        APPLOG("halCalloc(%d,%d) = %p",n,size,ptr);
     }
     return ptr;
 }
 
 void *halMalloc(size_t size) {
-    void *ptr;
-    return ptr;
+    void* ret = malloc(size);
+    if(NULL==ret){
+        APPLOG("halMalloc(%d) = %p",size,ret);
+    }
+    return ret;
 }
 
 void *halRealloc(void *ptr, size_t size) {
-    void *ptr1;
-    return ptr1;
+    void* ret = NULL;
+    ret = realloc(ptr,size);
+    if(NULL==ret){
+        APPLOG("halRealloc(%p,%d) = %p",ptr,size,ret);
+    }
+    return ret;
 }
-
-void halFree(void *ptr) {
-    if (ptr)
-        free(ptr);
-}
-#else
-void *halMallocEx(size_t size, const char *filename, uint32_t line) {
-    void *ptr;
-    return ptr;
-}
-
-void *halCallocEx(int n, size_t size, const char *filename, uint32_t line) {
-    void *ptr = malloc(n*size);
+#endif
+void *halMallocEx(size_t size, char* filename, uint32_t line) {
+    void *ptr = malloc(size);
+    //APPLOG("malloc:[%d][0x%x][%d][%s]", size, ptr, line, filename);
     if(ptr==NULL) {
-        APPLOG("halCallocEx:%d",  n*size);
-    }
-    if (ptr) {
-        memset(ptr, 0x00, n*size);
+        APPLOG("halMalloc(%d) = %p",size,ptr);
     }
     return ptr;
 }
 
-void *halReallocEx(void *ptr, size_t size, const char *filename, uint32_t line) {
-    void *ptr1;
+void *halCallocEx(size_t n, size_t size, char* filename, uint32_t line) {
+    void *ptr = calloc(n, size);
+    //APPLOG("calloc:[%d][%d][0x%x][%d][%s]", n*size,xPortGetFreeHeapSize(), ptr, line, filename);
+    if(ptr==NULL) {
+        APPLOG("halCallocEx:%d, %d",  n*size, xPortGetFreeHeapSize());
+    }
+    return ptr;
+}
+
+void *halReallocEx(void *ptr, size_t size, char* filename, uint32_t line) {
+    void *ptr1 = realloc(ptr, size);
+    //APPLOG("realloc:[%d][0x%x][%d][%s]", size, ptr1, line, filename);
+    if (ptr1==NULL) {
+        APPLOG("halRealloc(%p,%d) = %p",ptr,size,ptr1);
+    }
     return ptr1;
 }
 
-void halFreeEx(void *ptr, const char *filename, uint32_t line) {
+void halFreeEx(void *ptr, char* filename, uint32_t line) {
     //APPLOG("halFreeEx:[0x%x][%d][%s]", ptr, line, filename);
     if (ptr)
         free(ptr);
 }
-#endif
-
+////////////////////////////////////////////////////////////////////////////////
 int halReboot() {
+    APPLOG("halReboot");
+    MicoSystemReboot();
     return 0;
 }
 
 uint16_t halRand() {
-    return 0;
+    u16 ret;
+    MicoRandomNumberRead(&ret, 2);
+    return ret;
 }
 
 void halDelayms(int ms) {
-    usleep(ms*1000);
+    mico_thread_msleep(ms);
 }
