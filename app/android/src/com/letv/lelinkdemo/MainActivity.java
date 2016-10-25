@@ -78,11 +78,13 @@ public class MainActivity extends Activity {
 				Log.e(TAG, "Wifi config test...");
 				try {
 					mJsonCmd = new JSONObject();
-					mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
+					// mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
+					mJsonCmd.put(LeCmd.K.TIMEOUT, mDiscoverTimeout);
 					mJsonCmd.put(LeCmd.K.SSID, "ff");
-					mJsonCmd.put(LeCmd.K.APSSID, "ff");
+					// mJsonCmd.put(LeCmd.K.APSSID, "ff");
 					mJsonCmd.put(LeCmd.K.PASSWD, "fengfeng2qiqi");
-					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_SOFTAP);
+					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
+					// mJsonCmd.put(LeCmd.K.AESKEY, "4d90c52bea5259b95b53d33c63a706e2");
 					// AESKEY is optional
 //					mJsonCmd.put(LeCmd.K.AESKEY, "157e835e6c0bc55474abcd91e00e6979");
 				} catch (JSONException e) {

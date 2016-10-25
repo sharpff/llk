@@ -107,7 +107,7 @@ int halGetSelfAddr(char *ip, int size, int *port)
 {
 	int sockfd, nIf;
 	struct ifconf ifc;
-	char ifName[] = "eth0", *p;
+	char ifName[] = "wlan0", *p;
 	struct ifreq buf[MAXINTERFACES];
 	ifc.ifc_len = sizeof(buf);
 	ifc.ifc_len = sizeof(buf);
