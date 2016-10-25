@@ -32,6 +32,9 @@ static void channel_timeout(void* arg);
 //lelink配置是否正在进行中（即使配置成功了，也可以处于配置过程中）
 static bool is_airconfig_thread_running = false;
 
+#define MLAN_MAX_SSID_LENGTH 32
+static char ginSsid[MLAN_MAX_SSID_LENGTH] = {0};
+
 static void monitor_cb(uint8_t *data , int len){
     if(get_info_success){
         return;
@@ -40,7 +43,12 @@ static void monitor_cb(uint8_t *data , int len){
         //长度小于22，则不合法
         return;
     }
-    
+    if(data[0] == 0x80 && len > 39){
+        memset(ginSsid, 0, MLAN_MAX_SSID_LENGTH);
+        memcpy(ginSsid, &data[38], data[37]);
+        return;
+    }
+
     //第二个字节的前两位
     uint8_t to_from_ds = data[1] & 0x03;
     uint8_t *addr1 = data+4;
@@ -98,9 +106,9 @@ static void monitor_cb(uint8_t *data , int len){
         if(memcmp(phone_mac,sa,6)){
             return;
         }
-        
-        int ret = airconfig_get_info(len, base, &account,NULL,0);
-        
+
+        int ret = airconfig_get_info(len, base, &account, ginSsid, strlen(ginSsid));
+
         if(ret){
             debug("get info success!!!!");
             get_info_success = true;
@@ -218,7 +226,7 @@ void start_lelink_config(){
     reinit();
     debug("start caputure packet");
     mico_wlan_monitor_rx_type(WLAN_FILTER_RX_MCAST_DATA);
-    
+    mico_wlan_monitor_rx_type(WLAN_FILTER_RX_BEACON);
     // set the callback function to monitor_cb
     mico_wlan_register_monitor_cb(monitor_cb);
     
