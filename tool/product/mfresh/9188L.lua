@@ -124,9 +124,10 @@ end
 function s1CvtStd2Pri(json)
     local sum = 0
     local count = 0
-    local cmdtb = {0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xC0}
+    local cmdtb = {0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xC0}
     local ctrl = cjson.decode(json)
     local cvtType = s1apiGetCurrCvtType()
+    -- cvtType = 1
     if cvtType == 1 then
         local pwr = ctrl["pwr"]
 		if pwr == 0 then
@@ -160,16 +161,24 @@ function s1CvtStd2Pri(json)
 		end
 		local ospm2 = ctrl["outdoor_pm25"]
 		if ospm2 ~= nil then
+			for i=1, #cmdtb do
+				cmdtb[i] = cmdtb[i]
+				print('out => ' .. cmdtb[i] ..'\n')
+			end
 			cmdtb[3] = 0x0E
-			cmdtb[15] = ospm2 & 0xFF
-			cmdtb[16] = (ospm2 >> 8) & 0xFF
+			cmdtb[15] = ospm2 & 0xff
+			cmdtb[16] = (ospm2 >> 8) & 0xff
+			print('aaaaa => ' .. ospm2..' '..cmdtb[15]..' '..cmdtb[16]..'\n')
+		else
+			print('bbbbb' .. '\n')
 		end
 		for i = 1, #cmdtb - 1 do
 			sum = sum + cmdtb[i]
 		end
-		cmdtb[25] = sum & 0xFF
+		cmdtb[25] = sum & 0xff
 		count = 25
 	end
+    LOGTBL(cmdtb)
     local cmd = tableToString(cmdtb)
     return count, cmd
 end
@@ -196,7 +205,7 @@ function s1CvtPri2Std(bin)
 		for i = 1, #dataTbl - 1 do
 			sum = sum + dataTbl[i]
 		end
-	    sum = sum & 0xFF
+	    sum = sum & 0xff
 		if sum == dataTbl[25] then
 			local pwd = dataTbl[4] - 0x30
 			local envtemp = dataTbl[18]
