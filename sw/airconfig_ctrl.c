@@ -168,55 +168,65 @@ static int inner_airconfig_do_config_head(airconfig_ctx_t *ctx) {
 #else
     int repeat = 12; // 
 #endif
-    int len = 8; // magic & prefix 
+    int len = 4; // magic & prefix 
+    uint8_t buff[4];
     uint16_t data = 0;
     uint8_t ldata = 0;
     uint8_t hdata = 0;
-    uint8_t passwd_len = strlen(ctx->passwd);
-    uint8_t passwd_crc = 0x7F & crc8((uint8_t *)ctx->passwd, passwd_len);
-    uint8_t ssid_len = strlen(ctx->ssid);
-    uint8_t ssid_crc = 0x7F & crc8((uint8_t *)ctx->ssid, ssid_len);
-
+    buff[3] = strlen(ctx->passwd);
+    buff[2] = strlen(ctx->ssid);
+    buff[1] = crc8((uint8_t *)ctx->ssid, buff[2]);
+    buff[0] = crc8((uint8_t *)&buff[1], 3);
     for (i = 0; i < repeat; i++) {
-        data = 0;
         for (j = 0; j < len; j++) {
-            switch (j) {
-            case 0: { // ssid length
-                ldata = (ssid_len >> 4) & 0x0F;
-            }break;
-            case 1: {
-                ldata = ssid_len & 0x0F;
-            }break;
-            case 2: {// ssid crc
-                ldata = (ssid_crc >> 4) & 0x0F;
-            }break;
-            case 3: {
-                ldata = ssid_crc & 0x0F;
-            }break;
-            case 4: {// passwd length
-                ldata = (passwd_len >> 4) & 0x0F;
-            }break;
-            case 5: {
-                ldata = passwd_len & 0x0F;
-            }break;
-            case 6: {// passwd crc
-                ldata = (passwd_crc >> 4) & 0x0F;
-            }break;
-            case 7: {
-                ldata = passwd_crc & 0x0F;
-            }break;
-            default:
-                break;
-            }
-            hdata = j << 4;
+            ldata = ((buff[j] >> 4) & 0x0F);
+            hdata = ((2*j) << 4);
             data = hdata | ldata;
-
+            inner_airconfig_sendto(ctx, gin_base + data);
+            halDelayms(ctx->delay);
+            ldata = (buff[j] & 0x0F);
+            hdata = ((2*j+1) << 4);
+            data = hdata | ldata;
             inner_airconfig_sendto(ctx, gin_base + data);
             halDelayms(ctx->delay);
         }
     }
-
     return 1;
+}
+
+void inner_airconfig_str2bin(uint8_t* src, uint16_t src_len, uint8_t* dst, uint16_t* dst_len) {
+    uint16_t i, temp_len;
+    uint8_t half_data;
+
+    temp_len = (src_len*8)/3;
+
+    if((src_len*8)%3 > 0) {
+      temp_len++;
+    }
+
+    for(i=0; i<temp_len; i++) {
+      uint8_t a = (i*3%8);
+      uint8_t b = 8-a;
+      uint8_t c = i*3/8;
+
+      if(c >= src_len) {
+        APPLOGE("lelink_str2bin len error len =[%d]\r\n ", c);
+      }
+
+      dst[i] = ((src[c] << a) & 0xE0);
+      dst[i] = (dst[i] >> 5);
+      if(a != 0 && c+1 < src_len && b<3 ) {
+        if(b == 2) {
+          half_data = (src[c+1] & 0x80);
+          dst[i] |= (half_data >> 7);
+        } else {
+          half_data = (src[c+1] & 0xC0);
+          dst[i] |= (half_data >> 6);
+        }
+      }
+    }
+
+    *dst_len = temp_len;
 }
 
 static int inner_airconfig_do_config_data(airconfig_ctx_t *ctx) {
@@ -228,50 +238,30 @@ static int inner_airconfig_do_config_data(airconfig_ctx_t *ctx) {
     int passwd_len = strlen(ctx->passwd);
     int ssid_len = strlen(ctx->ssid);
     int total_bytes = 1 + passwd_len + 1 + ssid_len;
-    int total_blocks = (total_bytes - 1)/4 + 1;
-    int last_bytes = total_bytes%4 ? total_bytes%4 : 4;
-    int i, j, tmp;
     uint8_t buf[1 + 32 + 32 + 1] = {0};
+    uint8_t bin[128] = {0};
+    uint16_t bin_len, i;
     if (!ctx) {
         return 0;
     }
 
     memcpy(&buf[1], ctx->passwd, passwd_len);
     
-    // TODO: encrypt
-    // for (i = 0; i < passwd_len; i++) {
-
-    // }
-
     (buf + 1)[passwd_len] = 0xFF & genRand();
     memcpy((buf + 1) + passwd_len + 1, ctx->ssid, ssid_len);
     buf[0] = crc8((buf + 1), passwd_len + 1 + ssid_len);
+    inner_airconfig_str2bin(buf, passwd_len+ssid_len+2, bin, &bin_len);
+    APPLOG("====================> [%d][%d][%d]", passwd_len, bin_len, total_bytes);
     while (repeat--) {
-        LELOG("====================>");
-        halDelayms(ctx->delay);
-        for (i = 0; i < total_blocks; i++) {
-            int bytes = (i+1) == total_blocks ? last_bytes : 4;
-            uint16_t data = 0;
-            uint8_t tmp_buf[5] = { 0 };
-            tmp_buf[0] = (uint8_t)i;
-            memcpy(&tmp_buf[1], &buf[i*4], bytes);
-            tmp = 1;
-            while (tmp--) {
-                //data = 0x0080 | (crc8((uint8_t*)&i, 1) + crc8(buf + i*bytes, bytes));
-                data = 0x0080 | crc8((uint8_t *)tmp_buf, bytes + 1);
-                inner_airconfig_sendto(ctx, gin_base + data); // crc 
-                halDelayms(ctx->delay);
-                inner_airconfig_sendto(ctx, (gin_base + i) | 0x0080); // seq id
-                for (j = 0; j < bytes; j++) {
-                    inner_airconfig_sendto(ctx, (gin_base + buf[i*4 + j]) | 0x0100);
-                    halDelayms(ctx->delay);
-                }
-            }
+        uint16_t data = 0;
+        for (i = 0; i < bin_len; i++) {
+            data = (i << 3);
+            data |= (bin[i] & 0x07);
+            inner_airconfig_sendto(ctx, (gin_base + data));
+            //APPLOG("data [%d]====================>", data);
+            halDelayms(ctx->delay * 5);
         }
-        LELOG("<====================");
-
     }
-
     return 1;
 }
 
@@ -339,20 +329,28 @@ void *airconfig_new(const char *param) {
 
 int airconfig_do_config(void *context) {
     airconfig_ctx_t *ctx = (airconfig_ctx_t *)context;
-    
+
+    // current ssid + psk len should be <= 46
+    // data content is [crc + psk + rand + ssid] = 48 bytes, crc & rand are all 1 byte.
+    if ((strlen(ctx->ssid) + strlen(ctx->passwd)) > 46) {
+        LELOGE("airconfig_do_config param error ssid len[%d] psk len[%d]", strlen(ctx->ssid), strlen(ctx->passwd));
+        return -1;
+    }
     //int i = 0;
     //LELOG("AES:");
     //for (i = 0; i < AES_128; i++) {
         //LELOG("%02x", ctx->aes[i]);
     //}
     //LELOG("");
-    
+    LELOGE("111111");
     while (!inner_airconfig_do_config_sync(ctx))
         ;
     
+    LELOGE("222222");
     while (!inner_airconfig_do_config_head(ctx))
         ;
     
+    LELOGE("333333");
     while (!inner_airconfig_do_config_data(ctx))
         ;
     

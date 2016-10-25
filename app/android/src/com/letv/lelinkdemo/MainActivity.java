@@ -18,7 +18,7 @@ public class MainActivity extends Activity {
 	private JSONObject mJsonCmd = null;
 	private JSONObject mJsonData = null;
 	
-	private static boolean TEST_WIFI_CONFIG = false;
+	private static boolean TEST_WIFI_CONFIG = true;
 	private static boolean TEST_SDK_AUTH = true;
 	private static boolean TEST_DISCOVER_DEV = true;
 	private static boolean TEST_GET_STATE =  true;
@@ -45,6 +45,7 @@ public class MainActivity extends Activity {
 		if (LeLink.setContext(getApplicationContext(), mLeLinkListener, "11:22:33:44:55:66")) {
 			Log.i(TAG, "SDKUUID: " + LeLink.getSdkUUID());
 			mLeLink = LeLink.getInstance();
+			Log.i(TAG, LeLink.getSdkInfo());
 			mTestThread.start();
 		} else {
 			Log.e(TAG, "Failed to setContext");
@@ -59,19 +60,6 @@ public class MainActivity extends Activity {
 			String retData = null;
 			String dataStr = null;
 
-			while (TEST_SDK_AUTH && true) {
-				Log.e(TAG, "Waitting auth...");
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-				}
-				if (mLeLink.isCloud()) {
-					break;
-				}
-			}
-			
-			Log.i(TAG, LeLink.getSdkInfo());
-			
 			/*
 			 * 设备发现 必须传入timeout
 			 * 
@@ -90,10 +78,15 @@ public class MainActivity extends Activity {
 				Log.e(TAG, "Wifi config test...");
 				try {
 					mJsonCmd = new JSONObject();
-					mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
+					// mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
+					mJsonCmd.put(LeCmd.K.TIMEOUT, mDiscoverTimeout);
 					mJsonCmd.put(LeCmd.K.SSID, "ff");
+					// mJsonCmd.put(LeCmd.K.APSSID, "ff");
 					mJsonCmd.put(LeCmd.K.PASSWD, "fengfeng2qiqi");
 					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
+					// mJsonCmd.put(LeCmd.K.AESKEY, "4d90c52bea5259b95b53d33c63a706e2");
+					// AESKEY is optional
+//					mJsonCmd.put(LeCmd.K.AESKEY, "157e835e6c0bc55474abcd91e00e6979");
 				} catch (JSONException e) {
 					e.printStackTrace();
 					return;
@@ -105,6 +98,19 @@ public class MainActivity extends Activity {
 					return;
 				}
 			}
+			
+			while (TEST_SDK_AUTH && true) {
+				Log.e(TAG, "Waitting auth...");
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+				}
+				if (mLeLink.isCloud()) {
+					break;
+				}
+			}
+			
+			Log.i(TAG, LeLink.getSdkInfo());
 
 			if (TEST_DISCOVER_DEV) {
 				/*

@@ -19,6 +19,7 @@
 
 // test only
 #define SELF_IP "192.168.3.100"
+// #define SELF_IP "192.168.1.133"
 //#define SELF_IP "192.168.67.19"
 // #define SELF_IP "192.168.1.113"
 // #define SELF_IP "192.168.3.215"

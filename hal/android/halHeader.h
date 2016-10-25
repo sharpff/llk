@@ -20,7 +20,7 @@
     usleep(ms*1000)
 
 // test only
-#define SELF_IP "192.168.3.109"
+#define SELF_IP "192.168.3.100"
 
 
 // #define LOCAL_TEST_IP "10.57.149.117"

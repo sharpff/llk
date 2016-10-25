@@ -37,7 +37,7 @@ public class testLelink {
 	private JSONObject mJsonCmd = null;
 	private JSONObject mJsonData = null;
 	
-	private static boolean TEST_WIFI_CONFIG = false;
+	private static boolean TEST_WIFI_CONFIG = true;
 	private static boolean TEST_SDK_AUTH = true;
 	private static boolean TEST_DISCOVER_DEV = true;
 	private static boolean TEST_GET_STATE =  true;
@@ -110,6 +110,9 @@ public class testLelink {
 		try {
 			JSONObject jsonCmd;
 	        int c = 0;  
+	        if (TEST_WIFI_CONFIG) {
+		        (new testLelink()).mTestThread.start();
+	        }
 	        while(c != -1){//读取输入流中的字节直到流的末尾返回1  
 	            c = System.in.read();  
 	            switch (c) {
@@ -151,9 +154,37 @@ public class testLelink {
 			JSONObject dataJson;
 			String retData = null;
 			String dataStr = null;
+			Log.i(TAG, "===========>run1\r\n");
+			if (TEST_WIFI_CONFIG) {
+				/*
+				 * WIFI配置 必须传入参数: ssid, passwd, timeout
+				 * 
+				 * 在timeout时间内，不断重复发送配置包。如果期间收到hello,则退出该函数。
+				 */
+				Log.e(TAG, "Wifi config test...\r\n");
+				try {
+					mJsonCmd = new JSONObject();
+					// mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
+					mJsonCmd.put(LeCmd.K.TIMEOUT, mDiscoverTimeout);
+					mJsonCmd.put(LeCmd.K.SSID, "ff");
+					// mJsonCmd.put(LeCmd.K.APSSID, "ff");
+					mJsonCmd.put(LeCmd.K.PASSWD, "fengfeng2qiqi");
+					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_BROADCAST);
+					// mJsonCmd.put(LeCmd.K.AESKEY, "4d90c52bea5259b95b53d33c63a706e2");
+				} catch (JSONException e) {
+					e.printStackTrace();
+					return;
+				}
+				if (mLeLink.airConfig(mJsonCmd.toString()) == 0) {
+					Log.w(TAG, "airConfig ok!\n");
+				} else {
+					Log.e(TAG, "airConfig timeout");
+					return;
+				}
+			}
 
 			while (TEST_SDK_AUTH && true) {
-				Log.e(TAG, "Waitting auth...");
+				Log.e(TAG, "Waitting auth...\r\n");
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
@@ -162,6 +193,7 @@ public class testLelink {
 					break;
 				}
 			}
+			Log.i(TAG, "===========>run2\r\n");
 			
 			Log.i(TAG, LeLink.getSdkInfo());
 			
@@ -174,30 +206,6 @@ public class testLelink {
 			sdkUUID = LeLink.getSdkUUID();
 			Log.i(TAG, "SDK UUID: " + sdkUUID);
 			
-			if (TEST_WIFI_CONFIG) {
-				/*
-				 * WIFI配置 必须传入参数: ssid, passwd, timeout
-				 * 
-				 * 在timeout时间内，不断重复发送配置包。如果期间收到hello,则退出该函数。
-				 */
-				Log.e(TAG, "Wifi config test...");
-				try {
-					mJsonCmd = new JSONObject();
-					mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
-					mJsonCmd.put(LeCmd.K.SSID, "ff");
-					mJsonCmd.put(LeCmd.K.PASSWD, "fengfeng2qiqi");
-					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
-				} catch (JSONException e) {
-					e.printStackTrace();
-					return;
-				}
-				if (mLeLink.airConfig(mJsonCmd.toString()) == 0) {
-					Log.w(TAG, "airConfig ok!\n");
-				} else {
-					Log.e(TAG, "airConfig timeout");
-					return;
-				}
-			}
 
 			if (TEST_DISCOVER_DEV) {
 				/*

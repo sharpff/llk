@@ -49,7 +49,8 @@ inline char *hal_strstr(const char *haystack, const char *needle)
 
 inline char *hal_strrstr(const char *haystack, const char *needle)
 {
-    return strrstr(haystack, needle);
+    APPLOGE("has no implement");
+    return NULL;
 }
 
 inline int hal_sprintf(char *buf, const char *fmt, ...) {

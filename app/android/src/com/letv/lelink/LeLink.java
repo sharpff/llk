@@ -237,7 +237,7 @@ public class LeLink {
 				sendJson.getString(LeCmd.K.APSSID);
 			}
 			while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
-				String logStr = String.format("AirConfig type = %d tryTimes = %d", airConfigType, tryTimes);
+				String logStr = String.format("AirConfig type = %d tryTimes = %d\r\n", airConfigType, tryTimes);
 				LOGI(logStr);
 				sendJson.put(LeCmd.K.TYPE, airConfigType);
 				airConfig(mPtr, sendJson.toString());
@@ -534,7 +534,7 @@ public class LeLink {
 		synchronized (mWaitSendCmds) {
 			dataJson = mWaitSendCmds.get(keyStr);
 			if (dataJson != null) {
-				mWaitSendCmds.remove(keyStr);
+				// mWaitSendCmds.remove(keyStr);
 			}
 		}
 		return dataJson;
@@ -640,7 +640,7 @@ public class LeLink {
 		case MSG_TYPE_REMOTERESPOND:
 			try {
 				dataStr = new String(buf, "UTF-8");
-				LOGI("Json(" + buf.length + "):\n" + dataStr);
+				// LOGI("Json(" + buf.length + "):%s\n", dataStr);
 				if (cmd == LeCmd.CTRL_RSP || cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP) {
 					if (uuid.indexOf(mWaitCtrlUuid) < 0) {
 						LOGW("Ctrl respond, but uuid: " + uuid + ", need: " + mWaitCtrlUuid);

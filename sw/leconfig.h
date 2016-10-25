@@ -13,7 +13,7 @@ extern "C"
 #include "halHeader.h"
 #endif /* __LE_SDK__ */
 
-#if defined(WIN32) || defined(EWM3081)
+#if defined(WIN32) || defined(EMW3081)
 #define LELINK_ALIGNED
 #define LELINK_PACK
 #else
@@ -160,9 +160,6 @@ void *halCallocEx(size_t n, size_t size, const char *filename, uint32_t line);
 void *halReallocEx(void *ptr, size_t size, const char *filename, uint32_t line);
 void halFreeEx(void *ptr, const char *filename, uint32_t line);
 
-int halSoftApStart(char *ssid, char *wpa2_passphrase);
-int halSoftApStop(void);
-
 int halGetBroadCastAddr(char *broadcastAddr, int len);
 int halCastProbing(const char *mcastIP, const char *bcastIP, int port);
 int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *len, uint32_t maxLen, int isPKCS5, int type);
@@ -195,11 +192,15 @@ int halStopConfig(void);
 int halDoConfiguring(void *ptr, int ptrLen);
 int halDoApConnect(void *ptr, int ptrLen);
 int halDoApConnecting(void *ptr, int ptrLen);
-int halSoftApStart(char *ssid, char *wpa2_passphrase);
-int halSoftApStop(void);
+int halSoftApStart(const char *ssid, char *wpa2_passphrase, uint8_t *aesKey, int aesKeyLen);
+int halSoftApStop(int success);
+
 
 int halGetHostByName(const char *name, char ip[4][32], int len);
 uint16_t halRand();
+
+int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey);
+
 
 #define applog(_mod_name_, _fmt_, ...) \
     { \
@@ -235,6 +236,8 @@ void _halFree(void *ptr);
 #define CACHE_NODE_HEADER \
     uint16_t flag; \
     uint16_t nodeReserved;
+
+#define LELINK_OTA_VERIFICATION
 
 #ifdef __cplusplus
 }

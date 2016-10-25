@@ -237,7 +237,7 @@ public class LeLink {
 				sendJson.getString(LeCmd.K.APSSID);
 			}
 			while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
-				String logStr = String.format("AirConfig type = %d tryTimes = %d", airConfigType, tryTimes);
+				String logStr = String.format("AirConfig type = %d tryTimes = %d\r\n", airConfigType, tryTimes);
 				LOGI(logStr);
 				sendJson.put(LeCmd.K.TYPE, airConfigType);
 				airConfig(mPtr, sendJson.toString());
@@ -484,13 +484,11 @@ public class LeLink {
 		synchronized (mWaitSendCmds) {
 			String keyStr;
 			int min = 1;
-			// LOGI("------------------ send ----------------- mSeqId is " + mSeqId + ", size is " + mWaitSendCmds.size() + "\n");
 			if (mWaitSendCmds.size() >= MAX_WAIT_CMD) {
 				for (min = 1; min < mSeqId; min++) {
 					keyStr = String.valueOf(min);
 					if (mWaitSendCmds.get(keyStr) != null) {
 						mWaitSendCmds.remove(keyStr);
-						// LOGI("================mWaitSendCmds removed from cache ==> " + keyStr + "\n");
 						break;
 					}
 				}
@@ -506,7 +504,6 @@ public class LeLink {
 					return false;
 				}
 				mWaitSendCmds.put(String.valueOf(mSeqId), jsonStr);
-				// LOGI("*********mWaitSendCmds input <== " + jsonStr);
 			}
 		}
 		try {
@@ -537,7 +534,6 @@ public class LeLink {
 		synchronized (mWaitSendCmds) {
 			dataJson = mWaitSendCmds.get(keyStr);
 			if (dataJson != null) {
-				// LOGI("*********mWaitSendCmds removed ==> " + keyStr);
 				// mWaitSendCmds.remove(keyStr);
 			}
 		}

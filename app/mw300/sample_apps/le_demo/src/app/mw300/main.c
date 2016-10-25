@@ -143,7 +143,7 @@ void print_frame_info(const wlan_frame_t *frame)
 #define AIRCONFIG_INFINITE_INTERVAL os_msec_to_ticks(0xffffffff)
 // #define AIRCONFIG_CHANNEL_SWITCH_INTERVAL os_msec_to_ticks(800)
 #define AIRCONFIG_CHANNEL_SWITCH_INTERVAL os_msec_to_ticks(300)
-#define AIRCONFIG_CHANNEL_TIMEOUT os_msec_to_ticks(12*1000)
+#define AIRCONFIG_CHANNEL_TIMEOUT os_msec_to_ticks(18*1000)
 #define AIRCONFIG_TIMEOUT os_msec_to_ticks(60*60*1000)
 #define LOCK_AIRCONFIG "lock_airconfig"
 static os_thread_t thread_airconfig;

@@ -313,7 +313,7 @@ static int sdevInfoSerilized(const SDevNode *arr) {
 }
 
 static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
-    int tmpCurrNum = 0, i = 0, j = 0, ret = 0, val = 0, num = 0, index = -1, ept = -1;
+    int i = 0, j = 0, ret = 0, val = 0, num = 0, index = -1, ept = -1;
     char str[64] = {0};
     int8_t isCompleted = 1;
     // const char *fmt = "{\"%s\":%d}";
@@ -509,7 +509,8 @@ static int sdevInsert(SDevNode *arr, const char *status, int len) {
                 LELOG("sdevInsert qForEachfromCache already EXIST [%d]", index);
                 return 0;                
             }
-            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_INDEX, node.idx, sizeof(node.idx))) {
+            // strcpy(node.sdevInfo, sDev);
+            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_INDEX, (char *)node.idx, sizeof(node.idx))) {
                 LELOGE("sdevInsert json_get_val_str [%s] FAILED", JSON_NAME_SDEV_INDEX);
                 return -4;
             }
@@ -595,7 +596,7 @@ static int sdevRemove(SDevNode *arr, const char *status, int len) {
     char str[64] = {0};
     jobj_t jobj;
     jsontok_t jsonToken[NUM_TOKENS];
-    json_string_t jstr;
+    // json_string_t jstr;
     LELOG("sdevRemove START ****************************");
     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)status, len);
     if (WM_SUCCESS != ret) {
@@ -874,7 +875,7 @@ static IO lf_s1CvtStd2Pri_input(lua_State *L, const uint8_t *input, int inputLen
     return io;
 }
 static int lf_s1CvtStd2Pri(lua_State *L, uint8_t *output, int outputLen) {
-    int i = 0;
+    // int i = 0;
     int sLen = lua_tointeger(L, -2);
     int size = MIN(sLen, outputLen);
     const uint8_t *tmp = (const uint8_t *)lua_tostring(L, -1);
@@ -1692,14 +1693,14 @@ int senginePollingSlave(void) {
                         extern int lelinkNwPostCmdExt(const void *node);
                         int len = 0;
                         len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-                                datas.arrDatas, currLen, (uint8_t *)status, sizeof(status));
-                        // LELOGE("sengineCall len = %d. [%s]", len, status);
+                                &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
+                        } else if (len & (1<<31)) {
+                            sengineSetStatus((char *)status, len);
                         } else if (cacheIsChanged(status, len)) {
                             postStatusChanged(0);
                             cacheSetTerminalStatus(status, len);
-                            sengineSetStatus((char *)status, len);
                         }
                     }
                     break;
