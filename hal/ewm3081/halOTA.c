@@ -127,8 +127,11 @@ int halUpdateFirmware(OTAInfo_t *info) {
         
     APPLOG("Download result success");
     
+    #ifdef LELINK_OTA_VERIFICATION
     ret = lelinkVerify(ota_partition->partition_start_addr, totalSize);
-
+    #else
+    ret = 0;
+    #endif
     if ( 0 == ret ) {
         APPLOG("OTA SUCCESS. Rebooting [%d]...\r\n", totalSize);
         memset(buf, 0, FOTA_BUF_SIZE);

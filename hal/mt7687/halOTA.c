@@ -211,9 +211,11 @@ int halUpdateFirmware(OTAInfo_t *info) {
 	vPortFree(buf);
 	buf = NULL;
 
-	// test only
+    #ifdef LELINK_OTA_VERIFICATION
 	ret = lelinkVerify(p->start, info->imgLen);
-    // ret = 0;
+    #else
+    ret = 0;
+    #endif
 
     if (ret) {
     	APPLOGE("lelinkVerify error!");

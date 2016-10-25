@@ -233,6 +233,8 @@ void _halFree(void *ptr);
 #define halRealloc(ptr, size)  halReallocEx(ptr, size, __FILE__, __LINE__)
 #define halFree(ptr)           halFreeEx(ptr, __FILE__, __LINE__)
 
+#define LELINK_OTA_VERIFICATION
+
 #ifdef __cplusplus
 }
 #endif
