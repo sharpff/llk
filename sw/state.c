@@ -48,6 +48,16 @@
     if (0 < ((ot * ginMSDelay) / ms)) {\
         ot = 0;
 
+#define TIMEOUT_BEGIN_SEC(ss) {\
+    static uint8_t tsStart;\
+    static uint8_t tsEnd;\
+    tsEnd = halGetTimeStamp(); \
+    if (0 == tsStart) { \
+        tsStart = tsEnd; \
+    } \
+    if (ss <= ((tsEnd - tsStart))) {\
+        tsStart = tsEnd = 0;
+
 #define TIMEOUT_END }}
 
 /* for softAp */
@@ -420,8 +430,9 @@ static int stateProcCloudLinked(StateContext *cntx) {
     }
     LELOG("stateProcCloudLinked");
 
-    TIMEOUT_BEGIN(8000)
-        LELOGW("stateProcCloudLinked timeout");
+    TIMEOUT_BEGIN_SEC(8)
+    // TIMEOUT_BEGIN(8000)
+        LELOGW("stateProcCloudLinked timeout *****************************");
         return -1;
     TIMEOUT_END
 
@@ -444,7 +455,8 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         s_first_heart = 0;
         return 0;
     }
-    TIMEOUT_BEGIN(10000)
+    TIMEOUT_BEGIN_SEC(12)
+    // TIMEOUT_BEGIN(12000)
         NodeData node = {0};
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
@@ -465,6 +477,7 @@ static int stateProcCloudAuthed(StateContext *cntx) {
             if (lelinkNwPostCmd(ginCtxR2R, &node)) {
             }
         }
+        LELOGW("stateProcCloudAuthed timeout *****************************");
     TIMEOUT_END
 
     return 0;
