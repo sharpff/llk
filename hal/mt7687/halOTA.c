@@ -212,8 +212,8 @@ int halUpdateFirmware(OTAInfo_t *info) {
 	buf = NULL;
 
 	// test only
-	//ret = lelinkVerify(p->start, info->imgLen);
-    ret = 0;
+	ret = lelinkVerify(p->start, info->imgLen);
+    // ret = 0;
 
     if (ret) {
     	APPLOGE("lelinkVerify error!");
