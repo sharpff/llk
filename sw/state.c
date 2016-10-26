@@ -49,8 +49,8 @@
         ot = 0;
 
 #define TIMEOUT_BEGIN_SEC(ss) {\
-    static uint8_t tsStart;\
-    static uint8_t tsEnd;\
+    static uint32_t tsStart;\
+    static uint32_t tsEnd;\
     tsEnd = halGetTimeStamp(); \
     if (0 == tsStart) { \
         tsStart = tsEnd; \
