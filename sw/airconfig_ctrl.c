@@ -28,6 +28,8 @@
 #define LECONFIG_MCAST_ADDR "239.101.1.1"
 #define LECONFIG_PORT 59678
 
+#ifndef EMW3081
+
 typedef struct {
     char ssid[32];
     char passwd[32];
@@ -364,3 +366,4 @@ void airconfig_delete(void *context) {
     return;
 }
 
+#endif
