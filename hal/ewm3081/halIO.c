@@ -232,9 +232,15 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, i
  * 读取flash
  */
 int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin) {
-    //debug("read flash, dev = %p, data = %p, len = %d, startAddr = %d", dev, data,len,startAddr + offsetToBegin);
-    uint32_t _addr = startAddr + offsetToBegin;
-    MicoFlashRead(MICO_PARTITION_LELINK_PARAM, &_addr, data, len);
+    //debug("read flash, dev = %p, data = %p, len = %d, startAddr = %d %d", dev, data,len, startAddr, offsetToBegin);
+    mico_logic_partition_t* ota_partition = MicoFlashGetInfo( MICO_PARTITION_OTA_TEMP );
+    if(ota_partition->partition_start_addr == startAddr) {
+      uint32_t _addr = offsetToBegin; 
+      MicoFlashRead(MICO_PARTITION_OTA_TEMP, &_addr, data, len);
+    } else {
+      uint32_t _addr = startAddr + offsetToBegin; 
+      MicoFlashRead(MICO_PARTITION_LELINK_PARAM, &_addr, data, len);
+    }
     return len;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////

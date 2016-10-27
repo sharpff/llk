@@ -59,7 +59,7 @@ int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
     halSha1Start();
     halSha1Update(input, inputLen);
     halSha1End(tmp);
-
+#if 0
     {
         LELOG("------ sha12key single ----------");
         for (i = 0; i < sizeof(tmp); i++) {
@@ -67,6 +67,7 @@ int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
         }
         LEPRINTF("\r\n");
     }
+#endif
     memcpy(output, tmp, MD5_LEN);
     return 0;
 }
@@ -333,7 +334,7 @@ int getVer(char fwVer[64], int size) {
         return -1;
     }
     memset(fwVer, 0, 64);
-    sprintf(fwVer, "%d-%s-%d-%s", PF_VAL, getSWVer(), getProtocolVer(), getScriptVer());
+    sprintf(fwVer, "%d-%s-%s", PF_VAL, getSWVer(), getScriptVer());
     return 0;
 }
 

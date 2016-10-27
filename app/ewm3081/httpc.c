@@ -339,6 +339,37 @@ static uint8_t get_ip_addr_type(char *URL)
 	return ADDR_TYPE_IPV4;
 }
 
+static int inet_aton_ex (const char *cp, struct in_addr *inaddr ){
+  int dots = 0;  //2
+  int addr = 0;
+  int val = 0, base = 10;
+  do {
+      char c = *cp;
+      switch (c) {
+          case '0': case '1': case '2': case '3': case '4': case '5':
+          case '6': case '7': case '8': case '9':
+            val = (val * base) + (c - '0');
+            break;
+          case '.':
+            if (++dots > 3)
+              return 0;
+          case '\0':
+              if (val > 255)
+                return 0;
+              addr = addr << 8 | val;
+              val = 0;
+              break;
+          default:
+              return 0;
+      }
+    }while (*cp++) ;
+    if (dots < 3)
+        addr <<= 8 * (3 - dots);
+    if (inaddr)
+        inaddr->s_addr = htonl(addr);
+    return 1;
+}
+
 /**
  * Create a socket and connect to the peer. The 'hostname' parameter can
  * either be a hostname or a ip address.
@@ -358,13 +389,13 @@ static int tcp_socket(int *sockfd,
 	if (addr_type == ADDR_TYPE_IPV4) {
 		struct sockaddr_in *addr = (struct sockaddr_in *)address;
 		family = AF_INET;
-		//ret = inet_aton(hostname, &addr->sin_addr);
-
+        char ip[4][32];
+		ret = inet_aton_ex(hostname, &addr->sin_addr);
 		if (!ret) {
 			/* hostname is in human readable form. get the
 			   corresponding IP address */
 			// struct hostent *entry = NULL;
-			char ip[4*32] = {0};
+			
 			// net_gethostbyname(hostname, &entry);
 			ret = halGetHostByName(host, ip, sizeof(ip));
 
@@ -373,7 +404,7 @@ static int tcp_socket(int *sockfd,
 				// memset(&tmp, 0, sizeof(struct sockaddr_in));
 				// memcpy(&tmp.sin_addr.s_addr,
 				// 	entry->h_addr_list[0], entry->h_length);
-				// host = inet_ntoa(tmp.sin_addr);
+				host = ip[0];
 			} else {
 				APPLOGE("No entry for host %s found", hostname);
 					;// g_wm_stats.wm_ht_dns_fail++;

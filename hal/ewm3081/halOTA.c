@@ -89,7 +89,7 @@ void halHttpClose(OTAInfo_t *info) {
 int halUpdateFirmware(OTAInfo_t *info) {
     int32_t ret = 0;
     OSStatus err;
-    volatile uint32_t out_count;
+    volatile uint32_t out_count = 0;
     uint8_t md5_recv[16];
     uint8_t md5_calc[16];
     md5_context ctx;
