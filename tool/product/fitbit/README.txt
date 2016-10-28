@@ -186,22 +186,57 @@ REQ:
 LIGHT - ONOFF:
 hd l  cT cT    addr  e  onOff l  aM    sI v  cs
 FE 0B 29 00 0B 0B 5f 01 06 00 04 02 11 01 01 6D
+FE 0B 29 00 0B EC 12 0B 06 00 04 02 11 01 01 CD  open HUE
+FE 0B 29 00 0B EC 12 0B 06 00 04 02 11 01 00 CC  close HUE
 LIGHT - LEVEL:
+#define COMMAND_LEVEL_MOVE_TO_LEVEL                       0x00
+#define COMMAND_LEVEL_MOVE                                0x01
+#define COMMAND_LEVEL_STEP                                0x02
+#define COMMAND_LEVEL_STOP                                0x03
+#define COMMAND_LEVEL_MOVE_TO_LEVEL_WITH_ON_OFF           0x04
+#define COMMAND_LEVEL_MOVE_WITH_ON_OFF                    0x05
+#define COMMAND_LEVEL_STEP_WITH_ON_OFF                    0x06
+#define COMMAND_LEVEL_STOP_WITH_ON_OFF                    0x07
 c: command move to level - 00, move - 01
 l: level value, 0 ~ FF
 t: time, 100ms * n, philip used n = 4.
-hd l  cT cT    addr  e  level l  aM    sI c  lv t     cs
+hd l  cT cT    addr  e  level l  aM    sI c  v  t     cs
 fe 0e 29 00 0b 0b 5f 01 08 00 07 02 11 01 00 01 00 00 65 
+fe 0e 29 00 0b ec 12 0b 08 00 07 02 11 02 04 00 64 00 a7 move to level => 00
+fe 0e 29 00 0b ec 12 0b 08 00 07 02 11 02 04 ff 64 00 58 move to level => ff
 LIGHT - HUE:
-c: HUE & SAT
-hd l  cT cT    addr  e  level l  aM    sI c  H  S  t     cs
-FE 0F 29 00 0B 0B 5f 01 00 03 08 02 01 DD 06 80 80 00 00 XX
+#define COMMAND_LIGHTING_MOVE_TO_HUE                                     0x00
+#define COMMAND_LIGHTING_MOVE_HUE                                        0x01
+#define COMMAND_LIGHTING_STEP_HUE                                        0x02
+#define COMMAND_LIGHTING_MOVE_TO_SATURATION                              0x03
+#define COMMAND_LIGHTING_MOVE_SATURATION                                 0x04
+#define COMMAND_LIGHTING_STEP_SATURATION                                 0x05
+#define COMMAND_LIGHTING_MOVE_TO_HUE_AND_SATURATION                      0x06
+#define COMMAND_LIGHTING_MOVE_TO_COLOR                                   0x07
+#define COMMAND_LIGHTING_MOVE_COLOR                                      0x08
+#define COMMAND_LIGHTING_STEP_COLOR                                      0x09
+#define COMMAND_LIGHTING_MOVE_TO_COLOR_TEMPERATURE                       0x0a
+#define COMMAND_LIGHTING_ENHANCED_MOVE_TO_HUE                            0x40
+#define COMMAND_LIGHTING_ENHANCED_MOVE_HUE                               0x41
+#define COMMAND_LIGHTING_ENHANCED_STEP_HUE                               0x42
+#define COMMAND_LIGHTING_ENHANCED_MOVE_TO_HUE_AND_SATURATION             0x43
+#define COMMAND_LIGHTING_COLOR_LOOP_SET                                  0x44
+#define COMMAND_LIGHTING_STOP_MOVE_STEP                                  0x47
+c: HUE & SAT(refer to COMMAND_LIGHTING_XXX)
+S: SAT 0 ~ FE
+H: color (360dot)
+888 => (v of move to level with onoff), H, S
+hd l  cT cT    addr  e  color l  aM    sI c  H  S  t     cs
+FE 0F 29 00 0B EC 12 0B 00 03 08 02 01 00 06 00 FE 00 00 00
 
 RSP:
 FE 01 69 00 00 68
 
-
-
+Color Temprature:
+cT: color Temprature (2000K ~ 6500K(7500K)) colorTemperature = (uint16)(1000000L/(uint32)colorTemperature);
+hd l  cT cT    addr  e  temp  l  aM    sI c  cT    t     cs
+fe 0f 29 00 0b ec 12 0b 00 03 08 02 11 00 0a 4d 01 00 00 86 warmer
+fe 0f 29 00 0b ec 12 0b 00 03 08 02 11 00 0a a6 00 00 00 6c colder
 
 *active request:
 *active response:
@@ -446,3 +481,81 @@ void zclSocGetZoneType(uint16_t dstAddr, uint8_t endpoint,uint8_t addrMode)
 
     UARTwrite((const char *)cmd, sizeof(cmd));  
 }
+
+void zllSocSetHueSat(uint8_t hue, uint8_t sat, uint16_t time, uint16_t dstAddr, uint8_t endpoint, uint8_t addrMode)
+{
+  uint8_t cmd[] = { 
+    0xFE, 
+    15, //RPC payload Len
+    0x29, //MT_RPC_CMD_AREQ + MT_RPC_SYS_APP
+    0x00, //MT_APP_MSG
+    0x0B, //Application Endpoint         
+      0x00,//(dstAddr & 0x00ff),
+      0x00,//(dstAddr & 0xff00) >> 8,
+      0x00,//endpoint, /*Dst EP */          
+    (ZCL_CLUSTER_ID_LIGHTING_COLOR_CONTROL & 0x00ff),
+    (ZCL_CLUSTER_ID_LIGHTING_COLOR_CONTROL & 0xff00) >> 8,
+    0x08, //Data Len
+      0x00,//addrMode, 
+    0x11, //ZCL Header Frame Control
+      0x00,//transSeqNumber++,
+    0x06, //ZCL Header Frame Command (COMMAND_LEVEL_MOVE_TO_HUE_AND_SAT)
+    0x00,//hue, //HUE - fill it in later
+    0x00,/t, //SAT - fill it in later
+    0x00,//(time & 0xff),
+    0x00,//(time & 0xff00) >> 8,
+    0x00 //fcs
+  }; 
+      cmd[5]=(dstAddr & 0x00ff);
+      cmd[6]=(dstAddr & 0xff00) >> 8;
+      cmd[7]=endpoint; /*Dst EP */          
+          cmd[11]=addrMode;
+    cmd[13]=transSeqNumber++;
+    cmd[15]=hue; //HUE - fill it in later
+    cmd[16]=sat; //SAT - fill it in later
+    cmd[17]=(time & 0xff);
+    cmd[18]=(time & 0xff00) >> 8;
+
+  calcFcs(cmd, sizeof(cmd));
+  UARTwrite((const char *)cmd, sizeof(cmd));
+  if(addrMode==afAddr16Bit)
+    {
+    SetEpHue(dstAddr,endpoint,hue);
+    SetEpSat(dstAddr,endpoint,sat);
+    }   
+}
+
+void zllSocSetColorTemperature(uint16_t saddr,uint8_t endpoint, uint8_t addrMode,uint16_t value)
+{
+  uint8_t cmd[] = {
+    0xFE,
+    0x0F,
+    0x29,
+    0x00,
+    0x0B,
+    0,
+    0,
+    0,
+    (0x0300&0xff),
+    ((0x0300&0xff00)/256),
+    0x08,
+    0x02,
+    0x11,
+    0,
+    0x0a,
+    0,
+    0,
+    (0&0xff),
+    ((0&0xff00)/256),
+    0
+  };
+  cmd[5] = (saddr&0xff);
+  cmd[6] = ((saddr&0xff00)/256);
+  cmd[7] = endpoint;
+  cmd[13] = transSeqNumber++;
+  cmd[11] = addrMode;
+  cmd[15] = (value&0xff);
+  cmd[16] = ((value&0xff00)/256);
+  calcFcs(cmd, sizeof(cmd));
+  UARTwrite((const char *)cmd, sizeof(cmd));
+
