@@ -10,23 +10,58 @@ Cluster ID:
 8) 0x0201: 温控器类
 
 0x0009: alarm
+CIE includes clusters:
 0x0502: WD, warning device
 0x0501: ACE, Ancillary Control Equip
 0x0500: IAS Zone, Intruder Alarm Systems
 
-Device ID: 
-0x0402: CIE Control and Indicating Equip (*****includes clusters 0x0502, 0x0500, 0x)
+CIE(Control and Indicating Equip) Device ID: 
+0x0402, 0x0403
 
 c(command): MGR 05-join, 06-leave
 aM(address mode): 00-invalid, 01-group, 02-short, 03-mac 
+e(endpoint): endpoint FF is broadcast
+
+reset to factory:
+FE 0D 29 00 0B 02 00 0B FF FF 06 02 00 00 02 3C 00 00
+
+GET co's mac
+hd l  cT cT    addr  e  all   pL aM       c  t     cs
+REQ:
+FE 04 25 01 00 00 00 00 20 
+BACK:
+FE 01 65 01 00 65 
+RSP:
+hd l  cT cT r  |-------MAC-----------| addr     
+FE 0D 45 81 00 A7 38 43 03 00 4B 12 00 00 00 8F 00 C0 
 
 *CLASSIC_JOIN_PERMIT_JOIN:
-REQ: 
+REQ:
 hd l  cT cT    addr  e  all   pL aM       c  t     cs
 FE 0D 29 00 0B 02 00 0B FF FF 06 02 00 00 05 3C 01 1A 
 RSP:
    l        ret
 FE 01 69 00 00 68 
+
+/*** Foundation Command IDs ***/
+#define ZCL_CMD_READ                                    0x00
+#define ZCL_CMD_READ_RSP                                0x01
+#define ZCL_CMD_WRITE                                   0x02
+#define ZCL_CMD_WRITE_UNDIVIDED                         0x03
+#define ZCL_CMD_WRITE_RSP                               0x04
+#define ZCL_CMD_WRITE_NO_RSP                            0x05
+#define ZCL_CMD_CONFIG_REPORT                           0x06
+#define ZCL_CMD_CONFIG_REPORT_RSP                       0x07
+#define ZCL_CMD_READ_REPORT_CFG                         0x08
+#define ZCL_CMD_READ_REPORT_CFG_RSP                     0x09
+#define ZCL_CMD_REPORT                                  0x0a
+#define ZCL_CMD_DEFAULT_RSP                             0x0b
+#define ZCL_CMD_DISCOVER                                0x0c
+#define ZCL_CMD_DISCOVER_RSP                            0x0d
+X: 10 - need rsp, 11 - no need rsp(ctrl)
+Y: ZCL CMD
+hd l  cT cT    addr  e  CIE   l  aM X  sI Y           |-------MAC-----------| cs
+FE 16 29 00 0B 3F A4 01 00 05 0F 02 10 01 02 10 00 F0 A7 38 43 03 00 4B 12 00 00 
 
 mask:
 0x01,Send aRequest? 0x00 - leave silence. 0x01 - leave with Indicating
@@ -44,7 +79,7 @@ FE 01 69 00 00 68
 hd l  cT cT sAddr       |-------MAC-----------|    cs
 dev announce
 FE 0D 45 C1 67 5F 67 5F 52 98 C3 0C 00 4B 12 00 80 55
-
+FE0D45C1675F675F5298C30C004B12008055FE0D45C1675F675F5298C30C004B12008055
 
 
 *设备leave ind：
@@ -77,22 +112,72 @@ RSP mass, too many info
 
 
 *sensor类：
-   msgT  len   cs sq short e  clu      attrE t  v
-btn pressed:
-01 81 02 00 0B 62 04 B4 4C 01 00 06 00 00 00 10 01 03 
-01 81 02    00    0B 62 04    B4 4C 01    00    06    00    00    00    10 01    03 
-01 81 02 12 02 10 0B 62 02 14 B4 4C 02 11 02 10 02 16 02 10 02 10 02 10 10 02 11 03
-0181021202100B620214B44C02110210021602100210021010021103
-heart:
-01 81 02 00 0B AA 91 6E C7 01 04 06 00 00 00 18 01 03 
-01 81 02    00    0B AA 91 6E C7 01    04    06    00    00    00    18 01    03 
-01 81 02 12 02 10 0B AA 91 6E C7 02 11 02 14 02 16 02 10 02 10 02 10 18 02 11 03
-0181021202100BAA916EC702110214021602100210021018021103
-
-01 81 02 00 0B 2D 02 85 30 05 00 06 00 00 00 10 01 03
-01 81 02 12 02 10 0B 2D 02 12 85 30 02 15 02 10 02 16 02 10 02 10 02 10 10 02 11 03
-01 81 02    00    0B 2D 02    85 30 05    00    06    00    00    00    10 01    03
-0181021202100B2D0212853002150210021602100210021010021103
+/*** Data Types ***/
+#define ZCL_DATATYPE_NO_DATA                            0x00
+#define ZCL_DATATYPE_DATA8                              0x08
+#define ZCL_DATATYPE_DATA16                             0x09
+#define ZCL_DATATYPE_DATA24                             0x0a
+#define ZCL_DATATYPE_DATA32                             0x0b
+#define ZCL_DATATYPE_DATA40                             0x0c
+#define ZCL_DATATYPE_DATA48                             0x0d
+#define ZCL_DATATYPE_DATA56                             0x0e
+#define ZCL_DATATYPE_DATA64                             0x0f
+#define ZCL_DATATYPE_BOOLEAN                            0x10
+#define ZCL_DATATYPE_BITMAP8                            0x18
+#define ZCL_DATATYPE_BITMAP16                           0x19
+#define ZCL_DATATYPE_BITMAP24                           0x1a
+#define ZCL_DATATYPE_BITMAP32                           0x1b
+#define ZCL_DATATYPE_BITMAP40                           0x1c
+#define ZCL_DATATYPE_BITMAP48                           0x1d
+#define ZCL_DATATYPE_BITMAP56                           0x1e
+#define ZCL_DATATYPE_BITMAP64                           0x1f
+#define ZCL_DATATYPE_UINT8                              0x20
+#define ZCL_DATATYPE_UINT16                             0x21
+#define ZCL_DATATYPE_UINT24                             0x22
+#define ZCL_DATATYPE_UINT32                             0x23
+#define ZCL_DATATYPE_UINT40                             0x24
+#define ZCL_DATATYPE_UINT48                             0x25
+#define ZCL_DATATYPE_UINT56                             0x26
+#define ZCL_DATATYPE_UINT64                             0x27
+#define ZCL_DATATYPE_INT8                               0x28
+#define ZCL_DATATYPE_INT16                              0x29
+#define ZCL_DATATYPE_INT24                              0x2a
+#define ZCL_DATATYPE_INT32                              0x2b
+#define ZCL_DATATYPE_INT40                              0x2c
+#define ZCL_DATATYPE_INT48                              0x2d
+#define ZCL_DATATYPE_INT56                              0x2e
+#define ZCL_DATATYPE_INT64                              0x2f
+#define ZCL_DATATYPE_ENUM8                              0x30
+#define ZCL_DATATYPE_ENUM16                             0x31
+#define ZCL_DATATYPE_SEMI_PREC                          0x38
+#define ZCL_DATATYPE_SINGLE_PREC                        0x39
+#define ZCL_DATATYPE_DOUBLE_PREC                        0x3a
+#define ZCL_DATATYPE_OCTET_STR                          0x41
+#define ZCL_DATATYPE_CHAR_STR                           0x42
+#define ZCL_DATATYPE_LONG_OCTET_STR                     0x43
+#define ZCL_DATATYPE_LONG_CHAR_STR                      0x44
+#define ZCL_DATATYPE_ARRAY                              0x48
+#define ZCL_DATATYPE_STRUCT                             0x4c
+#define ZCL_DATATYPE_SET                                0x50
+#define ZCL_DATATYPE_BAG                                0x51
+#define ZCL_DATATYPE_TOD                                0xe0
+#define ZCL_DATATYPE_DATE                               0xe1
+#define ZCL_DATATYPE_UTC                                0xe2
+#define ZCL_DATATYPE_CLUSTER_ID                         0xe8
+#define ZCL_DATATYPE_ATTR_ID                            0xe9
+#define ZCL_DATATYPE_BAC_OID                            0xea
+#define ZCL_DATATYPE_IEEE_ADDR                          0xf0
+#define ZCL_DATATYPE_128_BIT_SEC_KEY                    0xf1
+#define ZCL_DATATYPE_UNKNOWN                            0xff
+rC: report counts 
+dT: data Type (refer to Data Types)
+#define CMD_SS_IAS_ZONE_STATUS_ENROLL_REQUEST 0x81
+#define CMD_SS_IAS_ZONE_STATUS_CHANGE_NOTIFICATION 0x80
+#define CMD_SS_IAS_WD_NOTIFICATION 0x82
+ss: Security & safe (attr id)
+v: value(refer to 传感器相关数据释义-V1.02.pdf, high 4bit is no used. 0x0080 is low bettery)
+hd l  cT cT sAddr e  clu   rC ss    dT v     
+FE 0B 49 83 B0 16 01 00 05 01 80 00 21 01 00 C2 
 
 *ctrl类：                
 sI: seqID, need to be diff for every ctrl.
@@ -216,36 +301,6 @@ endpoint
 }
 
 
-hello:
-
-
-
-*新设备入网：
-   msgT  len   cs short |-------MAC-----------| 
-01 00 4D 00 0B 8D 38 CF 00 12 4B 00 07 6A 88 00 80 03
-01 00 4D 00 0B 8D 38 CF 00 12 4B 00 07 6A 88 00 80 03
-
-01 87 01 00 02 84 00 00 03
-01 87 01 00 02 84 00 00 03
-*simple descriptor response:
-   msgT  len   cs       short l  e  pid   did   *v cn     
-01 80 43 00 19 70 43 00 38 CF 10 08 01 04 03 02 00 03 00 00 00 03 04 02 01 00 00 00 03 04 02 03
-*node descriptor response:
-   msgT  len   cs sq s  short man
-01 80 42 00 11 F2 44 00 38 CF 00 00 00 A0 00 A0 00 00 00 80 50 40 02 03
-*sensor类：
-   msgT  len   cs sq short e  clu      attrE t  v
-01 81 02 00 0C 64 01 38 CF 08 04 02 00 00 00 29 0A 30 03
-01 81 02 00 0C D3 03 38 CF 08 04 05 00 00 00 21 10 90 03
-
-01 81 02 00 0B 51 04 E2 2D 05 00 06 00 00 00 10 01 03
-01 81 02 00 0B 50 05 E2 2D 05 00 06 00 00 00 10 01 03
-
-IAS
-01 84 01 00 0D 2B 0C 01 05 00 02 9F 36 00 01 00 00 00 01 03
-01 84 01 00 0D 2B 0D 01 05 00 02 9F 36 00 00 00 00 00 01 03
-
-
 
 void zllSocGetState(uint16_t dstAddr, uint8_t endpoint, uint8_t addrMode)
 {     
@@ -311,3 +366,83 @@ void zllSocGetLevel(uint16_t dstAddr, uint8_t endpoint, uint8_t addrMode)
     
     UARTwrite((const char *)cmd, sizeof(cmd));
 } 
+
+void zllSocWriteCIEAddr(uint16_t dstAddr, uint8_t endpoint, uint8_t *addr)
+{
+  uint8_t cmd[27],i=0,cmdLength;
+
+  i=0;
+  cmd[i++] = 0xFE;
+  cmd[i++] = 22;//----7+0x12;   /*RPC payload Len */          
+  cmd[i++] =  0x29; /*MT_RPC_CMD_AREQ + MT_RPC_SYS_APP */          
+  cmd[i++] =0x00; /*MT_APP_MSG  */          
+  cmd[i++] =0x0B; /*Application Endpoint */          
+  cmd[i++] =0x00;//(dstAddr & 0x00ff);
+  cmd[i++] =0x00;//(dstAddr & 0xff00) >> 8;
+  cmd[i++] =0x00;//endpoint; /*Dst EP */          
+  cmd[i++] =(ZCL_CLUSTER_ID_SS_IAS_ZONE& 0x00ff);
+  cmd[i++] =(ZCL_CLUSTER_ID_SS_IAS_ZONE& 0xff00) >> 8;
+  cmd[i++] =15;//-----0x12; //Data Len
+  cmd[i++] =0x02;//addrMode; 
+  cmd[i++] =0x10; //0x00 ZCL frame control field.  not specific to a cluster (i.e. a SCL founadation command)
+  cmd[i++] =0x00;//-----0x00;//transSeqNumber++;
+  cmd[i++] =ZCL_CMD_WRITE;
+  cmd[i++] =0x10;       //attr low  CIE addr
+  cmd[i++] =0;        //attr hi
+  cmd[i++] =ZCL_DATATYPE_IEEE_ADDR;
+  cmd[i++] = *addr++;
+  cmd[i++] = *addr++;
+  cmd[i++] = *addr++;
+  cmd[i++] = *addr++;
+  cmd[i++] = *addr++;
+  cmd[i++] = *addr++;
+  cmd[i++] = *addr++;
+  cmd[i++] = *addr++;
+  cmd[i++] = 0;
+  cmd[5] = (dstAddr & 0x00ff);
+  cmd[6] = (dstAddr & 0xff00) >> 8;
+  cmd[7] = endpoint; /*Dst EP */  
+  cmd[13] = transSeqNumber++;
+
+  cmdLength=sizeof(cmd);
+  calcFcs(cmd, cmdLength);
+  UARTwrite((const char *)cmd, cmdLength);
+/*  for(i=0;i<cmdLength;i++)
+    {
+    printf("%02x ",cmd[i]);
+    }*/
+  free(cmd);
+}
+******************** only for CIE ******************
+void zclSocGetZoneType(uint16_t dstAddr, uint8_t endpoint,uint8_t addrMode)
+{
+  uint8_t cmd[] = {
+    0xFE,                                                                                      
+    13,   /*RPC payload Len */          
+    0x29, /*MT_RPC_CMD_AREQ + MT_RPC_SYS_APP */          
+    0x00, /*MT_APP_MSG  */          
+    0x0B, /*Application Endpoint */          
+      0x00,//(dstAddr & 0x00ff),
+      0x00,//(dstAddr & 0xff00) >> 8,
+      0x00,//endpoint, /*Dst EP */      
+    (ZCL_CLUSTER_ID_SS_IAS_ZONE & 0x00ff),
+    (ZCL_CLUSTER_ID_SS_IAS_ZONE & 0xff00) >> 8,
+    0x06, //Data Len
+      0x00,//addrMode, 
+      0x00, //0x00 ZCL frame control field.  not specific to a cluster (i.e. a SCL founadation command)
+      0x00,//transSeqNumber++,
+    ZCL_CMD_READ,
+    (ATTRID_SS_IAS_ZONE_TYPE & 0x00ff),
+    (ATTRID_SS_IAS_ZONE_TYPE & 0xff00) >> 8,
+    0x00       //FCS - fill in later
+  };
+  cmd[5]=(dstAddr & 0x00ff);
+  cmd[6]=(dstAddr & 0xff00) >> 8;
+  cmd[7]=endpoint; /*Dst EP */      
+    cmd[11]=addrMode;
+  cmd[13]=transSeqNumber++;
+
+  calcFcs(cmd, sizeof(cmd));
+
+    UARTwrite((const char *)cmd, sizeof(cmd));  
+}

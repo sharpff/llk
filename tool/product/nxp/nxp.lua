@@ -163,7 +163,7 @@ end
 	s1GetQueries
   ]]
 function s1GetQueries(queryType)
-
+	return 0, "", 0, ""
 end
 
 function s1OptHasSubDevs()

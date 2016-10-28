@@ -46,68 +46,12 @@ function calFCS(data)
     return result
 end
 
-
--- Cluster ID:
--- 1) 0x0000: 基本类
--- 2) 0x0006：ON/OFF类
--- 3) 0x0008：Level类
--- 4) 0x0001：电源管理类
--- 5) 0x0406：PIR，人体识别类
--- 6) 0x0402：温度测量类
--- 7) 0x0405：湿度测量类
--- 8) 0x0201: 温控器类
-function getClusterFromDid(did)
-	-- print ("did is "..did.."\r\n")
-	if nil ~= string.find(did, "0000") then
-		return string.format('%02x%02x', 0x00, 0x06)
-	elseif nil ~= string.find(did, "0107") then
-		return string.format('%02x%02x', 0x04, 0x06)
-	end
-end
-
-function whatWrite(tblData)
-	local tmpTbl = {}
-	local j = 1
-	for i = 1, #tblData do
-		if 0x10 > tblData[i] and 1 ~= i and #tblData ~= i then
-			tmpTbl[j] = 0x02
-			j = j + 1
-			tmpTbl[j] = 0x10 | tblData[i]
-		else
-			tmpTbl[j] = tblData[i]
-		end
-		j = j + 1
-	end
-	return tmpTbl
-end
-
-function whatRead(tblData)
-	local tmpTbl = {}
-	local j = 1
-	local flag = 0
-	for i = 1, #tblData do
-		if 0x02 == tblData[i] and 1 ~= i and #tblData ~= i then
-			tmpTbl[j] = 0x0F & tblData[i + 1]
-			flag = 1
-			j = j + 1
-		else
-			if 1 == flag then
-				flag = 0
-			else 
-				tmpTbl[j] = tblData[i]
-				j = j + 1
-			end
-		end
-	end
-	return tmpTbl
-end
-
 --[[ EXTERNAL
 	s1GetVer
   ]]
 function s1GetVer()
-	local cmdTbl = {0xFE, 0x0E, 0x29, 0x00, 0x0B, 0x0B, 0x5f, 0x01, 0x08, 0x00, 0x07, 0x02, 0x11, 0x01, 0x00, 0x01, 0x00, 0x00, 0x6D}
-	-- local cmdTbl = {0xFE, 0x0D, 0x29, 0x00, 0x0B, 0x02, 0x00, 0x0B, 0xFF, 0xFF, 0x06, 0x02, 0x00, 0x00, 0x05, 0x3C, 0x01, 0x00}
+	-- local cmdTbl = {0xFE, 0x0E, 0x29, 0x00, 0x0B, 0x0B, 0x5f, 0x01, 0x08, 0x00, 0x07, 0x02, 0x11, 0x01, 0x00, 0x01, 0x00, 0x00, 0x6D}
+	local cmdTbl = {0xFE, 0x0D, 0x29, 0x00, 0x0B, 0x02, 0x00, 0x0B, 0xFF, 0xFF, 0x06, 0x02, 0x00, 0x00, 0x02, 0x3C, 0x00, 0x00}
 	cmdTbl[#cmdTbl] = calFCS(cmdTbl)
 	LOGTBL(cmdTbl)
 
@@ -164,31 +108,29 @@ function s1OptDoSplit(data)
 	local where = 1
 	local idx = 0
 	local tblData = stringToTable(data)
-	tblData = whatRead(tblData)
-	data = tableToString(tblData)
 	print("[LUA] total ======> "..#tblData.."\r\n")
 	LOGTBL(tblData)
 	print("[LUA] <============ \r\n")
 
 	while where < #tblData do
-		local tmpLen = (tblData[where + 3] << 8) | tblData[where + 4]
-		-- print("tmpLen is "..tmpLen.."\r\n")
-		local tmpString = string.sub(data, where, (where + 7 + tmpLen - 1))
+		local tmpLen = tblData[where + 1]
+		print("tmpLen is "..tmpLen.."\r\n")
+		local tmpString = string.sub(data, where, (where + 4 + tmpLen))
 		local tmpTbl = stringToTable(tmpString)
-		if tblData[where+6-1] ~= csum(tmpTbl) then
-			print("[LUA E] csum failed\r\n")
+		LOGTBL(tmpTbl)
+		if tblData[where + 4 + tmpLen] ~= calFCS(tmpTbl) then
+			print("[LUA E] calFCS failed\r\n")
 			break
 		end
-		tblDataCountLen[idx + 1] = #(whatWrite(tmpTbl)) & 0xFF
+		tblDataCountLen[idx + 1] = #tmpTbl & 0xFF
 		tblDataCountLen[idx + 2] = 0x00
 		idx = idx + 2
-		where = where + 7 + tmpLen
+		where = where + 4 + tmpLen + 1
 		print("[LUA] IDX @"..where.." & LEN is "..tmpLen.." ------->\r\n")
 		LOGTBL(tmpTbl)
 		print("[LUA] --------------------------------- \r\n")
 	end
 
-	strDataCountLen = tableToString(tblDataCountLen)
 	print("[LUA] out ========> \r\n")
 	LOGTBL(tblDataCountLen)
 	print("[LUA] <============ \r\n")
@@ -216,11 +158,8 @@ function s1GetValidKind(data)
 	local WHATKIND_SUB_DEV_LEAVE = 13
 	local WHATKIND_SUB_DEV_INFO = 14
 
-	local tmp = stringToTable(data)
-	tmp = whatRead(tmp)
-	print("[LUA] s1GetValidKind start\r\n")
-	LOGTBL(tmp)
-	data = tableToString(tmp)
+	local dataTbl = stringToTable(data)
+	LOGTBL(dataTbl)
 
 	-- test only
 	cvtType = 0x01
@@ -228,32 +167,31 @@ function s1GetValidKind(data)
 	for i = 1, 1 do
 		-- UART
 		if 0x01 == cvtType then
-			dataTbl = stringToTable(data)
 			-- START for status of sub devices
-			if nil ~= string.find(data, string.char(0x01, 0x00, 0x4D, 0x00, 0x0B)) then
+			if dataTbl[3] == 0x45 and dataTbl[4] == 0xC1 then
 				-- (IND) new device joining, RAW ind is 0102104D02100B2331BC60AF76337EE10219748003
 				print ("[LUA] s1GetValidKind - new device joining\r\n")
 				ret = WHATKIND_SUB_DEV_JOIN
 				break
 			end
 
-			if nil ~= string.find(data, string.char(0x01, 0x80, 0x48, 0x00, 0x09)) then
+			if dataTbl[3] == 0x45 and dataTbl[4] == 0xC9 then
 				-- (IND) new device leaving, RAW ind is 01804802100219A960AF76337EE1021974021003 
 				print ("[LUA] s1GetValidKind - new device leaving\r\n")
 				ret = WHATKIND_SUB_DEV_LEAVE
 				break
 			end
 
-			if nil ~= string.find(data, string.char(0x01, 0x80, 0x45)) or 
-				nil ~= string.find(data, string.char(0x01, 0x80, 0x43)) or
-				nil ~= string.find(data, string.char(0x01, 0x80, 0x42)) then
+			if dataTbl[3] == 0x45 and dataTbl[4] == 0x85 or
+				dataTbl[3] == 0x45 and dataTbl[4] == 0x84 or
+				dataTbl[3] == 0x45 and dataTbl[4] == 0x82 then
 				-- (RSP) query ept, query ept info, query man
 				print ("[LUA] s1GetValidKind - ENDPOINT list or info "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_INFO
 				break
 			end
 
-			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) then
+			if nil ~= string.find(dataTbl, string.char(0x01, 0x81, 0x02)) then
 				-- (IND) sDevStatus, RAW ind 0181021202100B2D0212853002150210021602100210021010021103 
 				print ("[LUA] s1GetValidKind - sDevStatus ind "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
@@ -261,8 +199,8 @@ function s1GetValidKind(data)
 			end
 
 			-- TODO: if it is really need
-			if nil ~= string.find(data, string.char(0x01, 0x80, 0x06, 0x00, 0x01, 0x86, 0x01, 0x03)) or
-				nil ~= string.find(data, string.char(0X01, 0X80, 0X00, 0X00, 0X04)) then
+			if nil ~= string.find(dataTbl, string.char(0x01, 0x80, 0x06, 0x00, 0x01, 0x86, 0x01, 0x03)) or
+				nil ~= string.find(dataTbl, string.char(0X01, 0X80, 0X00, 0X00, 0X04)) then
 				-- (RSP) reset FAC rsp , RAW rep is 018002160210021186021103 
 				-- (RSP) join permition rsp , RAW rep is 0180021002100214380210F502104903 
 				print ("[LUA] s1GetValidKind - RSP(s) "..#dataTbl.."\r\n")
