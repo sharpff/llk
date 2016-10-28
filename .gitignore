@@ -8,3 +8,4 @@ hal/jni/obj
 hal/jni/libs
 hal/android/version.h
 sw/version.h
+.DS_Store
