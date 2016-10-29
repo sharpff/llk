@@ -1,8 +1,8 @@
 #!/bin/bash
 MAIN_PATH="../../.."
 $MAIN_PATH/tool/lelinkTool.py \
-    -a iot.fineat.com \
-    -p 9011 \
+    -a iot.test.leinlife.com \
+    -p 9003 \
     -u f1b312fd6f7b427f8306 \
     -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDxqkuVDvetJDbq1JgBr93VBYKJZdnZbMFS7gWoNjX1BUTxjBRY+2ek2k/V08lTj9ejlCsnn927lE4iOBzrHY66xIktxsyw6btmGcqQ/doDX6y89mHcbq8e2oFE+eJ/vuqI426g+waaYxPrCtsuN+G+4PUEnZnOZP/PFAGMj3pywIDAQAB \
     -s vUckaTiTQsBuvtKHS1UgNMarBopvFTZolNGXbnkwqD2GX9d7c6dSQOHOr8niTFYPWkhl2/3DQWouRWfMXt55QYKvSpToiQA7EZqcnNR7/T1hfa0RKU8lzuRV3RWD7CVApmTJ5ZIHQMd8GL1kDjj8zPNdgAZKr9Dpnpyz0yfBzaM= \
@@ -22,8 +22,8 @@ $MAIN_PATH/tool/lelinkTool.py \
 
     # DNS
     # 测试
-    #-a iot.fineat.com \
-    #-p 9011 \
+    #-a iot.test.leinlife.com \
+    #-p 9003 \
 
     # DNS
     # 外网，待定

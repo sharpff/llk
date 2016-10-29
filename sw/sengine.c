@@ -117,9 +117,9 @@ SDevNode *sdevArray() {
 }
 
 static void loadSDevInfo(SDevNode *arr) {
-    int i = 0;
-    if (0 > lelinkStorageReadSDevInfoCfg(arr)) {
-        LELOGE("loadSDevInfo FAILED");
+    int i = 0, ret = 0;
+    if (0 > (ret = lelinkStorageReadSDevInfoCfg(arr))) {
+        LELOGE("loadSDevInfo FAILED ret[%d]", ret);
         return;
     }
     for (i = 0; i < MAX_SDEV_NUM; i++) {
@@ -360,7 +360,6 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
         }
     } else if (WM_SUCCESS == json_get_val_int(&jobj, JSON_NAME_SDEV_QUERY_INFO, &val) && 2 == val) {
         // 0x02. cluster done(simple descriptor response)
-        int numInfo = 0, count = 4;
         char oldJson[SDEV_MAX_INFO/2] = {0}, tmpJson[SDEV_MAX_INFO/2] = {0};
         char totalJson[SDEV_MAX_INFO] = {0};
 
@@ -509,7 +508,6 @@ static int sdevInsert(SDevNode *arr, const char *status, int len) {
                 LELOG("sdevInsert qForEachfromCache already EXIST [%d]", index);
                 return 0;                
             }
-            // strcpy(node.sdevInfo, sDev);
             if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_INDEX, (char *)node.idx, sizeof(node.idx))) {
                 LELOGE("sdevInsert json_get_val_str [%s] FAILED", JSON_NAME_SDEV_INDEX);
                 return -4;
@@ -551,7 +549,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
     jsontok_t jsonToken[NUM_TOKENS];
     // char name[MAX_RULE_NAME] = {0};
     int ret = 0;
-    int sDevIdx = 0, num = 0, i = 0;
+    int sDevIdx = 0;
     char buf[MAX_BUF] = {0};
     SDevNode node;
 
@@ -596,7 +594,6 @@ static int sdevRemove(SDevNode *arr, const char *status, int len) {
     char str[64] = {0};
     jobj_t jobj;
     jsontok_t jsonToken[NUM_TOKENS];
-    // json_string_t jstr;
     LELOG("sdevRemove START ****************************");
     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)status, len);
     if (WM_SUCCESS != ret) {
@@ -875,7 +872,6 @@ static IO lf_s1CvtStd2Pri_input(lua_State *L, const uint8_t *input, int inputLen
     return io;
 }
 static int lf_s1CvtStd2Pri(lua_State *L, uint8_t *output, int outputLen) {
-    // int i = 0;
     int sLen = lua_tointeger(L, -2);
     int size = MIN(sLen, outputLen);
     const uint8_t *tmp = (const uint8_t *)lua_tostring(L, -1);
@@ -1124,16 +1120,21 @@ LF_IMPL get_lf_impl(const char *func_name, int *param_num)
 
 int sengineInit(void) {
     int ret = 0;
-    // #define STATIC_MEMORY_FOR_SCRIPT
-    #ifndef STATIC_MEMORY_FOR_SCRIPT
+#define STATIC_MEMORY_FOR_SCRIPT
+#ifndef STATIC_MEMORY_FOR_SCRIPT
     ginScriptCfg = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
     ginScriptCfg2 = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
+#else
+    #if defined(PF_VAL) && (PF_VAL == 6) // for MT7687
+        static volatile ScriptCfg inScriptCfg __attribute__((section(".tcmBSS")));
+        static volatile ScriptCfg inScriptCfg2 __attribute__((section(".tcmBSS")));
     #else
-    static ScriptCfg inScriptCfg;
-    static ScriptCfg inScriptCfg2;
-    ginScriptCfg = &inScriptCfg;
-    ginScriptCfg2 = &inScriptCfg2;
+        static volatile ScriptCfg inScriptCfg;
+        static volatile ScriptCfg inScriptCfg2;
     #endif
+    ginScriptCfg = (ScriptCfg *)&inScriptCfg;
+    ginScriptCfg2 = (ScriptCfg *)&inScriptCfg2;
+#endif
     ret = lelinkStorageReadScriptCfg(ginScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
     
     if (0 > ret) {
@@ -1188,6 +1189,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     lua_register(L, "s1apiSDevGetMacByUserData", s1apiSDevGetMacByUserData);
     // lua_register(L, "csum", csum);
     
+    // LELOG("[lua engine] START [%s]----------------", funcName);
     if (script == NULL || scriptSize <= 0)
         return -1;
 
@@ -1237,6 +1239,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     //wmprintf("[config]: config[0x%x] lua[0x%x] timer[0x%x] ", SYS_CONFIG_OFFSET, LUA_STORE_ADDRESS, JOYLINK_TIMER_MEM_ADDR);
 
     lua_close(L);
+    // LELOG("[lua engine] END -----------");
     return ret;
 }
 
@@ -1673,7 +1676,7 @@ int senginePollingSlave(void) {
 
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     datas.arrDatas, currLen, (uint8_t *)&whatKind, sizeof(whatKind));
-            // LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
+            LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
             if (0 >= ret) {
                 LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
                 continue;

@@ -39,6 +39,7 @@ FE 0D 45 81 00 A7 38 43 03 00 4B 12 00 00 00 8F 00 C0
 REQ:
 hd l  cT cT    addr  e  all   pL aM       c  t     cs
 FE 0D 29 00 0B 02 00 0B FF FF 06 02 00 00 05 3C 01 1A 
+FE0D29000B02000BFFFF06020000053C011A
 RSP:
    l        ret
 FE 01 69 00 00 68 
@@ -80,26 +81,12 @@ hd l  cT cT sAddr       |-------MAC-----------|    cs
 dev announce
 FE 0D 45 C1 67 5F 67 5F 52 98 C3 0C 00 4B 12 00 80 55
 FE0D45C1675F675F5298C30C004B12008055FE0D45C1675F675F5298C30C004B12008055
-
+fe0d45c10b5f0b5fe7d4f400008d15008e58
 
 *设备leave ind：
 hd l  cT cT sAddr |-------MAC-----------| |-mask-| cs
 FE 0D 45 C9 DE A9 74 09 E1 7E 33 76 AF 60 00 00 00 9E
-
-# switcher:
-# AA 00 11 82 04 01 45 01 01 00 3B 9A 01 1A 04 77 DF F8 00 00 C8 
-*debug split:
-01004D000BD7317100158D0000F4D4E78E03
-01004D000B5ABE4A60AF76337EE1097480030100920006D402317101010203 
-
-atmel:
-E6CF 60AF76337EE10974
-mi:
-FAE7 00158D0000F3A0CE
-light:
-057d C06FA000E44CE36F
-
-                     i8                      i16      
+FE0D45C9DEA97409E17E3376AF600000009E
 
 
 *恢复Gateway到出厂设置：
@@ -109,6 +96,29 @@ RSP mass, too many info
 01 80 06    00    01    86 01    03
 01 80 02 16 02 10 02 11 86 02 11 03 
 
+
+*active request:
+*active response:
+hd l  cT cT sAddr ret      c  v  cs
+FE 07 45 85 67 5F 00 67 5F 01 01 C7
+FE074585675F00675F0101C7
+
+*simple descriptor request:
+*simple descriptor response:
+iC: in cluster
+oC: out cluster
+iV: in cluster val
+oV: out cluster val
+hd l  cT cT sAddr ret      l  e  pid   did      iC iV    oC oV    oV    oV    oV    oV    oV    cs
+FE 1C 45 84 67 5F 00 67 5F 16 01 04 01 02 04 00 01 00 00 06 00 00 06 00 09 00 01 00 02 05 00 05 C2
+FE1C4584675F00675F1601040102040001000006000006000900010002050005C2
+
+*node descriptor request:
+*node descriptor response:
+lT: logical type, 00-co, 01-router, 02-end device
+hd l  cT cT sAddr ret      lT       manu                          cs
+FE 12 45 82 67 5F 00 67 5F 02 40 80 00 00 50 A0 00 00 00 A0 00 00 47
+FE124582675F00675F024080000050A0000000A0000047
 
 
 *sensor类：
@@ -178,6 +188,7 @@ ss: Security & safe (attr id)
 v: value(refer to 传感器相关数据释义-V1.02.pdf, high 4bit is no used. 0x0080 is low bettery)
 hd l  cT cT sAddr e  clu   rC ss    dT v     
 FE 0B 49 83 B0 16 01 00 05 01 80 00 21 01 00 C2 
+FE0B4983B016010005018000210100C2
 
 *ctrl类：                
 sI: seqID, need to be diff for every ctrl.
@@ -201,10 +212,9 @@ c: command move to level - 00, move - 01
 l: level value, 0 ~ FF
 t: time, 100ms * n, philip used n = 4.
 hd l  cT cT    addr  e  level l  aM    sI c  v  t     cs
-fe 0e 29 00 0b 0b 5f 01 08 00 07 02 11 01 00 01 00 00 65 
 fe 0e 29 00 0b ec 12 0b 08 00 07 02 11 02 04 00 64 00 a7 move to level => 00
 fe 0e 29 00 0b ec 12 0b 08 00 07 02 11 02 04 ff 64 00 58 move to level => ff
-LIGHT - HUE:
+LIGHT - color:
 #define COMMAND_LIGHTING_MOVE_TO_HUE                                     0x00
 #define COMMAND_LIGHTING_MOVE_HUE                                        0x01
 #define COMMAND_LIGHTING_STEP_HUE                                        0x02
@@ -227,7 +237,7 @@ S: SAT 0 ~ FE
 H: color (360dot)
 888 => (v of move to level with onoff), H, S
 hd l  cT cT    addr  e  color l  aM    sI c  H  S  t     cs
-FE 0F 29 00 0B EC 12 0B 00 03 08 02 01 00 06 00 FE 00 00 00
+FE 0F 29 00 0B EC 12 0B 00 03 08 02 11 00 06 00 FE 00 00 00
 
 RSP:
 FE 01 69 00 00 68
@@ -237,29 +247,6 @@ cT: color Temprature (2000K ~ 6500K(7500K)) colorTemperature = (uint16)(1000000L
 hd l  cT cT    addr  e  temp  l  aM    sI c  cT    t     cs
 fe 0f 29 00 0b ec 12 0b 00 03 08 02 11 00 0a 4d 01 00 00 86 warmer
 fe 0f 29 00 0b ec 12 0b 00 03 08 02 11 00 0a a6 00 00 00 6c colder
-
-*active request:
-*active response:
-hd l  cT cT sAddr ret      c  v  cs
-FE 07 45 85 67 5F 00 67 5F 01 01 C7
-
-*simple descriptor request:
-*simple descriptor response:
-iC: in cluster
-oC: out cluster
-iV: in cluster val
-oV: out cluster val
-hd l  cT cT sAddr ret      l  e  pid   did   v  iC iV    oC oV    oV    oV    oV    oV    oV    cs
-FE 1C 45 84 67 5F 00 67 5F 16 01 04 01 02 04 00 01 00 00 06 00 00 06 00 09 00 01 00 02 05 00 05 C2
-
-
-*node descriptor request:
-*node descriptor response:
-lT: logical type, 00-co, 01-router, 02-end device
-hd l  cT cT sAddr ret      lT       manu                          cs
-FE 12 45 82 67 5F 00 67 5F 02 40 80 00 00 50 A0 00 00 00 A0 00 00 47
-
-                     i8                      i16      
 
 std2pri:
 profile id

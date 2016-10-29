@@ -406,7 +406,7 @@ int lelinkStorageWriteSDevInfoCfg(const void *sdevArr) {
             halFlashClose(hdl);
             return -5;
         }
-        csum += crc8(base, sizeof(SDevNBase));
+        csum += crc8((const uint8_t *)base, sizeof(SDevNBase));
         written += sizeof(SDevNBase);
     }
     ret = halFlashWrite(hdl, (const uint8_t *)&csum, 1, fr.addr, i*sizeof(SDevNBase));
@@ -447,7 +447,7 @@ int lelinkStorageReadSDevInfoCfg(void *sdevArr) {
             halFlashClose(hdl);
             return -4;
         }
-        csum += crc8(base, sizeof(SDevNBase));
+        csum += crc8((const uint8_t *)base, sizeof(SDevNBase));
         read += sizeof(SDevNBase);
     }
     ret = halFlashRead(hdl, (uint8_t *)&tmp, 1, fr.addr, i*sizeof(SDevNBase));
