@@ -542,7 +542,7 @@ void testSengine() {
     // const char json2[256] = {"{\"status\":{\"pwr\":1,\"action\":1},\"utcH\":339,\"utcL\":136006835,\"uuid\":\"10000100011000510005FFFFFFFFFFFF\"}"};
     const char json2[256] = {"{\"status\":{\"pwr\":1,\"action\":1},\"uuid\":\"10000100011000510005FFFFFFFFFFFF\"}"};
     uint8_t buf[256] = {0};
-    ScriptCfg *tmpScriptCfg = NULL;
+    ScriptCfg2 *tmpScriptCfg2 = NULL;
     ret = sengineInit();
     if (0 != ret) {
         LELOGE("sengineInit ret[%d]", ret);
@@ -573,9 +573,9 @@ void testSengine() {
         "s1CvtPri2Std", buf, 4, (uint8_t *)json, sizeof(json));
     LELOG("testSengine cvtPri2Std[%d] [%s]", ret, json);
 
-    tmpScriptCfg = (void *)halCalloc(1, sizeof(ScriptCfg));
-    ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
-    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
+    tmpScriptCfg2 = (void *)halCalloc(1, sizeof(ScriptCfg2));
+    ret = lelinkStorageReadScriptCfg(tmpScriptCfg2, E_FLASH_TYPE_SCRIPT2, 0);
+    ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg2);
     // ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg, E_FLASH_TYPE_SCRIPT2, 0);
 
     senginePollingRules((char *)json2, strlen(json2));

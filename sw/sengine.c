@@ -88,7 +88,7 @@ typedef enum {
 
 IA_CACHE ginIACache;
 ScriptCfg *ginScriptCfg;
-ScriptCfg *ginScriptCfg2;
+ScriptCfg2 *ginScriptCfg2;
 static uint32_t ginDelayMS;
 static int ginCurrCvtType;
 static void loadSDevInfo(SDevNode *arr);
@@ -1123,17 +1123,17 @@ int sengineInit(void) {
 #define STATIC_MEMORY_FOR_SCRIPT
 #ifndef STATIC_MEMORY_FOR_SCRIPT
     ginScriptCfg = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
-    ginScriptCfg2 = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
+    ginScriptCfg2 = (ScriptCfg2 *)halCalloc(1, sizeof(ScriptCfg2));
 #else
     #if defined(PF_VAL) && (PF_VAL == 6) // for MT7687
         static volatile ScriptCfg inScriptCfg __attribute__((section(".tcmBSS")));
-        static volatile ScriptCfg inScriptCfg2 __attribute__((section(".tcmBSS")));
+        static volatile ScriptCfg2 inScriptCfg2 __attribute__((section(".tcmBSS")));
     #else
         static volatile ScriptCfg inScriptCfg;
-        static volatile ScriptCfg inScriptCfg2;
+        static volatile ScriptCfg2 inScriptCfg2;
     #endif
     ginScriptCfg = (ScriptCfg *)&inScriptCfg;
-    ginScriptCfg2 = (ScriptCfg *)&inScriptCfg2;
+    ginScriptCfg2 = (ScriptCfg2 *)&inScriptCfg2;
 #endif
     ret = lelinkStorageReadScriptCfg(ginScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
     
@@ -1649,7 +1649,7 @@ int senginePollingSlave(void) {
 
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_DO_SPLIT,
                 bin, size, (uint8_t *)&datas, sizeof(Datas));
-        LELOG("senginePollingSlave "S1_OPT_DO_SPLIT" ret[%d], datasCountsLen[%d], datasLen[%d] sizeof(Datas) is [%d]", ret, datas.datasCountsLen/2, datas.datasLen, sizeof(Datas));
+        // LELOG("senginePollingSlave "S1_OPT_DO_SPLIT" ret[%d], datasCountsLen[%d], datasLen[%d] sizeof(Datas) is [%d]", ret, datas.datasCountsLen/2, datas.datasLen, sizeof(Datas));
         for (i = 0; i < datas.datasCountsLen; i += sizeof(uint16_t)) {
             LELOG("senginePollingSlave datas.datasCounts[%x][%d]", datas.arrDatasCounts[i/2], datas.arrDatasCounts[i/2]);
         }
@@ -1659,9 +1659,9 @@ int senginePollingSlave(void) {
             datas.arrDatasCounts[0] = size;
         }
         for (i = 0; i < datas.datasCountsLen; i += sizeof(uint16_t)) {
-            LELOG("==>senginePollingSlave datas.datasCounts[%x][%d]", datas.arrDatasCounts[i/2], datas.arrDatasCounts[i/2]);
+            // LELOG("==>senginePollingSlave datas.datasCounts[%x][%d]", datas.arrDatasCounts[i/2], datas.arrDatasCounts[i/2]);
             memcpy(&currLen, &datas.arrDatasCounts[i/sizeof(uint16_t)], sizeof(uint16_t));
-            LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
+            // LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
             memcpy(datas.arrDatas, &bin[appendLen], currLen);
 
             if (0)
@@ -1676,7 +1676,7 @@ int senginePollingSlave(void) {
 
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     datas.arrDatas, currLen, (uint8_t *)&whatKind, sizeof(whatKind));
-            LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
+            // LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
             if (0 >= ret) {
                 LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
                 continue;
@@ -1778,7 +1778,7 @@ int senginePollingSlave(void) {
 //     return isFound;
 // }
 
-int sengineS2GetBeingReservedInfo(const ScriptCfg *scriptCfg2, uint8_t strBeingReserved[MAX_RSV_NUM][MAX_UUID]) {
+int sengineS2GetBeingReservedInfo(const ScriptCfg2 *scriptCfg2, uint8_t strBeingReserved[MAX_RSV_NUM][MAX_UUID]) {
     int ret = 0, count = 0, i;
     uint8_t tmpBeingReserved[sizeof(int) + (MAX_RSV_NUM*MAX_UUID)] = {0};
     char *tmp = NULL;
@@ -1808,7 +1808,7 @@ int sengineS2GetBeingReservedInfo(const ScriptCfg *scriptCfg2, uint8_t strBeingR
     return count;
 }
 
-int sengineS2RuleHandler(const ScriptCfg *scriptCfg2, 
+int sengineS2RuleHandler(const ScriptCfg2 *scriptCfg2, 
     const char *localJson, int localJsonLen, 
     const char *rmtJson, int rmtJsonLen,
     IA_CACHE_INT *cacheInt) {
@@ -1979,7 +1979,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     ginIACache.cfg.num = 0;
     for (i = 0; i < privCfg.data.iaCfg.num; i++) {
         if (0 < privCfg.data.iaCfg.arrIA[i]) {
-            memset(ginScriptCfg2, 0, sizeof(ScriptCfg));
+            memset(ginScriptCfg2, 0, sizeof(ScriptCfg2));
             ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, i);
             if (0 > ret) {
                 LELOGW("senginePollingRules FAILED arrIA idx[%d]", i);

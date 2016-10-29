@@ -88,7 +88,7 @@ static uint32_t getSize(E_FLASH_TYPE type, uint32_t minSize) {
             ret = GET_PAGE_SIZE(sizeof(PrivateCfg), minSize);
         } break;
         case E_FLASH_TYPE_SCRIPT2: {
-            ret = GET_PAGE_SIZE(sizeof(ScriptCfg), minSize);
+            ret = GET_PAGE_SIZE(sizeof(ScriptCfg2), minSize);
         } break;
         case E_FLASH_TYPE_SDEV_INFO: {
             ret = GET_PAGE_SIZE(sizeof(SDevInfoCfg), minSize);
@@ -245,8 +245,14 @@ int lelinkStorageWriteScriptCfg(const void *scriptCfg, int flashType, int idx) {
     int ret = 0;
     // char strSelfRuleName[MAX_RULE_NAME] = {0};
     // ScriptCfg *tmpScriptCfg = (ScriptCfg *)scriptCfg;
-
-    ret = storageWrite(flashType, scriptCfg, sizeof(ScriptCfg), idx);
+    int tmpSize = 0;
+    if (E_FLASH_TYPE_SCRIPT == flashType) {
+        tmpSize = sizeof(ScriptCfg);
+    } else if (E_FLASH_TYPE_SCRIPT2 == flashType) {
+        tmpSize = sizeof(ScriptCfg2);
+    } else 
+        return -1;
+    ret = storageWrite(flashType, scriptCfg, tmpSize, idx);
 
 
     // if (E_FLASH_TYPE_SCRIPT == flashType) {
@@ -291,7 +297,7 @@ int lelinkStorageReadScriptCfg(void *scriptCfg, int flashType, int idx){
     if (E_FLASH_TYPE_SCRIPT == flashType) {
         ret = storageRead(E_FLASH_TYPE_SCRIPT, scriptCfg, sizeof(ScriptCfg), idx);
     } else if (E_FLASH_TYPE_SCRIPT2 == flashType) {
-        ret = storageRead(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg), idx);
+        ret = storageRead(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg2), idx);
     } else {
         LELOGW("lelinkStorageReadScriptCfg not supported flashType[%d]", flashType);
         return -1;
@@ -306,7 +312,7 @@ int lelinkStorageWriteScriptCfg2(const void *scriptCfg) {
     char strSelfRuleName[MAX_RULE_NAME] = {0};
     LELOG("lelinkStorageWriteScriptCfg2 -s ");
 
-    lenSelfRuleName = sengineCall((const char *)((ScriptCfg *)scriptCfg)->data.script, ((ScriptCfg *)scriptCfg)->data.size, S2_GET_SELFNAME,
+    lenSelfRuleName = sengineCall((const char *)((ScriptCfg2 *)scriptCfg)->data.script, ((ScriptCfg2 *)scriptCfg)->data.size, S2_GET_SELFNAME,
         NULL, 0, (uint8_t *)&strSelfRuleName, sizeof(strSelfRuleName));
     if (0 > lenSelfRuleName) {
         LELOGW("lelinkStorageWriteScriptCfg2 sengineCall("S2_GET_SELFNAME") [%d]", lenSelfRuleName);

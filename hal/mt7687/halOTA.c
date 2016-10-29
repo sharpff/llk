@@ -247,7 +247,7 @@ uint32_t halUpdate(OTAInfo_t *info, uint8_t *buf, uint32_t bufLen) {
         APPLOGE("Update script paremeter error!");
         return -1;
     }
-    if(info->imgLen > MAX_PROFILE_SIZE) {
+    if(info->imgLen > bufLen) {
         APPLOGE("Script too large!");
         return -2;
     }

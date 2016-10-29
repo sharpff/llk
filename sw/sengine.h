@@ -9,7 +9,8 @@ extern "C"
 #include "ota.h"
 #include "io.h"
 
-#define MAX_SCRIPT_SIZE MAX_PROFILE_SIZE
+#define MAX_SCRIPT_SIZE (1024*16)
+#define MAX_SCRIPT2_SIZE (1024*13)
 #define MAX_QUERY_COUNTS 16
 #define MAX_ALL_QUERYS 128
 
@@ -82,6 +83,17 @@ typedef struct {
     ScriptData data;
     uint8_t csum;
 }LELINK_ALIGNED ScriptCfg;
+
+typedef struct {
+    int size;
+    uint8_t script[MAX_SCRIPT2_SIZE];
+}LELINK_ALIGNED ScriptData2;
+
+typedef struct {
+    ScriptData2 data;
+    uint8_t csum;
+}LELINK_ALIGNED ScriptCfg2;
+
 #ifdef LELINK_PACK
 #pragma pack()
 #endif
@@ -129,7 +141,7 @@ typedef struct {
 
 extern IA_CACHE ginIACache;
 extern ScriptCfg *ginScriptCfg;
-extern ScriptCfg *ginScriptCfg2;
+extern ScriptCfg2 *ginScriptCfg2;
 
 int sengineInit(void);
 int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen);

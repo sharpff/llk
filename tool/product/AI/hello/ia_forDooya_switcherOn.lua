@@ -219,7 +219,7 @@ end
 function s2GetSelfName()
 	local name = ''
 	-- CUSTOMIZATION START
-	name = 'helloTest1'
+	name = 'helloTest3'
 	-- CUSTOMIZATION END
 	return string.len(name), name
 end
