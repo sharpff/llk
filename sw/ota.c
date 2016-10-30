@@ -85,7 +85,7 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                 if(0 < status) {
                     *((int *)tmpScriptCfg) = status;
                     #ifdef LELINK_OTA_VERIFICATION
-                    ret = lelinkVerifyBuf(tmpScriptCfg + (sizeof(int), status);
+                    ret = lelinkVerifyBuf(tmpScriptCfg + sizeof(int), status);
                     #else
                     ret = 0;
                     #endif
