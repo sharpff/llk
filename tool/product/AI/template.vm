@@ -16,46 +16,41 @@ function cmpUTC(utcH, utcL, utcBaseH, utcBaseL)
 end
 
 --[[
-	INTERNAL
+    INTERNAL
 ]]
-function cmpValInOldStatus(uuid, val, token)
-	local l, n = s2GetSelfName()
-	local tblOldStatus = s2apiGetLatestStatus(l, n)
-	local ret = -2
+function getOldStatus(uuid)
+    local l, n = s2GetSelfName()
+    local tblOldStatus = s2apiGetLatestStatus(l, n)
 
-	if tblOldStatus then 
-		for _, jsonOldStatus in pairs(tblOldStatus) do
-			if nil ~= string.find(jsonOldStatus, uuid) then
-				local tbl = cjson.decode(jsonOldStatus)
-				if tbl["status"][token] < val then
-					ret = 1
-				elseif tbl["status"][token] > val then
-					ret = -1
-				else
-					ret = 0
-				end
-				break
-			end
-		end
-	end
-	return ret
+    if tblOldStatus then 
+        for _, jsonOldStatus in pairs(tblOldStatus) do
+            if nil ~= string.find(jsonOldStatus, uuid) then
+                local tbl = cjson.decode(jsonOldStatus)
+                return tbl["status"]
+            end
+        end
+    end
+    return nil
 end
 
 --[[
-	INTERNAL
+    INTERNAL
 ]]
-function getOldStatus(uuid)
-	local l, n = s2GetSelfName()
-	local tblOldStatus = s2apiGetLatestStatus(l, n)
+function cmpValInOldStatus(uuid, val, token)
+    local l, n = s2GetSelfName()
+    local ret = -2
 
-	if tblOldStatus then 
-		for _, jsonOldStatus in pairs(tblOldStatus) do
-			if nil ~= string.find(jsonOldStatus, uuid) then
-				return jsonOldStatus
-			end
-		end
-	end
-	return nil
+    local tblOldStatus = getOldStatus(uuid)
+    if tblOldStatus then
+        if tblOldStatus[token] < val then
+            ret = 1
+        elseif tblOldStatus[token] > val then
+            ret = -1
+        else
+            ret = 0
+        end
+    end
+    return ret
 end
 
 --[[
@@ -156,14 +151,17 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 	tblConditions[retIdx] = 0
 	tblConditionsOld[retIdx] = 0
 	if nil ~= string.find(rmtUUID, '${UUID}') then
-		if ${REF_VAL} == tblNewStatus["${STATUS_KEY}"] and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") then
+		if ${REF_VAL} ${OPERATOR} tblNewStatus["${STATUS_KEY}"] and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") then
 			tblConditions[retIdx] = 1
 			print('ok 1\r\n')
 		end
 	else
-		if 0 == cmpValInOldStatus('${UUID}', ${REF_VAL}, "${STATUS_KEY}") then
-			tblConditionsOld[retIdx] = 1
-			print('okOld 1\r\n')
+        local tblOldStatus = getOldStatus('${UUID}')
+        if tblOldStatus then
+			if ${REF_VAL} ${OPERATOR} tblOldStatus["${STATUS_KEY}"] then
+				tblConditionsOld[retIdx] = 1
+				print('okOld 1\r\n')
+			end
 		end
 	end
 	retIdx = retIdx + 1
