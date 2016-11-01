@@ -54,7 +54,7 @@ extern PrivateCfg ginPrivateCfg;
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
 int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
-    int i = 0;
+    // int i = 0;
     uint8_t tmp[20] = {0};
     halSha1Start();
     halSha1Update(input, inputLen);
@@ -333,8 +333,9 @@ int getVer(char fwVer[64], int size) {
     if (64 > size || !fwVer) {
         return -1;
     }
-    memset(fwVer, 0, 64);
+    memset(fwVer, 0, size);
     sprintf(fwVer, "%d-%s-%s", PF_VAL, getSWVer(), getScriptVer());
+    LELOG("Build Time: " __DATE__ " " __TIME__ "");
     return 0;
 }
 

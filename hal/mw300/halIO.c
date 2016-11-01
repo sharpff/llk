@@ -263,13 +263,13 @@ int halGetMac(uint8_t *mac, int len) {
         return -1;
     }
     wlan_get_mac_address(mac);
-    APPLOG("mac [%02x:%02x:%02x:%02x:%02x:%02x]", 
-        mac[0], 
-        mac[1], 
-        mac[2], 
-        mac[3], 
-        mac[4], 
-        mac[5]);
+    // APPLOG("mac [%02x:%02x:%02x:%02x:%02x:%02x]", 
+    //     mac[0], 
+    //     mac[1], 
+    //     mac[2], 
+    //     mac[3], 
+    //     mac[4], 
+    //     mac[5]);
     // mac[5] = 67;
     // wlan_set_mac_addr(mac);
     return 0;
