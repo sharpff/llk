@@ -493,8 +493,8 @@ int halGetMac(uint8_t *mac, int len) {
     status = wifi_config_get_mac_address(WIFI_PORT_STA, mac);
     
     if(status >= 0) {
-        APPLOG("[Lelink]: wifi_config_get_mac_address(): (%02x:%02x:%02x:%02x:%02x:%02x),status = %d ",
-                   mac[0], mac[1], mac[2],mac[3], mac[4], mac[5],status);
+        // APPLOG("[Lelink]: wifi_config_get_mac_address(): (%02x:%02x:%02x:%02x:%02x:%02x),status = %d ",
+        //            mac[0], mac[1], mac[2],mac[3], mac[4], mac[5],status);
         return 0;
     }
     else {

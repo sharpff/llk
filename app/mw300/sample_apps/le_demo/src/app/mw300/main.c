@@ -577,7 +577,7 @@ void event_wlan_init_done(void *data)
     if (ret != WM_SUCCESS) {
 		APPLOGE("Error: wlan_iw_init failed");
     }
-    printForFac();
+    // printForFac();
     os_dump_mem_stats();
     // sector 0x1000(512pcs), block 0x10000(32pcs)
     ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000);

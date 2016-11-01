@@ -34,6 +34,9 @@ $MAIN_PATH/lelinkTool.py \
     # -a iot.leinlife.com \
     # -p 9011 \
 
+    # -a iot.test.leinlife.com \
+    # -p 9003 \
+    
     # 外网, 内网ip
     #-a 10.182.192.19 \
     #-p 9002 \

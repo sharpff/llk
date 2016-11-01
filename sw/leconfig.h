@@ -204,7 +204,7 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, c
 
 #define applog(_mod_name_, _fmt_, ...) \
     { \
-        const char * p = strrchr(__FILE__, '/'); \
+        const char * p = (const char *)strrchr(__FILE__, '/'); \
         printOut("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : __FILE__, __LINE__); \
     }
 

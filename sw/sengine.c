@@ -858,7 +858,7 @@ static int lf_s1GetVer(lua_State *L, uint8_t *output, int outputLen) {
     const uint8_t *tmp = (const uint8_t *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        LELOG("[SENGINE] s1GetVer: [%d][%s]", size, output);
+        // LELOG("[SENGINE] s1GetVer: [%d][%s]", size, output);
     } else {
         size = 0;
     }
