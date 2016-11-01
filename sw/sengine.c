@@ -1120,7 +1120,7 @@ LF_IMPL get_lf_impl(const char *func_name, int *param_num)
 
 int sengineInit(void) {
     int ret = 0;
-#define STATIC_MEMORY_FOR_SCRIPT
+// #define STATIC_MEMORY_FOR_SCRIPT
 #ifndef STATIC_MEMORY_FOR_SCRIPT
     ginScriptCfg = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
     ginScriptCfg2 = (ScriptCfg2 *)halCalloc(1, sizeof(ScriptCfg2));

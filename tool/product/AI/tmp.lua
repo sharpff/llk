@@ -12,8 +12,7 @@ function cmpUTC(utcH, utcL, utcBaseH, utcBaseL)
 	elseif (utcH == utcBaseH) and (utcL == utcBaseL) then
 		ret = 0
 	end
-
-	return ret
+    return ret
 end
 
 --[[
@@ -64,7 +63,7 @@ end
 ]]
 function getBeingReservedInfo()
 	-- CUSTOMIZATION START
-	local tblInfo = {'10000100101000010007C80E77ABCD51'}
+	local tblInfo = {${UUIDS}}
 	-- CUSTOMIZATION END
 	return tblInfo
 end
@@ -77,17 +76,17 @@ end
 	lua5.3.0_win_slim.exe hello/helloworld.lua s2IsValid {\"status\":{},\"utcH\":339,\"utcL\":136006835}
 ]]
 function s2IsValid(selfStatus)
-	local valid = 0
+	local valid = 1
 	local tb = cjson.decode(selfStatus)
 	local utcL = tb["utcL"]
 	local utcH = tb["utcH"]
 	
 	-- E.g. 16/12/1 0:00:00 is 0x583F6800
 	-- CUSTOMIZATION START
-	local utcBaseH = 0
-	local utcBaseL = 1463640793
+	local utcBaseH = ${UTCH}
+	local utcBaseL = ${UTCL}
 	-- CUSTOMIZATION END
-	if (cmpUTC(utcH, utcL, utcBaseH, utcBaseL) >= 0) then 
+	if (cmpUTC(utcH, utcL, utcBaseH, utcBaseL) <= 0) then 
 		valid = 1
 	end
 	return valid
@@ -103,7 +102,7 @@ function s2GetRuleType()
 	local isAND = 0
 	-- repeating call or status trig, AND or OR
 	-- CUSTOMIZATION START
-	repeatOrTrig = 0
+	repeatOrTrig = ${ISREPEAT}
 	isAND = 0 -- ignore it
 	-- CUSTOMIZATION END
 	return repeatOrTrig, isAND
@@ -121,103 +120,69 @@ function s2GetBeingReservedInfo()
 	return tblInfo
 end
 
+
 function s2IsConditionOKExt(selfStatus, rmtStatus)
-	local tblA = cjson.decode(selfStatus)
-	local tblB = cjson.decode(rmtStatus)
+	local ok = 0
+	local toStoreStatus = 0
+	local rmtUUID = nil
+	local tblRmt = {}
+	if not (nil == rmtStatus) then
+		tblRmt = cjson.decode(rmtStatus)
+	end
+	local tblSelf = {}
+	if not (nil == selfStatus) then
+		tblSelf = cjson.decode(selfStatus)
+	end
 
-	out = tblA["ctrl"]
-	out = tblB["ctrl"]
-	print("*** is "..out.."\r\n")
-	-- table_view = {  
-	--     "w",  
-	--     "e",  
-	--     "r",  
-	--     color1 = "red",  
-	--     color2 = "blue",  
-	--     {"a1", "a2", "a3"},  
-	--     {"b1", "b2", "b3"},  
-	--     {"c1", "c2", "c3"},  
-	-- }  
-	-- for i, v in pairs(tblA) do  
-		-- print("size is "..#out.."\r\n")
-	-- end
-	-- local json = cjson.encode(tblB)
-	-- print("json is "..json.."\r\n")
+	r, a = s2GetRuleType()
+	local rmtUUID = tblRmt["uuid"]
+	if nil == rmtUUID and 0 == r then
+		return ok
+	end
 
-	-- for i = 1, #(tblA) do
-	-- 	print("it is  "..tblA[i].."\r\n")
-	-- 	table.insert(out, tblA[i])
-	-- end
-	local json = cjson.encode(out)
-	print("json is "..json.."\r\n")
+	-- CUSTOMIZATION START
+	toStoreStatus = 1
 
+	local tblOldStatus = {}
+	local tblConditions = {}
+	local tblConditionsOld = {}
+	local retIdx = 1;
+	local tblNewStatus = tblRmt["status"]
+	if nil == tblNewStatus then
+		return ok
+	end
+
+	-- CONDITION(s) START
+	tblConditions[retIdx] = 0
+	tblConditionsOld[retIdx] = 0
+	if nil ~= string.find(rmtUUID, '${UUID}') then
+		if ${REF_VAL} == tblNewStatus["${STATUS_KEY}"] and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") then
+			tblConditions[retIdx] = 1
+			print('ok 1\r\n')
+		end
+	else
+		if 0 == cmpValInOldStatus('${UUID}', ${REF_VAL}, "${STATUS_KEY}") then
+			tblConditionsOld[retIdx] = 1
+			print('okOld 1\r\n')
+		end
+	end
+	retIdx = retIdx + 1
+	
+	${CONDITIONS}
+	-- CONDITION(s) END
+
+	${CONDITIONS_CHECK}
+	-- CUSTOMIZATION END
+
+	if ((toStoreStatus == 1) and 
+	not (nil == rmtUUID) and 
+	not (nil == rmtStatus)) then 
+		local l, n = s2GetSelfName()
+		s2apiSetCurrStatus(l, n, string.len(rmtUUID), rmtUUID, string.len(rmtStatus), rmtStatus)
+	end
+
+	return ok
 end
-
--- function s2IsConditionOKExt(selfStatus, rmtStatus)
--- 	local ok = 0
--- 	local toStoreStatus = 0
--- 	local rmtUUID = nil
--- 	local tblRmt = {}
--- 	if not (nil == rmtStatus) then
--- 		tblRmt = cjson.decode(rmtStatus)
--- 	end
--- 	local tblSelf = {}
--- 	if not (nil == selfStatus) then
--- 		tblSelf = cjson.decode(selfStatus)
--- 	end
-
--- 	r, a = s2GetRuleType()
--- 	local rmtUUID = tblRmt["uuid"]
--- 	if nil == rmtUUID and 0 == r then
--- 		return ok
--- 	end
-
--- 	-- CUSTOMIZATION START
--- 	toStoreStatus = 1
-
--- 	local tblOldStatus = {}
--- 	local tblConditions = {}
--- 	local tblConditionsOld = {}
--- 	local retIdx = 1;
--- 	local tblNewStatus = tblRmt["status"]
--- 	if nil == tblNewStatus then
--- 		return ok
--- 	end
-
--- 	-- CONDITION(s) START
--- 	tblConditions[retIdx] = 0
--- 	tblConditionsOld[retIdx] = 0
--- 	if nil ~= string.find(rmtUUID, '10000100101000010007C80E77ABCD51') then
--- 		if 1 == tblNewStatus["idx3"] and 0 ~= cmpValInOldStatus('10000100101000010007C80E77ABCD51', tblNewStatus["idx3"], "idx3") then
--- 			tblConditions[retIdx] = 1
--- 			print('[LUA] *********** ok 1\r\n')
--- 		end
--- 	else
--- 		if 0 == cmpValInOldStatus('10000100101000010007C80E77ABCD51', 1, "idx3") then
--- 			tblConditionsOld[retIdx] = 1
--- 			print('[LUA] *********** okOld 1\r\n')
--- 		end
--- 	end
--- 	retIdx = retIdx + 1
-	
-	
--- 	-- CONDITION(s) END
-
--- 	if 1 == tblConditions[1] then
--- 		ok = 1
--- 	end
-
--- 	-- CUSTOMIZATION END
-
--- 	if ((toStoreStatus == 1) and 
--- 	not (nil == rmtUUID) and 
--- 	not (nil == rmtStatus)) then 
--- 		local l, n = s2GetSelfName()
--- 		s2apiSetCurrStatus(l, n, string.len(rmtUUID), rmtUUID, string.len(rmtStatus), rmtStatus)
--- 	end
-
--- 	return ok
--- end
 
 
 --[[
@@ -229,8 +194,7 @@ end
 function s2GetSelfName()
 	local name = ''
 	-- CUSTOMIZATION START
-	name = '111111'
-	print ("name is "..name.."\r\n")
+	name = '${INAME}'
 	-- CUSTOMIZATION END
 	return string.len(name), name
 end
@@ -248,7 +212,7 @@ function s2GetSelfCtrlCmd()
 	local selfCtrl = ''
 	
 	-- CUSTOMIZATION START
-	selfCtrl = '{"ctrl":{"action":1}}'
+	selfCtrl = '${ACTION}'
 	-- CUSTOMIZATION END
 	return string.len(selfCtrl), selfCtrl
 end
