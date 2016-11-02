@@ -90,7 +90,7 @@ public class testLelink {
 				e.printStackTrace();
 				return;
 			}
-			if (LeLink.setContext(scriptStr, authStr, "11:22:33:44:55:66")) {
+			if (LeLink.setContext(mLeLinkListener, scriptStr, authStr, "11:22:33:44:55:66")) {
 				System.out.printf(LeLink.getSdkInfo() + "\n");
 				// System.out.printf("111111" + LeLink.getSdkUUID());
 				mLeLink = LeLink.getInstance();
@@ -359,5 +359,47 @@ public class testLelink {
 			}
 		}
 	});
-	
+	static private LeLink.Listener mLeLinkListener = new LeLink.Listener() {
+		@Override
+		public void onStateChange(String uuid, String dataStr) {
+			String str = String.format("onStateChange(%s):\n%s", uuid, dataStr);
+			Log.e(TAG, str);
+		}
+
+		@Override
+		public void onCloudStateChange(boolean isCloud) {
+			String str = String.format("onCloudStateChange: %s", isCloud);
+			Log.e(TAG, str);
+		}
+
+		@Override
+		public void onAirConfigBack(String uuid, String dataStr) {
+			String str = String.format("onAirConfigBack: %s, %s", uuid, dataStr);
+			Log.e(TAG, str);
+		}
+
+		@Override
+		public void onDiscoverBack(String uuid, String dataStr) {
+			String str = String.format("onDiscoverBack(%s):\n%s", uuid, dataStr);
+			Log.e(TAG, str);
+		}
+
+		@Override
+		public void onGetStateBack(int subcmd, String uuid, String dataStr) {
+			String str = String.format("onGetStateBack-%d(%s):\n%s", subcmd, uuid, dataStr);
+			Log.e(TAG, str);
+		}
+
+		@Override
+		public void onCtrlBack(int subcmd, String uuid, String dataStr) {
+			String str = String.format("onCtrlBack-%d(%s):\n%s", subcmd, uuid, dataStr);
+			Log.e(TAG, str);
+		}
+
+		@Override
+		public void onPushMessage(String dataStr) {
+			String str = String.format("onPushMessage:\n%s", dataStr);
+			Log.e(TAG, str);
+		}
+	};
 }

@@ -633,7 +633,7 @@ public class LeLink {
 				send(sendCmdJson, null);
 				mIsGetDevHello = true;
 				if (mListener != null) {
-					mListener.onAirConfigBack(uuid);
+					mListener.onAirConfigBack(uuid, dataStr);
 				}
 			}
 			break;
@@ -754,7 +754,7 @@ public class LeLink {
 		 * @param uuid
 		 * 			device uuid<br>
 		 */
-		void onAirConfigBack(String uuid);
+		void onAirConfigBack(String uuid, String dataStr);
 
 		/**
 		 * 设备发现.<br>
