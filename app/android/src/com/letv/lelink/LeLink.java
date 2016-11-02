@@ -122,7 +122,7 @@ public class LeLink {
 			mListener = listener;
 			jsonObj = new JSONObject();
 			try {
-				jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
+				// jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
 				jsonObj.put(LeCmd.K.AUTH, authStr);
 				jsonObj.put(LeCmd.K.MAC, macStr);
 			} catch (JSONException e1) {
