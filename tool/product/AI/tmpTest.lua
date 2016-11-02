@@ -21,6 +21,8 @@ end
 function getOldStatus(uuid)
     local l, n = s2GetSelfName()
     local tblOldStatus = s2apiGetLatestStatus(l, n)
+    
+    -- tblOldStatus = {'{"status":{"percentage":101},"uuid":"10000100091000610006FFFFFFFFFFFF"}','{"status":{"idx3":4},"uuid":"10000100101000010007FFFFFFFFFFFF"}','{"status":{"idx4":3},"uuid":"10000100101000010008FFFFFFFFFFFF"}'}
 
     if tblOldStatus then 
         for _, jsonOldStatus in pairs(tblOldStatus) do
