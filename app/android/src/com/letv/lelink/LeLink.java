@@ -122,6 +122,7 @@ public class LeLink {
 			mListener = listener;
 			jsonObj = new JSONObject();
 			try {
+				jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
 				jsonObj.put(LeCmd.K.AUTH, authStr);
 				jsonObj.put(LeCmd.K.MAC, macStr);
 			} catch (JSONException e1) {
@@ -633,6 +634,12 @@ public class LeLink {
 				send(sendCmdJson, null);
 				mIsGetDevHello = true;
 				if (mListener != null) {
+					try {
+						dataStr = new String(buf, "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+						return ret;
+					}
 					mListener.onAirConfigBack(uuid, dataStr);
 				}
 			}
