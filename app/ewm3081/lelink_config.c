@@ -84,7 +84,16 @@ static void monitor_cb(uint8_t *data , int len){
     //if(idx%20==0){
     //    debug("idx = %d",idx);
     //}
-    
+    // only multicast
+    if (!(0x01 == da[0] && 0x00 == da[1] && 0x5E == da[2])) {
+        uint8_t i;
+        // only broadcast
+        for (i = 0; i < 6; i++) {
+            if (da[i] != 0xFF) {
+                return;
+            }
+        }
+    }
 
     target_item_t item;
     item.data = len;
@@ -97,9 +106,11 @@ static void monitor_cb(uint8_t *data , int len){
         int ret = airconfig_do_sync(&item,channel,channel_locked,&base);
         if(AIRCONFIG_NW_STATE_CHANNEL_LOCKED == ret){
             is_channel_locked = true;
+            mico_stop_timer(channel_change_timer);
             memcpy(phone_mac,sa,6);
+            channel = channel_locked[0];
             mico_wlan_set_channel(channel_locked[0]);
-            debug("channel[%d] [%d] lock success!!!!", channel_locked[0], channel);
+            debug("channel base[%d][%d] [%d] lock success!!!!", base, channel_locked[0], channel);
             mico_start_timer(channel_timeout_timer);
         }
     } else {
@@ -178,6 +189,7 @@ static void channel_timeout(void* arg){
     debug("channel_timeout!!!!");
     is_channel_locked = false;
     airconfig_reset();
+    mico_start_timer(channel_change_timer);
     mico_stop_timer(channel_timeout_timer);
 }
 
@@ -225,7 +237,7 @@ void start_lelink_config(){
     
     reinit();
     debug("start caputure packet");
-    mico_wlan_monitor_rx_type(WLAN_FILTER_RX_MCAST_DATA);
+    mico_wlan_monitor_rx_type(WLAN_FILTER_RX_DATA);
     mico_wlan_monitor_rx_type(WLAN_FILTER_RX_BEACON);
     // set the callback function to monitor_cb
     mico_wlan_register_monitor_cb(monitor_cb);
