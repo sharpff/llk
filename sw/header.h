@@ -262,12 +262,29 @@ typedef unsigned int uint32_t;
 //#define delayms(ms) \
     //usleep(ms*1000)
     
+#elif defined (IOS)
+#include <ctype.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <sys/unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#define PF_VAL 1
+    
 #else
 
 #define LELOG(...)
 #pragma error ("no adpation...")
 
 #endif
+    
+    
+
 
 
 #define LOG_SENGINE
@@ -278,7 +295,7 @@ typedef unsigned int uint32_t;
 // #define LOG_AIRCONFIG_CTRL
 
 
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32) && !defined(IOS)
 #define memset hal_memset
 #define memcpy hal_memcpy
 #define memcmp hal_memcmp

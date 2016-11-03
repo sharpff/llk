@@ -173,6 +173,7 @@
 // #define lua_writeline(...)
 // #endif
     
+#elif defined(IOS)
 #else
 #error ("no adpation...")
 // #include <errno.h>
