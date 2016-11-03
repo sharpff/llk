@@ -350,20 +350,21 @@ static int tcp_socket(int *sockfd,
 			unsigned int socket_timeout)
 {
 	char *host = hostname;
-	int ret, family;
+	int ret = 0, family;
 	uint8_t addr_type = get_ip_addr_type(hostname);
 
 	/* See whether provided hostname needs to be resolved or not */
 	if (addr_type == ADDR_TYPE_IPV4) {
 		struct sockaddr_in *addr = (struct sockaddr_in *)address;
 		family = AF_INET;
+        char ip[4][32];
 		ret = inet_aton(hostname, &addr->sin_addr);
 
 		if (!ret) {
 			/* hostname is in human readable form. get the
 			   corresponding IP address */
 			// struct hostent *entry = NULL;
-			char ip[4*32] = {0};
+			
 			// net_gethostbyname(hostname, &entry);
 			ret = halGetHostByName(host, ip, sizeof(ip));
 
@@ -373,6 +374,7 @@ static int tcp_socket(int *sockfd,
 				// memcpy(&tmp.sin_addr.s_addr,
 				// 	entry->h_addr_list[0], entry->h_length);
 				// host = inet_ntoa(tmp.sin_addr);
+                host = ip[0];
 			} else {
 				APPLOGE("No entry for host %s found", hostname);
 					;// g_wm_stats.wm_ht_dns_fail++;
@@ -480,14 +482,17 @@ static inline int tcp_connect(int *sockfd,
 
 {
 	struct sockaddr addr;
+	struct sockaddr_in *tmpAddr = NULL;
+	int8_t *s_ip = NULL;
 	int r = tcp_socket(sockfd, &addr, hostname, port,
 			 retry_cnt, socket_timeout);
 	if (r != WM_SUCCESS) {
 		APPLOG("Socket creation for %s:%d failed", hostname, port);
 		return r;
 	}
-
-	APPLOG("Connecting .. %s:%d", hostname, port);
+	tmpAddr = (struct sockaddr_in *)&addr;
+	s_ip = (uint8_t*)(&(tmpAddr->sin_addr.s_addr));
+	APPLOG("Connecting .. %s:%d [%d.%d.%d.%d]", hostname, port, s_ip[0], s_ip[1], s_ip[2], s_ip[3]);
 	if (connect(*sockfd, &addr, sizeof(addr)) != 0) {
 		APPLOGE("tcp connect failed %s:%d errno=%d", hostname, port,
 			errno);

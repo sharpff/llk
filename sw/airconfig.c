@@ -773,6 +773,7 @@ int softApStart(void)
     uint8_t mac[6] = {0};
     uint8_t retCRC8 = 0;
     char wpa2_passphrase[32] = "00000000";
+    uint8_t tmpMac[3] = {0};
 
     softApStop(0);
     if((ret = getTerminalUUID((uint8_t *)uuid, sizeof(uuid))) < 0) {
@@ -781,7 +782,11 @@ int softApStart(void)
     }
     halGetMac(mac, 6);
     retCRC8 = crc8(mac, sizeof(mac));
-    snprintf(ssid, sizeof(ssid), "lelink%03d%s%02X", WIFICONFIG_SOFTAP_VER, uuid, retCRC8);
+    bytes2hexStr(&retCRC8, 1, tmpMac, sizeof(tmpMac));
+    snprintf(ssid, sizeof(ssid), "lelink%03d%s", WIFICONFIG_SOFTAP_VER, uuid);
+    ssid[29] = tmpMac[0];
+    ssid[30] = tmpMac[1];
+    LELOG("softApStart crc8[0x%02x] ssid[%s]", retCRC8, ssid);
     memset(ginSoftAPAESKey, 0, AES_LEN);
     if((ret = halSoftApStart(ssid, wpa2_passphrase, ginSoftAPAESKey, AES_LEN))) {
         LELOGE("halSoftApStart ret[%d]", ret);
