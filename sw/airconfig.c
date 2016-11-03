@@ -156,12 +156,13 @@ static target_node_t *inner_airconfig_shoot_to_node(const target_item_t *item) {
                 if (0 == memcmp(item->mac_src, gin_node_set[i].item[MAX_ITEM_SET / 2].mac_src, sizeof(item->mac_src))) {
                     // reset if no balance.
                     if (++gin_node_set[i].count[MAX_ITEM_SET / 2 + diff] >= MAX_COUNT_SYNC * 2) {
-                        memset(&(gin_node_set[i]), 0, sizeof(target_node_t));
-                        return NULL;
+						gin_node_set[i].count[MAX_ITEM_SET / 2 + diff]--;
+                        //memset(&(gin_node_set[i]), 0, sizeof(target_node_t));
+                        //return NULL;
                     }
 
                     memcpy(&(gin_node_set[i].item[MAX_ITEM_SET / 2 + diff]), item, sizeof(target_item_t));
-                    if (gin_node_set[i].base > item->data) {
+                    if (gin_node_set[i].base > item->data && gin_node_set[i].count[MAX_ITEM_SET / 2 + diff] >= MAX_COUNT_SYNC) {
                         gin_node_set[i].base = item->data;
                     }
 
@@ -360,13 +361,16 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
             }
         }
         i = 0;
-        while (MAX_COUNT_SYNC <= node->count[i++]) {
-            LELOG("channel counts [%d]", i);
-            break;
+        while (i < MAX_ITEM_SET) {
+			if( MAX_COUNT_SYNC <= node->count[i]) {
+				//LELOG("channel counts [%d]", i);
+				break;
+			}
+			i++;
         }
         if(i<=MAX_ITEM_SET / 2) {
             int j = 0;
-            while((j < MAX_ITEM_SET / 2) && (MAX_COUNT_SYNC <= node->count[i+j]) && (node->base+j == node->item[i+j].data)) {
+            while((j < (MAX_ITEM_SET-i)) && (MAX_COUNT_SYNC <= node->count[i+j]) && (node->base+j == node->item[i+j].data)) {
                 j++;
             }
             if(j>=MAX_ITEM_SET / 2) {
