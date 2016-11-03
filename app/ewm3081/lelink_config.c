@@ -175,8 +175,8 @@ static void change_channel(void* arg){
     if(!get_info_success){
         if(!is_channel_locked){
             //在所有的信道之间跳转
-            mico_wlan_set_channel(++channel);
-            if(channel==13){
+            mico_wlan_set_channel(channel++);
+            if(channel==14){
                 channel = 1;
             }
         }
