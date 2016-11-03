@@ -122,6 +122,7 @@ public class LeLink {
 			mListener = listener;
 			jsonObj = new JSONObject();
 			try {
+				// jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
 				jsonObj.put(LeCmd.K.AUTH, authStr);
 				jsonObj.put(LeCmd.K.MAC, macStr);
 			} catch (JSONException e1) {
@@ -633,7 +634,13 @@ public class LeLink {
 				send(sendCmdJson, null);
 				mIsGetDevHello = true;
 				if (mListener != null) {
-					mListener.onAirConfigBack(uuid);
+					try {
+						dataStr = new String(buf, "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+						return ret;
+					}
+					mListener.onAirConfigBack(uuid, dataStr);
 				}
 			}
 			break;
@@ -754,7 +761,7 @@ public class LeLink {
 		 * @param uuid
 		 * 			device uuid<br>
 		 */
-		void onAirConfigBack(String uuid);
+		void onAirConfigBack(String uuid, String dataStr);
 
 		/**
 		 * 设备发现.<br>
