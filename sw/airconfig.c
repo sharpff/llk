@@ -161,7 +161,7 @@ static target_node_t *inner_airconfig_shoot_to_node(const target_item_t *item) {
                     }
 
                     memcpy(&(gin_node_set[i].item[MAX_ITEM_SET / 2 + diff]), item, sizeof(target_item_t));
-                    if (gin_node_set[i].base < item->data) {
+                    if (gin_node_set[i].base > item->data) {
                         gin_node_set[i].base = item->data;
                     }
 
@@ -359,12 +359,26 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
                 break;
             }
         }
-        for (i = 0; i < MAX_ITEM_SET; i++) {
-            if (MAX_COUNT_SYNC <= node->count[i]) {
-                fulled++;
-            }
+        i = 0;
+        while (MAX_COUNT_SYNC <= node->count[i++]) {
+            LELOG("channel counts [%d]", i);
+            break;
         }
-
+        if(i<=MAX_ITEM_SET / 2) {
+            int j = 0;
+            while((j < MAX_ITEM_SET / 2) && (MAX_COUNT_SYNC <= node->count[i+j]) && (node->base+j == node->item[i+j].data)) {
+                j++;
+            }
+            if(j>=MAX_ITEM_SET / 2) {
+                fulled = MAX_ITEM_SET / 2;
+                // right data
+            } else {
+                return AIRCONFIG_NW_STATE_NONE;
+            }
+        } else {
+            // not right data
+            return AIRCONFIG_NW_STATE_NONE;
+        }
         // check if full filed the target 
         if (fulled >= MAX_ITEM_SET / 2) {
             int valid_channel = 0, valid_counts = 0;
@@ -405,7 +419,7 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
                     node->item[i].mac_dst[5],                                         
                     node->count[i]);
             }
-            *base = node->base - MAX_ITEM_SET / 2;
+            *base = node->base - 1;
             for(i=0; i<128; i++) {
                 gin_temp_data.flag[i] = 0;
                 gin_temp_data.data[i] = 0;
