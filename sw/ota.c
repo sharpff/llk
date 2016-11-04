@@ -96,6 +96,10 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                         }
                         if (OTA_TYPE_FW_SCRIPT == type) {
                             ret = lelinkStorageWriteScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
+                            if (0 > ret) {
+                                status = -9;
+                                break;
+                            }
                         } else if (OTA_TYPE_IA_SCRIPT == type) {
                             ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
                             if (0 > ret) {
@@ -105,7 +109,7 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                         }
                         LELOG("OTA script type [%d] ret[%d] status[%d]", type, ret, status);
                     } else {
-                        status = -6;
+                        status = -1;
                     }
                 }
             }
