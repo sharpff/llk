@@ -22,6 +22,8 @@ function getOldStatus(uuid)
     local l, n = s2GetSelfName()
     local tblOldStatus = s2apiGetLatestStatus(l, n)
 
+    -- tblOldStatus = {'{"status":{"idx1":1,"idx2":0,"idx3":0,"idx4":0},"uuid":"10000100101000010007E81863C38E75"}'}
+
     if tblOldStatus then 
         for _, jsonOldStatus in pairs(tblOldStatus) do
             if nil ~= string.find(jsonOldStatus, uuid) then
@@ -116,7 +118,11 @@ function s2GetBeingReservedInfo()
     return tblInfo
 end
 
-
+--[[
+    ./Debug/lua /home/lf/dev/rp/lelinkDev/tool/product/AI/tmpTest.lua s2IsConditionOKExt 
+    "{\"status\":{},\"uuid\":\"10000100091000610006F0B429000012\"}" "{\"status\":{\"percentage\":0},\"uuid\":\"10000100091000610006F0B429000012\"}"
+    "{\"status\":{},\"uuid\":\"10000100091000610006F0B429000012\"}" "{\"status\":{\"percentage\":0},\"uuid\":\"10000100091000610006F0B429000012\"}"
+]]
 function s2IsConditionOKExt(selfStatus, rmtStatus)
     local ok = 0
     local toStoreStatus = 0
