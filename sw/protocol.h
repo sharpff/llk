@@ -48,12 +48,18 @@ enum
     LELINK_ERR_BUSY_ERR                 = -1005,            /*in processing*/
     LELINK_ERR_IA_DELETE                = -1006,            /*IA delete error, it means IA has not been deleted*/
     LELINK_ERR_LOCK_UNLOCK              = -1008,            /*lock OR unlock failed*/
+    LELINK_ERR_HTTP_UPDATE              = -1009,            /*halUpdate*/
+    LELINK_ERR_VERIFY_SCRIPT            = -1010,            /*script1, script2 verification failed*/
+    LELINK_ERR_WRITE_SCRIPT1            = -1011,            /*script1 write error*/
+    LELINK_ERR_WRITE_SCRIPT2            = -1012,            /*script2 write error*/
 };
 
 typedef enum
 {
     LELINK_CMD_ASYNC_OTA_REQ = 1,
     LELINK_CMD_ASYNC_OTA_RSP,
+    LELINK_CMD_ASYNC_REBOOT_REQ = 3,
+    LELINK_CMD_ASYNC_REBOOT_RSP,
     /*
      * send this cmd only for a case that getting AP connection 
      * by the wlan configure info in the air 
@@ -190,7 +196,9 @@ typedef enum
      * handle the async request
      */
     LELINK_SUBCMD_ASYNC_OTA_REQ = 1,
-    LELINK_SUBCMD_ASYNC_OTA_RSP
+    LELINK_SUBCMD_ASYNC_OTA_RSP,
+    LELINK_SUBCMD_ASYNC_REBOOT_REQ = 1,
+    LELINK_SUBCMD_ASYNC_REBOOT_RSP
 }E_LELINK_SUBCMD;
     
 #define CMD_HEADER_INFO_1ST \

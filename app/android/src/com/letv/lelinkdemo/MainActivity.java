@@ -279,8 +279,8 @@ public class MainActivity extends Activity {
 		}
 
 		@Override
-		public void onAirConfigBack(String uuid) {
-			String str = String.format("onAirConfigBack: %s", uuid);
+		public void onAirConfigBack(String uuid, String dataStr) {
+			String str = String.format("onAirConfigBack: %s, %s", uuid, dataStr);
 			Log.e(TAG, str);
 		}
 

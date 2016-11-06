@@ -110,7 +110,7 @@
  *
  * Enable this layer to allow use of alternative memory allocators.
  */
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32) && !defined(IOS)
 #define MBEDTLS_PLATFORM_MEMORY
 #endif
 
@@ -131,7 +131,7 @@
  * Uncomment to prevent default assignment of standard functions in the
  * platform layer.
  */
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32) && !defined(IOS)
 #define MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
 #endif
 
@@ -156,7 +156,7 @@
  * Uncomment a macro to enable alternate implementation of specific base
  * platform function
  */
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32) && !defined(IOS)
 //#define MBEDTLS_PLATFORM_EXIT_ALT
 //#define MBEDTLS_PLATFORM_FPRINTF_ALT
 #define MBEDTLS_PLATFORM_PRINTF_ALT
@@ -295,7 +295,7 @@
  *
  * Uncomment to use your own hardware entropy collector.
  */
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32) && !defined(IOS)
 #define MBEDTLS_ENTROPY_HARDWARE_ALT
 #endif
 
@@ -789,7 +789,7 @@
  *
  * Uncomment this macro to disable the built-in platform entropy functions.
  */
-#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32)
+#if !defined (LINUX) && !defined (__ANDROID__) && !defined(WIN32) && !defined(IOS)
 #define MBEDTLS_NO_PLATFORM_ENTROPY
 #endif
 

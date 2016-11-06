@@ -156,12 +156,13 @@ static target_node_t *inner_airconfig_shoot_to_node(const target_item_t *item) {
                 if (0 == memcmp(item->mac_src, gin_node_set[i].item[MAX_ITEM_SET / 2].mac_src, sizeof(item->mac_src))) {
                     // reset if no balance.
                     if (++gin_node_set[i].count[MAX_ITEM_SET / 2 + diff] >= MAX_COUNT_SYNC * 2) {
-                        memset(&(gin_node_set[i]), 0, sizeof(target_node_t));
-                        return NULL;
+						gin_node_set[i].count[MAX_ITEM_SET / 2 + diff]--;
+                        //memset(&(gin_node_set[i]), 0, sizeof(target_node_t));
+                        //return NULL;
                     }
 
                     memcpy(&(gin_node_set[i].item[MAX_ITEM_SET / 2 + diff]), item, sizeof(target_item_t));
-                    if (gin_node_set[i].base < item->data) {
+                    if (gin_node_set[i].base > item->data && gin_node_set[i].count[MAX_ITEM_SET / 2 + diff] >= MAX_COUNT_SYNC) {
                         gin_node_set[i].base = item->data;
                     }
 
@@ -359,12 +360,29 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
                 break;
             }
         }
-        for (i = 0; i < MAX_ITEM_SET; i++) {
-            if (MAX_COUNT_SYNC <= node->count[i]) {
-                fulled++;
-            }
+        i = 0;
+        while (i < MAX_ITEM_SET) {
+			if( MAX_COUNT_SYNC <= node->count[i]) {
+				//LELOG("channel counts [%d]", i);
+				break;
+			}
+			i++;
         }
-
+        if(i<=MAX_ITEM_SET / 2) {
+            int j = 0;
+            while((j < (MAX_ITEM_SET-i)) && (MAX_COUNT_SYNC <= node->count[i+j]) && (node->base+j == node->item[i+j].data)) {
+                j++;
+            }
+            if(j>=MAX_ITEM_SET / 2) {
+                fulled = MAX_ITEM_SET / 2;
+                // right data
+            } else {
+                return AIRCONFIG_NW_STATE_NONE;
+            }
+        } else {
+            // not right data
+            return AIRCONFIG_NW_STATE_NONE;
+        }
         // check if full filed the target 
         if (fulled >= MAX_ITEM_SET / 2) {
             int valid_channel = 0, valid_counts = 0;
@@ -405,7 +423,7 @@ int airconfig_do_sync(const target_item_t *item, int channel, int channel_locked
                     node->item[i].mac_dst[5],                                         
                     node->count[i]);
             }
-            *base = node->base - MAX_ITEM_SET / 2;
+            *base = node->base - 1;
             for(i=0; i<128; i++) {
                 gin_temp_data.flag[i] = 0;
                 gin_temp_data.data[i] = 0;
@@ -752,14 +770,23 @@ int softApStart(void)
     int ret;
     char ssid[32];
     char uuid[32] = {0};
+    uint8_t mac[6] = {0};
+    uint8_t retCRC8 = 0;
     char wpa2_passphrase[32] = "00000000";
+    uint8_t tmpMac[3] = {0};
 
     softApStop(0);
     if((ret = getTerminalUUID((uint8_t *)uuid, sizeof(uuid))) < 0) {
         LELOGE("getTerminalUUID ret[%d]", ret);
         goto out;
     }
-    snprintf(ssid, sizeof(ssid), "-lelink%03d-%s", WIFICONFIG_SOFTAP_VER, uuid);
+    halGetMac(mac, 6);
+    retCRC8 = crc8(mac, sizeof(mac));
+    bytes2hexStr(&retCRC8, 1, tmpMac, sizeof(tmpMac));
+    snprintf(ssid, sizeof(ssid), "lelink%03d%s", WIFICONFIG_SOFTAP_VER, uuid);
+    ssid[29] = tmpMac[0];
+    ssid[30] = tmpMac[1];
+    LELOG("softApStart crc8[0x%02x] ssid[%s]", retCRC8, ssid);
     memset(ginSoftAPAESKey, 0, AES_LEN);
     if((ret = halSoftApStart(ssid, wpa2_passphrase, ginSoftAPAESKey, AES_LEN))) {
         LELOGE("halSoftApStart ret[%d]", ret);

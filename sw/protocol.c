@@ -183,6 +183,8 @@ static int cbCloudIndMsgLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
 
 static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbAsyncOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbAsyncRebootLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbAsyncRebootRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 
 
 static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHeaderInfo *cmdInfo);
@@ -278,7 +280,8 @@ static CmdRecord tblCmdType[] = {
 
     { LELINK_CMD_ASYNC_OTA_REQ, LELINK_SUBCMD_ASYNC_OTA_REQ, cbAsyncOTALocalReq, NULL },
     { LELINK_CMD_ASYNC_OTA_RSP, LELINK_SUBCMD_ASYNC_OTA_RSP, cbAsyncOTARemoteRsp, NULL },
-
+    { LELINK_CMD_ASYNC_REBOOT_REQ, LELINK_SUBCMD_ASYNC_REBOOT_REQ, cbAsyncRebootLocalReq, NULL },
+    { LELINK_CMD_ASYNC_REBOOT_RSP, LELINK_SUBCMD_ASYNC_REBOOT_RSP, cbAsyncRebootRemoteRsp, NULL },
     { 0, 0, 0, 0 }
 };
 
@@ -937,7 +940,8 @@ int lelinkNwPostCmd(void *ctx, const void *node)
         LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == node_p->subCmdId) {
         node_p->timeoutRef = 1;
     }
-    if (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId) {
+    if (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId && 
+        LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->subCmdId) {
         node_p->timeoutRef = 3;
     }
     LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef);
@@ -1303,7 +1307,13 @@ MULTI_LOCAL_RSP:
     }
     return ret;
 }
+static void postReboot(void *ctx) {
+    NodeData node = {0};
 
+    node.cmdId = LELINK_CMD_ASYNC_REBOOT_REQ;
+    node.subCmdId = LELINK_SUBCMD_ASYNC_REBOOT_REQ;
+    lelinkNwPostCmd(ctx, &node);
+}
 /* hello */
 static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
@@ -1970,13 +1980,14 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
     // uint8_t sig[RSA_LEN] = {0};
     CmdHeaderInfo* tmpCmdInfo = (CmdHeaderInfo *)cmdInfo;
     const char *urlPtr = otaGetLatestUrl();
-    LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp url[0x%p] lenWithRSA[%d] -s", urlPtr, len);
+    LELOG("intDoOTA url[0x%p] lenWithRSA[%d] -s", urlPtr, len);
 
 
     if (NULL != urlPtr) {
         tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
     } else if (len <= RSA_LEN) {
         tmpCmdInfo->status = LELINK_ERR_PARAM_INVALID;
+        return;
     } else {
         NodeData node = {0};
         type = getJsonOTAType((char *)data + RSA_LEN, len - RSA_LEN, url, sizeof(url));
@@ -1995,32 +2006,55 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }
 
         switch (type) {
-            case OTA_TYPE_FW:
+            case OTA_TYPE_FW: {
+                node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
+                node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
+                ret = lelinkNwPostCmd(ctx, &node);
+                if (!ret) {
+                    tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
+                } else {
+                    otaSetLatestSig(data);
+                    otaSetLatestType(type);
+                    otaSetLatestUrl(url, strlen(url));
+                }
+            }break;
+            case OTA_TYPE_AUTH:
+            case OTA_TYPE_PRIVATE:
             case OTA_TYPE_FW_SCRIPT:
             case OTA_TYPE_IA_SCRIPT: {
-                LELOG("cbCloudMsgCtrlR2TDoOTALocalRsp type[%d], ret[%d]", type, ret);
                 otaSetLatestSig(data);
-            }break;
-            case OTA_TYPE_PRIVATE:
-            case OTA_TYPE_AUTH: {
-                otaSetLatestSig(NULL);
+                otaSetLatestType(type);
+                otaSetLatestUrl(url, strlen(url));
+                ret = cbAsyncOTALocalReq(NULL, NULL, NULL, 0);
+                switch(ret) {
+                    case -1: {
+                        tmpCmdInfo->status = LELINK_ERR_HTTP_UPDATE;
+                    }break;
+                    case -7: {
+                        tmpCmdInfo->status = LELINK_ERR_WRITE_SCRIPT2;
+                    }break;
+                    case -8: {
+                        tmpCmdInfo->status = LELINK_ERR_VERIFY_SCRIPT;
+                    }break;
+                    case -9: {
+                        tmpCmdInfo->status = LELINK_ERR_WRITE_SCRIPT1;
+                    }break;
+                    default: {
+                        tmpCmdInfo->status = LELINK_ERR_SUCCESS;
+                    }break;
+                }
             }break;
             default:
                 tmpCmdInfo->status = LELINK_ERR_PARAM_INVALID;
             break;
+        }    
+        // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
+        if (LELINK_ERR_SUCCESS == tmpCmdInfo->status && 
+            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_FW == type)) {
+            postReboot(ctx);
         }
-        if (LELINK_ERR_SUCCESS == tmpCmdInfo->status) {                
-            node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
-            node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
-            ret = lelinkNwPostCmd(ctx, &node);
-            if (!ret) {
-                tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
-            } else {
-                otaSetLatestType(type);
-                otaSetLatestUrl(url, strlen(url));
-            }
-        }      
     }
+    LELOG("intDoOTA type[%d], status[%d]", type, tmpCmdInfo->status);
 }
 
 static int cbCloudMsgCtrlR2TDoOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
@@ -2204,30 +2238,33 @@ static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
     int type = otaGetLatestType();
     const char *url = otaGetLatestUrl();
     const uint8_t *sig = otaGetLatestSig();
+    int ret = 0;
     LELOG("cbAsyncOTALocalReq -s");
     LELOG("cbAsyncOTALocalReq type[%d] url[%s] sig[0x%p]", type, url, sig);
     if (NULL == url || OTA_TYPE_NONE >= type) {
         LELOGE("cbAsyncOTALocalReq URL NOT FOUND");
     } else {
-        int ret = 0;
         ret = leOTA(type, url, sig, RSA_LEN);
         // clear the ota info
         otaInfoClean();
-        // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
-        if (0 <= ret && 
-            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_FW == type)) {
-            halReboot();
-        }
     }
 
     LELOG("cbAsyncOTALocalReq -e");
-    return 0;
+    return (ret > 0) ? 0 : ret;
 }
 
 static void cbAsyncOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     
 }
 
+static int cbAsyncRebootLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
+    halReboot();
+    return 0;
+}
+
+static void cbAsyncRebootRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    
+}
 
 CmdRecord *getCmdRecord(uint32_t cmdId, uint32_t subCmdId) {
 

@@ -235,6 +235,20 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     return changeState(ret, &ginStateCntx, i);
 }
 
+static void reloadLatestPassport(void) {
+    memset(&ginPrivateCfg, 0, sizeof(ginPrivateCfg));
+    if (0 == lelinkStorageReadPrivateCfg(&ginPrivateCfg)) {
+        LELOG("reloadLatestPassport status [%d]", ginPrivateCfg.data.nwCfg.configStatus);
+        if (ginPrivateCfg.csum == crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
+            if (0 < ginPrivateCfg.data.nwCfg.config.ssid_len) {
+                LELOG("reloadLatestPassport got old passport [%s:%s]", ginPrivateCfg.data.nwCfg.config.ssid, ginPrivateCfg.data.nwCfg.config.psk);
+                ginPrivateCfg.data.nwCfg.configStatus = 1;
+                lelinkStorageWritePrivateCfg(&ginPrivateCfg);                    
+            }
+        }
+    }
+}
+
 static int stateProcStart(StateContext *cntx) {
     int ret = 0;
 
@@ -290,6 +304,8 @@ static int stateProcConfiguring(StateContext *cntx) {
             LELOG("Configure wifi timeout!!!");
             wifiConfigByMonitor ?  halStopConfig() : softApStop(0);
             setResetLed(RLED_STATE_FREE);
+            reloadLatestPassport();
+            halReboot();
         } else {
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
         }

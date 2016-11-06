@@ -91,20 +91,21 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                     #endif
                     if (0 > ret) { // recover the fw script, for ia script, it is no need to recover. cause ginScriptCfg2 is just a tmp var.
                         if (OTA_TYPE_FW_SCRIPT == type) {
-                            ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
-                            LELOGW("recover E_FLASH_TYPE_SCRIPT ret[%d]", ret);
+                            ret = lelinkStorageWriteScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
+                            if (0 > ret) {
+                                status = -9;
+                                break;
+                            }
+                        } else if (OTA_TYPE_IA_SCRIPT == type) {
+                            ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
+                            if (0 > ret) {
+                                status = -7;
+                                break;
+                            }
                         }
-                        status = -8;
-                        break;
-                    }
-                    if (OTA_TYPE_FW_SCRIPT == type) {
-                        ret = lelinkStorageWriteScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
-                    } else if (OTA_TYPE_IA_SCRIPT == type) {
-                        ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
-                        if (0 > ret) {
-                            status = -7;
-                            break;
-                        }
+                        LELOG("OTA script type [%d] ret[%d] status[%d]", type, ret, status);
+                    } else {
+                        status = -1;
                     }
                     LELOG("OTA script type [%d] ret[%d] status[%d]", type, ret, status);
                 } else {

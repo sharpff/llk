@@ -148,21 +148,19 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
 }
 
 int halGetHostByName(const char *name, char ip[4][32], int len) { 
-    char ipstr[16];
+    char ipstr[16] = {0};
     int err;
     
     if (NULL == name || 4*32 > len) {
         APPLOGE("param error");
         return -1;
     }
-    while(1) {
-       err = gethostbyname(name, (uint8_t *)ipstr, 16);
-       require_noerr(err, ReConnWithDelay);
-       debug("server address: %s",ipstr);
-       break;
-ReConnWithDelay:
-       mico_thread_sleep(5);
-   }
-   strcpy(ip[0], ipstr);
-   return 0;
+    err = gethostbyname(name, (uint8_t *)ipstr, 16);
+    debug("server address: %d %s",err, ipstr);
+    if(err == 0) {
+        strcpy(ip[0], ipstr);
+        return 0;
+    } else {
+        return -2;
+    }
 }

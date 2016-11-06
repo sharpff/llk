@@ -52,7 +52,7 @@ public class LeLink {
 	private long mGetCloudHeartRspTime = 0;
 	private static String mInitInfo = null;
 	private static String mSdkInfo = null;
-	// private static Listener mListener = null;
+	private static Listener mListener = null;
 	// for get & discover
 	private String mWaitGetUuid = null;
 	private Map<String, JSONObject> mFindDevs = new HashMap<String, JSONObject>(); // uuid
@@ -93,7 +93,7 @@ public class LeLink {
 	 * 
 	 * @return true - 设置正确; false - 设置失败 
 	 */
-	public static boolean setContext(String scriptStr, String authStr, String macStr) {
+	public static boolean setContext(Listener listener, String scriptStr, String authStr, String macStr) {
 //		String macStr = "11:22:33:44:55:66";
 		JSONObject jsonObj = null;
 		
@@ -118,7 +118,7 @@ public class LeLink {
 			// 	e.printStackTrace();
 			// 	return false;
 			// }
-			// mListener = listener;
+			mListener = listener;
 			jsonObj = new JSONObject();
 			try {
 				jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
@@ -632,9 +632,15 @@ public class LeLink {
 				LOGI("Get device hello");
 				send(sendCmdJson, null);
 				mIsGetDevHello = true;
-				// if (mListener != null) {
-				// 	mListener.onAirConfigBack(uuid);
-				// }
+				if (mListener != null) {
+					try {
+						dataStr = new String(buf, "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+						return ret;
+					}
+					mListener.onAirConfigBack(uuid, dataStr);
+				}
 			}
 			break;
 		case MSG_TYPE_REMOTERESPOND:
@@ -754,7 +760,7 @@ public class LeLink {
 		 * @param uuid
 		 * 			device uuid<br>
 		 */
-		void onAirConfigBack(String uuid);
+		void onAirConfigBack(String uuid, String dataStr);
 
 		/**
 		 * 设备发现.<br>

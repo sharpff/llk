@@ -163,14 +163,10 @@ function s1CvtStd2Pri(json)
 		if ospm2 ~= nil then
 			for i=1, #cmdtb do
 				cmdtb[i] = cmdtb[i]
-				print('out => ' .. cmdtb[i] ..'\n')
 			end
 			cmdtb[3] = 0x0E
 			cmdtb[15] = ospm2 & 0xff
 			cmdtb[16] = (ospm2 >> 8) & 0xff
-			print('aaaaa => ' .. ospm2..' '..cmdtb[15]..' '..cmdtb[16]..'\n')
-		else
-			print('bbbbb' .. '\n')
 		end
 		for i = 1, #cmdtb - 1 do
 			sum = sum + cmdtb[i]
