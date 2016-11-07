@@ -72,44 +72,47 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
             break;
         case OTA_TYPE_FW_SCRIPT:
         case OTA_TYPE_IA_SCRIPT: {
-                if (OTA_TYPE_FW_SCRIPT == type) {
-                    tmpScriptCfg = (uint8_t *)ginScriptCfg;
-                    tmpTotalSize = sizeof(ScriptCfg);
-                } else if (OTA_TYPE_IA_SCRIPT == type) {
-                    tmpScriptCfg = (uint8_t *)ginScriptCfg2;
-                    tmpTotalSize = sizeof(ScriptCfg2);
-                }
-                memset(tmpScriptCfg, 0, tmpTotalSize);
-                // status = halUpdate((void *)&info, (uint8_t *)(tmpScriptCfg->data.script), sizeof(tmpScriptCfg->data.script));
-                status = halUpdate((void *)&info, tmpScriptCfg + sizeof(int), tmpTotalSize);
-                if(0 < status) {
-                    *((int *)tmpScriptCfg) = status;
-                    #ifdef LELINK_OTA_VERIFICATION
-                    ret = lelinkVerifyBuf(tmpScriptCfg + sizeof(int), status);
-                    #else
-                    ret = 0;
-                    #endif
-                    if (0 > ret) { // recover the fw script, for ia script, it is no need to recover. cause ginScriptCfg2 is just a tmp var.
+            if (OTA_TYPE_FW_SCRIPT == type) {
+                tmpScriptCfg = (uint8_t *)ginScriptCfg;
+                tmpTotalSize = sizeof(ScriptCfg);
+            } else if (OTA_TYPE_IA_SCRIPT == type) {
+                tmpScriptCfg = (uint8_t *)ginScriptCfg2;
+                tmpTotalSize = sizeof(ScriptCfg2);
+            }
+            memset(tmpScriptCfg, 0, tmpTotalSize);
+            // status = halUpdate((void *)&info, (uint8_t *)(tmpScriptCfg->data.script), sizeof(tmpScriptCfg->data.script));
+            status = halUpdate((void *)&info, tmpScriptCfg + sizeof(int), tmpTotalSize);
+            if(0 < status) {
+                *((int *)tmpScriptCfg) = status;
+                #ifdef LELINK_OTA_VERIFICATION
+                ret = lelinkVerifyBuf(tmpScriptCfg + sizeof(int), status);
+                #else
+                ret = 0;
+                #endif
+                if (0 > ret) { // recover the fw script, for ia script, it is no need to recover. cause ginScriptCfg2 is just a tmp var.
                         if (OTA_TYPE_FW_SCRIPT == type) {
-                            ret = lelinkStorageWriteScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
-                            if (0 > ret) {
-                                status = -9;
-                                break;
-                            }
-                        } else if (OTA_TYPE_IA_SCRIPT == type) {
-                            ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
-                            if (0 > ret) {
-                                status = -7;
-                                break;
-                            }
+                            ret = lelinkStorageReadScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
+                            LELOGW("recover E_FLASH_TYPE_SCRIPT ret[%d]", ret);
                         }
-                        LELOG("OTA script type [%d] ret[%d] status[%d]", type, ret, status);
-                    } else {
-                        status = -1;
+                        status = -8;
+                        break;
+                    }
+                    if (OTA_TYPE_FW_SCRIPT == type) {
+                        ret = lelinkStorageWriteScriptCfg(tmpScriptCfg, E_FLASH_TYPE_SCRIPT, 0);
+                        if (0 > ret) {
+                            status = -9;
+                            break;
+                        }
+                    } else if (OTA_TYPE_IA_SCRIPT == type) {
+                        ret = lelinkStorageWriteScriptCfg2(tmpScriptCfg);
+                        if (0 > ret) {
+                            status = -7;
+                            break;
+                        }
                     }
                     LELOG("OTA script type [%d] ret[%d] status[%d]", type, ret, status);
                 } else {
-                    status = -6;
+                    status = -1;
                 }
             }
             break;

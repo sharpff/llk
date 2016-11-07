@@ -1476,9 +1476,9 @@ int s2apiGetLatestStatus(lua_State *L) {
 }
 
 int s1apiOptLogTable(lua_State *L) {
-    int i = 0, ret = 0;
+    int i = 0;
     int lenTable = 0;
-    uint8_t strRet[128] = {0};
+    // uint8_t strRet[128] = {0};
 
     LEPRINTF("logTable: ");
     lenTable = lua_rawlen(L, 1);
@@ -1529,13 +1529,13 @@ int s1apiOptTable2String(lua_State *L) {
             break;
     }
     if (ret)
-        lua_pushlstring(L, strRet, ret);
+        lua_pushlstring(L, (const char *)strRet, ret);
     LELOG("s1apiTable2String -e");
     return ret > 0 ? 1 : 0;
 }
 
 int s1apiOptString2Table(lua_State *L) {
-    int i = 0, len = 0, hasNewTbl = 0;
+    int i = 0, len = 0;
     uint8_t *str = NULL;
 
     LELOG("s1apiOptString2Table -s");
