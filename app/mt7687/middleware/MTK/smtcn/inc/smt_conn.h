@@ -90,6 +90,7 @@ extern "C" {
 #elif (CFG_SUPPORT_SMNT_PROTO == 6)            /* lelink protocol */
 #define switch_channel_timems   (300)          /* lelink 300ms */
 #define locked_channel_timems   (5 * 1000)     /* 5s */
+#define use_smart_connection_filter  1
 #endif
 
 
