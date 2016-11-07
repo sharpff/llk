@@ -130,10 +130,14 @@ function s1GetVer()
 	-- LOGTBL(tblData1)
 	-- LOGTBL(whatWrite(tblData1))
 
-	local tblData2 = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x46, 0xFF, 0xFC, 0x02, 0x18, 0x02, 0x10, 0x03}
-	LOGTBL(tblData2)
-	LOGTBL(whatRead(tblData2))
+	-- local tblData2 = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x46, 0xFF, 0xFC, 0x02, 0x18, 0x02, 0x10, 0x03}
+	-- LOGTBL(tblData2)
+	-- LOGTBL(whatRead(tblData2))
 
+	-- local str = s1apiOptTable2String(tblData2)
+	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
+	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
+	-- s1apiOptLogTable(tblData3)
 	local str = '1.0'
 	return string.len(str), str
 end
@@ -238,7 +242,7 @@ function s1GetValidKind(data)
 	data = tableToString(tmp)
 
 	-- test only
-	cvtType = 0x01
+	-- cvtType = 0x01
 
 	for i = 1, 1 do
 		-- UART
@@ -268,7 +272,8 @@ function s1GetValidKind(data)
 				break
 			end
 
-			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) then
+			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) or
+				nil ~= string.find(data, string.char(0x01, 0x84, 0x01)) then
 				-- (IND) sDevStatus, RAW ind 0181021202100B2D0212853002150210021602100210021010021103 
 				print ("[LUA] s1GetValidKind - sDevStatus ind "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
@@ -378,7 +383,7 @@ function s1CvtStd2Pri(json)
 	local dataStr = ""
 
 	-- test only
-	cvtType = 1
+	-- cvtType = 1
 
 	for i = 1, 1 do
 		-- UART
@@ -493,7 +498,7 @@ function s1CvtPri2Std(bin)
 	bin = tableToString(dataTbl)
 
 	-- test only
-	cvtType = 0x01
+	-- cvtType = 0x01
 
 	for i = 1, 1 do
 		-- UART

@@ -296,8 +296,15 @@ ERROR_PARAM:
 	}
 #ifdef TEST_ONLY
 	{
-		extern int ss2apiGetStatusTest(lua_State *L);
+		extern int s2apiSetCurrStatus(lua_State *L);
 		extern int s2apiGetLatestStatus(lua_State *L);
+		extern int s1apiGetCurrCvtType(lua_State *L);
+		extern int s1apiGetDevStatus(lua_State *L);
+		extern int s1apiSdevGetUserDataByMac(lua_State *L);
+		extern int s1apiSDevGetMacByUserData(lua_State *L);
+		extern int s1apiString2Table(lua_State *L);
+		extern int s1apiTable2String(lua_State *L);
+		extern int s1apiLogTable(lua_State *L);
 		extern void testOnlySetIACache();
 
 		int s2apiSetCurrStatus(lua_State *L);
@@ -307,9 +314,16 @@ ERROR_PARAM:
 
 		testOnlySetIACache();
 
-		lua_register(L, "ss2apiGetStatusTest", ss2apiGetStatusTest);
-		lua_register(L, "s2apiGetLatestStatus", s2apiGetLatestStatus);
-		lua_register(L, "s2apiSetCurrStatus", s2apiSetCurrStatus);
+	    lua_register(L, "s2apiSetCurrStatus", s2apiSetCurrStatus);
+	    lua_register(L, "s2apiGetLatestStatus", s2apiGetLatestStatus);
+	    lua_register(L, "s1apiGetCurrCvtType", s1apiGetCurrCvtType);
+	    lua_register(L, "s1apiGetDevStatus", s1apiGetDevStatus);
+	    lua_register(L, "s1apiSdevGetUserDataByMac", s1apiSdevGetUserDataByMac);
+	    lua_register(L, "s1apiSDevGetMacByUserData", s1apiSDevGetMacByUserData);
+	    lua_register(L, "s1apiString2Table", s1apiString2Table);
+	    lua_register(L, "s1apiTable2String", s1apiTable2String);
+	    lua_register(L, "s1apiLogTable", s1apiLogTable);
+
 		luaL_openlibs(L);
 		if (luaL_loadbuffer(L, ginScriptCfg->data.script, ginScriptCfg->data.size, "lelink") || lua_pcall(L, 0, 0, 0)) {
 			lua_pop(L, 1);

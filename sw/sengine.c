@@ -469,6 +469,7 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
             //     arr[index].idx[3] = i + 0x30;
             //     sdevInfoSerilized(&arr[index], i);
             // }
+            // sdevUpdate(arr)
         }
     }
 
@@ -1120,7 +1121,7 @@ LF_IMPL get_lf_impl(const char *func_name, int *param_num)
 
 int sengineInit(void) {
     int ret = 0;
-// #define STATIC_MEMORY_FOR_SCRIPT
+#define STATIC_MEMORY_FOR_SCRIPT
 #ifndef STATIC_MEMORY_FOR_SCRIPT
     ginScriptCfg = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
     ginScriptCfg2 = (ScriptCfg2 *)halCalloc(1, sizeof(ScriptCfg2));
@@ -1169,6 +1170,9 @@ int s1apiGetCurrCvtType(lua_State *L);
 int s1apiGetDevStatus(lua_State *L);
 int s1apiSdevGetUserDataByMac(lua_State *L);
 int s1apiSDevGetMacByUserData(lua_State *L);
+int s1apiOptString2Table(lua_State *L);
+int s1apiOptTable2String(lua_State *L);
+int s1apiOptLogTable(lua_State *L);
 
 int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen)
 {
@@ -1187,6 +1191,9 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     lua_register(L, "s1apiGetDevStatus", s1apiGetDevStatus);
     lua_register(L, "s1apiSdevGetUserDataByMac", s1apiSdevGetUserDataByMac);
     lua_register(L, "s1apiSDevGetMacByUserData", s1apiSDevGetMacByUserData);
+    lua_register(L, "s1apiOptString2Table", s1apiOptString2Table);
+    lua_register(L, "s1apiOptTable2String", s1apiOptTable2String);
+    lua_register(L, "s1apiOptLogTable", s1apiOptLogTable);
     // lua_register(L, "csum", csum);
     
     // LELOG("[lua engine] START [%s]----------------", funcName);
@@ -1457,7 +1464,7 @@ int s2apiGetLatestStatus(lua_State *L) {
                     }
                     lua_pushnumber(L, i + 1);    //key  
                     lua_pushstring(L, ginIACache.cache[m].beingReservedStatus[n]);  //value  
-                    lua_settable(L, -3);       //push key,value  
+                    lua_rawset(L, -3);       //push key,value  
                 	i++;
 				}
             }
@@ -1466,6 +1473,91 @@ int s2apiGetLatestStatus(lua_State *L) {
     }
 
     return ret;
+}
+
+int s1apiOptLogTable(lua_State *L) {
+    int i = 0, ret = 0;
+    int lenTable = 0;
+    uint8_t strRet[128] = {0};
+
+    LEPRINTF("logTable: ");
+    lenTable = lua_rawlen(L, 1);
+    for (i = 0; i < lenTable; i++) {
+        lua_pushinteger(L, i + 1);
+        lua_gettable(L, -2);
+        if (lua_isnumber(L, -1)) {
+            
+            LEPRINTF("%02x ", lua_tonumber(L, -1));
+        }
+        lua_pop(L, 1);
+    }
+    LEPRINTF("\r\n");
+    return 0;
+}
+
+int s1apiOptTable2String(lua_State *L) {
+    int i = 0, ret = 0;
+    int lenTable = 0;
+    uint8_t strRet[128] = {0};
+
+    LELOG("s1apiTable2String -s");
+    lenTable = lua_rawlen(L, 1);
+    for (i = 0; i < lenTable; i++) {
+        lua_pushinteger(L, i + 1);
+        lua_gettable(L, -2);
+        if (lua_isnumber(L, -1)) {
+            ret += 1;
+            strRet[i] = lua_tonumber(L, -1);
+        } else
+            ret = 0;
+        /*else {
+            ret = 0;
+            lua_pushfstring(L,
+                strcat(
+                    strcat(
+                        "invalid entry #%d in array argument #%d (expected number, got ",
+                        luaL_typename(L, -1)
+                        ),
+                    ")"
+                    ),
+                i, 1
+                );
+            lua_error(L);
+        }*/
+        lua_pop(L, 1);
+        if (!ret)
+            break;
+    }
+    if (ret)
+        lua_pushlstring(L, strRet, ret);
+    LELOG("s1apiTable2String -e");
+    return ret > 0 ? 1 : 0;
+}
+
+int s1apiOptString2Table(lua_State *L) {
+    int i = 0, len = 0, hasNewTbl = 0;
+    uint8_t *str = NULL;
+
+    LELOG("s1apiOptString2Table -s");
+    len = lua_tointeger(L, -2);
+    str = (uint8_t *)lua_tostring(L, -1);
+    if (0 > len || NULL == str) {
+        LELOG("s1apiOptString2Table -e1");
+        return 0;
+    }
+    LELOG("s1apiOptString2Table len[%d] str[%x]", len, str);
+
+    // /* create table. */
+    lua_newtable(L);
+    for (i = 0; i < len; i++) {
+        lua_pushinteger(L, i + 1);    //key  
+        lua_pushinteger(L, str[i]);  //value  
+        lua_rawset(L, -3);       //push key,value  
+    }
+
+    LELOG("s1apiOptString2Table -e");
+
+    return 1;
 }
 
 int sengineSetStatus(char *json, int jsonLen) {
