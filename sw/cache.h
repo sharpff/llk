@@ -6,12 +6,10 @@ extern "C"
 {
 #endif
 
+#include "leconfig.h"
+
 #define CACHE_MAX_NODE 10
 // #define CACHE_NODE_TYPE NodeData
-
-#define CACHE_NODE_HEADER \
-    uint16_t flag; \
-    uint16_t nodeReserved;
 
 typedef struct {
 	CACHE_NODE_HEADER;

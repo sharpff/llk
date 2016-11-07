@@ -28,7 +28,10 @@ $MAIN_PATH/lelinkTool.py \
     #-a 10.154.252.130 \
     #-p 5546 \
     
-    # -a iot.fineat.com \
+    # -a iot.test.leinlife.com \
+    # -p 9003 \
+
+    # -a iot.leinlife.com \
     # -p 9011 \
 
     # -a iot.test.leinlife.com \

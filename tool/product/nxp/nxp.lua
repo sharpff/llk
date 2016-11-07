@@ -126,14 +126,18 @@ function s1GetVer()
 	-- local str = string.format('%02X ', ret)
 	-- print ("[LUA] csum "..str.."\r\n")
 
-	-- local tblData1 = {0x01, 0x80, 0x43, 0x00, 0x25, 0x4C, 0xE9, 0x00, 0xDB, 0x8F, 0x16, 0x01, 0x01, 0x04, 0x01, 0x01, 0x02, 0x06, 0x00, 0x00, 0x00, 0x04, 0x00, 0x03, 0x00, 0x06, 0x00, 0x08, 0x00, 0x05, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x03, 0x00, 0x06, 0x00, 0x08, 0x00, 0x05, 0x03}
+	-- local tblData1 = {0x01, 0x80, 0x00, 0x00, 0x04, 0x99, 0x00, 0x54, 0x00, 0x49, 0x03}
 	-- LOGTBL(tblData1)
 	-- LOGTBL(whatWrite(tblData1))
 
-	-- local tblData2 = {0x01, 0x02, 0x10, 0x47, 0x02, 0x10, 0x02, 0x1C, 0x18, 0x02, 0x15, 0x7D, 0xC0, 0x6F, 0xA0, 0x02, 0x10, 0xE4, 0x4C, 0xE3, 0x6F, 0x02, 0x10, 0x02, 0x10, 0x03}
+	-- local tblData2 = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x46, 0xFF, 0xFC, 0x02, 0x18, 0x02, 0x10, 0x03}
 	-- LOGTBL(tblData2)
 	-- LOGTBL(whatRead(tblData2))
 
+	-- local str = s1apiOptTable2String(tblData2)
+	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
+	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
+	-- s1apiOptLogTable(tblData3)
 	local str = '1.0'
 	return string.len(str), str
 end
@@ -163,7 +167,7 @@ end
 	s1GetQueries
   ]]
 function s1GetQueries(queryType)
-
+	return 0, "", 0, ""
 end
 
 function s1OptHasSubDevs()
@@ -181,28 +185,32 @@ function s1OptDoSplit(data)
 	local tblData = stringToTable(data)
 	tblData = whatRead(tblData)
 	data = tableToString(tblData)
+	print("[LUA] total ======> "..#tblData.."\r\n")
 	LOGTBL(tblData)
+	print("[LUA] <============ \r\n")
 
-	print("[LUA] total is "..#tblData.."\r\n")
 	while where < #tblData do
 		local tmpLen = (tblData[where + 3] << 8) | tblData[where + 4]
 		-- print("tmpLen is "..tmpLen.."\r\n")
 		local tmpString = string.sub(data, where, (where + 7 + tmpLen - 1))
 		local tmpTbl = stringToTable(tmpString)
-		LOGTBL(tmpTbl)
 		if tblData[where+6-1] ~= csum(tmpTbl) then
-			print("csum failed\r\n")
+			print("[LUA E] csum failed\r\n")
 			break
 		end
 		tblDataCountLen[idx + 1] = #(whatWrite(tmpTbl)) & 0xFF
 		tblDataCountLen[idx + 2] = 0x00
 		idx = idx + 2
 		where = where + 7 + tmpLen
-		print("test where is "..where.." tmpLen is "..tmpLen.."\r\n")
+		print("[LUA] IDX @"..where.." & LEN is "..tmpLen.." ------->\r\n")
+		LOGTBL(tmpTbl)
+		print("[LUA] --------------------------------- \r\n")
 	end
 
 	strDataCountLen = tableToString(tblDataCountLen)
+	print("[LUA] out ========> \r\n")
 	LOGTBL(tblDataCountLen)
+	print("[LUA] <============ \r\n")
 	-- print(string.format('count [%d] ', string.len( strDataCountLen)) .. LOGTBL(stringToTable(strDataCountLen)))
 
 	return string.len( strDataCountLen ), strDataCountLen, string.len( data ), data
@@ -229,12 +237,12 @@ function s1GetValidKind(data)
 
 	local tmp = stringToTable(data)
 	tmp = whatRead(tmp)
-	print("s1GetValidKind start\r\n")
+	print("[LUA] s1GetValidKind start\r\n")
 	LOGTBL(tmp)
 	data = tableToString(tmp)
 
 	-- test only
-	cvtType = 0x01
+	-- cvtType = 0x01
 
 	for i = 1, 1 do
 		-- UART
@@ -264,7 +272,8 @@ function s1GetValidKind(data)
 				break
 			end
 
-			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) then
+			if nil ~= string.find(data, string.char(0x01, 0x81, 0x02)) or
+				nil ~= string.find(data, string.char(0x01, 0x84, 0x01)) then
 				-- (IND) sDevStatus, RAW ind 0181021202100B2D0212853002150210021602100210021010021103 
 				print ("[LUA] s1GetValidKind - sDevStatus ind "..#dataTbl.."\r\n")
 				ret = WHATKIND_SUB_DEV_DATA
@@ -285,6 +294,8 @@ function s1GetValidKind(data)
 
 	end
 	-- invalid kind
+	print ("[LUA] s1GetValidKind - ret is "..ret.."\r\n")
+
 	return ret
 end
 
@@ -372,7 +383,7 @@ function s1CvtStd2Pri(json)
 	local dataStr = ""
 
 	-- test only
-	cvtType = 1
+	-- cvtType = 1
 
 	for i = 1, 1 do
 		-- UART
@@ -386,6 +397,10 @@ function s1CvtStd2Pri(json)
 			if ctrl["sDevJoin"] == 1 then
 			-- RAW is  01 02 10 49 02 10 02 14 7E FF FC 30 02 10 03
 				cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x7E, 0xFF, 0xFC, 0x30, 0x00, 0x03}
+				-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x46, 0xff, 0xfc, 0x08, 0x00, 0x03}
+				-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0xb1, 0xff, 0xfc, 0xff, 0x00, 0x03}
+				-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x4e, 0xff, 0xfc, 0x00, 0x00, 0x03}
+
  				break
 			end
 
@@ -483,7 +498,7 @@ function s1CvtPri2Std(bin)
 	bin = tableToString(dataTbl)
 
 	-- test only
-	cvtType = 0x01
+	-- cvtType = 0x01
 
 	for i = 1, 1 do
 		-- UART

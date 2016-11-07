@@ -448,7 +448,6 @@ static int stateProcCloudLinked(StateContext *cntx) {
 
     TIMEOUT_BEGIN_SEC(8)
     // TIMEOUT_BEGIN(8000)
-        LELOGW("stateProcCloudLinked timeout *****************************");
         return -1;
     TIMEOUT_END
 
@@ -493,7 +492,6 @@ static int stateProcCloudAuthed(StateContext *cntx) {
             if (lelinkNwPostCmd(ginCtxR2R, &node)) {
             }
         }
-        LELOGW("stateProcCloudAuthed timeout *****************************");
     TIMEOUT_END
 
     return 0;

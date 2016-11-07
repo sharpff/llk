@@ -54,13 +54,13 @@ extern PrivateCfg ginPrivateCfg;
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
 int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
-    // int i = 0;
     uint8_t tmp[20] = {0};
     halSha1Start();
     halSha1Update(input, inputLen);
     halSha1End(tmp);
 #if 0
     {
+        int i = 0;
         LELOG("------ sha12key single ----------");
         for (i = 0; i < sizeof(tmp); i++) {
             LEPRINTF("%02x", tmp[i]);

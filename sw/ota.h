@@ -7,8 +7,6 @@ extern "C"
 #endif
 #include "leconfig.h"
 
-#define MAX_PROFILE_SIZE (1024*16)
-
 typedef enum {
     OTA_TYPE_NONE = 0,
     OTA_TYPE_RESERVED_PF,

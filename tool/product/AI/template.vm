@@ -12,51 +12,45 @@ function cmpUTC(utcH, utcL, utcBaseH, utcBaseL)
 	elseif (utcH == utcBaseH) and (utcL == utcBaseL) then
 		ret = 0
 	end
-
-	return ret
+    return ret
 end
 
 --[[
-	INTERNAL
-]]
-function cmpValInOldStatus(uuid, valCurr, tokenOld)
-	local l, n = s2GetSelfName()
-	local tblOldStatus = s2apiGetLatestStatus(l, n)
-	local ret = -2
-
-	if tblOldStatus then 
-		for _, jsonOldStatus in pairs(tblOldStatus) do
-			if nil ~= string.find(jsonOldStatus, uuid) then
-				local tbl = cjson.decode(jsonOldStatus)
-				if tbl["status"][tokenOld] < valCurr then
-					ret = 1
-				elseif tbl["status"][tokenOld] > valCurr then
-					ret = -1
-				else
-					ret = 0
-				end
-				break
-			end
-		end
-	end
-	return ret
-end
-
---[[
-	INTERNAL
+    INTERNAL
 ]]
 function getOldStatus(uuid)
-	local l, n = s2GetSelfName()
-	local tblOldStatus = s2apiGetLatestStatus(l, n)
+    local l, n = s2GetSelfName()
+    local tblOldStatus = s2apiGetLatestStatus(l, n)
 
-	if tblOldStatus then 
-		for _, jsonOldStatus in pairs(tblOldStatus) do
-			if nil ~= string.find(jsonOldStatus, uuid) then
-				return jsonOldStatus
-			end
-		end
-	end
-	return nil
+    if tblOldStatus then 
+        for _, jsonOldStatus in pairs(tblOldStatus) do
+            if nil ~= string.find(jsonOldStatus, uuid) then
+                local tbl = cjson.decode(jsonOldStatus)
+                return tbl["status"]
+            end
+        end
+    end
+    return nil
+end
+
+--[[
+    INTERNAL
+]]
+function cmpValInOldStatus(uuid, val, token)
+    local l, n = s2GetSelfName()
+    local ret = -2
+
+    local tblOldStatus = getOldStatus(uuid)
+    if tblOldStatus then
+        if tblOldStatus[token] < val then
+            ret = 1
+        elseif tblOldStatus[token] > val then
+            ret = -1
+        else
+            ret = 0
+        end
+    end
+    return ret
 end
 
 --[[
@@ -64,7 +58,7 @@ end
 ]]
 function getBeingReservedInfo()
 	-- CUSTOMIZATION START
-	local tblInfo = {'10000100101000010007F0B429000012', '10000100111000810008C80E77ABCD60'}
+	local tblInfo = {${UUIDS}}
 	-- CUSTOMIZATION END
 	return tblInfo
 end
@@ -77,21 +71,19 @@ end
 	lua5.3.0_win_slim.exe hello/helloworld.lua s2IsValid {\"status\":{},\"utcH\":339,\"utcL\":136006835}
 ]]
 function s2IsValid(selfStatus)
-	local valid = 0
+	local valid = 1
 	local tb = cjson.decode(selfStatus)
 	local utcL = tb["utcL"]
 	local utcH = tb["utcH"]
 	
 	-- E.g. 16/12/1 0:00:00 is 0x583F6800
 	-- CUSTOMIZATION START
-	local utcBaseH = 0
-	local utcBaseL = 0x583F6800
+	local utcBaseH = ${UTCH}
+	local utcBaseL = ${UTCL}
 	-- CUSTOMIZATION END
 	if (cmpUTC(utcH, utcL, utcBaseH, utcBaseL) <= 0) then 
 		valid = 1
 	end
-
-	-- print(string.format('[LUA] valid [%d]\r\n', valid))
 	return valid
 end
 
@@ -105,8 +97,8 @@ function s2GetRuleType()
 	local isAND = 0
 	-- repeating call or status trig, AND or OR
 	-- CUSTOMIZATION START
-	repeatOrTrig = 0
-	isAND = 0
+	repeatOrTrig = ${ISREPEAT}
+	isAND = 0 -- ignore it
 	-- CUSTOMIZATION END
 	return repeatOrTrig, isAND
 end
@@ -145,7 +137,6 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 
 	-- CUSTOMIZATION START
 	toStoreStatus = 1
-	print(string.format('[LUA] s2IsConditionOKExt 1 ok[%d]\r\n', ok))
 
 	local tblOldStatus = {}
 	local tblConditions = {}
@@ -155,47 +146,27 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 	if nil == tblNewStatus then
 		return ok
 	end
-	print(string.format('[LUA] s2IsConditionOKExt 2 ok[%d]\r\n', ok))
 
 	-- CONDITION(s) START
 	tblConditions[retIdx] = 0
 	tblConditionsOld[retIdx] = 0
-	if nil ~= string.find(rmtUUID, '10000100111000810008C80E77ABCD60') then
-		print('checking 1\r\n')
-		if 1 == tblNewStatus["switcher"] and 0 ~= cmpValInOldStatus('10000100111000810008C80E77ABCD60', tblNewStatus["switcher"], "switcher") then
-			tblConditions[retIdx] = 1
-			print('ok 1\r\n')
-		end
-	else
-		print('checking 2\r\n')
-		if 0 == cmpValInOldStatus('10000100111000810008C80E77ABCD60', 1, "switcher") then
+	if ${REF_VAL} ${OPERATOR} tblNewStatus["${STATUS_KEY}"] and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") then
+		tblConditions[retIdx] = 1
+		print('ok 1\r\n')
+	end
+    local tblOldStatus = getOldStatus('${UUID}')
+    if tblOldStatus then
+		if ${REF_VAL} ${OPERATOR} tblOldStatus["${STATUS_KEY}"] then
 			tblConditionsOld[retIdx] = 1
 			print('okOld 1\r\n')
 		end
 	end
 	retIdx = retIdx + 1
+	
+	${CONDITIONS}
+	-- CONDITION(s) END
 
-	-- CONDITION END
-	print(string.format('[LUA] s2IsConditionOKExt 3 \r\n'))
-
-	--[[
-		$(CONDITIONS CHECK) may include the following cases
-	]]
-	-- 1. OR condition check 
-	if 1 == tblConditions[1] then
-		ok = 1
-	end
-
-	-- -- 2. AND condition check 
-	-- if 1 == tblConditions[1] and 1 == tblConditionsOld[2] then
-	-- 	ok = 1
-	-- end
-	-- if 1 == tblConditions[2] and 1 == tblConditionsOld[1] then
-	-- 	ok = 1
-	-- end
-
-
-
+	${CONDITIONS_CHECK}
 	-- CUSTOMIZATION END
 
 	if ((toStoreStatus == 1) and 
@@ -205,7 +176,6 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 		s2apiSetCurrStatus(l, n, string.len(rmtUUID), rmtUUID, string.len(rmtStatus), rmtStatus)
 	end
 
-	print(string.format('[LUA] s2IsConditionOKExt 4 ok[%d]\r\n', ok))
 	return ok
 end
 
@@ -219,7 +189,7 @@ end
 function s2GetSelfName()
 	local name = ''
 	-- CUSTOMIZATION START
-	name = 'helloTest3'
+	name = '${INAME}'
 	-- CUSTOMIZATION END
 	return string.len(name), name
 end
@@ -237,8 +207,7 @@ function s2GetSelfCtrlCmd()
 	local selfCtrl = ''
 	
 	-- CUSTOMIZATION START
-	selfCtrl = '{"ctrl":{"action":1}}'
+	selfCtrl = '${ACTION}'
 	-- CUSTOMIZATION END
-	print(string.format('[LUA] s2GetSelfCtrlCmd [%s]\r\n', selfCtrl))
 	return string.len(selfCtrl), selfCtrl
 end

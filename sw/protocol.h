@@ -200,11 +200,6 @@ typedef enum
     LELINK_SUBCMD_ASYNC_REBOOT_REQ = 1,
     LELINK_SUBCMD_ASYNC_REBOOT_RSP
 }E_LELINK_SUBCMD;
-
-
-#define CACHE_NODE_HEADER \
-    uint16_t flag; \
-    uint16_t nodeReserved;
     
 #define CMD_HEADER_INFO_1ST \
     int16_t status; \

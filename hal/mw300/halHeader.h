@@ -36,6 +36,7 @@ inline int hal_strncmp(const char *dst, const char *src, unsigned int len);
 inline char * hal_strcpy(char *dst, const char *src);
 inline long int hal_strtol(const char *str, char **c, int adecimal);
 inline char *hal_strstr(const char *haystack, const char *needle);
+inline char *hal_strrstr(const char *haystack, const char *needle);
 inline int hal_sprintf(char *buf, const char *fmt, ...);
 inline int hal_snprintf(char *buf, size_t size, const char *fmt, ...);
 inline int hal_vsnprintf(char *buffer, size_t n, const char *format, va_list ap);

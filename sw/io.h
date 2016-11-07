@@ -84,6 +84,45 @@ typedef struct
 
 
 /*
+ * -------this size should be sync with lelinkTool.py START------
+ */
+#define SDEV_MAX_INFO 320
+#define SDEV_MAX_MAC 24
+#define SDEV_MAX_EPT 8
+#define SDEV_MAX_CUST 8
+/*
+ * -------this size should be sync with lelinkTool.py END------
+ */
+#define MAX_SDEV_NUM 16
+
+// char sdevInfo[SDEV_MAX_INFO]; // as json object "sDev".
+// char mac[SDEV_MAX_MAC]; // long mac address
+// uint8_t sdevEpt[SDEV_MAX_EPT]; // the element - 1 is the real ept
+// uint8_t sdevMan[SDEV_MAX_CUST]; // for the manufacturer
+// uint8_t idx[SDEV_MAX_MAC/4]; // short mac or index
+
+
+
+#define CACHE_NODE_NBASE \
+    CACHE_NODE_HEADER; \
+    char sdevInfo[SDEV_MAX_INFO]; \
+    char mac[SDEV_MAX_MAC]; \
+    uint8_t idx[SDEV_MAX_MAC]; \
+    uint8_t sdevEpt[SDEV_MAX_EPT]; \
+    uint8_t sdevMan[SDEV_MAX_CUST]; \
+    uint8_t reserved[4];
+
+typedef struct {
+    CACHE_NODE_NBASE;
+}LELINK_ALIGNED SDevNBase;
+
+typedef struct
+{
+    SDevNBase data[MAX_SDEV_NUM];
+    uint8_t csum;
+}LELINK_ALIGNED SDevInfoCfg;
+
+/*
  * auth info
  */
 typedef struct {
@@ -113,7 +152,7 @@ typedef enum {
     E_FLASH_TYPE_SCRIPT, 
     E_FLASH_TYPE_PRIVATE,
     E_FLASH_TYPE_SCRIPT2, 
-    E_FLASH_TYPE_TEST, // XXX
+    E_FLASH_TYPE_SDEV_INFO,
     E_FLASH_TYPE_MAX,
 }E_FLASH_TYPE;
 

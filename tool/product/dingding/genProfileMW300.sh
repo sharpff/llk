@@ -10,8 +10,8 @@
 
 MAIN_PATH="../.."
 $MAIN_PATH/lelinkTool.py \
-    -a iot.fineat.com \
-    -p 9011 \
+    -a iot.test.leinlife.com \
+    -p 9003 \
     -u 10000100011000010022 \
     -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCEW7N+AnWIkhGMGUfLFBdMd3txwA2D7jSeDq8xpuw80ru8XPFxM1Zc3fNy9Ps+F853uadfNr8JMZyr1lxbLmldTug9IusZVqZzqDYMbiVpjxFtp2WpXuQgiSJ14TuF/N4eGsgcB0KikXWum+ZlOtfCgpWjSKDsJgL2O95/UBwr1wIDAQAB \
     -s asFxYWh+q61Fii5AhPOG3NSiCe5FzZcfeWho0qj0uq8y9oLIrWmXMT/xEX92eVqaH2x8pKepgyhzdNaqa27ugfijEm7i6Awmmrd0KOjwhAxSXwWmPYFb7RVgufEqSRKIETLG/FysJoIkAb6Rs70AdGz7oUYhxjRLt5Bxwhh3cT0= \
