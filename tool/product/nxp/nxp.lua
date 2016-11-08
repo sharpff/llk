@@ -130,10 +130,35 @@ function s1GetVer()
 	-- LOGTBL(tblData1)
 	-- LOGTBL(whatWrite(tblData1))
 
-	-- local tblData2 = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x46, 0xFF, 0xFC, 0x02, 0x18, 0x02, 0x10, 0x03}
+	local tblData2 = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x46, 0xFF, 0xFC, 0x02, 0x18, 0x02, 0x10, 0x03}
 	-- LOGTBL(tblData2)
+	s1apiOptLogTable(tblData2)
+	-- local a = tableToString(tblData2)
+	-- local a = s1apiOptTable2String(tblData2)
+	print('abc'..'\r\n')
 	-- LOGTBL(whatRead(tblData2))
 
+
+	-- local str = s1apiOptTable2String(tblData2)
+	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
+	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
+	-- s1apiOptLogTable(tblData3)
+	-- local str = s1apiOptTable2String(tblData2)
+	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
+	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
+	-- s1apiOptLogTable(tblData3)
+	-- local str = s1apiOptTable2String(tblData2)
+	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
+	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
+	-- s1apiOptLogTable(tblData3)
+	-- local str = s1apiOptTable2String(tblData2)
+	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
+	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
+	-- s1apiOptLogTable(tblData3)
+	-- local str = s1apiOptTable2String(tblData2)
+	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
+	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
+	-- s1apiOptLogTable(tblData3)
 	-- local str = s1apiOptTable2String(tblData2)
 	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
 	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
@@ -146,20 +171,19 @@ end
 	s1GetCvtType
   ]]
 function s1GetCvtType()
-    -- combained uart(0x1) & gpio(0x2)
+    -- combained uart(0x1) & gpio(0x2) & pwm(0x10)
     local str = [[
-    {
-    "whatCvtType":1,
-    "uart":[
-		{
-			"id":1, 
-			"baud":"115200-8N1"
-		}
-    	]
-	}
+    {"whatCvtType":19,
+     "common":[{"num":8,"id":"36-37-32-33-34-35-0","mux":"7-7-9-9-9-9-8"}],
+     "uart":[{"id":1, "baud":"115200-8N1"}],  
+     "gpio":[{"id":0,"dir":0,"mode":0,"state":1,"type":1,"longTime":30,"shortTime":3}],
+     "pwm":[{"id":33,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
+            {"id":34,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
+            {"id":35,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
+            {"id":18,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024}]
+    }
     ]]
 	local delay = 5
-
 	return string.len(str), str, delay
 end
 
@@ -178,41 +202,43 @@ end
 	s1OptDoSplit
   ]]
 function s1OptDoSplit(data)
+	local cvtType = s1apiGetCurrCvtType()
 	local tblDataCountLen = {}
 	local strDataCountLen = ""
 	local where = 1
 	local idx = 0
-	local tblData = stringToTable(data)
-	tblData = whatRead(tblData)
-	data = tableToString(tblData)
-	print("[LUA] total ======> "..#tblData.."\r\n")
-	LOGTBL(tblData)
-	print("[LUA] <============ \r\n")
+	if 0x01 == cvtType then
+		local tblData = stringToTable(data)
+		tblData = whatRead(tblData)
+		data = tableToString(tblData)
+		print("[LUA] total ======> "..#tblData.."\r\n")
+		LOGTBL(tblData)
+		print("[LUA] <============ \r\n")
 
-	while where < #tblData do
-		local tmpLen = (tblData[where + 3] << 8) | tblData[where + 4]
-		-- print("tmpLen is "..tmpLen.."\r\n")
-		local tmpString = string.sub(data, where, (where + 7 + tmpLen - 1))
-		local tmpTbl = stringToTable(tmpString)
-		if tblData[where+6-1] ~= csum(tmpTbl) then
-			print("[LUA E] csum failed\r\n")
-			break
+		while where < #tblData do
+			local tmpLen = (tblData[where + 3] << 8) | tblData[where + 4]
+			-- print("tmpLen is "..tmpLen.."\r\n")
+			local tmpString = string.sub(data, where, (where + 7 + tmpLen - 1))
+			local tmpTbl = stringToTable(tmpString)
+			if tblData[where+6-1] ~= csum(tmpTbl) then
+				print("[LUA E] csum failed\r\n")
+				break
+			end
+			tblDataCountLen[idx + 1] = #(whatWrite(tmpTbl)) & 0xFF
+			tblDataCountLen[idx + 2] = 0x00
+			idx = idx + 2
+			where = where + 7 + tmpLen
+			print("[LUA] IDX @"..where.." & LEN is "..tmpLen.." ------->\r\n")
+			LOGTBL(tmpTbl)
+			print("[LUA] --------------------------------- \r\n")
 		end
-		tblDataCountLen[idx + 1] = #(whatWrite(tmpTbl)) & 0xFF
-		tblDataCountLen[idx + 2] = 0x00
-		idx = idx + 2
-		where = where + 7 + tmpLen
-		print("[LUA] IDX @"..where.." & LEN is "..tmpLen.." ------->\r\n")
-		LOGTBL(tmpTbl)
-		print("[LUA] --------------------------------- \r\n")
+
+		strDataCountLen = tableToString(tblDataCountLen)
+		print("[LUA] out ========> \r\n")
+		LOGTBL(tblDataCountLen)
+		print("[LUA] <============ \r\n")
+		-- print(string.format('count [%d] ', string.len( strDataCountLen)) .. LOGTBL(stringToTable(strDataCountLen)))
 	end
-
-	strDataCountLen = tableToString(tblDataCountLen)
-	print("[LUA] out ========> \r\n")
-	LOGTBL(tblDataCountLen)
-	print("[LUA] <============ \r\n")
-	-- print(string.format('count [%d] ', string.len( strDataCountLen)) .. LOGTBL(stringToTable(strDataCountLen)))
-
 	return string.len( strDataCountLen ), strDataCountLen, string.len( data ), data
 end
 
@@ -234,6 +260,11 @@ function s1GetValidKind(data)
 	local WHATKIND_SUB_DEV_JOIN = 12
 	local WHATKIND_SUB_DEV_LEAVE = 13
 	local WHATKIND_SUB_DEV_INFO = 14
+
+    -- included gpio(0x2) & pwm(0x10)
+	if 0x10 == cvtType or 0x02 == cvtType then
+		return WHATKIND_MAIN_DEV_DATA;
+	end
 
 	local tmp = stringToTable(data)
 	tmp = whatRead(tmp)
@@ -378,106 +409,119 @@ function s1CvtStd2Pri(json)
 	local cvtType = s1apiGetCurrCvtType()
 	print ('[LUA] s1CvtStd2Pri return => '..json..'\r\n')
 	local ctrl = cjson.decode(json)
-	local sDevCtrl = ctrl["sDevCtrl"]
 	local cmdTbl = {}
 	local dataStr = ""
 
 	-- test only
 	-- cvtType = 1
 
-	for i = 1, 1 do
 		-- UART
 		if 0x01 == cvtType then
-			-- RAW is  01 02 10 11 02 10 02 10 11 03
-			if ctrl["reset"] == 1 then
-				cmdTbl = {0x01, 0x00, 0x11, 0x00, 0x00, 0x11, 0x03}
-				break
-			end
+			for x = 1, 1 do
+				local sDevCtrl = ctrl["sDevCtrl"]
+				-- RAW is  01 02 10 11 02 10 02 10 11 03
+				if ctrl["reset"] == 1 then
+					cmdTbl = {0x01, 0x00, 0x11, 0x00, 0x00, 0x11, 0x03}
+					break
+				end
 
-			if ctrl["sDevJoin"] == 1 then
-			-- RAW is  01 02 10 49 02 10 02 14 7E FF FC 30 02 10 03
-				cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x7E, 0xFF, 0xFC, 0x30, 0x00, 0x03}
-				-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x46, 0xff, 0xfc, 0x08, 0x00, 0x03}
-				-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0xb1, 0xff, 0xfc, 0xff, 0x00, 0x03}
-				-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x4e, 0xff, 0xfc, 0x00, 0x00, 0x03}
+				if ctrl["sDevJoin"] == 1 then
+				-- RAW is  01 02 10 49 02 10 02 14 7E FF FC 30 02 10 03
+					cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x7E, 0xFF, 0xFC, 0x30, 0x00, 0x03}
+					-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x46, 0xff, 0xfc, 0x08, 0x00, 0x03}
+					-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0xb1, 0xff, 0xfc, 0xff, 0x00, 0x03}
+					-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x4e, 0xff, 0xfc, 0x00, 0x00, 0x03}
 
- 				break
-			end
+	 				break
+				end
 
-			-- "{\"sDevLeave\":1,\"idx\":\"ABCD\",\"mac\":\"C06FA000E44CE36F\"}"
-			if ctrl["sDevLeave"] then
-			-- NXP is 01 00 47 00 0C 18 05 7D C0 6F A0 00 E4 4C E3 6F 00 00 03
-			-- RAW is 01 02 10 47 02 10 02 1C 18 02 15 7D C0 6F A0 02 10 E4 4C E3 6F 02 10 02 10 03
-				local addr = ctrl["idx"]
-				local mac = ctrl["mac"]
-				local str = string.char(0x01, 0x00, 0x47, 0x00, 0x0C, 0x00)
-				str = str .. hex2bin(addr) .. hex2bin(mac) .. string.char(0x00, 0x00, 0x03)
-				cmdTbl = stringToTable(str)
-				cmdTbl[6] = csum(cmdTbl)
-				LOGTBL(cmdTbl)
- 				break
-			end
+				-- "{\"sDevLeave\":1,\"idx\":\"ABCD\",\"mac\":\"C06FA000E44CE36F\"}"
+				if ctrl["sDevLeave"] then
+				-- NXP is 01 00 47 00 0C 18 05 7D C0 6F A0 00 E4 4C E3 6F 00 00 03
+				-- RAW is 01 02 10 47 02 10 02 1C 18 02 15 7D C0 6F A0 02 10 E4 4C E3 6F 02 10 02 10 03
+					local addr = ctrl["idx"]
+					local mac = ctrl["mac"]
+					local str = string.char(0x01, 0x00, 0x47, 0x00, 0x0C, 0x00)
+					str = str .. hex2bin(addr) .. hex2bin(mac) .. string.char(0x00, 0x00, 0x03)
+					cmdTbl = stringToTable(str)
+					cmdTbl[6] = csum(cmdTbl)
+					LOGTBL(cmdTbl)
+	 				break
+				end
 
-			-- INTERNAL QUERY
-			-- "{\"sDevQryEpt\":1,\"idx\":\"ABCD\"}"
-			if ctrl["sDevQryEpt"] == 1 then
-				local str = string.char(0x01, 0x00, 0x45, 0x00, 0x02, 0x00)
-				local addr = ctrl["idx"]
-				str = str..hex2bin(addr)..string.char(0x03)
-				cmdTbl = stringToTable(str)
-				cmdTbl[6] = csum(cmdTbl)
-				LOGTBL(cmdTbl)
-				break
-			end
-			-- "{\"sDevQryMan\":1,\"idx\":\"ABCD\"}"
-			if ctrl["sDevQryMan"] == 1 then
-				local str = string.char(0x01, 0x00, 0x42, 0x00, 0x02, 0x00)
-				local addr = ctrl["idx"]
-				str = str..hex2bin(addr)..string.char(0x03)
-				cmdTbl = stringToTable(str)
-				cmdTbl[6] = csum(cmdTbl)
-				LOGTBL(cmdTbl)
-				break
-			end
-			-- "{\"sDevQryEptInfo\":1,\"idx\":\"ABCD\",\"ept\":1}"
-			if ctrl["sDevQryEptInfo"] == 1 then
-				local str = string.char(0x01, 0x00, 0x43, 0x00, 0x03, 0x00)
-				local addr = ctrl["idx"]
-				local ept = ctrl["ept"]
-				str = str..hex2bin(addr)..string.char(ept, 0x03)
-				cmdTbl = stringToTable(str)
-				cmdTbl[6] = csum(cmdTbl)
-				LOGTBL(cmdTbl)
-				break
-			end
+				-- INTERNAL QUERY
+				-- "{\"sDevQryEpt\":1,\"idx\":\"ABCD\"}"
+				if ctrl["sDevQryEpt"] == 1 then
+					local str = string.char(0x01, 0x00, 0x45, 0x00, 0x02, 0x00)
+					local addr = ctrl["idx"]
+					str = str..hex2bin(addr)..string.char(0x03)
+					cmdTbl = stringToTable(str)
+					cmdTbl[6] = csum(cmdTbl)
+					LOGTBL(cmdTbl)
+					break
+				end
+				-- "{\"sDevQryMan\":1,\"idx\":\"ABCD\"}"
+				if ctrl["sDevQryMan"] == 1 then
+					local str = string.char(0x01, 0x00, 0x42, 0x00, 0x02, 0x00)
+					local addr = ctrl["idx"]
+					str = str..hex2bin(addr)..string.char(0x03)
+					cmdTbl = stringToTable(str)
+					cmdTbl[6] = csum(cmdTbl)
+					LOGTBL(cmdTbl)
+					break
+				end
+				-- "{\"sDevQryEptInfo\":1,\"idx\":\"ABCD\",\"ept\":1}"
+				if ctrl["sDevQryEptInfo"] == 1 then
+					local str = string.char(0x01, 0x00, 0x43, 0x00, 0x03, 0x00)
+					local addr = ctrl["idx"]
+					local ept = ctrl["ept"]
+					str = str..hex2bin(addr)..string.char(ept, 0x03)
+					cmdTbl = stringToTable(str)
+					cmdTbl[6] = csum(cmdTbl)
+					LOGTBL(cmdTbl)
+					break
+				end
 
-			-- TODO: ctrl the sub dev.
-			if sDevCtrl then
-				local str = string.char(0x01, 0x00, 0x92, 0x00, 0x00, 0x00, 0x02)
-				local mac = ctrl["sDev"]["mac"]
-				local dEpt = ctrl["sDev"]["ept"]
-				-- local idx = s1apiSdevGetUserDataByMac(mac)
-				local idx = string.char(0x31, 0x71)
-				str = str..idx..string.char(0x01)..string.char(dEpt)..genSDevCtrl(ctrl["sDev"], sDevCtrl)..string.char(0x03)
-				cmdTbl = stringToTable(str)
-				-- len
-				cmdTbl[5] = (string.len(str) - 7) & 0xff
-				cmdTbl[4] = ((string.len(str) - 7) >> 8) & 0xff
-				cmdTbl[6] = csum(cmdTbl)
-				LOGTBL(cmdTbl)
-				break
-			end
+				-- TODO: ctrl the sub dev.
+				if sDevCtrl then
+					local str = string.char(0x01, 0x00, 0x92, 0x00, 0x00, 0x00, 0x02)
+					local mac = ctrl["sDev"]["mac"]
+					local dEpt = ctrl["sDev"]["ept"]
+					-- local idx = s1apiSdevGetUserDataByMac(mac)
+					local idx = string.char(0x31, 0x71)
+					str = str..idx..string.char(0x01)..string.char(dEpt)..genSDevCtrl(ctrl["sDev"], sDevCtrl)..string.char(0x03)
+					cmdTbl = stringToTable(str)
+					-- len
+					cmdTbl[5] = (string.len(str) - 7) & 0xff
+					cmdTbl[4] = ((string.len(str) - 7) >> 8) & 0xff
+					cmdTbl[6] = csum(cmdTbl)
+					LOGTBL(cmdTbl)
+					break
+				end
 
-			if itself then
-				print("TODO: ctrl the self dev. \r\n")
-				break
+				if itself then
+					print("TODO: ctrl the self dev. \r\n")
+					break
+				end
+				cmdTbl = whatWrite(cmdTbl)
 			end
+			-- LOGTBL(cmdTbl)
+		elseif cvtType == 16 then
+			local i = 0, val
+			local j = 0
+			local aa = ctrl["pwm"]
+	        for j = 1, 4 do
+		        val = aa[j]["id"]
+	            i = i + 1
+	            cmdTbl[i] = val
+	            val = aa[j]["val"]
+	            i = i + 1
+	            cmdTbl[i] = (val >> 8) & 0xff
+	            i = i + 1
+	            cmdTbl[i] = val & 0xFF
+	        end
 		end
 
-	end
-
-	cmdTbl = whatWrite(cmdTbl)
-	-- LOGTBL(cmdTbl)
 	dataStr = tableToString(cmdTbl)
 	return string.len(dataStr), dataStr
 end
@@ -488,45 +532,47 @@ end
 function s1CvtPri2Std(bin)
 	local cvtType = s1apiGetCurrCvtType()
 	local dataTbl = {}
-	-- local strSubDev = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
-	local strSubDev = '{}'
-	dataTbl = stringToTable(bin)
-
-	dataTbl = whatRead(dataTbl)
-	print("s1CvtPri2Std\r\n")
-	LOGTBL(dataTbl)
-	bin = tableToString(dataTbl)
+	local str = ''
+    local len = 0
 
 	-- test only
 	-- cvtType = 0x01
 
-	for i = 1, 1 do
-		-- UART
-		if 0x01 == cvtType then
+	-- UART
+	if 0x01 == cvtType then
+		for x = 1, 1 do
+			str = '{}'
 			-- INTERNAL
+			-- local str = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
+			dataTbl = stringToTable(bin)
+
+			dataTbl = whatRead(dataTbl)
+			print("s1CvtPri2Std\r\n")
+			LOGTBL(dataTbl)
+			bin = tableToString(dataTbl)
 			-- (RSP) ept list {"sDevQryEpt":2,"idx":"DB8F","ept":[1,2]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x45)) then
-				strSubDev = '{"sDevQryEpt":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":['
-				for i = 12, dataTbl[11]+11 do
-					strSubDev = strSubDev..dataTbl[i]..','
+				str = '{"sDevQryEpt":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":['
+				for x = 12, dataTbl[11]+11 do
+					str = str..dataTbl[i]..','
 				end
-				strSubDev = string.sub(strSubDev,1,string.len(strSubDev) - 1)..']}'
+				str = string.sub(str,1,string.len(str) - 1)..']}'
 				break
 			end
 			
 			-- (RSP) ept info {"sDevQryEptInfo":2,"idx":"DB8F","pid":"0104","ept":1,"did":"0101","clu":["0000","0004"]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
-				strSubDev = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","pid":"'..bin2hex(string.sub(bin,13,14))..'","ept":'..dataTbl[12]..',"did":"'..bin2hex(string.sub(bin,15,16))..'","clu":['
-				for i = 19, dataTbl[18]*2+18, 2 do
-					strSubDev = strSubDev..'"'..bin2hex(string.sub(bin,i,i+1))..'",'
+				str = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","pid":"'..bin2hex(string.sub(bin,13,14))..'","ept":'..dataTbl[12]..',"did":"'..bin2hex(string.sub(bin,15,16))..'","clu":['
+				for x = 19, dataTbl[18]*2+18, 2 do
+					str = str..'"'..bin2hex(string.sub(bin,i,i+1))..'",'
 				end
-				strSubDev = string.sub(strSubDev,1,string.len(strSubDev) - 1)..']}'
+				str = string.sub(str,1,string.len(str) - 1)..']}'
 				break
 			end
 
 			-- (RSP) manufacture {"sDevQryMan":2,"idx":"DB8F","man":"1234"}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x42)) then
-				strSubDev = '{"sDevQryMan":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","man":"'..bin2hex(string.sub(bin,11,12))..'"}'
+				str = '{"sDevQryMan":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","man":"'..bin2hex(string.sub(bin,11,12))..'"}'
 				break
 			end
 
@@ -534,25 +580,68 @@ function s1CvtPri2Std(bin)
 			-- (IND) join, leave
 			if nil ~= string.find(bin, string.char(0x01, 0x00, 0x4D)) then
 				-- {"sDevJoin":2,"sDev":{"idx":"DB8F","mac":"6FE34CE400A06FC0"}}
-				strSubDev = '{"sDevJoin":2,"sDev":{"idx":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
-				-- strSubDev = '{"sDevJoin":2,"sDev":{"idx":"DB8F","mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
+				str = '{"sDevJoin":2,"sDev":{"idx":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
+				-- str = '{"sDevJoin":2,"sDev":{"idx":"DB8F","mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
 				break
 			end
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x48)) then
 				-- {"sDevLeave":2,"sDev":{mac":"6FE34CE400A06FC0"}}
-				strSubDev = '{"sDevLeave":2,"sDev":{"mac":'..'"'..bin2hex(string.sub(bin,7,14))..'"'..'}}'
+				str = '{"sDevLeave":2,"sDev":{"mac":'..'"'..bin2hex(string.sub(bin,7,14))..'"'..'}}'
 				break
 			end
 			-- (IND) ind actions
 			-- {"sDevStatus":{"btn":1},"sDev":{"idx":"DB8F"}}
 			if nil ~= string.find(bin, string.char(0x01, 0x81, 0x02)) then
-				strSubDev = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,11,12)), bin2hex(string.sub(bin,10,10)), bin2hex(string.sub(bin,17,17)))..',"sDev":{"idx":"'..bin2hex(string.sub(bin,8,9)).. '"}}'
+				str = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,11,12)), bin2hex(string.sub(bin,10,10)), bin2hex(string.sub(bin,17,17)))..',"sDev":{"idx":"'..bin2hex(string.sub(bin,8,9)).. '"}}'
 				break
 			end
-
 		end
-
+	elseif 0x02 == cvtType then
+		dataTbl = {33, 0, 34, 0, 35, 0, 18, 0}
+		local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
+		local lenStatus, currStatus = s1apiGetDevStatus()
+		if lenStatus <= 2 then
+			str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0)
+		end
+		local id = bin:byte(1)
+		if id == 0 and bin:byte(2) == 1 then
+			if lenStatus > 2 then
+				local tb = cjson.decode(currStatus)
+				local pwm = tb["pwm"]
+				for j = 1, 4 do
+					val = pwm[j]["id"]
+					i = i + 1
+					datatb[i] = val
+					val = pwm[j]["val"]
+					i = i + 1
+					datatb[i] = val
+				end
+			end
+			if datatb[8] == 0 then
+				str = string.format(status, datatb[1], 1024, datatb[3], 1024, datatb[5], 1024, datatb[7], 1024)
+			else
+				str = string.format(status, datatb[1], 0, datatb[3], 0, datatb[5], 0, datatb[7], 0)
+			end
+		end
+		len = 0x40000000
+	elseif 0x10 == cvtType then
+		if #bin >= 12 then
+			local id1, id2, id3, id4, val1, val2, val3, val4
+			id1 = bin:byte(1)
+			val1 = bin:byte(2)
+			val1 = (val1 << 8) | bin:byte(3)
+			id2 = bin:byte(4)
+			val2 = bin:byte(5)
+			val2 = (val2 << 8) | bin:byte(6)      
+			id3 = bin:byte(7)
+			val3 = bin:byte(8)
+			val3 = (val3 << 8) | bin:byte(9)         
+			id4 = bin:byte(10)
+			val4 = bin:byte(11)
+			val4 = (val4 << 8) | bin:byte(12) 
+			str = string.format(status, id1, val1, id2, val2, id3, val3, id4, val4)	
+		end
 	end
-	print("result -> "..strSubDev..'\r\n')
-	return string.len(strSubDev), strSubDev
+	print("result -> "..str..'\r\n')
+	return string.len(str) + len, str
 end

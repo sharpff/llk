@@ -1835,6 +1835,14 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     LELOG("cbCloudMsgCtrlR2TRemoteReq -s");
     // LELOG("[%d][%s]", dataLen, dataIn);
     // setCurrentR2T
+    // test only
+    // {
+    //     extern int testGetFreeHeap();
+    //     extern const char *getScriptVer();
+    //     LELOG("=============================>() [%d]", testGetFreeHeap(1));
+    //     const char *ver = getScriptVer();
+    //     LELOG("<=============================() [%d][%s]", testGetFreeHeap(0), ver);
+    // }
     setTerminalStatus((const char *)dataIn, dataLen);
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
