@@ -652,6 +652,7 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             for(i = 0, table = ginPWMManager.table; i < ginPWMManager.num; i++, table++) {
                 halPWMSetFrequency(table);
                 halPWMOpen(table);
+                halPWMWrite(table, table->state);
             }
             ioHdl = &ginPWMManager;
             return ioHdl;
@@ -824,15 +825,18 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
 
         }break;
         case IO_TYPE_PWM: {
-            int i,j,ret = 0;
+            int i,j,ret = 0, val = 0;
             pwmManager_t *mgr = ((pwmManager_t *)hdl);
             pwmHandler_t *q = NULL;
             //LELOG("ioWrite pwm count [%d][%d]", mgr->num, dataLen);
-            for(i = 0; i < dataLen ; i+=2) {
+            for(i = 0; i < dataLen ; i+=3) {
                 q = mgr->table;
                 for(j = 0; j< mgr->num; j++,q++) {
                     if(data[i] == q->id) {
-                        halPWMWrite(q, data[i+1]);
+                        val = data[i+1];
+                        val = ((val << 8) | data[i+2]);
+                        //LELOG("ioWrite halPWMWrite [%d][%d]", q->id, val);
+                        halPWMWrite(q, val);
                         ret = 1;
                     }
                 }
@@ -883,17 +887,20 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             pwmHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num ; i++, q++) {
                 halPWMRead(q, (uint32_t*)&val);
-                if(q->oldState != val) {
+                //LELOG("ioWrite ioRead [%d][%d][%d]", q->id, val, q->oldState);
+                //if(q->oldState != val) {
                     data[k++] = q->id;
-                    data[k++] = val;
-                    q->oldState = val;
-                }
+                    data[k++] = ((val >> 8) & 0xFF);
+                    data[k++] = (val & 0xFF);
+                //    q->oldState = val;
+                //}
                 if(q->type == PWM_TYPE_OUTPUT_RESET) {
                     pwmCheckState(q);
                 }
             }
-            //return k;
-            return 0; // not send any data
+            //LELOG("ioRead [%d][%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x]", k, data[0], data[1], data[2], 
+            //    data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
+            return k;
         }break;
     }    
     return 0;
@@ -1034,4 +1041,168 @@ void ioDeinit(int ioType, void *hdl) {
         }break;
     }    
     // return 0;
+}
+
+void test_PWM(void) {
+    int i,j;
+    pwmManager_t *mgr = &ginPWMManager;
+    pwmHandler_t *q = NULL;
+    
+    q = mgr->table;
+    for(j = 0; j< mgr->num; j++,q++) {
+        if(q->id == 18)
+        {
+            halPWMWrite(q, 1024);
+            LELOG("ioWrite pwm id [%d]", q->id);
+            halDelayms(1000);
+            break;
+        }
+    }
+retry:
+    q = mgr->table;
+    for(j = 0; j< mgr->num; j++,q++) {
+        if(q->id != 18)
+        {
+            LELOG("ioWrite pwm id [%d]", q->id);
+            for(i = 0; i < 1024 ; i+=2) {
+                halPWMWrite(q, i);
+                halDelayms(10);
+            }
+        }
+        halDelayms(1000);
+    }
+    q = mgr->table;
+    for(j = 0; j< mgr->num; j++,q++) {
+        if(q->id != 18)
+        {
+            LELOG("ioWrite pwm id [%d]", q->id);
+            for(i = 1024; i > 0 ; i-=2) {
+                halPWMWrite(q, i);
+                halDelayms(10);
+            }
+        }
+        halDelayms(1000);
+    }
+    goto retry;
+}
+
+uint8_t le_ledon(uint8_t len, char *param[]) {
+    int j;
+    pwmManager_t *mgr = &ginPWMManager;
+    pwmHandler_t *q = NULL;
+    
+    q = mgr->table;
+    for(j = 0; j< mgr->num; j++,q++) {
+        if(q->id == 18)
+        {
+            halPWMWrite(q, 1024);
+            LELOG("ioWrite pwm id [%d]", q->id);
+            break;
+        }
+    }
+    return 0;
+}
+    
+uint8_t le_ledoff(uint8_t len, char *param[]) {
+    int j;
+    pwmManager_t *mgr = &ginPWMManager;
+    pwmHandler_t *q = NULL;
+    
+    q = mgr->table;
+    for(j = 0; j< mgr->num; j++,q++) {
+        if(q->id == 18)
+        {
+            halPWMWrite(q, 0);
+            LELOG("ioWrite pwm id [%d]", q->id);
+            break;
+        }
+    }
+    return 0;
+}
+
+uint8_t le_ledset(uint8_t len, char *param[]) {
+    int type = 1;
+    int duty = 2;
+    int j;
+    pwmManager_t *mgr = &ginPWMManager;
+    pwmHandler_t *q = NULL;
+    if (len < 2) {
+        APPLOGE("error, format is [le ledset 1 1024]\n");
+        return 0;
+    }
+    type = atoi(param[0]);
+    duty = atoi(param[1]);
+    if(type == 1) {
+        q = mgr->table;
+        for(j = 0; j< mgr->num; j++,q++) {
+            if(q->id == 33) {
+                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
+                halPWMWrite(q, duty);
+            } else {
+                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
+                halPWMWrite(q, 0);
+            }
+        }
+    } else if (type == 2) {
+        q = mgr->table;
+        for(j = 0; j< mgr->num; j++,q++) {
+            if(q->id == 34)
+            {
+                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
+                halPWMWrite(q, duty);
+            } else {
+                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
+                halPWMWrite(q, 0);
+            }
+        }
+    } else if (type == 3) {
+        q = mgr->table;
+        for(j = 0; j< mgr->num; j++,q++) {
+            if(q->id == 35)
+            {
+                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
+                halPWMWrite(q, duty);
+            } else {
+                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
+                halPWMWrite(q, 0);
+            }
+        }
+    } else {
+        test_PWM();
+    }
+    return 0;
+}
+
+uint8_t le_ledsetRGB(uint8_t len, char *param[]) {
+    int R, G, B;
+    int j;
+    pwmManager_t *mgr = &ginPWMManager;
+    pwmHandler_t *q = mgr->table;
+    if (len < 3) {
+        APPLOGE("error, format is [le ledsetRGB 1024 1024 1024]\n");
+        return 0;
+    }
+
+    R = atoi(param[0]);
+    G = atoi(param[1]);
+    B = atoi(param[2]);
+
+    for(j = 0; j< mgr->num; j++,q++) {
+        if(q->id == 33) { // green
+            halPWMWrite(q, G);
+        } else if(q->id == 34) {// blue
+            halPWMWrite(q, B);
+        } else if(q->id == 35) {// red
+            halPWMWrite(q, R);
+        } else if(q->id == 18) {// switch
+            halPWMWrite(q, 1024);
+        }
+    }
+    return 0;
+}
+
+uint8_t le_permitjoin(uint8_t len, char *param[]) {
+    uint8_t cmd[15] = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x7E, 0xFF, 0xFC, 0x30, 0x02, 0x10, 0x03};
+    halUartWrite(&uartHandler, cmd, 15);
+    return 0;
 }

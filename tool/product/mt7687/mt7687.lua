@@ -42,7 +42,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.1'
+	local str = '1.0.0'
 	return string.len(str), str
 end
 
@@ -58,14 +58,13 @@ function s1GetCvtType()
     -- combained uart(0x1) & gpio(0x2) & pwm(0x10)
     local str = [[
     {"whatCvtType":19,
-     "common":[{"num":8,"id":"36-37-32-33-34-35-0-6","mux":"7-7-9-9-9-9-8-8"}],
+     "common":[{"num":8,"id":"36-37-32-33-34-35-0","mux":"7-7-9-9-9-9-8"}],
      "uart":[{"id":1, "baud":"9600-8N1"}],  
-     "gpio":[{"id":0,"dir":0,"mode":2,"state":1,"type":1,"longTime":30,"shortTime":3},
-             {"id":6,"dir":1,"mode":0,"state":0,"type":1,"longTime":6,"shortTime":1}],
-     "pwm":[{"id":33,"type":0,"clock":1,"state":255,"frequency":1024,"duty":255},
-            {"id":34,"type":0,"clock":1,"state":255,"frequency":1024,"duty":255},
-            {"id":35,"type":0,"clock":1,"state":255,"frequency":1024,"duty":255},
-            {"id":18,"type":1,"clock":1,"state":255,"frequency":1024,"duty":255,"blink":2,"longTime":6,"shortTime":1}]
+     "gpio":[{"id":0,"dir":0,"mode":0,"state":1,"type":1,"longTime":30,"shortTime":3}],
+     "pwm":[{"id":33,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
+            {"id":34,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
+            {"id":35,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
+            {"id":18,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024}]
     }
     ]]
     local delay = 5
@@ -99,33 +98,24 @@ end
 --[[ MUST
 ]]
 -- type, size, id, val, id, val ...
--- {"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}],"gpio":[{"id":%d,"val":%d}]}
+-- {"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}
 function s1CvtStd2Pri(json)
     local i = 0, val
     local j = 0
-    local cmdtb = {16, 8, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 0, 0, 0, 0}
+    local cmdtb = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     local tb = cjson.decode(json)
     local cvtType = s1apiGetCurrCvtType()
     if cvtType == 16 then
         local ctrl = tb["pwm"]
         for j = 1, 4 do
-	    val = ctrl[j]["id"]
+	        val = ctrl[j]["id"]
             i = i + 1
             cmdtb[i] = val
             val = ctrl[j]["val"]
             i = i + 1
-            cmdtb[i] = val
-        end
-    end
-    if cvtType == 2 then
-        local ctrl1 = tb["gpio"]
-        for j = 1, 2 do
-	    val = ctrl1[j]["id"]
+            cmdtb[i] = (val >> 8) & 0xff
             i = i + 1
-            cmdtb[i] = val
-            val = ctrl1[j]["val"]
-            i = i + 1
-            cmdtb[i] = val
+            cmdtb[i] = val & 0xFF
         end
     end
     local cmd = tableToString(cmdtb)
@@ -137,22 +127,22 @@ end
 ]]
 function s1CvtPri2Std(bin)
     local i = 0, val, j
+    local len = 0
     local str = ""
-    local datatb = {33, 0, 34, 0, 35, 0, 18, 0, 0, 0, 6, 0}
-    local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}],"gpio":[{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
+    local datatb = {33, 0, 34, 0, 35, 0, 18, 0}
+    local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
     local cvtType = s1apiGetCurrCvtType()
     local lenStatus, currStatus = s1apiGetDevStatus()
     if lenStatus <= 2 then
-        str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0, 0, 0, 6, 0)
+        str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0)
     end
     if cvtType == 2 then
         local ctrltb = {}
         local id = bin:byte(1)
-        if id == 0 and bin:byte(2) == 0 then
+        if id == 0 and bin:byte(2) == 1 then
             if lenStatus > 2 then
     	        local tb = cjson.decode(currStatus)
     	        local pwm = tb["pwm"]
-    	        local gpio = tb["gpio"]
     	        for j = 1, 4 do
         		    val = pwm[j]["id"]
         		    i = i + 1
@@ -161,21 +151,30 @@ function s1CvtPri2Std(bin)
         		    i = i + 1
         		    datatb[i] = val
     	        end
-                for j = 1, 2 do
-    	            val = gpio[j]["id"]
-    	            i = i + 1
-    	            datatb[i] = val
-    	            val = gpio[j]["val"]
-    	            i = i + 1
-    	            datatb[i] = val
-                end
             end
             if datatb[8] == 0 then
-                str = string.format(status, datatb[1], datatb[2], datatb[3], datatb[4], datatb[5], datatb[6], datatb[7], 255, datatb[9], datatb[10], datatb[11], 0)
+                str = string.format(status, datatb[1], 1024, datatb[3], 1024, datatb[5], 1024, datatb[7], 1024)
             else
-                str = string.format(status, datatb[1], datatb[2], datatb[3], datatb[4], datatb[5], datatb[6], datatb[7], 0, datatb[9], datatb[10], datatb[11], 1)
+                str = string.format(status, datatb[1], 0, datatb[3], 0, datatb[5], 0, datatb[7], 0)
             end
         end
+        len = 0x40000000
     end
-    return string.len(str), str
+    if cvtType == 16 and #bin >= 12 then
+        local id1, id2, id3, id4, val1, val2, val3, val4
+        id1 = bin:byte(1)
+        val1 = bin:byte(2)
+        val1 = (val1 << 8) | bin:byte(3)
+        id2 = bin:byte(4)
+        val2 = bin:byte(5)
+        val2 = (val2 << 8) | bin:byte(6)      
+        id3 = bin:byte(7)
+        val3 = bin:byte(8)
+        val3 = (val3 << 8) | bin:byte(9)         
+        id4 = bin:byte(10)
+        val4 = bin:byte(11)
+        val4 = (val4 << 8) | bin:byte(12) 
+        str = string.format(status, id1, val1, id2, val2, id3, val3, id4, val4)
+    end
+    return  string.len(str) + len, str
 end

@@ -25,6 +25,7 @@ int gin_airconfig_channel_cared[MAX_CHANNEL_CARE];
 static TimerHandle_t lelink_airconfig_timer = NULL;
 extern void smtcn_evt_handler(wifi_smart_connection_event_t event, void *data);
 extern void aes_task_init();
+extern int getVer(char fwVer[64], int size);
 int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 int airconfig_stop();
 
@@ -161,6 +162,15 @@ uint8_t le_ota(uint8_t len, char *param[]) {
 
 uint8_t le_reboot(uint8_t len, char *param[]) {
     halReboot();
+    return 0;
+}
+
+uint8_t le_version(uint8_t len, char *param[]) {
+    char fwVer[64] = {0};
+    getVer(fwVer, sizeof(fwVer));
+    APPLOG("======== version ========\n");
+    APPLOG("firmware: %s\r\n", fwVer);
+    APPLOG("======== version ========\n");
     return 0;
 }
 

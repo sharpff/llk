@@ -899,7 +899,10 @@ static IO lf_s1CvtPri2Std_input(lua_State *L, const uint8_t *input, int inputLen
 static int lf_s1CvtPri2Std(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     int sLen = lua_tointeger(L, -2);
-    int size = MIN(sLen, outputLen);
+    int size = sLen;
+    if(size > 0x40000000)
+        size = size - 0x40000000;
+    size = MIN(size, outputLen);
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
@@ -908,7 +911,7 @@ static int lf_s1CvtPri2Std(lua_State *L, uint8_t *output, int outputLen) {
         size = 0;
     }
 
-    return size;
+    return sLen;
 }
 
 static IO lf_s2IsValid_input(lua_State *L, const uint8_t *input, int inputLen) {
@@ -1732,6 +1735,8 @@ int senginePollingSlave(void) {
     int whatKind = 0, ret = 0, size = 0, i;
 
     FOR_EACH_IO_HDL_START;
+        currLen = 0;
+        appendLen = 0;
         ret = ioRead(ioHdl[x].ioType, ioHdl[x].hdl, bin, sizeof(bin));
         if (ret <= 0) {
             // LELOGW("senginePollingSlave ioRead [%d]", ret);
@@ -1791,9 +1796,12 @@ int senginePollingSlave(void) {
                                 &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
-                        } else if (len & (1<<31)) {
+                        } else if (len > 0x40000000) {
+                            len = len - 0x40000000;
+                            LELOGW("senginePollingSlave native status("S1_PRI2STD") [%d] [%s]", len, status);
                             sengineSetStatus((char *)status, len);
                         } else if (cacheIsChanged(status, len)) {
+                            LELOGW("senginePollingSlave cloud status("S1_PRI2STD") [%d] [%s]", len, status);
                             postStatusChanged(0);
                             cacheSetTerminalStatus(status, len);
                         }

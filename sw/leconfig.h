@@ -73,11 +73,11 @@ typedef struct {
     uint8_t id;            // support 1, 2, 3, 4
     uint8_t type;
     uint8_t blink;
-    uint8_t state;
-    uint8_t oldState;
     uint8_t longTime;
     uint8_t shortTime;
     uint8_t clock;
+    uint32_t state;
+    uint32_t oldState;
     uint32_t frequency;
     uint32_t percent;
     uint32_t duty;
@@ -219,14 +219,6 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, c
 
 #define APPPRINTF(...) \
     printOut(__VA_ARGS__)
-
-
-#if 0
-void *_halMalloc(size_t size);
-void *_halCalloc(size_t n, size_t size);
-void *_halRealloc(void *ptr, size_t size);
-void _halFree(void *ptr);
-#endif
 
 #define halMalloc(size)        halMallocEx(size, __FILE__, __LINE__)
 #define halCalloc(n, size)     halCallocEx(n, size, __FILE__, __LINE__)

@@ -55,10 +55,22 @@ static uint8_t _sdk_cli_normal_mode(uint8_t len, char *param[]);
 
 extern uint8_t le_ota(uint8_t len, char *param[]);
 extern uint8_t le_reboot(uint8_t len, char *param[]);
+extern uint8_t le_version(uint8_t len, char *param[]);
+extern uint8_t le_ledon(uint8_t len, char *param[]);
+extern uint8_t le_ledoff(uint8_t len, char *param[]);
+extern uint8_t le_ledset(uint8_t len, char *param[]);
+extern uint8_t le_ledsetRGB(uint8_t len, char *param[]);
+extern uint8_t le_permitjoin(uint8_t len, char *param[]);
 
 cmd_t le_cmd[] = {
     { "ota", "ota download", le_ota },
-    { "reboot", "le reboot", le_reboot },
+    { "version", "software download", le_version },
+    { "ledon", "led on", le_ledon },
+    { "ledoff", "led off", le_ledoff },
+    { "ledset", "led set", le_ledset },
+    { "ledsetRGB", "led set RGB", le_ledsetRGB },
+    { "permitjoin", "led set RGB", le_permitjoin },
+    { "reboot", "hardware reboot", le_reboot },
     { NULL }
 };
 
