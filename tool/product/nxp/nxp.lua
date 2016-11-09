@@ -207,8 +207,8 @@ function s1OptDoSplit(data)
 	local strDataCountLen = ""
 	local where = 1
 	local idx = 0
+	local tblData = stringToTable(data)
 	if 0x01 == cvtType then
-		local tblData = stringToTable(data)
 		tblData = whatRead(tblData)
 		data = tableToString(tblData)
 		print("[LUA] total ======> "..#tblData.."\r\n")
@@ -233,12 +233,15 @@ function s1OptDoSplit(data)
 			print("[LUA] --------------------------------- \r\n")
 		end
 
-		strDataCountLen = tableToString(tblDataCountLen)
 		print("[LUA] out ========> \r\n")
 		LOGTBL(tblDataCountLen)
 		print("[LUA] <============ \r\n")
 		-- print(string.format('count [%d] ', string.len( strDataCountLen)) .. LOGTBL(stringToTable(strDataCountLen)))
+	else
+		tblDataCountLen[1] = (#tblData) & 0xFF
+		tblDataCountLen[2] = 0x00
 	end
+	strDataCountLen = tableToString(tblDataCountLen)
 	return string.len( strDataCountLen ), strDataCountLen, string.len( data ), data
 end
 
@@ -425,13 +428,15 @@ function s1CvtStd2Pri(json)
 					break
 				end
 
-				if ctrl["sDevJoin"] == 1 then
-				-- RAW is  01 02 10 49 02 10 02 14 7E FF FC 30 02 10 03
-					cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x7E, 0xFF, 0xFC, 0x30, 0x00, 0x03}
+				if ctrl["sDevJoin"] then
+					cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x00, 0xFF, 0xFC, 0x00, 0x00, 0x03}
+					cmdTbl[9] = ctrl["sDevJoin"]
+					cmdTbl[6] = csum(cmdTbl)
+					-- RAW is  01 02 10 49 02 10 02 14 7E FF FC 30 02 10 03
+					-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x7E, 0xFF, 0xFC, 0x30, 0x00, 0x03}
 					-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x46, 0xff, 0xfc, 0x08, 0x00, 0x03}
 					-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0xb1, 0xff, 0xfc, 0xff, 0x00, 0x03}
 					-- cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x4e, 0xff, 0xfc, 0x00, 0x00, 0x03}
-
 	 				break
 				end
 
@@ -503,23 +508,25 @@ function s1CvtStd2Pri(json)
 					print("TODO: ctrl the self dev. \r\n")
 					break
 				end
-				cmdTbl = whatWrite(cmdTbl)
 			end
+			cmdTbl = whatWrite(cmdTbl)
+			print("whatWrite :")
+			LOGTBL(cmdTbl)
 			-- LOGTBL(cmdTbl)
 		elseif cvtType == 16 then
 			local i = 0, val
 			local j = 0
 			local aa = ctrl["pwm"]
-	        for j = 1, 4 do
-		        val = aa[j]["id"]
-	            i = i + 1
-	            cmdTbl[i] = val
-	            val = aa[j]["val"]
-	            i = i + 1
-	            cmdTbl[i] = (val >> 8) & 0xff
-	            i = i + 1
-	            cmdTbl[i] = val & 0xFF
-	        end
+			for j = 1, 4 do
+				val = aa[j]["id"]
+				i = i + 1
+				cmdTbl[i] = val
+				val = aa[j]["val"]
+				i = i + 1
+				cmdTbl[i] = (val >> 8) & 0xff
+				i = i + 1
+				cmdTbl[i] = val & 0xFF
+			end
 		end
 
 	dataStr = tableToString(cmdTbl)
@@ -534,6 +541,7 @@ function s1CvtPri2Std(bin)
 	local dataTbl = {}
 	local str = ''
     local len = 0
+	local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
 
 	-- test only
 	-- cvtType = 0x01
@@ -553,7 +561,7 @@ function s1CvtPri2Std(bin)
 			-- (RSP) ept list {"sDevQryEpt":2,"idx":"DB8F","ept":[1,2]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x45)) then
 				str = '{"sDevQryEpt":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":['
-				for x = 12, dataTbl[11]+11 do
+				for i = 12, dataTbl[11]+11 do
 					str = str..dataTbl[i]..','
 				end
 				str = string.sub(str,1,string.len(str) - 1)..']}'
@@ -563,7 +571,7 @@ function s1CvtPri2Std(bin)
 			-- (RSP) ept info {"sDevQryEptInfo":2,"idx":"DB8F","pid":"0104","ept":1,"did":"0101","clu":["0000","0004"]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
 				str = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","pid":"'..bin2hex(string.sub(bin,13,14))..'","ept":'..dataTbl[12]..',"did":"'..bin2hex(string.sub(bin,15,16))..'","clu":['
-				for x = 19, dataTbl[18]*2+18, 2 do
+				for i = 19, dataTbl[18]*2+18, 2 do
 					str = str..'"'..bin2hex(string.sub(bin,i,i+1))..'",'
 				end
 				str = string.sub(str,1,string.len(str) - 1)..']}'
@@ -596,14 +604,16 @@ function s1CvtPri2Std(bin)
 				break
 			end
 		end
+		print("result -> "..str..'\r\n')
 	elseif 0x02 == cvtType then
 		dataTbl = {33, 0, 34, 0, 35, 0, 18, 0}
-		local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
+		print("aaaaa -> "..'\r\n')
 		local lenStatus, currStatus = s1apiGetDevStatus()
 		if lenStatus <= 2 then
 			str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0)
 		end
 		local id = bin:byte(1)
+		local i = 0, val
 		if id == 0 and bin:byte(2) == 1 then
 			if lenStatus > 2 then
 				local tb = cjson.decode(currStatus)
@@ -611,16 +621,16 @@ function s1CvtPri2Std(bin)
 				for j = 1, 4 do
 					val = pwm[j]["id"]
 					i = i + 1
-					datatb[i] = val
+					dataTbl[i] = val
 					val = pwm[j]["val"]
 					i = i + 1
-					datatb[i] = val
+					dataTbl[i] = val
 				end
 			end
-			if datatb[8] == 0 then
-				str = string.format(status, datatb[1], 1024, datatb[3], 1024, datatb[5], 1024, datatb[7], 1024)
+			if dataTbl[8] == 0 then
+				str = string.format(status, dataTbl[1], 1024, dataTbl[3], 1024, dataTbl[5], 1024, dataTbl[7], 1024)
 			else
-				str = string.format(status, datatb[1], 0, datatb[3], 0, datatb[5], 0, datatb[7], 0)
+				str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 0, dataTbl[7], 0)
 			end
 		end
 		len = 0x40000000
@@ -642,6 +652,5 @@ function s1CvtPri2Std(bin)
 			str = string.format(status, id1, val1, id2, val2, id3, val3, id4, val4)	
 		end
 	end
-	print("result -> "..str..'\r\n')
 	return string.len(str) + len, str
 end

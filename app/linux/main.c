@@ -143,7 +143,7 @@ redo:
     case '9': {
         node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ; 
-
+        node.timeoutRef = 8;
         // set peer uuid (for 1st, for cloud)
         memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
 

@@ -1746,13 +1746,13 @@ int senginePollingSlave(void) {
 
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_DO_SPLIT,
                 bin, size, (uint8_t *)&datas, sizeof(Datas));
-        // LELOG("senginePollingSlave "S1_OPT_DO_SPLIT" ret[%d], datasCountsLen[%d], datasLen[%d] sizeof(Datas) is [%d]", ret, datas.datasCountsLen/2, datas.datasLen, sizeof(Datas));
-        for (i = 0; i < datas.datasCountsLen; i += sizeof(uint16_t)) {
-            LELOG("senginePollingSlave datas.datasCounts[%x][%d]", datas.arrDatasCounts[i/2], datas.arrDatasCounts[i/2]);
-        }
+        // LELOG("senginePollingSlave "S1_OPT_DO_SPLIT" ret[%d], datasCountsLen[%d], datasLen[%d] sizeof(Datas) is [%d], ioHdl[x].ioType[%d]", ret, datas.datasCountsLen/2, datas.datasLen, sizeof(Datas), ioHdl[x].ioType);
+        // for (i = 0; i < datas.datasCountsLen; i += sizeof(uint16_t)) {
+        //     LELOG("senginePollingSlave datas.datasCounts[%x][%d]", datas.arrDatasCounts[i/2], datas.arrDatasCounts[i/2]);
+        // }
         if (0 >= ret) {
             // LELOGW("senginePollingSlave sengineCall "S1_OPT_DO_SPLIT" [%d]", ret);
-            datas.datasCountsLen = 1;
+            datas.datasCountsLen = 2;
             datas.arrDatasCounts[0] = size;
         }
         for (i = 0; i < datas.datasCountsLen; i += sizeof(uint16_t)) {

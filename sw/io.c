@@ -888,12 +888,12 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             for(i = 0; i < mgr->num ; i++, q++) {
                 halPWMRead(q, (uint32_t*)&val);
                 //LELOG("ioWrite ioRead [%d][%d][%d]", q->id, val, q->oldState);
-                //if(q->oldState != val) {
+                if(q->oldState != val) {
                     data[k++] = q->id;
                     data[k++] = ((val >> 8) & 0xFF);
                     data[k++] = (val & 0xFF);
-                //    q->oldState = val;
-                //}
+                   q->oldState = val;
+                }
                 if(q->type == PWM_TYPE_OUTPUT_RESET) {
                     pwmCheckState(q);
                 }
@@ -918,7 +918,7 @@ RLED_STATE_t setResetLed(RLED_STATE_t st)
 
 static void gpioCheckInput(gpioHandler_t *ptr) {
     ptr->keepHighTimes++;
-    LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
+    LELOG("gpioCheckInput [%d] [%d] id[%d]",ptr->keepHighTimes, ptr->longTime, ptr->id);
     if(ptr->keepHighTimes >= ptr->longTime) {
         int ret = resetConfigData();
         LELOG("resetConfigData [%d]", ret);
