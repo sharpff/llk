@@ -848,6 +848,7 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
 }
 
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
+    int ret = 0;
     switch (ioType) {
         case IO_TYPE_UART: {
             return halUartRead(hdl, data, dataLen);
@@ -864,16 +865,17 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
                     (q->dir == GPIO_DIR_INPUT) && (q->oldState == val)) {
                     gpioCheckInput(q);
                 }
+                data[k++] = q->id;
+                data[k++] = val;
                 if(q->oldState != val && q->oldState != q->state) {
-                    data[k++] = q->id;
-                    data[k++] = val;
+                    ret = mgr->num*(1 + 1); // id + val
                 }
                 q->oldState = val;
                 if(q->type == GPIO_TYPE_OUTPUT_RESET && (q->dir == GPIO_DIR_OUTPUT)) {
                     gpioCheckState(q);
                 }
             }
-            return k;
+            return ret;
         } break;
         case IO_TYPE_PIPE: {
             return halPipeRead(hdl, data, dataLen);
@@ -888,11 +890,12 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             for(i = 0; i < mgr->num ; i++, q++) {
                 halPWMRead(q, (uint32_t*)&val);
                 //LELOG("ioWrite ioRead [%d][%d][%d]", q->id, val, q->oldState);
+                data[k++] = q->id;
+                data[k++] = ((val >> 8) & 0xFF);
+                data[k++] = (val & 0xFF);
                 if(q->oldState != val) {
-                    data[k++] = q->id;
-                    data[k++] = ((val >> 8) & 0xFF);
-                    data[k++] = (val & 0xFF);
-                   q->oldState = val;
+                    ret = mgr->num*(1 + 2); // id + percent
+                    q->oldState = val;
                 }
                 if(q->type == PWM_TYPE_OUTPUT_RESET) {
                     pwmCheckState(q);
@@ -900,7 +903,7 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             }
             //LELOG("ioRead [%d][%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x]", k, data[0], data[1], data[2], 
             //    data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-            return k;
+            return ret;
         }break;
     }    
     return 0;
