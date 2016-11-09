@@ -26,6 +26,7 @@ static TimerHandle_t lelink_airconfig_timer = NULL;
 extern void smtcn_evt_handler(wifi_smart_connection_event_t event, void *data);
 extern void aes_task_init();
 extern int getVer(char fwVer[64], int size);
+extern void lelinkPltCtrlProcess(void);
 int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 int airconfig_stop();
 
@@ -118,6 +119,7 @@ static void mtk_thread_lelink_proc(void *args) {
     ctxQ2A = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, NULL);
 
     while (1) {
+        lelinkPltCtrlProcess();
         lelinkPollingState(100, ctxR2R, ctxQ2A);
     }
 
@@ -140,37 +142,6 @@ static int platform_launch_lelink_start(void) {
 #ifdef HW_AES
     aes_task_init();
 #endif
-    return 0;
-}
-
-uint8_t le_ota(uint8_t len, char *param[]) {
-    int type = 2;
-    char url[64] = "http://115.182.63.167/zhiwei/mt7687_le_demo.bin";
-    if (len < 1) {
-        APPLOGE("need url address\n");
-        return 0;
-    }
-    type = atoi(param[0]);
-    if (len == 2) {
-        strncpy(url, param[1], sizeof(url));
-        APPLOG("url address %s\n",param[1]);
-    }
-   
-    leOTA(type, url, NULL, 0);
-    return 0;
-}
-
-uint8_t le_reboot(uint8_t len, char *param[]) {
-    halReboot();
-    return 0;
-}
-
-uint8_t le_version(uint8_t len, char *param[]) {
-    char fwVer[64] = {0};
-    getVer(fwVer, sizeof(fwVer));
-    APPLOG("======== version ========\n");
-    APPLOG("firmware: %s\r\n", fwVer);
-    APPLOG("======== version ========\n");
     return 0;
 }
 

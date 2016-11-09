@@ -99,9 +99,10 @@ APP_FILES       = \
                   $(APP_PATH_HAL)/halOTA.c \
                   $(APP_PATH_HAL)/halRSA.c \
                   $(APP_PATH_HAL)/httpc.c \
-		  		$(APP_PATH_SRC)/main.c     \
+		  $(APP_PATH_SRC)/main.c     \
                   $(APP_PATH_SRC)/sys_init.c \
                   $(APP_PATH_SRC)/smt.c \
+                  $(APP_PATH_SRC)/plt.c \
                   $(APP_PATH)/GCC/syscalls.c 
 
 APP_FILES      += $(APP_PATH_SRC)/network_init.c
