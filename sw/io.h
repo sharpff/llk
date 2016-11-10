@@ -86,7 +86,7 @@ typedef struct
 /*
  * -------this size should be sync with lelinkTool.py START------
  */
-#define SDEV_MAX_INFO 320
+#define SDEV_MAX_INFO 512
 #define SDEV_MAX_MAC 24
 #define SDEV_MAX_EPT 8
 #define SDEV_MAX_CUST 8

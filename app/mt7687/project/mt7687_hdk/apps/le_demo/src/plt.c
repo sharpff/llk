@@ -1,4 +1,4 @@
-
+#include "leconfig.h"
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "halHeader.h"

@@ -119,7 +119,7 @@ SDevNode *sdevArray() {
 static void loadSDevInfo(SDevNode *arr) {
     int i = 0, ret = 0;
     if (0 > (ret = lelinkStorageReadSDevInfoCfg(arr))) {
-        LELOGE("loadSDevInfo FAILED ret[%d]", ret);
+        LELOGW("loadSDevInfo FAILED ret[%d]", ret);
         return;
     }
     for (i = 0; i < MAX_SDEV_NUM; i++) {
@@ -385,22 +385,37 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
             return -8;
         }
         json_set_val_str(&jstr, JSON_NAME_SDEV_DID, str);
-        if(WM_SUCCESS != (ret = json_get_array_object(&jobj, JSON_NAME_SDEV_CLU, &num))) {
-            LELOGE("sdevInfoRsp [%s] NOT FOUND [%d]", JSON_NAME_SDEV_CLU, ret);
-            json_close_object(&jstr);
-            return -9;
-        }
-        LELOG("ept info num is [%d]", num);
-        if (0 < num) {
-            json_push_array_object(&jstr, JSON_NAME_SDEV_CLU);
-            for(i = 0; i < num; i++) {
-                if(WM_SUCCESS != json_array_get_str(&jobj, i, str, sizeof(str))) {
-                    continue;
+
+        if(WM_SUCCESS == (ret = json_get_array_object(&jobj, JSON_NAME_SDEV_CLU_IN, &num))) {
+            LELOG("inCluster num is [%d]", num);
+            if (0 < num) {
+                json_push_array_object(&jstr, JSON_NAME_SDEV_CLU_IN);
+                for(i = 0; i < num; i++) {
+                    if(WM_SUCCESS != json_array_get_str(&jobj, i, str, sizeof(str))) {
+                        continue;
+                    }
+                    json_set_array_str(&jstr, str);
                 }
-                json_set_array_str(&jstr, str);
+                json_pop_array_object(&jstr);
             }
-            json_pop_array_object(&jstr);
+            json_release_array_object(&jobj);
         }
+
+        if(WM_SUCCESS == (ret = json_get_array_object(&jobj, JSON_NAME_SDEV_CLU_OUT, &num))) {
+            LELOG("outCluster num is [%d]", num);
+            if (0 < num) {
+                json_push_array_object(&jstr, JSON_NAME_SDEV_CLU_OUT);
+                for(i = 0; i < num; i++) {
+                    if(WM_SUCCESS != json_array_get_str(&jobj, i, str, sizeof(str))) {
+                        continue;
+                    }
+                    json_set_array_str(&jstr, str);
+                }
+                json_pop_array_object(&jstr);
+            }
+            json_release_array_object(&jobj);
+        }
+
         json_close_object(&jstr);
         LELOG("THE NEW JSON ====> [%s] EPT[%d]", tmpJson, ept);
 

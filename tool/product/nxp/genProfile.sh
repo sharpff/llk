@@ -9,13 +9,13 @@ $MAIN_PATH/lelinkTool.py \
     -o ./0x1c2000.bin
 
 $MAIN_PATH/lelinkTool.py \
-    -t $MAIN_PATH/product/nxp/nxp.lua \
+    -t $MAIN_PATH/product/nxp/nxp.bin \
     -o ./0x1c3000.bin
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid ff \
-    --passwd fengfeng2qiqi \
+    --ssid Xiaomi_Lelink \
+    --passwd 987654321 \
     -o ./0x1c8000.bin
 
 # IA 

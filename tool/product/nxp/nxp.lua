@@ -212,8 +212,8 @@ function s1OptDoSplit(data)
 		tblData = whatRead(tblData)
 		data = tableToString(tblData)
 		print("[LUA] total ======> "..#tblData.."\r\n")
-		LOGTBL(tblData)
-		print("[LUA] <============ \r\n")
+		-- LOGTBL(tblData)
+		-- print("[LUA] <============ \r\n")
 
 		while where < #tblData do
 			local tmpLen = (tblData[where + 3] << 8) | tblData[where + 4]
@@ -228,13 +228,13 @@ function s1OptDoSplit(data)
 			tblDataCountLen[idx + 2] = 0x00
 			idx = idx + 2
 			where = where + 7 + tmpLen
-			print("[LUA] IDX @"..where.." & LEN is "..tmpLen.." ------->\r\n")
-			LOGTBL(tmpTbl)
-			print("[LUA] --------------------------------- \r\n")
+			-- print("[LUA] IDX @"..where.." & LEN is "..tmpLen.." ------->\r\n")
+			-- LOGTBL(tmpTbl)
+			-- print("[LUA] --------------------------------- \r\n")
 		end
 
-		print("[LUA] out ========> \r\n")
-		LOGTBL(tblDataCountLen)
+		-- print("[LUA] out ========> \r\n")
+		-- LOGTBL(tblDataCountLen)
 		print("[LUA] <============ \r\n")
 		-- print(string.format('count [%d] ', string.len( strDataCountLen)) .. LOGTBL(stringToTable(strDataCountLen)))
 	else
@@ -517,15 +517,17 @@ function s1CvtStd2Pri(json)
 			local i = 0, val
 			local j = 0
 			local aa = ctrl["pwm"]
-			for j = 1, 4 do
-				val = aa[j]["id"]
-				i = i + 1
-				cmdTbl[i] = val
-				val = aa[j]["val"]
-				i = i + 1
-				cmdTbl[i] = (val >> 8) & 0xff
-				i = i + 1
-				cmdTbl[i] = val & 0xFF
+			if aa then
+				for j = 1, 4 do
+					val = aa[j]["id"]
+					i = i + 1
+					cmdTbl[i] = val
+					val = aa[j]["val"]
+					i = i + 1
+					cmdTbl[i] = (val >> 8) & 0xff
+					i = i + 1
+					cmdTbl[i] = val & 0xFF
+				end
 			end
 		end
 
@@ -544,7 +546,7 @@ function s1CvtPri2Std(bin)
 	local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
 
 	-- test only
-	-- cvtType = 0x01
+	cvtType = 0x01
 
 	-- UART
 	if 0x01 == cvtType then
@@ -553,10 +555,10 @@ function s1CvtPri2Std(bin)
 			-- INTERNAL
 			-- local str = '"sDev":{"pid":"%s","clu":"%s","ept":%s,"mac":"%s"}'
 			dataTbl = stringToTable(bin)
+			LOGTBL(dataTbl)
 
 			dataTbl = whatRead(dataTbl)
 			print("s1CvtPri2Std\r\n")
-			LOGTBL(dataTbl)
 			bin = tableToString(dataTbl)
 			-- (RSP) ept list {"sDevQryEpt":2,"idx":"DB8F","ept":[1,2]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x45)) then
@@ -570,11 +572,24 @@ function s1CvtPri2Std(bin)
 			
 			-- (RSP) ept info {"sDevQryEptInfo":2,"idx":"DB8F","pid":"0104","ept":1,"did":"0101","clu":["0000","0004"]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
-				str = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","pid":"'..bin2hex(string.sub(bin,13,14))..'","ept":'..dataTbl[12]..',"did":"'..bin2hex(string.sub(bin,15,16))..'","clu":['
-				for i = 19, dataTbl[18]*2+18, 2 do
-					str = str..'"'..bin2hex(string.sub(bin,i,i+1))..'",'
+				str = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","pid":"'..bin2hex(string.sub(bin,13,14))..'","ept":'..dataTbl[12]..',"did":"'..bin2hex(string.sub(bin,15,16))..'"'
+				local m = 18
+				if dataTbl[m] > 0 then
+					str = str..',"cluI":['
+					for i = m+1, dataTbl[m]*2+m, 2 do
+						str = str..'"'..bin2hex(string.sub(bin,i,i+1))..'",'
+					end
+					str = string.sub(str,1,string.len(str) - 1)..']'
 				end
-				str = string.sub(str,1,string.len(str) - 1)..']}'
+				m = 18+dataTbl[18]*2+1
+				if dataTbl[m] > 0 then
+					str = str..',"cluO":['
+					for i = m+1, dataTbl[m]*2+m, 2 do
+						str = str..'"'..bin2hex(string.sub(bin,i,i+1))..'",'
+					end
+					str = string.sub(str,1,string.len(str) - 1)..']'
+				end
+				str = str..'}'
 				break
 			end
 

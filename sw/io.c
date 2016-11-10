@@ -125,7 +125,6 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
         tmpTotal += getSize((E_FLASH_TYPE)i, minSize);
     }
-
     if (tmpTotal > totalSize) {
         return -1;
     }
@@ -135,20 +134,18 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     ginMinSize = minSize;
 
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
-        ginRegion[i].type = i;
-        singleSize = getSize(i, minSize);
+        // ginRegion[i].type = i;
         ginRegion[i].type = (E_FLASH_TYPE)i;
         ginRegion[i].size = getSize((E_FLASH_TYPE)i, minSize);
-        LELOG("[%d] [%d]", i, ginRegion[i].size);
         ginRegion[i].addr = ginStartAddr + tmpSize;
-        ginRegion[i].size = singleSize;
+        LELOG("[%d] [%d]", i, ginRegion[i].size);
         if (E_FLASH_TYPE_SCRIPT2 == i) {
-            tmpTotal = singleSize*MAX_IA;
+            tmpTotal = ginRegion[i].size*MAX_IA;
         } else {
-            tmpTotal = singleSize;
+            tmpTotal = ginRegion[i].size;
         }
         tmpSize += tmpTotal;
-        LELOG("idx[%d] addr[0x%x] size[0x%x*%d=0x%x] type[%d]", i, ginRegion[i].addr, ginRegion[i].size, ginRegion[i].size ? tmpTotal/ginRegion[i].size : 0, tmpTotal, ginRegion[i].type);
+        LELOG("idx[%d] addr[0x%x] size[0x%x*%d=0x%x] type[%d]", i, ginRegion[i].addr, ginRegion[i].size, (ginRegion[i].size ? tmpTotal/ginRegion[i].size : 0), tmpTotal, ginRegion[i].type);
     }
 
     return 0;
