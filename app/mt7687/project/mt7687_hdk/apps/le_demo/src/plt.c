@@ -1,3 +1,4 @@
+
 #include "leconfig.h"
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
@@ -14,6 +15,8 @@ typedef enum {
 }E_PLT_TYPE;
 
 extern int sengineSetStatus(char *json, int jsonLen);
+extern int getVer(char fwVer[64], int size);
+extern int halGetMac(uint8_t *mac, int len);
 
 static const char *cmdFormat = "{\"pwm\":[{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d}]}";
 static char cmdBuff[1024];
@@ -88,6 +91,19 @@ uint8_t le_version(uint8_t len, char *param[]) {
     return 0;
 }
 
+static uint8_t lelinkGetSN(uint8_t* data) {
+	uint32_t valid_bit;
+	SYSefuse_Read16Bytes(0x80, (uint32_t *)data, &valid_bit, 0);
+	if (valid_bit == 0) {
+    	return 0;
+    }
+	SYSefuse_Read16Bytes(0x90, (uint32_t *)data+16, &valid_bit, 0);
+	if (valid_bit == 0) {
+    	return 0;
+    }
+    return 32;
+}
+
 void lelinkPltCtrlProcess(void) {
     switch (cmdType) {
         case E_PLT_TYPE_CTRL: {
@@ -97,12 +113,23 @@ void lelinkPltCtrlProcess(void) {
         }
         break;
         case E_PLT_TYPE_VERSION: {
-        	char fwVer[64] = {0};
-            cmdType = E_PLT_TYPE_IDLE;
+        	char fwVer[64] = {0}, count;
+		    uint8_t mac[8] = {0};
+		    cmdType = E_PLT_TYPE_IDLE;
+		    APPLOG("---------lelinkInfo----------\r\n");
 		    getVer(fwVer, sizeof(fwVer));
-		    APPLOG("======== version ========\n");
-		    APPLOG("firmware: %s\r\n", fwVer);
-		    APPLOG("======== version ========\n");
+		    APPLOG("ver: %s", fwVer);
+		    halGetMac(mac, sizeof(mac));
+		    APPLOG("mac: %02x:%02x:%02x:%02x:%02x:%02x", 
+		        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+		    memset(fwVer, 0 , 64);
+		    count = lelinkGetSN(fwVer);
+		    if(count) {
+			    APPLOG("sn:  %s", fwVer);
+		    } else {
+		    	APPLOG("sn: data error");
+		    }
+		    APPLOG("-----------------------------\r\n");
         }
         break;
         case E_PLT_TYPE_OTA: {
