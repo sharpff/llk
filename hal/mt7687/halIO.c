@@ -5,6 +5,7 @@
 #include "hal_gpio.h"
 #include "hal_flash.h"
 #include "hal_pwm.h"
+#include "hal_eint.h"
 #include "wifi_api.h"
 #include "io.h"
 
@@ -299,6 +300,53 @@ int halPWMOpen(pwmHandler_t *handler) {
 void* halPWMInit(int clock) {
     hal_pwm_init(clock);
     return 0xABCFFFFF;
+}
+
+static void halEINTIrqHandler(void *data) {
+    eintHandler_t *handler = (eintHandler_t *)data;
+    if(handler) {
+        handler->count++;
+        if(handler->timeout && handler->count == 1) {
+            handler->timeStamp = xTaskGetTickCount();
+        }
+    }
+}
+
+int halEINTRead(eintHandler_t* handler, int *val) {
+    uint32_t curr;
+    *val = 0;
+    if(handler->timeout) {
+        if(handler->timeStamp > 0) {
+            curr = xTaskGetTickCount();
+            if(((curr - handler->timeStamp)/portTICK_PERIOD_MS) > handler->timeout) {
+                *val = handler->count;
+                handler->count = 0;
+                handler->timeStamp = 0;
+            }
+        }
+    } else {
+        *val = handler->count;
+        handler->count = 0;
+    }
+    return 0;
+}
+
+int halEINTClose(eintHandler_t *handler) {
+    return 0;
+}
+
+int halEINTOpen(eintHandler_t *handler) {
+    hal_eint_config_t eint_config;
+    hal_gpio_init(handler->gid);
+    hal_gpio_set_direction(handler->gid, HAL_GPIO_DIRECTION_INPUT);
+    hal_gpio_disable_pull(handler->gid);
+    eint_config.trigger_mode = handler->mode;
+    eint_config.debounce_time = handler->debounce;
+    hal_eint_init(handler->id, &eint_config);
+    APPLOG("halEINTOpen id[%d] gid[%d] mode[%d] debounce[%d] timeout[%d]",
+        handler->id, handler->gid, handler->mode, handler->debounce, handler->timeout);
+    hal_eint_register_callback(handler->id, halEINTIrqHandler, handler);
+    return handler->id;
 }
 
 //Flash;

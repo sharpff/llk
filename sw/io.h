@@ -22,6 +22,7 @@ typedef enum {
     IO_TYPE_PIPE = 0x4,
     IO_TYPE_SOCKET = 0x8,
     IO_TYPE_PWM = 0x10,
+    IO_TYPE_EINT = 0x20,
 }IO_TYPE;
 
 #ifdef LELINK_PACK
@@ -248,6 +249,13 @@ typedef struct {
     uint32_t num;
     pwmHandler_t table[PWM_MAX_ID + 1];
 } pwmManager_t;
+
+#define EINT_MAX_ID     (4)
+
+typedef struct {
+    uint32_t num;
+    eintHandler_t table[EINT_MAX_ID + 1];
+} eintManager_t;
 
 typedef enum {
     RLED_STATE_IGNORE = -1, // 忽略, 设置的时候返回当前状态

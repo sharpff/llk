@@ -196,6 +196,18 @@ void* halPWMInit(int clock) {
     return (void *)0xffffffff;
 }
 
+int halEINTClose(eintHandler_t *handler) {
+    return 0;
+}
+
+int halEINTOpen(eintHandler_t *handler) {
+    return 0;
+}
+
+int halEINTRead(eintHandler_t* handler, int *val) {
+    return 0;
+}
+
 void *halPipeOpen(char *name) {
     return (void *)0xffffffff;
 }

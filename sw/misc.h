@@ -44,6 +44,12 @@ extern "C"
 #define JSON_NAME_PWM_BLINK         "blink"
 #define JSON_NAME_PWM_TIME_SHORT    "shortTime"
 #define JSON_NAME_PWM_TIME_LONG     "longTime"
+#define JSON_NAME_EINT_CONF         "eint"
+#define JSON_NAME_EINT_ID           "id"
+#define JSON_NAME_EINT_GID          "gid"
+#define JSON_NAME_EINT_MODE         "mode"
+#define JSON_NAME_EINT_DEBOUNCE     "debounce"
+#define JSON_NAME_EINT_TIMEOUT      "timeout"
 
 #define JSON_NAME_COMMON_CONF       "common"
 #define JSON_NAME_COMMON_NUM        "num"
@@ -91,6 +97,7 @@ int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler);
 int getGPIOInfo(const char *json, int jsonLen, gpioHandler_t *table, int n);
 int getPipeInfo(const char *json, int jsonLen, char *name, int size);
 int getPWMInfo(const char *json, int jsonLen, pwmHandler_t *table, int n);
+int getEINTInfo(const char *json, int jsonLen, eintHandler_t *table, int n);
 int getWhatCvtType(const char *json, int jsonLen);
 int getJsonUTC32(char *json, int jsonLen/*, const char *rmtJson, int rmtJsonLen*/);
 int getJsonUTC(char *json, int jsonLen);

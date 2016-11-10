@@ -53,6 +53,7 @@ static gpioManager_t ginGpioManager;
 static pwmManager_t ginPWMManager;
 static commonManager_t ginCommonManager;
 static uartHandler_t uartHandler;
+static eintManager_t ginEINTManager;
 
 static void gpioCheckInput(gpioHandler_t *ptr);
 static void gpioCheckState(gpioHandler_t *ptr);
@@ -64,6 +65,7 @@ static IOHDL ginIOHdl[] = {
     {IO_TYPE_GPIO, 0x0},
     {IO_TYPE_PIPE, 0x0},
     {IO_TYPE_PWM, 0x0},
+    {IO_TYPE_EINT, 0x0},
 };
 
 /*
@@ -657,6 +659,21 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             ioHdl = &ginPWMManager;
             return ioHdl;
         }break;
+        case IO_TYPE_EINT: {
+            int i;
+            pwmHandler_t *table;
+            ret = getEINTInfo(json, jsonLen, ginEINTManager.table, EINT_MAX_ID);
+            if (0 >= ret) {
+                LELOGW("ioInit ginEINTManager ret[%d]", ret);
+                return NULL;
+            }
+            ginEINTManager.num = ret;
+            for(i = 0, table = ginEINTManager.table; i < ginEINTManager.num; i++, table++) {
+                halEINTOpen(table);
+            }
+            ioHdl = &ginEINTManager;
+            return ioHdl;
+        }break;
     }
     // halUartInit()
     return NULL;
@@ -729,6 +746,12 @@ void **ioGetHdl(int *ioType) {
             }
             return &ioHdl;
         }break;
+        case IO_TYPE_EINT: {
+            if (NULL == ioHdl) {
+                ioHdl = ioInit(whatCvtType, json, ret);
+            }
+            return &ioHdl;
+        }break;
     }
     // halUartInit()
     return NULL;    
@@ -780,6 +803,7 @@ IOHDL *ioGetHdlExt() {
     IO_INIT_ITEM(IO_TYPE_GPIO, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_PIPE, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_PWM, whatCvtType, json, ret);
+    IO_INIT_ITEM(IO_TYPE_EINT, whatCvtType, json, ret);
     IO_INIT_END;
 
     // {
@@ -849,6 +873,7 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
 
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
     int ret = 0;
+    //LELOG("ioRead type[%d] [0x%02x]", ioType, hdl);
     switch (ioType) {
         case IO_TYPE_UART: {
             return halUartRead(hdl, data, dataLen);
@@ -904,6 +929,20 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             //LELOG("ioRead [%d][%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x]", k, data[0], data[1], data[2], 
             //    data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
             return ret;
+        }break;
+        case IO_TYPE_EINT: {
+            int i, k=0, val;
+            eintManager_t *mgr = ((eintManager_t *)hdl);
+            eintHandler_t *q = mgr->table;
+            for(i = 0; i < mgr->num ; i++, q++) {
+                halEINTRead(q, (uint32_t*)&val);
+                if(val > 0) {
+                    data[k++] = q->id;
+                    data[k++] = val;
+                    LELOG("ioRead IO_TYPE_EINT id[%d] val[%d]", q->id, val);
+                }
+            }
+            return k;
         }break;
     }    
     return 0;

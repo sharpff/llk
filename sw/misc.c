@@ -204,8 +204,7 @@ int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler) {
     return 0;
 }
 
-int getGPIOInfo(const char *json, int jsonLen,  gpioHandler_t *table, int n)
-{
+int getGPIOInfo(const char *json, int jsonLen,  gpioHandler_t *table, int n) {
     jobj_t jobj;
     int i, num, ret, tmp, j = -1;
     jsontok_t jsonToken[NUM_TOKENS];
@@ -278,8 +277,7 @@ int getPipeInfo(const char *json, int jsonLen, char *name, int size) {
     return 0;
 }
 
-int getPWMInfo(const char *json, int jsonLen,  pwmHandler_t *table, int n)
-{
+int getPWMInfo(const char *json, int jsonLen,  pwmHandler_t *table, int n) {
     jobj_t jobj;
     int i = -1, num, ret, tmp;
     jsontok_t jsonToken[NUM_TOKENS];
@@ -337,6 +335,46 @@ int getPWMInfo(const char *json, int jsonLen,  pwmHandler_t *table, int n)
         }
     }
     LELOG("getPWMInfo e[%d]", i);
+    return i;
+}
+
+int getEINTInfo(const char *json, int jsonLen, eintHandler_t *table, int n) {
+    jobj_t jobj;
+    int i = -1, num, ret, tmp;
+    jsontok_t jsonToken[NUM_TOKENS];
+    if((ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen)) != WM_SUCCESS) {
+        LELOG("getEINTInfo json_init");
+        return -1;
+    }
+    if((ret = json_get_array_object(&jobj, JSON_NAME_EINT_CONF, &num))== WM_SUCCESS) {
+        num = num > n ? n : num;
+        LELOG("getEINTInfo num[%d]", num);
+        for( i = 0; i < num; i++ ) {
+            if((ret = json_array_get_composite_object(&jobj, i)) != WM_SUCCESS) {
+                LELOG("getEINTInfo json_array_get_composite_object");
+                return -1;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_ID, &tmp)) == WM_SUCCESS) {
+                table[i].id = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_GID, &tmp)) == WM_SUCCESS) {
+                table[i].gid = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_MODE, &tmp)) == WM_SUCCESS) {
+                table[i].mode = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_DEBOUNCE, &tmp)) == WM_SUCCESS) {
+                table[i].debounce = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_TIMEOUT, &tmp)) == WM_SUCCESS) {
+                table[i].timeout = tmp;
+            }
+            LELOG("EINT id[%d], gid[%d], mode[%d], debounce[%d], timeout[%d]",
+                table[i].id, table[i].gid, table[i].mode, table[i].debounce, table[i].timeout);
+            json_release_composite_object(&jobj);
+        }
+    }
+    LELOG("getEINTInfo e[%d]", i);
     return i;
 }
 

@@ -98,6 +98,19 @@ typedef struct {
     uint32_t reserved2;
 } uartHandler_t;
 
+typedef struct {
+    uint8_t id;
+    uint8_t gid;
+    uint8_t mode;
+    uint8_t debounce;
+    uint32_t timeout;
+    uint32_t count;
+    uint32_t timeStamp;
+    void* handler;
+    uint32_t reserved1;
+    uint32_t reserved2;
+} eintHandler_t;
+
 #define COMMON_MAX_ID     (10)
 
 typedef struct {
@@ -128,6 +141,10 @@ int halPWMClose(pwmHandler_t* handler);
 void halPWMWrite(pwmHandler_t* handler, uint32_t percent);
 void halPWMRead(pwmHandler_t* handler, uint32_t *percent);
 void halPWMSetFrequency(pwmHandler_t* handler);
+
+int halEINTClose(eintHandler_t *handler);
+int halEINTOpen(eintHandler_t *handler);
+int halEINTRead(eintHandler_t* handler, int *val);
 
 void halCommonInit(commonManager_t* dev);
 

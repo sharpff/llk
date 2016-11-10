@@ -17,7 +17,6 @@ typedef enum {
 extern int sengineSetStatus(char *json, int jsonLen);
 extern int getVer(char fwVer[64], int size);
 extern int halGetMac(uint8_t *mac, int len);
-extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
 
 static const char *cmdFormat = "{\"pwm\":[{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d}]}";
 static char cmdBuff[1024];
@@ -94,23 +93,15 @@ uint8_t le_version(uint8_t len, char *param[]) {
 
 static uint8_t lelinkGetSN(uint8_t* data) {
 	uint32_t valid_bit;
-	uint8_t buff[16];
-	SYSefuse_Read16Bytes(0, (uint32_t *)buff, &valid_bit, 0);
+	SYSefuse_Read16Bytes(0x80, (uint32_t *)data, &valid_bit, 0);
 	if (valid_bit == 0) {
     	return 0;
     }
-    memcpy(data, buff, 16);
-	SYSefuse_Read16Bytes(16, (uint32_t *)buff, &valid_bit, 0);
+	SYSefuse_Read16Bytes(0x90, (uint32_t *)data+16, &valid_bit, 0);
 	if (valid_bit == 0) {
     	return 0;
     }
-    memcpy(data+16, buff, 16);
-    SYSefuse_Read16Bytes(32, (uint32_t *)buff, &valid_bit, 0);
-	if (valid_bit == 0) {
-    	return 0;
-    }
-    memcpy(data+32, buff, 2);
-    return 34;
+    return 32;
 }
 
 void lelinkPltCtrlProcess(void) {
@@ -124,8 +115,6 @@ void lelinkPltCtrlProcess(void) {
         case E_PLT_TYPE_VERSION: {
         	char fwVer[64] = {0}, count;
 		    uint8_t mac[8] = {0};
-		    uint8_t sn[36] = {0};
-		    uint8_t sn_hex[72] = {0};
 		    cmdType = E_PLT_TYPE_IDLE;
 		    APPLOG("---------lelinkInfo----------\r\n");
 		    getVer(fwVer, sizeof(fwVer));
@@ -133,10 +122,10 @@ void lelinkPltCtrlProcess(void) {
 		    halGetMac(mac, sizeof(mac));
 		    APPLOG("mac: %02x:%02x:%02x:%02x:%02x:%02x", 
 		        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-		    count = lelinkGetSN(sn);
+		    memset(fwVer, 0 , 64);
+		    count = lelinkGetSN(fwVer);
 		    if(count) {
-		    	bytes2hexStr(sn, count, sn_hex, sizeof(sn_hex));
-			    APPLOG("sn: %s", sn_hex);
+			    APPLOG("sn:  %s", fwVer);
 		    } else {
 		    	APPLOG("sn: data error");
 		    }
