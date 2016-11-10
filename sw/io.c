@@ -658,7 +658,7 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
         }break;
         case IO_TYPE_EINT: {
             int i;
-            pwmHandler_t *table;
+            eintHandler_t *table;
             ret = getEINTInfo(json, jsonLen, ginEINTManager.table, EINT_MAX_ID);
             if (0 >= ret) {
                 LELOGW("ioInit ginEINTManager ret[%d]", ret);
