@@ -171,12 +171,13 @@ end
 	s1GetCvtType
   ]]
 function s1GetCvtType()
-    -- combained uart(0x1) & gpio(0x2) & pwm(0x10)
+    -- combained uart(0x1) & pwm(0x10) & pwm(0x20)
     local str = [[
-    {"whatCvtType":19,
-     "common":[{"num":8,"id":"36-37-32-33-34-35-0","mux":"7-7-9-9-9-9-8"}],
+    {"whatCvtType":49,
+     "common":[{"num":7,"id":"36-37-32-33-34-35-0","mux":"7-7-9-9-9-9-3"}],
      "uart":[{"id":1, "baud":"115200-8N1"}],  
-     "gpio":[{"id":0,"dir":0,"mode":0,"state":1,"type":1,"longTime":30,"shortTime":3}],
+     "eint":[{"id":0,"gid":0,"mode":3,"debounce":5,"timeout":400}],
+     "int":[{"id":intid,"gpioid":0, tri 1, time}],
      "pwm":[{"id":33,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
             {"id":34,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
             {"id":35,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
@@ -620,34 +621,41 @@ function s1CvtPri2Std(bin)
 			end
 		end
 		print("result -> "..str..'\r\n')
-	elseif 0x02 == cvtType then
+	elseif 0x20 == cvtType then
 		dataTbl = {33, 0, 34, 0, 35, 0, 18, 0}
-		print("aaaaa -> "..'\r\n')
 		local lenStatus, currStatus = s1apiGetDevStatus()
 		if lenStatus <= 2 then
 			str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0)
 		end
 		local id = bin:byte(1)
 		local i = 0, val
-		if id == 0 and bin:byte(2) == 1 then
-			if lenStatus > 2 then
-				local tb = cjson.decode(currStatus)
-				local pwm = tb["pwm"]
-				for j = 1, 4 do
-					val = pwm[j]["id"]
-					i = i + 1
-					dataTbl[i] = val
-					val = pwm[j]["val"]
-					i = i + 1
-					dataTbl[i] = val
-				end
-			end
-			if dataTbl[8] == 0 then
-				str = string.format(status, dataTbl[1], 1024, dataTbl[3], 1024, dataTbl[5], 1024, dataTbl[7], 1024)
-			else
-				str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 0, dataTbl[7], 0)
-			end
-		end
+		if id == 0 then
+            if lenStatus > 2 then
+                local tb = cjson.decode(currStatus)
+                local pwm = tb["pwm"]
+                for j = 1, 4 do
+                    val = pwm[j]["id"]
+                    i = i + 1
+                    datatb[i] = val
+                    val = pwm[j]["val"]
+                    i = i + 1
+                    datatb[i] = val
+                end
+            end
+            if bin:byte(2) == 1 then
+                if datatb[8] == 0 then
+                    str = string.format(status, datatb[1], 1024, datatb[3], 1024, datatb[5], 1024, datatb[7], 1024)
+                else
+                    str = string.format(status, datatb[1], 0, datatb[3], 0, datatb[5], 0, datatb[7], 0)
+                end
+            elseif bin:byte(2) == 2 then
+                str = string.format(status, datatb[1], 1024, datatb[3], 0, datatb[5], 0, datatb[7], 1024)
+            elseif bin:byte(2) == 3 then
+                str = string.format(status, datatb[1], 0, datatb[3], 1024, datatb[5], 0, datatb[7], 1024)
+            elseif bin:byte(2) == 4 then
+                str = string.format(status, datatb[1], 0, datatb[3], 0, datatb[5], 1024, datatb[7], 1024)
+            end
+        end
 		len = 0x40000000
 	elseif 0x10 == cvtType then
 		if #bin >= 12 then

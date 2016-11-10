@@ -62,6 +62,18 @@ void* halPWMInit(int clock) {
     return 0xffffffff;
 }
 
+int halEINTClose(eintHandler_t *handler) {
+    return 0;
+}
+
+int halEINTOpen(eintHandler_t *handler) {
+    return 0;
+}
+
+int halEINTRead(eintHandler_t* handler, int *val) {
+    return 0;
+}
+
 void halCommonInit(commonManager_t* dev) {
     return;
 }
