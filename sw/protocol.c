@@ -700,8 +700,8 @@ int getSDevStatus(int index, char *sdevStatus, int len) {
     if (arr && cache) {
         uint8_t uuid[MAX_UUID+1] = {0};
         getTerminalUUID(uuid, MAX_UUID);
-        sprintf(sdevStatus, "{\"%s\":\"%s\",\"%s\":%s,\"%s\":%s}", JSON_NAME_UUID, uuid, JSON_NAME_SDEV, arr[index].sdevInfo, 
-            JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}");
+        sprintf(sdevStatus, "{\"%s\":\"%s\",\"%s\":%s,\"%s\":%s,\"%s\":\"%s\",\"%s\":\"%s\"}", JSON_NAME_UUID, uuid, JSON_NAME_SDEV, arr[index].sdevInfo, 
+            JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAN, arr[index].sdevMan, JSON_NAME_SDEV_MAC, arr[index].mac);
     } else {
         return 0;
     }

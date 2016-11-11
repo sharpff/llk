@@ -123,7 +123,7 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     int i = 0;
     uint32_t tmpTotal = 0, singleSize = 0, tmpSize = 0;
     // uint32_t tmpStartAddr = startAddr;
-    LELOG("lelinkStorageInit -s\r\n");
+    LELOG("lelinkStorageInit [%d] -s\r\n", sizeof(SDevInfoCfg));
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
         tmpTotal += getSize((E_FLASH_TYPE)i, minSize);
     }
@@ -147,7 +147,8 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
             tmpTotal = ginRegion[i].size;
         }
         tmpSize += tmpTotal;
-        LELOG("idx[%d] addr[0x%x] size[0x%x*%d=0x%x] type[%d]", i, ginRegion[i].addr, ginRegion[i].size, (ginRegion[i].size ? tmpTotal/ginRegion[i].size : 0), tmpTotal, ginRegion[i].type);
+        LELOG("idx[%d] addr[0x%x] size[0x%x*%d=0x%x] type[%d] all[%d]", i, ginRegion[i].addr, ginRegion[i].size, 
+            (ginRegion[i].size ? tmpTotal/ginRegion[i].size : 0), tmpTotal, ginRegion[i].type, tmpSize);
     }
 
     return 0;
@@ -906,7 +907,7 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
 
         }break;
         case IO_TYPE_PWM: {
-            int i, k=0, val;
+            int i, k=0, val = 0;
             pwmManager_t *mgr = ((pwmManager_t *)hdl);
             pwmHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num ; i++, q++) {
@@ -928,7 +929,7 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             return ret;
         }break;
         case IO_TYPE_EINT: {
-            int i, k=0, val;
+            int i, k=0, val = 0;
             eintManager_t *mgr = ((eintManager_t *)hdl);
             eintHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num ; i++, q++) {

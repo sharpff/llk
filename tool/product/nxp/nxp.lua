@@ -177,11 +177,10 @@ function s1GetCvtType()
      "common":[{"num":7,"id":"36-37-32-33-34-35-0","mux":"7-7-9-9-9-9-3"}],
      "uart":[{"id":1, "baud":"115200-8N1"}],  
      "eint":[{"id":0,"gid":0,"mode":3,"debounce":5,"timeout":400}],
-     "int":[{"id":intid,"gpioid":0, tri 1, time}],
-     "pwm":[{"id":33,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
-            {"id":34,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
-            {"id":35,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024},
-            {"id":18,"type":0,"clock":1,"state":1024,"frequency":5120,"duty":1024}]
+     "pwm":[{"id":33,"type":0,"clock":1,"state":0,"frequency":5120,"duty":1024},
+            {"id":34,"type":0,"clock":1,"state":0,"frequency":5120,"duty":1024},
+            {"id":35,"type":0,"clock":1,"state":0,"frequency":5120,"duty":1024},
+            {"id":18,"type":0,"clock":1,"state":0,"frequency":5120,"duty":1024}]
     }
     ]]
 	local delay = 5
@@ -265,8 +264,8 @@ function s1GetValidKind(data)
 	local WHATKIND_SUB_DEV_LEAVE = 13
 	local WHATKIND_SUB_DEV_INFO = 14
 
-    -- included gpio(0x2) & pwm(0x10)
-	if 0x10 == cvtType or 0x02 == cvtType then
+    -- included eint(0x20) & pwm(0x10)
+	if 0x10 == cvtType or 0x20 == cvtType then
 		return WHATKIND_MAIN_DEV_DATA;
 	end
 
@@ -387,6 +386,8 @@ function genStatus(clu, ept, val)
 		status = string.format('{"switcher":%d}', val)
 	elseif nil ~= string.find(clu, "0406") then
 		status = string.format('{"pir":%d}', val)
+	elseif nil ~= string.find(clu, "0500") then
+		status = string.format('{"ias":%d}', val)
 	end
 	return status
 end
@@ -514,7 +515,7 @@ function s1CvtStd2Pri(json)
 			print("whatWrite :")
 			LOGTBL(cmdTbl)
 			-- LOGTBL(cmdTbl)
-		elseif cvtType == 16 then
+		elseif cvtType == 0x10 then
 			local i = 0, val
 			local j = 0
 			local aa = ctrl["pwm"]
@@ -547,7 +548,7 @@ function s1CvtPri2Std(bin)
 	local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
 
 	-- test only
-	cvtType = 0x01
+	-- cvtType = 0x01
 
 	-- UART
 	if 0x01 == cvtType then
@@ -559,6 +560,7 @@ function s1CvtPri2Std(bin)
 			LOGTBL(dataTbl)
 
 			dataTbl = whatRead(dataTbl)
+			LOGTBL(dataTbl)
 			print("s1CvtPri2Std\r\n")
 			bin = tableToString(dataTbl)
 			-- (RSP) ept list {"sDevQryEpt":2,"idx":"DB8F","ept":[1,2]}
@@ -619,6 +621,12 @@ function s1CvtPri2Std(bin)
 				str = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,11,12)), bin2hex(string.sub(bin,10,10)), bin2hex(string.sub(bin,17,17)))..',"sDev":{"idx":"'..bin2hex(string.sub(bin,8,9)).. '"}}'
 				break
 			end
+
+			-- (IAS IND) 018401000da50401050002c5eb00000000000103 
+			if nil ~= string.find(bin, string.char(0x01, 0x84, 0x01)) then
+				str = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,9,10)), bin2hex(string.sub(bin,8,8)), bin2hex(string.sub(bin,14,15)))..',"sDev":{"idx":"'..bin2hex(string.sub(bin,12,13)).. '"}}'
+				break
+			end
 		end
 		print("result -> "..str..'\r\n')
 	elseif 0x20 == cvtType then
@@ -636,24 +644,24 @@ function s1CvtPri2Std(bin)
                 for j = 1, 4 do
                     val = pwm[j]["id"]
                     i = i + 1
-                    datatb[i] = val
+                    dataTbl[i] = val
                     val = pwm[j]["val"]
                     i = i + 1
-                    datatb[i] = val
+                    dataTbl[i] = val
                 end
             end
             if bin:byte(2) == 1 then
-                if datatb[8] == 0 then
-                    str = string.format(status, datatb[1], 1024, datatb[3], 1024, datatb[5], 1024, datatb[7], 1024)
+                if dataTbl[8] == 0 then
+                    str = string.format(status, dataTbl[1], 1024, dataTbl[3], 1024, dataTbl[5], 1024, dataTbl[7], 1024)
                 else
-                    str = string.format(status, datatb[1], 0, datatb[3], 0, datatb[5], 0, datatb[7], 0)
+                    str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 0, dataTbl[7], 0)
                 end
             elseif bin:byte(2) == 2 then
-                str = string.format(status, datatb[1], 1024, datatb[3], 0, datatb[5], 0, datatb[7], 1024)
+                str = string.format(status, dataTbl[1], 1024, dataTbl[3], 0, dataTbl[5], 0, dataTbl[7], 1024)
             elseif bin:byte(2) == 3 then
-                str = string.format(status, datatb[1], 0, datatb[3], 1024, datatb[5], 0, datatb[7], 1024)
+                str = string.format(status, dataTbl[1], 0, dataTbl[3], 1024, dataTbl[5], 0, dataTbl[7], 1024)
             elseif bin:byte(2) == 4 then
-                str = string.format(status, datatb[1], 0, datatb[3], 0, datatb[5], 1024, datatb[7], 1024)
+                str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 1024, dataTbl[7], 1024)
             end
         end
 		len = 0x40000000

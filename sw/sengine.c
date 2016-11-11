@@ -132,6 +132,8 @@ static void loadSDevInfo(SDevNode *arr) {
                 arr[i].sdevEpt[0], arr[i].sdevEpt[1], arr[i].sdevEpt[2], arr[i].sdevEpt[3],
                 arr[i].sdevEpt[4], arr[i].sdevEpt[5], arr[i].sdevEpt[6], arr[i].sdevEpt[7]);
             LELOG("=======> SDevInfoCfg sdevMan[%s] ", arr[i].sdevMan);
+            sdevCache()->currsize++;
+            arr[i].occupied = 1;
         }
     }
 }
@@ -421,35 +423,35 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
 
         // make the sdevEpt valid
         for(i = 0; arr[index].sdevEpt[i] && i < SDEV_MAX_EPT; i++) {
-            if (((arr[index].sdevEpt[i] & 0x7F) - 1) == ept) {
+            // to void repeat ept entry
+            if (((arr[index].sdevEpt[i] & 0x7F) - 1) == ept && (arr[index].sdevEpt[i] & 0x80)) {
                 arr[index].sdevEpt[i] &= 0x7F;
+
                 LELOG("valid idx[%d] ept[%d]", ept, arr[index].sdevEpt[i]);
+                // APPEND old ept info
+                json_str_init(&jstr, totalJson, sizeof(totalJson));
+                json_start_object(&jstr);
+                // json_push_object(&jstr, JSON_NAME_SDEV);
+                json_push_array_object(&jstr, JSON_NAME_SDEV_DES);
+                // for new
+                json_set_val_strobj(&jstr, NULL, tmpJson, strlen(tmpJson));
+                // for old
+                if (0 < getJsonArray(arr[index].sdevInfo, sizeof(arr[index].sdevInfo), JSON_NAME_SDEV_DES, oldJson, sizeof(oldJson))) {
+                    oldJson[0] = ',';
+                    json_set_val_strobj(&jstr, NULL, oldJson, strlen(oldJson) - 1);
+                    LELOG("THE OLD JSON ====> [%s]", oldJson);
+                }
+                json_pop_array_object(&jstr);
+                // json_pop_object(&jstr);
+                json_close_object(&jstr);
+
+                strcpy(arr[index].sdevInfo, totalJson);
+                arr[index].sdevInfo[strlen(totalJson)] = '\0';
+                arr[index].isSDevInfoDone |= 0x02;
+                LELOG("THE RESULT =======> sdevInfoRsp sdevInfo[%s] ", arr[index].sdevInfo);
                 break;
             }
         }
-
-        // APPEND old ept info
-        json_str_init(&jstr, totalJson, sizeof(totalJson));
-        json_start_object(&jstr);
-        json_push_object(&jstr, JSON_NAME_SDEV);
-        json_push_array_object(&jstr, JSON_NAME_SDEV_DES);
-        // for new
-        json_set_val_strobj(&jstr, NULL, tmpJson, strlen(tmpJson));
-        // for old
-        if (0 < getJsonArray(arr[index].sdevInfo, sizeof(arr[index].sdevInfo), JSON_NAME_SDEV_DES, oldJson, sizeof(oldJson))) {
-            oldJson[0] = ',';
-            json_set_val_strobj(&jstr, NULL, oldJson, strlen(oldJson) - 1);
-            LELOG("THE OLD JSON ====> [%s]", oldJson);
-        }
-        json_pop_array_object(&jstr);
-        json_pop_object(&jstr);
-        json_close_object(&jstr);
-
-        strcpy(arr[index].sdevInfo, totalJson);
-        arr[index].sdevInfo[strlen(totalJson)] = '\0';
-        arr[index].isSDevInfoDone |= 0x02;
-        LELOG("THE RESULT =======> sdevInfoRsp sdevInfo[%s] ", arr[index].sdevInfo);
-
     } else if (WM_SUCCESS == json_get_val_int(&jobj, JSON_NAME_SDEV_QUERY_MAN, &val) && 2 == val) {
         // 0x04. man done(node descriptor response)
         if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAN, str, sizeof(str))) {
@@ -475,9 +477,11 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
             break;
         }
     }
-    if (isCompleted) {
+    if (isCompleted && (0x07 == arr[index].isSDevInfoDone)) {
         if (arr[index].sdevMan[0]) {
             sdevInfoSerilized(arr);
+            sdevCache()->currsize++;
+            arr[index].occupied = 1;
             LELOG("COMPLETED =======> sdevInfoRsp[%d] mac[%s], idx[%s], sdevMan[%s]", index, arr[index].mac, arr[index].idx, arr[index].sdevMan);
             // // test only
             // for (i = 1; i < MAX_SDEV_NUM; i++) {
@@ -578,16 +582,17 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
     // for sub dev status ind
     if (0 < getJsonObject(status, len, JSON_NAME_SDEV_STATUS, buf, sizeof(buf))) {
         LELOG("sdevUpdate sdevStatus START ****************************");
+        LELOG("%s", status);
         ret = json_get_composite_object(&jobj, JSON_NAME_SDEV);
-        if (0 == ret) {
-            if (0 <= sdevArrayGet(sDevIdx, &node) && node.occupied) {
-                if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAC, node.mac, sizeof(node.mac))) {
-                    LELOGE("json_get_val_str [%s] FAILED", JSON_NAME_SDEV_MAC);
-                    return -5;
-                }
-                LELOG("mac is [%s]", node.mac);
-                sDevIdx = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, node.mac);
-                if (0 <= sDevIdx) {
+        if (WM_SUCCESS == ret) {
+            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_INDEX, node.idx, sizeof(node.idx))) {
+                LELOGE("sdevUpdate json_get_val_str [%s] FAILED", JSON_NAME_SDEV_INDEX);
+                return -2;
+            }
+            LELOG("idx is [%s]", node.idx);
+            sDevIdx = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByIdxCB, node.idx);
+            if (0 <= sDevIdx) {
+                if (0 <= sdevArrayGet(sDevIdx, &node) && node.occupied) {
                     LELOG("old[%s] new[%s]", node.sdevStatus, buf);
                     if (0 != memcmp(node.sdevStatus, buf, strlen(buf))) {
                         postStatusChanged(sDevIdx + 1);
@@ -595,7 +600,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
                     memset(node.sdevStatus, 0, sizeof(node.sdevStatus));
                     strcpy(node.sdevStatus, buf);
                     sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_STATUS);  
-                    LELOG("=> sDevIdx[%d] mac[%s] sdev[%s] sdevStatus[%s]", sDevIdx, node.mac, node.sdevInfo, node.sdevStatus);               
+                    LELOG("=> sDevIdx[%d] idx[%s] mac[%s] sdev[%s] sdevStatus[%s]", sDevIdx, node.idx, node.mac, node.sdevInfo, node.sdevStatus);               
                 }
             }
         }
@@ -1856,10 +1861,10 @@ int senginePollingSlave(void) {
                             sdevInfoRsp(tmpArr, status, len);
                         } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_DATA");
-                            // if (0 > sdevUpdate(tmpArr, status, len)) {
-                            //     LELOGE("sdevUpdate is FAILED");
-                            //     break;
-                            // }
+                            if (0 > sdevUpdate(tmpArr, status, len)) {
+                                LELOGE("sdevUpdate is FAILED");
+                                break;
+                            }
                         } else if (WHATKIND_SUB_DEV_LEAVE == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_LEAVE");
                             sdevRemove(sdevArray(), status, len);
