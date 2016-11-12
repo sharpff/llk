@@ -478,7 +478,7 @@ static int stateProcCloudAuthed(StateContext *cntx) {
             if (sengineHasDevs()) {
                 SDevNode *arr = sdevArray();
                 PCACHE cache = sdevCache(); 
-            // LELOGW("******** stateProcCloudAuthed [%p] [%p] [%d]", arr, cache, cache->currsize);
+                LELOGW("******** stateProcCloudAuthed [%p] [%p] [%d]", arr, cache, cache->currsize);
                 if (arr && cache) {
                     int i = 0;
                     for (i = 0; i < cache->currsize; i++) {
