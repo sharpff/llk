@@ -523,14 +523,16 @@ static int sdevInsert(SDevNode *arr, const char *status, int len) {
                 return -3;
             }
 
-            index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, node.mac);
-            if (0 <= index) {
-                LELOG("sdevInsert qForEachfromCache already EXIST [%d]", index);
-                return 0;                
-            }
             if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_INDEX, (char *)node.idx, sizeof(node.idx))) {
                 LELOGE("sdevInsert json_get_val_str [%s] FAILED", JSON_NAME_SDEV_INDEX);
                 return -4;
+            }
+
+            index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, node.mac);
+            if (0 <= index) {
+                LELOG("sdevInsert qForEachfromCache already EXIST [%d]", index);
+                memcpy(arr[index].idx, node.idx, sizeof(arr[index].idx));
+                return 0;                
             }
             node.occupied = 1;
             // {
