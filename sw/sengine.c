@@ -587,7 +587,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
         LELOG("%s", status);
         ret = json_get_composite_object(&jobj, JSON_NAME_SDEV);
         if (WM_SUCCESS == ret) {
-            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_INDEX, node.idx, sizeof(node.idx))) {
+            if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_INDEX, (char *)node.idx, sizeof(node.idx))) {
                 LELOGE("sdevUpdate json_get_val_str [%s] FAILED", JSON_NAME_SDEV_INDEX);
                 return -2;
             }
