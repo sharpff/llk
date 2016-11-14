@@ -472,6 +472,7 @@ static int stateProcCloudAuthed(StateContext *cntx) {
                     node.reserved = 0;
                 }
             }
+            node.seqId = 0;
             if (lelinkNwPostCmd(ginCtxR2R, &node)) {
             }
         }

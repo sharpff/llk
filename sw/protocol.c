@@ -945,7 +945,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
         LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->subCmdId) {
         node_p->timeoutRef = 3;
     }
-    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef);
+    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d] seqId[%d] reserved[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef, node_p->seqId, node_p->reserved);
 
     // if (node_p->ndPort) {
     //     memcpy(node.ndIP, ipTmp, MAX_IPLEN);
@@ -1242,7 +1242,7 @@ static int isNeedDelCB(NodeData *currNode) {
 
         switch (currNode->cmdId) {
             case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
-                if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ) {
+                if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ && !(currNode->reserved)) {
                     if (!flagHeartBeatMinus()) {
                         changeStateId(E_STATE_AP_CONNECTED);
                         flagHeartBeatReset();

@@ -1,3 +1,4 @@
+#include "leconfig.h"
 #include "halHeader.h"
 #include "os.h"
 
@@ -46,7 +47,7 @@ int hal_sprintf(char *buf, const char *fmt, ...) {
     int rv;
 
     va_start(ap, fmt);
-    rv = vsnprintf(buf, 260, fmt, ap);
+    rv = vsnprintf(buf, MAX_BUF, fmt, ap);
     va_end(ap);
     return rv;
 }
