@@ -922,8 +922,8 @@ static int lf_s1CvtPri2Std(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     int sLen = lua_tointeger(L, -2);
     int size = sLen;
-    if(size > 0x40000000)
-        size = size - 0x40000000;
+    if(size > PRI2STD_LEN_INTERNAL)
+        size = size - PRI2STD_LEN_INTERNAL;
     size = MIN(size, outputLen);
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
@@ -1818,16 +1818,21 @@ int senginePollingSlave(void) {
                                 &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
-                        } else if (len > 0x40000000) {
-                            len = len - 0x40000000;
-                            LELOGW("senginePollingSlave native status("S1_PRI2STD") [%d] [%s]", len, status);
-                            sengineSetStatus((char *)status, len);
-                        } else if (cacheIsChanged(status, len)) {
-                            LELOGW("senginePollingSlave cloud status("S1_PRI2STD") [%d] [%s]", len, status);
-                            postStatusChanged(0);
-                            cacheSetTerminalStatus(status, len);
+                        } else {
+                            if ((PRI2STD_LEN_INTERNAL == (PRI2STD_LEN_INTERNAL & len)) || 
+                                (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
+                                LELOGW("senginePollingSlave native status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
+                                sengineSetStatus((char *)status, (len & PRI2STD_LEN_MAX));                                
+                            }
+                            if (PRI2STD_LEN_MAX > len || 
+                                (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
+                                if (cacheIsChanged(status, (len & PRI2STD_LEN_MAX))) {
+                                    LELOGW("senginePollingSlave cloud status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
+                                    postStatusChanged(0);
+                                    cacheSetTerminalStatus(status, (len & PRI2STD_LEN_MAX));
+                                }
+                            }
                         }
-                    }
                     break;
                 // for sub devs
                 case WHATKIND_SUB_DEV_RESET: {

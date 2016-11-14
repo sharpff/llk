@@ -130,9 +130,11 @@ function s1GetVer()
 	-- LOGTBL(tblData1)
 	-- LOGTBL(whatWrite(tblData1))
 
-	local tblData2 = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x46, 0xFF, 0xFC, 0x02, 0x18, 0x02, 0x10, 0x03}
+	local tblData2 = {0x01, 0x80, 0x43, 0x00, 0x25, 0x00, 0xe9, 0x00, 0xdb, 0x8f, 0x16, 0x01, 0x01, 0x04, 0x04, 0x02, 0x02, 0x06, 0x00, 0x00, 0x00, 0x04, 0x00, 0x03, 0x00, 0x06, 0x00, 0x08, 0x00, 0x05, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x03, 0x00, 0x06, 0x00, 0x08, 0x00, 0x05, 0x03}
 	-- LOGTBL(tblData2)
-	s1apiOptLogTable(tblData2)
+	tblData2[6] = csum(tblData2)
+	LOGTBL(whatWrite(tblData2))
+	-- s1apiOptLogTable(tblData2)
 	-- local a = tableToString(tblData2)
 	-- local a = s1apiOptTable2String(tblData2)
 	print('abc'..'\r\n')
@@ -546,9 +548,13 @@ function s1CvtPri2Std(bin)
 	local str = ''
     local len = 0
 	local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
+    local PRI2STD_LEN_NONE = 0x00000000
+    local PRI2STD_LEN_INTERNAL = 0x40000000
+    local PRI2STD_LEN_BOTH = 0x20000000
+    local PRI2STD_LEN_MAX = 0x0000FFFF
 
 	-- test only
-	-- cvtType = 0x01
+	cvtType = 0x01
 
 	-- UART
 	if 0x01 == cvtType then
@@ -560,8 +566,8 @@ function s1CvtPri2Std(bin)
 			LOGTBL(dataTbl)
 
 			dataTbl = whatRead(dataTbl)
-			LOGTBL(dataTbl)
 			print("s1CvtPri2Std\r\n")
+			LOGTBL(dataTbl)
 			bin = tableToString(dataTbl)
 			-- (RSP) ept list {"sDevQryEpt":2,"idx":"DB8F","ept":[1,2]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x45)) then
@@ -593,6 +599,9 @@ function s1CvtPri2Std(bin)
 					str = string.sub(str,1,string.len(str) - 1)..']'
 				end
 				str = str..'}'
+				if nil ~= string.find(string.char(0x04, 0x02), string.sub(bin,15,16)) then
+					len = PRI2STD_LEN_BOTH
+				end
 				break
 			end
 
@@ -664,7 +673,7 @@ function s1CvtPri2Std(bin)
                 str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 1024, dataTbl[7], 1024)
             end
         end
-		len = 0x40000000
+		len = PRI2STD_LEN_INTERNAL
 	elseif 0x10 == cvtType then
 		if #bin >= 12 then
 			local id1, id2, id3, id4, val1, val2, val3, val4

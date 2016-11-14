@@ -57,6 +57,17 @@ enum {
     WHATKIND_SUB_DEV_INFO,
 };
 
+/*
+ * 这些enum值通过FW脚本中的s1GetValidKind进行处理并返回
+ * 标示当前在脚本中分析出来的数据类型
+ */
+enum {
+    PRI2STD_LEN_NONE = 0x00000000,
+    PRI2STD_LEN_INTERNAL = 0x40000000,
+    PRI2STD_LEN_BOTH = 0x20000000,
+    PRI2STD_LEN_MAX = 0x0000FFFF
+};
+
 typedef enum {
     QUERIETYPE_INVAIL = 0,
     QUERIETYPE_STATE = 1,       // 1, 查询设备状态
