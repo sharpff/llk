@@ -554,7 +554,7 @@ function s1CvtPri2Std(bin)
     local PRI2STD_LEN_MAX = 0x0000FFFF
 
 	-- test only
-	cvtType = 0x01
+	-- cvtType = 0x01
 
 	-- UART
 	if 0x01 == cvtType then

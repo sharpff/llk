@@ -1833,6 +1833,7 @@ int senginePollingSlave(void) {
                                 }
                             }
                         }
+                    }
                     break;
                 // for sub devs
                 case WHATKIND_SUB_DEV_RESET: {

@@ -121,7 +121,7 @@ int getRegion(E_FLASH_TYPE type, FlashRegion *region) {
 
 int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) {
     int i = 0;
-    uint32_t tmpTotal = 0, singleSize = 0, tmpSize = 0;
+    uint32_t tmpTotal = 0, tmpSize = 0;
     // uint32_t tmpStartAddr = startAddr;
     LELOG("lelinkStorageInit [%d] -s\r\n", sizeof(SDevInfoCfg));
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
@@ -933,7 +933,7 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             eintManager_t *mgr = ((eintManager_t *)hdl);
             eintHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num ; i++, q++) {
-                halEINTRead(q, (uint32_t*)&val);
+                halEINTRead(q, (int*)&val);
                 if(val > 0) {
                     data[k++] = q->id;
                     data[k++] = val;
