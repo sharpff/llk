@@ -459,6 +459,8 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
         if (ginCtxR2R) {
+            lelinkNwPostCmd(ginCtxR2R, &node);
+            node.seqId = 0;
             if (sengineHasDevs()) {
                 SDevNode *arr = sdevArray();
                 PCACHE cache = sdevCache(); 
@@ -471,9 +473,6 @@ static int stateProcCloudAuthed(StateContext *cntx) {
                     }
                     node.reserved = 0;
                 }
-            }
-            node.seqId = 0;
-            if (lelinkNwPostCmd(ginCtxR2R, &node)) {
             }
         }
     TIMEOUT_END
