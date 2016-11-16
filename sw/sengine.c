@@ -1621,13 +1621,13 @@ int sengineSetStatus(char *json, int jsonLen) {
             if (0 < ret) {
                 jsonLen = ret;
             }
-            //LELOGW("sengineSetStatus sengineCall("S1_OPT_MERGE_ST2ACT") [%d] [%d][%s]", ret, jsonLen, jsonMerged);
+            LELOGW("sengineSetStatus sengineCall("S1_OPT_MERGE_ST2ACT") [%d] [%d][%s]", ret, jsonLen, jsonMerged);
         }
 
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
             (uint8_t *)jsonMerged, jsonLen, bin, sizeof(bin));
         if (ret <= 0) {
-            //LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]", ret);
+            LELOGW("sengineSetStatus sengineCall("S1_STD2PRI") [%d]", ret);
             continue;
         }
 
@@ -1783,7 +1783,7 @@ int senginePollingSlave(void) {
             // LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
             memcpy(datas.arrDatas, &bin[appendLen], currLen);
 
-            if (1)
+            if (0)
             {
                 int j = 0;
                 extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
@@ -1816,7 +1816,6 @@ int senginePollingSlave(void) {
                         int len = 0;
                         len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                                 &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
-                        LELOGW("S1_PRI2STD [%s]", status);
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else {

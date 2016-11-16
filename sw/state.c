@@ -59,7 +59,7 @@
 
 /* for softAp */
 #define SEC2LETICK(x)               ((x) * 1000 / ginMSDelay)
-#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(10) //SEC2LETICK(60 * 3)
+#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 3)
 #define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 3)
 static uint8_t wifiConfigByMonitor = 0;
 static uint32_t wifiConfigTime = 0;
@@ -263,7 +263,6 @@ static int stateProcStart(StateContext *cntx) {
 
     LELOG("flag = %02x", ginPrivateCfg.data.devCfg.flag);
     if (0 == ret) {
-#if 1
         if(!getDevFlag(DEV_FLAG_RESET) && !wifiConfigByMonitor) {
             wifiConfigByMonitor = 0;
             wifiConfigTimeout = WIFI_CFG_BY_SOFTAP_TIME;
@@ -271,7 +270,6 @@ static int stateProcStart(StateContext *cntx) {
             // TODO: wait for mt7687 flash ready?
             halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
-#endif
             wifiConfigByMonitor = 1;
             wifiConfigTimeout = WIFI_CFG_BY_MONITOR_TIME;
         }
@@ -302,8 +300,8 @@ static int stateProcConfiguring(StateContext *cntx) {
             LELOG("Configure wifi timeout!!!");
             wifiConfigByMonitor ?  halStopConfig() : softApStop(0);
             setResetLed(RLED_STATE_FREE);
-            //reloadLatestPassport();
-            //halReboot();
+            reloadLatestPassport();
+            halReboot();
         } else {
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
         }
