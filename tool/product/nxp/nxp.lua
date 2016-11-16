@@ -178,11 +178,11 @@ function s1GetCvtType()
     {"whatCvtType":49,
      "common":[{"num":7,"id":"36-37-32-33-34-35-0","mux":"7-7-9-9-9-9-3"}],
      "uart":[{"id":1, "baud":"115200-8N1"}],  
-     "eint":[{"id":0,"gid":0,"mode":3,"debounce":5,"timeout":400}],
-     "pwm":[{"id":33,"type":0,"clock":1,"state":0,"frequency":5120,"duty":1024},
-            {"id":34,"type":0,"clock":1,"state":0,"frequency":5120,"duty":1024},
-            {"id":35,"type":0,"clock":1,"state":0,"frequency":5120,"duty":1024},
-            {"id":18,"type":0,"clock":1,"state":0,"frequency":5120,"duty":1024}]
+     "eint":[{"id":0,"gid":0,"type":2,"mode":4,"state":1,"debounce":5,"timeout":400}],
+     "pwm":[{"id":33,"type":1,"clock":1,"state":0,"frequency":5120,"duty":1024},
+            {"id":34,"type":1,"clock":1,"state":0,"frequency":5120,"duty":1024},
+            {"id":35,"type":1,"clock":1,"state":0,"frequency":5120,"duty":1024},
+            {"id":18,"type":1,"clock":1,"state":0,"frequency":5120,"duty":1024}]
     }
     ]]
 	local delay = 5
@@ -547,7 +547,7 @@ function s1CvtPri2Std(bin)
 	local dataTbl = {}
 	local str = ''
     local len = 0
-	local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}]}'
+	local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}],"eint":[{"id":%d,"val":%d}]}'
     local PRI2STD_LEN_NONE = 0x00000000
     local PRI2STD_LEN_INTERNAL = 0x40000000
     local PRI2STD_LEN_BOTH = 0x20000000
@@ -642,7 +642,7 @@ function s1CvtPri2Std(bin)
 		dataTbl = {33, 0, 34, 0, 35, 0, 18, 0}
 		local lenStatus, currStatus = s1apiGetDevStatus()
 		if lenStatus <= 2 then
-			str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0)
+			str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0, 0, 0)
 		end
 		local id = bin:byte(1)
 		local i = 0, val
@@ -661,22 +661,32 @@ function s1CvtPri2Std(bin)
             end
             if bin:byte(2) == 1 then
                 if dataTbl[8] == 0 then
-                    str = string.format(status, dataTbl[1], 1024, dataTbl[3], 1024, dataTbl[5], 1024, dataTbl[7], 1024)
+                    str = string.format(status, dataTbl[1], 1024, dataTbl[3], 1024, dataTbl[5], 1024, dataTbl[7], 1024, 0, 1)
                 else
-                    str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 0, dataTbl[7], 0)
+                    str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 0, dataTbl[7], 0, 0, 1)
                 end
             elseif bin:byte(2) == 2 then
-                str = string.format(status, dataTbl[1], 1024, dataTbl[3], 0, dataTbl[5], 0, dataTbl[7], 1024)
+                str = string.format(status, dataTbl[1], 0x8001, dataTbl[3], 0x8001, dataTbl[5], 0x8001, dataTbl[7], 1024, 0, 2)
             elseif bin:byte(2) == 3 then
-                str = string.format(status, dataTbl[1], 0, dataTbl[3], 1024, dataTbl[5], 0, dataTbl[7], 1024)
-            elseif bin:byte(2) == 4 then
-                str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 1024, dataTbl[7], 1024)
+                str = string.format(status, dataTbl[1], 0x8002, dataTbl[3], 0x8002, dataTbl[5], 0x8002, dataTbl[7], 1024, 0, 3)
+            elseif bin:byte(2) == 0xFF then
+                str = string.format(status, dataTbl[1], 0x8003, dataTbl[3], 0x8003, dataTbl[5], 0x8003, dataTbl[7], 1024, 0, 0xFF)
+            elseif bin:byte(2) == 0 then
+                str = string.format(status, datatb[1], datatb[2], datatb[3], datatb[4], datatb[5], datatb[6], dataTbl[7], dataTbl[8], 0, 0)
             end
         end
-		len = PRI2STD_LEN_INTERNAL
+		len = PRI2STD_LEN_BOTH
 	elseif 0x10 == cvtType then
 		if #bin >= 12 then
 			local id1, id2, id3, id4, val1, val2, val3, val4
+			local val5 = 0
+            local val6 = 0
+            if lenStatus > 2 then
+	            local tb1 = cjson.decode(currStatus)
+	            local eintData = tb1["eint"]
+	            val5 = eintData[1]["id"]
+	            val6 = eintData[1]["val"]
+        	end
 			id1 = bin:byte(1)
 			val1 = bin:byte(2)
 			val1 = (val1 << 8) | bin:byte(3)
@@ -689,7 +699,7 @@ function s1CvtPri2Std(bin)
 			id4 = bin:byte(10)
 			val4 = bin:byte(11)
 			val4 = (val4 << 8) | bin:byte(12) 
-			str = string.format(status, id1, val1, id2, val2, id3, val3, id4, val4)	
+			str = string.format(status, id1, val1, id2, val2, id3, val3, id4, val4, val5, val6)	
 		end
 	end
 	return string.len(str) + len, str

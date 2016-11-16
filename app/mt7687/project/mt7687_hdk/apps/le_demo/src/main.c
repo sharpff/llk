@@ -77,6 +77,8 @@ int airconfig_start(void *ptr, uint8_t *prov_key, int prov_key_len) {
 }
 
 int airconfig_stop() {
+    wifi_smart_connection_stop();
+    wifi_smart_connection_deinit();
     airconfig_reset();
     return 0;
 }

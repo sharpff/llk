@@ -47,34 +47,22 @@ extern "C"
 #define REMOTE_BAK_PORT 5546
 
 typedef struct {
-    uint8_t id;          // support 1, 2, 3 
-    //int8_t num;         // gpio num
-    uint16_t dir:1;     // 0 - input; 1 - output
-    uint16_t mode:3;    // 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
-    uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
-    uint16_t type:3;    // 0 - stdio; 1 - reset
-    uint16_t gpiostate:1;   // only : 0 - low; 1 - high
-    uint16_t freestate:1;   // only output reset: 0 - low; 1 - high
-    uint8_t blink;          // only output. ticks, blink frequency
-    uint8_t oldState; 
-    // for input/output type reset
-    uint8_t longTime;
-    uint8_t shortTime;
-    // for output type reset
-    // TODO: only for internal
-    uint8_t keepLowTimes;   // ticks, gpiostat keep low times
-    uint8_t keepHighTimes;  // ticks, gpiostat keep high times
+    uint8_t id;
+    uint8_t dir;
+    uint8_t mode;
+    uint8_t type;
+    uint8_t state;
+    uint8_t oldState;
+    uint8_t gpiostate;
     void* handler;
     uint32_t reserved1;
     uint32_t reserved2;
 } gpioHandler_t;
 
 typedef struct {
-    uint8_t id;            // support 1, 2, 3, 4
+    uint8_t id;
     uint8_t type;
-    uint8_t blink;
-    uint8_t longTime;
-    uint8_t shortTime;
+    uint8_t mode;
     uint8_t clock;
     uint32_t state;
     uint32_t oldState;
@@ -102,10 +90,16 @@ typedef struct {
     uint8_t id;
     uint8_t gid;
     uint8_t mode;
-    uint8_t debounce;
+    uint8_t type;
+    uint8_t state;
+    uint8_t oldState;
+    uint8_t longPress;
+    uint32_t debounce;
     uint32_t timeout;
     uint32_t count;
     uint32_t timeStamp;
+    uint32_t longPressStart;
+    uint32_t longPressEnd;
     void* handler;
     uint32_t reserved1;
     uint32_t reserved2;

@@ -230,30 +230,14 @@ int getGPIOInfo(const char *json, int jsonLen,  gpioHandler_t *table, int n) {
             if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_MODE, &tmp)) == WM_SUCCESS) {
                 table[j].mode = tmp;
             }
-            if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_BLINK, &tmp)) == WM_SUCCESS) {
-                table[j].blink = tmp;
-            }
             if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_STATE, &tmp)) == WM_SUCCESS) {
                 table[j].state = tmp;
             }
             if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_TYPE, &tmp)) == WM_SUCCESS) {
                 table[j].type = tmp;
             }
-            if((table[j].dir == GPIO_DIR_INPUT && table[j].type == GPIO_TYPE_INPUT_RESET) || 
-                    (table[j].dir == GPIO_DIR_OUTPUT && table[j].type == GPIO_TYPE_OUTPUT_RESET)) {
-                if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_TIME_SHORT, &tmp)) != WM_SUCCESS || tmp < 1) {
-                    LELOGE("GPIO wrang value: %s = %d",  JSON_NAME_GPIO_TIME_SHORT, (ret == WM_SUCCESS ? tmp : ret));
-                    continue;
-                }
-                table[j].shortTime = tmp;
-                if((ret = json_get_val_int(&jobj, JSON_NAME_GPIO_TIME_LONG, &tmp)) != WM_SUCCESS || tmp <= table[j].shortTime) {
-                    LELOGE("GPIO wrang value: %s = %d",  JSON_NAME_GPIO_TIME_LONG, (ret == WM_SUCCESS ? tmp : ret));
-                    continue;
-                }
-                table[j].longTime = tmp;
-            }
-            LELOG("GPIO id = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
-                    table[j].id, table[j].dir, table[j].mode, table[j].state, table[j].type, table[j].blink);
+            LELOG("GPIO id = %d, dir = %d, mode = %d, state = %d, type = %d",
+                    table[j].id, table[j].dir, table[j].mode, table[j].state, table[j].type);
             j++;
             json_release_composite_object(&jobj);
         }
@@ -311,26 +295,8 @@ int getPWMInfo(const char *json, int jsonLen,  pwmHandler_t *table, int n) {
             if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_DUTY, &tmp)) == WM_SUCCESS) {
                 table[i].duty = tmp;
             }
-            if(table[i].type == PWM_TYPE_OUTPUT_RESET) {
-                if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_BLINK, &tmp)) != WM_SUCCESS || tmp < 1) {
-                    LELOGE("PWM blink value: %s = %d",  JSON_NAME_PWM_BLINK, (ret == WM_SUCCESS ? tmp : ret));
-                    continue;
-                }
-                table[i].blink = tmp;
-                if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_TIME_SHORT, &tmp)) != WM_SUCCESS || tmp < 1) {
-                    LELOGE("PWM wrong value: %s = %d",  JSON_NAME_PWM_TIME_SHORT, (ret == WM_SUCCESS ? tmp : ret));
-                    continue;
-                }
-                table[i].shortTime = tmp;
-                if((ret = json_get_val_int(&jobj, JSON_NAME_PWM_TIME_LONG, &tmp)) != WM_SUCCESS || tmp <= table[i].shortTime) {
-                    LELOGE("PWM wrong value: %s = %d",  JSON_NAME_PWM_TIME_LONG, (ret == WM_SUCCESS ? tmp : ret));
-                    continue;
-                }
-                table[i].longTime = tmp;
-            }
-            LELOG("PWM id[%d], type[%d], clock[%d], fre[%d], duty[%d], blink[%d], short[%d], long[%d]", 
-                table[i].id, table[i].type, table[i].clock, table[i].frequency,
-                table[i].duty,table[i].blink,table[i].shortTime,table[i].longTime);
+            LELOG("PWM id[%d], type[%d], clock[%d], fre[%d], duty[%d]",
+                table[i].id, table[i].type, table[i].clock, table[i].frequency, table[i].duty);
             json_release_composite_object(&jobj);
         }
     }
@@ -360,8 +326,14 @@ int getEINTInfo(const char *json, int jsonLen, eintHandler_t *table, int n) {
             if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_GID, &tmp)) == WM_SUCCESS) {
                 table[i].gid = tmp;
             }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_TYPE, &tmp)) == WM_SUCCESS) {
+                table[i].type = tmp;
+            }
             if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_MODE, &tmp)) == WM_SUCCESS) {
                 table[i].mode = tmp;
+            }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_STATE, &tmp)) == WM_SUCCESS) {
+                table[i].state = tmp;
             }
             if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_DEBOUNCE, &tmp)) == WM_SUCCESS) {
                 table[i].debounce = tmp;
