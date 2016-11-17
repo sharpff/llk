@@ -8,7 +8,7 @@ extern "C"
 
 #include "leconfig.h"
 
-#define CACHE_MAX_NODE 10
+#define CACHE_MAX_NODE 30
 // #define CACHE_NODE_TYPE NodeData
 
 typedef struct {

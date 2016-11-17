@@ -322,9 +322,14 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
     jobj_t jobj;
     jsontok_t jsonToken[NUM_TOKENS];
     json_string_t jstr;
+
+    if (NULL == arr || NULL == status || 0 >= len) {
+        return -1;
+    }
+
     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)status, len);
     if (WM_SUCCESS != ret) {
-        return -1;
+        return -2;
     }
 
     LELOG("sdevInfoRsp input status[%s]", status);
@@ -332,14 +337,14 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
     // get idx first
     if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_INDEX, str, sizeof(str))) {
         LELOGE("sdevInfoRsp json_get_val_str [%s] FAILED", JSON_NAME_SDEV_INDEX);
-        return -2;
+        return -3;
     }
 
     // find the node with idx
     index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByIdxCB, str);
     if (0 > index) {
         LELOGE("sdevInfoRsp idx NOT FOUND [%d]", index);
-        return -3;              
+        return -4;              
     }
     LELOG("forEachNodeSDevByIdxCB index[%d] str[%s], idx[%s] mac[%s]", index, str, arr[index].idx, arr[index].mac);
 
@@ -347,7 +352,7 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
         // 0x01. endpoint list(active response)
         if(WM_SUCCESS != (ret = json_get_array_object(&jobj, JSON_NAME_SDEV_EPT, &num))) {
             LELOGE("sdevInfoRsp [%s] NOT FOUND [%d]", JSON_NAME_SDEV_EPT, ret);
-            return -4;
+            return -5;
         }
         LELOG("EPT LIST NUM ====> [%d]", num);
         num = num < 0 ? 0 : num;
@@ -456,7 +461,7 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
         // 0x04. man done(node descriptor response)
         if (WM_SUCCESS != json_get_val_str(&jobj, JSON_NAME_SDEV_MAN, str, sizeof(str))) {
             LELOGE("sdevInfoRsp [%s] NOT FOUND", JSON_NAME_SDEV_MAN);
-            return -10;
+            return -9;
         }
         strcpy(arr[index].sdevMan, str);
         arr[index].sdevMan[strlen(str)] = 0;
@@ -480,8 +485,10 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
     if (isCompleted && (0x07 == arr[index].isSDevInfoDone)) {
         if (arr[index].sdevMan[0]) {
             sdevInfoSerilized(arr);
-            sdevCache()->currsize++;
-            arr[index].occupied = 1;
+            // if (!arr[index].occupied) {
+            //     sdevCache()->currsize++;
+            //     arr[index].occupied = 1;                
+            // }
             LELOG("COMPLETED =======> sdevInfoRsp[%d] mac[%s], idx[%s], sdevMan[%s]", index, arr[index].mac, arr[index].idx, arr[index].sdevMan);
             // // test only
             // for (i = 1; i < MAX_SDEV_NUM; i++) {
@@ -1277,12 +1284,19 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
 
 int sengineHasDevs(void) {
     int ret = 0, hasDevs = 0;
+    static int8_t flagHasSDev = -1;
+    if (-1 != flagHasSDev) {
+        return (int)flagHasSDev;
+    }
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_HAS_SUBDEVS,
             NULL, 0, (uint8_t *)&hasDevs, sizeof(hasDevs));
     if (ret <= 0) {
         // LELOGW("sengineHasDevs sengineCall("S1_OPT_HAS_SUBDEVS") [%d]", ret);
+        flagHasSDev = 0;
         return 0;
     }
+    flagHasSDev = (int8_t)hasDevs;
+
     return hasDevs;
 }
 
@@ -1783,15 +1797,15 @@ int senginePollingSlave(void) {
             // LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
             memcpy(datas.arrDatas, &bin[appendLen], currLen);
 
-            if (0)
-            {
-                int j = 0;
-                extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
-                uint8_t hexStr[96] = {0};
-                LELOG("[SENGINE]datas.arrDatas currLen[%d], appendLen[%d]", currLen, appendLen);
-                bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
-                LELOG("bin[%s] type[%d]", hexStr, ioHdl[x].ioType);          
-            }
+            // if (0)
+            // {
+            //     int j = 0;
+            //     extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
+            //     uint8_t hexStr[96] = {0};
+            //     LELOG("[SENGINE]datas.arrDatas currLen[%d], appendLen[%d]", currLen, appendLen);
+            //     bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
+            //     LELOG("bin[%s]", hexStr);          
+            // }
 
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     datas.arrDatas, currLen, (uint8_t *)&whatKind, sizeof(whatKind));
@@ -1846,7 +1860,6 @@ int senginePollingSlave(void) {
                 case WHATKIND_SUB_DEV_INFO: {
                         int len;
                         SDevNode *tmpArr = sdevArray();
-                        // NodeData node = {0};
                         if (NULL == tmpArr) {
                             LELOGE("sdevArray is NULL");
                             break;
@@ -1875,9 +1888,8 @@ int senginePollingSlave(void) {
                             }
                         } else if (WHATKIND_SUB_DEV_LEAVE == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_LEAVE");
-                            sdevRemove(sdevArray(), status, len);
+                            sdevRemove(tmpArr, status, len);
                         }
-                        // LELOG("outcomming [%s]", status);
                     }
                     break;
                 default:
@@ -1887,9 +1899,6 @@ int senginePollingSlave(void) {
 
             appendLen += currLen;
             //LEPRINTF("\r\n");
-        }
-        {
-            
         }
     FOR_EACH_IO_HDL_END;
     

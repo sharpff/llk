@@ -240,7 +240,7 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, c
     uint16_t flag; \
     uint16_t nodeReserved;
 
-// #define LELINK_OTA_VERIFICATION
+#define LELINK_OTA_VERIFICATION
 
 #ifdef __cplusplus
 }

@@ -246,6 +246,10 @@ static void reloadLatestPassport(void) {
     }
 }
 
+static int sdevGetValidChannel(void) {
+    return 11;
+}
+
 static int stateProcStart(StateContext *cntx) {
     int ret = 0;
 
@@ -389,6 +393,19 @@ static int stateProcApConnected(StateContext *cntx) {
 
         ginPrivateCfg.data.nwCfg.configStatus = 2;
         lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+    }
+
+    if (sengineHasDevs()) {
+        // TODO: 
+        static int8_t onlyOnceForChannel = 0;
+        if (!onlyOnceForChannel) {
+            int chnl = sdevGetValidChannel();
+            char buf[64] = {0};
+            snprintf(buf, sizeof(buf), "{\"chnl\":%d}", chnl);
+            LELOGE("sdevGetValidChannel [%d]", chnl);
+            sengineSetStatus(buf, strlen(buf));
+            onlyOnceForChannel = 1;
+        }
     }
     
     if (ginCtxR2R) {

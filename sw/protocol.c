@@ -1328,6 +1328,11 @@ static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dat
         helloReq[helloReqLen + 1] = 0;
     }
     LELOG("cbHelloLocalReq [%s] -s", helloReq);
+
+    // if (!cmdInfo->reserved) {
+    //     ret = getSDevStatus(ginSDevCountsInDiscovery-1, rspDiscover, sizeof(rspDiscover));
+    // }
+
     // CommonCtx *pCtx = COMM_CTX(ctx);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)helloReq, strlen(helloReq), dataOut, dataLen);
     LELOG("cbHelloLocalReq [%d] -e", ret);
@@ -1706,7 +1711,7 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     } else {
         ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
     }
-    LELOG("appended token [%d][%d] [%s]", ret, strlen(status), status);
+    LELOG("appended token [%d][%d] [%s] reserved[%d]", ret, strlen(status), status, cmdInfo->reserved);
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     
@@ -2029,6 +2034,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
             }break;
             case OTA_TYPE_AUTH:
             case OTA_TYPE_PRIVATE:
+            case OTA_TYPE_SDEV:
             case OTA_TYPE_FW_SCRIPT:
             case OTA_TYPE_IA_SCRIPT: {
                 otaSetLatestSig(data);
@@ -2059,7 +2065,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }    
         // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
         if (LELINK_ERR_SUCCESS == tmpCmdInfo->status && 
-            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_FW == type)) {
+            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_SDEV == type || OTA_TYPE_FW == type)) {
             postReboot(ctx);
         }
     }

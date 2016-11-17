@@ -16,6 +16,7 @@ typedef enum {
     OTA_TYPE_IA_SCRIPT, // 5
     OTA_TYPE_AUTH, // 6
     OTA_TYPE_PRIVATE, // 7
+    OTA_TYPE_SDEV, // 8
     OTA_TYPE_MAX
 } OTAType_t;
 

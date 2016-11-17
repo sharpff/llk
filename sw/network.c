@@ -3,7 +3,6 @@
 #include "protocol.h"
 #include "io.h"
 
-
 typedef struct
 {
     int alloced;

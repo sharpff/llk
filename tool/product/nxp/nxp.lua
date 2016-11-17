@@ -420,13 +420,24 @@ function s1CvtStd2Pri(json)
 	local dataStr = ""
 
 	-- test only
-	-- cvtType = 1
+	-- local cvtType = 1
 
 		-- UART
 		if 0x01 == cvtType then
 			for x = 1, 1 do
 				local sDevCtrl = ctrl["sDevCtrl"]
-				-- RAW is  01 02 10 11 02 10 02 10 11 03
+				if ctrl["chnl"] then
+					local a = 0x00000800 << (ctrl["chnl"] - 11)
+					cmdTbl = {0x01, 0x00, 0x21, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03}
+					cmdTbl[10] = 0x00
+					cmdTbl[9] = 0xFF & (a >> 8)
+					cmdTbl[8] = 0xFF & (a >> 16)
+					cmdTbl[7] = 0xFF & (a >> 24)
+					cmdTbl[6] = csum(cmdTbl)
+					LOGTBL(cmdTbl)
+					break
+				end
+
 				if ctrl["reset"] == 1 then
 					cmdTbl = {0x01, 0x00, 0x11, 0x00, 0x00, 0x11, 0x03}
 					break

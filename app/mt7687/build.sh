@@ -86,6 +86,7 @@ if [ "$1" != "clean" ]; then
         $COPY ./project/mt7687_hdk/apps/le_demo/src/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
         cp ./project/mt7687_hdk/apps/le_demo/src/main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
         cp ./driver/board/mt76x7_hdk/lib/libbsp.a $MTSDK7687/driver/board/mt76x7_hdk/lib
+        cp ./driver/board/mt76x7_hdk/lib/libhal.a $MTSDK7687/driver/board/mt76x7_hdk/lib
         $COPY ./project/mt7687_hdk/template/download/flash_download.ini $MTSDK7687/project/mt7687_hdk/template/download
         $COPY ./project/mt7687_hdk/apps/le_demo/inc/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
         $COPY ./project/mt7687_hdk/apps/le_demo/inc/flash_map.h $MTSDK7687/project/mt7687_hdk/apps/bootloader/inc
