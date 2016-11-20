@@ -130,7 +130,7 @@ void *halUartOpen(uartHandler_t* handler) {
     uart_config.parity = handler->parity;
     status = hal_uart_init(handler->id, &uart_config);
 	if(status != HAL_UART_STATUS_OK) {
-        APPLOG("open uart[%d] failed", handler->id);
+        APPLOG("open uart[%d] failed[%d]", handler->id, status);
         return NULL;
     }	
 
@@ -213,6 +213,18 @@ int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
         }
         send_notice = 0;
    }
+
+    if(size > 0)
+    {
+        uint32_t i;
+        APPPRINTF("halUartWrite [%d]: ", size);
+        for(i=0;i<size;i++)
+        {
+            APPPRINTF("%02x ", buf[i]);
+        }
+        APPPRINTF("\r\n");
+    }
+
    return size;
 }
 
@@ -681,9 +693,9 @@ int halGetMac(uint8_t *mac, int len) {
     status = wifi_config_get_mac_address(WIFI_PORT_STA, mac);
     
     if(status >= 0) {
-        // APPLOG("[Lelink]: wifi_config_get_mac_address(): (%02x:%02x:%02x:%02x:%02x:%02x),status = %d ",
-        //            mac[0], mac[1], mac[2],mac[3], mac[4], mac[5],status);
-        // mac[5] = 0x31;
+        APPLOG("[Lelink]: wifi_config_get_mac_address(): (%02x:%02x:%02x:%02x:%02x:%02x),status = %d ",
+                   mac[0], mac[1], mac[2],mac[3], mac[4], mac[5],status);
+        // mac[5] = 0x32;
         // wifi_profile_set_mac_address(WIFI_PORT_STA, mac);
         return 0;
     }

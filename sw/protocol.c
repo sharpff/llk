@@ -2034,7 +2034,8 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
             }break;
             case OTA_TYPE_AUTH:
             case OTA_TYPE_PRIVATE:
-            case OTA_TYPE_SDEV:
+            case OTA_TYPE_SDEVINFO:
+            case OTA_TYPE_SDEVFW:
             case OTA_TYPE_FW_SCRIPT:
             case OTA_TYPE_IA_SCRIPT: {
                 otaSetLatestSig(data);
@@ -2065,7 +2066,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }    
         // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
         if (LELINK_ERR_SUCCESS == tmpCmdInfo->status && 
-            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_SDEV == type || OTA_TYPE_FW == type)) {
+            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_SDEVINFO == type || OTA_TYPE_FW == type)) {
             postReboot(ctx);
         }
     }

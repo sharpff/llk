@@ -210,16 +210,20 @@ function s1OptDoSplit(data)
 	local where = 1
 	local idx = 0
 	local tblData = stringToTable(data)
+	local dataLen = 0
 	if 0x01 == cvtType then
 		tblData = whatRead(tblData)
 		data = tableToString(tblData)
-		print("[LUA] total ======> "..#tblData.."\r\n")
+		dataLen = #tblData
+		-- if #tblData > 96 then
+		-- 	dataLen = 96
+		-- end
+		print("[LUA] total ======> "..dataLen.."\r\n")
 		-- LOGTBL(tblData)
 		-- print("[LUA] <============ \r\n")
 
-		while where < #tblData do
+		while where < dataLen do
 			local tmpLen = (tblData[where + 3] << 8) | tblData[where + 4]
-			-- print("tmpLen is "..tmpLen.."\r\n")
 			local tmpString = string.sub(data, where, (where + 7 + tmpLen - 1))
 			local tmpTbl = stringToTable(tmpString)
 			if tblData[where+6-1] ~= csum(tmpTbl) then
@@ -230,9 +234,7 @@ function s1OptDoSplit(data)
 			tblDataCountLen[idx + 2] = 0x00
 			idx = idx + 2
 			where = where + 7 + tmpLen
-			-- print("[LUA] IDX @"..where.." & LEN is "..tmpLen.." ------->\r\n")
-			-- LOGTBL(tmpTbl)
-			-- print("[LUA] --------------------------------- \r\n")
+			break
 		end
 
 		-- print("[LUA] out ========> \r\n")

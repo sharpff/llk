@@ -14,8 +14,8 @@ $MAIN_PATH/lelinkTool.py \
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid Xiaomi_Lelink \
-    --passwd 987654321 \
+    --ssid ff \
+    --passwd fengfeng2qiqi \
     -o ./0x1c8000.bin
 
 # IA 
