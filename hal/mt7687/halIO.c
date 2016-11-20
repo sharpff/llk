@@ -214,16 +214,16 @@ int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
         send_notice = 0;
    }
 
-    if(size > 0)
-    {
-        uint32_t i;
-        APPPRINTF("halUartWrite [%d]: ", size);
-        for(i=0;i<size;i++)
-        {
-            APPPRINTF("%02x ", buf[i]);
-        }
-        APPPRINTF("\r\n");
-    }
+    // if(size > 0)
+    // {
+    //     uint32_t i;
+    //     APPPRINTF("halUartWrite [%d]: ", size);
+    //     for(i=0;i<size;i++)
+    //     {
+    //         APPPRINTF("%02x ", buf[i]);
+    //     }
+    //     APPPRINTF("\r\n");
+    // }
 
    return size;
 }

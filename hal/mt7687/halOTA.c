@@ -391,6 +391,8 @@ static uint8_t eBL_ReadMessage(uartHandler_t* handler, int iTimeoutMicroseconds,
     int iBytesRead = 0;
     int iTotalBytesRead = 0;
 
+    APPLOG("eBL_ReadMessage iTimeoutMicroseconds %d", iTimeoutMicroseconds);
+
     /* Get the length byte */
     if((eUART_Read(handler, iTimeoutMicroseconds, 1, &u8Length, &iBytesRead) != 0) || (iBytesRead != 1))
     {
@@ -398,11 +400,12 @@ static uint8_t eBL_ReadMessage(uartHandler_t* handler, int iTimeoutMicroseconds,
         return 0xf6/*E_BL_RESPONSE_NO_RESPONSE*/;
     }
 
-    //APPLOG("Incoming message length %d", u8Length);
+    APPLOG("Incoming message length %d", u8Length);
 
     /* Message must have at least 3 bytes, maximum is implicit */
     if (u8Length < 3)
     {
+        APPLOGE("u8Length error");
         return 0xf6/*E_BL_RESPONSE_NO_RESPONSE*/;
     }
 
@@ -490,11 +493,16 @@ static uint8_t eBL_Request(uartHandler_t* handler, int iTimeoutMicroseconds, uin
     // halDelayms(100);
     // TODO: 读取不完整的补丁
 
-    if (0x27 == eTxType || 0x07) {
+    if (0x27 == eTxType || 0x07 == eTxType || 0x09 == eTxType) {
         uint8_t buf[8] = {0};
         int readBytes = 0;
-        eUART_Read(handler, 2*1000*1000, sizeof(buf), buf, &readBytes);
+        int size = sizeof(buf);
+        if (0x09 == eTxType) {
+            size = 4;
+        }
+        eUART_Read(handler, 2*1000*1000, size, buf, &readBytes);
         *peRxType = buf[1];
+        APPLOG("TODO: partial data?");
         return buf[2];
     }
 
