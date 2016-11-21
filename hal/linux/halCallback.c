@@ -86,11 +86,12 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 // sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
 
                 // type = OTA_TYPE_FW;
-                type = OTA_TYPE_FW_SCRIPT;
+                // type = OTA_TYPE_FW_SCRIPT;
                 // type = OTA_TYPE_IA_SCRIPT;
                 // type = OTA_TYPE_AUTH;
                 // type = OTA_TYPE_PRIVATE;
-                // type = OTA_TYPE_SDEV;
+                // type = OTA_TYPE_SDEVINFO;
+                type = OTA_TYPE_SDEVFW;
                 switch (type) {
                     case OTA_TYPE_FW: {
                         sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mt7687_fota_le_demo.bin", type, 35);
@@ -129,8 +130,12 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                         sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1c8000.bin", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/0x1c8000.bin", type, 35);
                     } break;
-                    case OTA_TYPE_SDEV: {
+                    case OTA_TYPE_SDEVINFO: {
                         sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/0x1d9000.bin", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/0x1c8000.bin", type, 35);
+                    } break;
+                    case OTA_TYPE_SDEVFW: {
+                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/ZigbeeNodeControlBridge_JN5169_FULL_FUNC_DEVICE_115200.bin", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/0x1c8000.bin", type, 35);
                     } break;
                     default: {
