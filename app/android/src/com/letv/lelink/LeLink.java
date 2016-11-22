@@ -28,6 +28,7 @@ import android.util.Log;
 public class LeLink {
 
 	/*
+	 * 0.7, Zigbee设备状态BUG
 	 * 0.6, 解决启动了两个线程的BUG
 	 * 0.5,
 	 * 0.4, 优化wifi配置
@@ -35,7 +36,7 @@ public class LeLink {
 	 * 0.2, 添加Listener onPushMessage()
 	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "0.6"; // 与以上的注释一致
+	private static final String VERSION = "0.7"; // 与以上的注释一致
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
@@ -674,12 +675,12 @@ public class LeLink {
 						}
 					}
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
-					// LOGI("Data:\n" + dataStr);
+					//LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
 					uuid = dataJson.getString(LeCmd.K.UUID);
 					JSONObject objSDev = dataJson.optJSONObject(LeCmd.K.SDEV);	
 					if (null != objSDev) {
-						uuid += objSDev.optString(LeCmd.K.ZMAC);
+						uuid += dataJson.optString(LeCmd.K.ZMAC);
 					}
 
 					dataJson.put(LeCmd.K.MSGSTATUS, status);
@@ -703,6 +704,7 @@ public class LeLink {
 							}
 						}
 					} else {
+						//LOGI("uuid = " + uuid + ", data: \n" + dataStr);
 						mFindDevs.put(uuid, dataJson);
 						if (mListener != null) {
 							mListener.onDiscoverBack(uuid, dataStr);
