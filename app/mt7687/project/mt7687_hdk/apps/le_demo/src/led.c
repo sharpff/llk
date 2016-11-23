@@ -19,7 +19,7 @@
 
 typedef struct {
     uint8_t  light;      // on/off led switch
-    uint8_t  special;    // read/white green/white
+    uint8_t  mode;    // read/white green/white
     uint8_t  timeout;    // led auto off time
     uint16_t brightness; // 100-1024
     uint16_t color_r;    // 0-1024
@@ -80,7 +80,7 @@ static void ledSetVal(int val) {
 }
 
 void ledRestoreStatus(void) {
-    ledDevice.special = 0;
+    ledDevice.mode = 0;
     if(ledNeedRestoreStatus) {
         ledDevice.light = 1;
         hal_pwm_set_duty_cycle(LED_ID_BRIGHT, ledDevice.brightness);
@@ -113,6 +113,13 @@ static void ledBlinkTimerCallback( TimerHandle_t tmr ) {
             return;
         }
     }
+    if(ledEffectDev.size == 1) {
+        hal_pwm_set_duty_cycle(LED_ID_BRIGHT, ledEffectDev.rgbValue[0].a);
+        hal_pwm_set_duty_cycle(LED_ID_RED, ledEffectDev.rgbValue[0].r);
+        hal_pwm_set_duty_cycle(LED_ID_GREEN, ledEffectDev.rgbValue[0].g);
+        hal_pwm_set_duty_cycle(LED_ID_BLUE, ledEffectDev.rgbValue[0].b);
+        goto reloadtimer;
+    }
     if (ledEffectDev.mode == 200) {
         timeout = 4;
     }
@@ -125,6 +132,8 @@ static void ledBlinkTimerCallback( TimerHandle_t tmr ) {
         ledEffectDev.curr++;
     }
     ledEffectDev.count++;
+
+reloadtimer:
     if (ledTimerHandler != NULL) {
         xTimerStart(ledTimerHandler, 0);
     }
@@ -144,28 +153,32 @@ void leLedStopBlink(void) {
 
 int leLedProcessData(ledDevice_t* dev) {
     hal_pwm_set_duty_cycle(LED_ID_BRIGHT, dev->light);
-    APPLOG("leLedProcessData light[%d] special[%d] timeout[%d] argb[%d][%d][%d][%d]", 
-        dev->light, dev->special, dev->timeout, dev->brightness, 
+    APPLOG("leLedProcessData light[%d] mode[%d] timeout[%d] argb[%d][%d][%d][%d]", 
+        dev->light, dev->mode, dev->timeout, dev->brightness, 
         dev->color_r, dev->color_g, dev->color_b);
     if (dev->light == 0) {
         ledDevice.light = 0;
-        ledDevice.special = 0;
+        ledDevice.mode = 0;
         ledDevice.timeout = 0;
         ledNeedRestoreStatus = 0;
         xTimerStop(ledTimerHandler, 0);
         ledSetVal(0);
     } else {
         ledDevice.light = dev->light;
-        ledDevice.special = dev->special;
+        ledDevice.mode = dev->mode;
         ledDevice.timeout = dev->timeout;
-        if (dev->special > 0) {
-            if (dev->special == 1) {
+        if (dev->mode > 0) {
+            if (dev->mode == 1) {
                 leLedRedWhiteBlink(dev->timeout);
-            } else if (dev->special == 2) {
+            } else if (dev->mode == 2) {
                 leLedGreenWhiteBlink(dev->timeout);
-            } else if (dev->special == 100) {
+            } else if (dev->mode == 3) {
+                leLedYellow(dev->timeout);
+            } else if (dev->mode == 4) {
+                leLedWhite(dev->timeout);
+            } else if (dev->mode == 100) {
                 leLedRedYellowBlueBlink();
-            } else if (dev->special == 101) {
+            } else if (dev->mode == 101) {
                 leLedGreenFastBlink();
             } else {
                 // do nothing
@@ -185,7 +198,7 @@ int leLedProcessData(ledDevice_t* dev) {
 
 int leLedRead(uint8_t *data, int* dataLen) {
     data[0] = ledDevice.light;
-    data[1] = ledDevice.special;
+    data[1] = ledDevice.mode;
     data[2] = ledDevice.timeout;
     data[3] = ledDevice.brightness >> 8;
     data[4] = ledDevice.brightness & 0xFF;
@@ -202,7 +215,7 @@ int leLedRead(uint8_t *data, int* dataLen) {
 int leLedWrite(const uint8_t *data, int dataLen) {
     ledDevice_t currLedDevice;
     currLedDevice.light = data[0];
-    currLedDevice.special = data[1];
+    currLedDevice.mode = data[1];
     currLedDevice.timeout = data[2];
     currLedDevice.brightness = data[3];
     currLedDevice.brightness <<= 8;
@@ -285,6 +298,35 @@ void leLedGreenWhiteBlink(uint8_t timeout) {
     ledEffectDev.rgbValue[1].r = 1024;
     ledEffectDev.rgbValue[1].g = 1024;
     ledEffectDev.rgbValue[1].b = 1024;
+    ledEffectDev.timestamp = xTaskGetTickCount();
+    leLedStartBlink();
+}
+
+void leLedYellow(uint8_t timeout) {
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 1;
+    ledEffectDev.timeout = timeout;
+    ledEffectDev.rgbValue[0].a = 1024;
+    ledEffectDev.rgbValue[0].r = 1024;
+    ledEffectDev.rgbValue[0].g = 1024;
+    ledEffectDev.timestamp = xTaskGetTickCount();
+    leLedStartBlink();
+}
+
+void leLedWhite(uint8_t timeout) {
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 1;
+    ledEffectDev.timeout = timeout;
+    ledEffectDev.rgbValue[0].a = 1024;
+    ledEffectDev.rgbValue[0].r = 1024;
+    ledEffectDev.rgbValue[0].g = 1024;
+    ledEffectDev.rgbValue[0].b = 1024;
     ledEffectDev.timestamp = xTaskGetTickCount();
     leLedStartBlink();
 }
