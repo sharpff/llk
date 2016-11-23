@@ -293,7 +293,7 @@ int halGPIORead(gpioHandler_t* handler, int *val) {
 
 static void halGPIOBlinkTimerCallback( TimerHandle_t tmr ) {
     gpioHandler_t *table = NULL;
-    int i,j;
+    int i;
     for(i = 0, table = ginGpioManager.table; i < ginGpioManager.num; i++, table++) {
         if (table->gpiostate == 2) {
             if (table->reserved2%4) {
@@ -587,11 +587,22 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
 }
 
 int halUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
-    return leLedRead(buf, len);
+    int currLen = leLedRead(buf, len);
+    uint8_t status = getDevFlag(DEV_FLAG_MODE);
+    buf[currLen++] = status;
+    //APPLOG("halUserRead status[%d] len[%d]", status, currLen);
+    return currLen;
 }
 
 int halUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
-    return leLedWrite(buf, len);
+    //APPLOG("halUserRead buf[%d] len[%d]", buf[len], len);
+    if(buf[len-1] == 1) {
+        setDevFlag(DEV_FLAG_MODE, 1);
+        halReboot();
+        return 0;
+    } else {
+        return leLedWrite(buf, len);
+    }
 }
 
 void halSetLedStatus(RLED_STATE_t st) {

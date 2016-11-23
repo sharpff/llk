@@ -49,30 +49,18 @@ int halDoConfiguring(void *ptr, int ptrLen) {
 	return gin_airconfig_sniffer_got;
 }
 
-// int wifi_connect_repeater_start(ap_passport_t *args) {
-//     uint8_t *ssid = (uint8_t *)(args->ssid);
-//     uint8_t *password = (uint8_t *)(args->psk);
-//     APPLOG("Repeater mode connect to AP,  SSID[%s][%s]", ssid, password); 
-//     wifi_set_opmode(WIFI_MODE_REPEATER);
-//     wifi_config_set_ssid(WIFI_PORT_APCLI, ssid ,(uint8_t)os_strlen((char *)ssid));
-//     wifi_config_set_wpa_psk_key(WIFI_PORT_APCLI, password, (uint8_t)os_strlen((char *)password));
-//     wifi_config_set_security_mode(WIFI_PORT_APCLI, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
-//     wifi_config_set_channel(WIFI_PORT_APCLI, 6);
-//     wifi_config_set_bandwidth(WIFI_PORT_APCLI, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
-//     wifi_config_set_wireless_mode(WIFI_PORT_APCLI, WIFI_PHY_11BG_MIXED);
-//     wifi_config_set_ssid(WIFI_PORT_AP, (uint8_t *)"ff_repeater", strlen("ff_repeater"));
-//     wifi_config_set_wpa_psk_key(WIFI_PORT_AP, (uint8_t *)"1234abcd", strlen("1234abcd"));
-//     wifi_config_set_security_mode(WIFI_PORT_AP, WIFI_AUTH_MODE_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
-//     wifi_config_set_channel(WIFI_PORT_AP, 6);
-//     wifi_config_set_bandwidth(WIFI_PORT_AP, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
-//     wifi_config_set_wireless_mode(WIFI_PORT_AP, WIFI_PHY_11BG_MIXED);
-//     wifi_config_reload_setting();
-//     network_dhcp_start(WIFI_MODE_REPEATER);
-//     APPLOG("network_dhcp_start WIFI_MODE_REPEATER");
-//     return 1;
-// }
+int wifi_station_start_to_connect(uint8_t *ssid, uint8_t *password) {
+    APPLOG("Station mode connect to AP,  SSID[%s][%s]", ssid, password);
+    wifi_config_set_opmode(WIFI_MODE_STA_ONLY);
+    wifi_config_set_ssid(WIFI_PORT_STA, ssid ,(uint8_t)os_strlen((char *)ssid));
+    wifi_config_set_security_mode(WIFI_PORT_STA, WIFI_AUTH_MODE_WPA_PSK_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
+    wifi_config_set_wpa_psk_key(WIFI_PORT_STA, password, (uint8_t)os_strlen((char *)password));
+    wifi_config_reload_setting();
+    network_dhcp_start(WIFI_MODE_STA_ONLY);
+    return 1;
+}
 
-int wifi_connect_one_sta_start(uint8_t *ssid, uint8_t *password, uint8_t channel) {
+int wifi_repeater_start_to_connect(uint8_t *ssid, uint8_t *password, uint8_t channel) {
     char newSSID[64] = {0};
     sprintf(newSSID, "%s_repeater", ssid);
     APPLOG("Repeater mode connect to AP,  SSID[%s][%s]", ssid, password);
@@ -103,8 +91,6 @@ static int wifi_scan_event_handler(wifi_event_t event_id, unsigned char *payload
             APPLOG("ssid %d, %s, %d", i, g_ap_list[i].ssid, g_ap_list[i].channel);
             if(strcmp((char*)ginSSID, (char*)g_ap_list[i].ssid) == 0) {
                 wifi_connection_unregister_event_handler(WIFI_EVENT_IOT_SCAN_COMPLETE, (wifi_event_handler_t) wifi_scan_event_handler);
-                //wifi_connection_stop_scan();
-                //wifi_connect_one_sta_start(ginSSID, ginPassword, g_ap_list[i].channel);
                 ginChannel = g_ap_list[i].channel;
                 ginSanDone = 1;
                 break;
@@ -115,7 +101,7 @@ static int wifi_scan_event_handler(wifi_event_t event_id, unsigned char *payload
     return 0;
 }
 
-int wifi_register_scan_event(ap_passport_t *args) {
+void wifi_register_scan_event(ap_passport_t *args) {
     uint8_t *ssid = (uint8_t *)(args->ssid);
     strcpy((char*)ginSSID,(char*)ssid);
     strcpy((char*)ginPassword,(char *)(args->psk));
@@ -124,36 +110,39 @@ int wifi_register_scan_event(ap_passport_t *args) {
     //wifi_connection_scan_init(g_ap_list, 16);
     //wifi_connection_start_scan(NULL, 0, NULL, 0, 2);
     wifi_connection_register_event_handler(WIFI_EVENT_IOT_SCAN_COMPLETE, (wifi_event_handler_t) wifi_scan_event_handler);
-    return 1;
 }
 
 //Lelink lib get ssid & passwd;
 int halDoApConnect(void *ptr, int ptrLen) {
     int ret = 0;
-	ap_passport_t passport;
-    if(!ginFirstInFlag) {
-        return 0;
-    }
-    ginFirstInFlag = 0;
-	os_memset(&passport, 0, sizeof(passport));
     if (ptr) {
         PrivateCfg *privateCfg = (PrivateCfg *)ptr;//ssid ,passwd;
-        gin_airconfig_sniffer_got = 1;
-        os_strncpy(passport.ssid, (char *)(privateCfg->data.nwCfg.config.ssid), 36);
-        os_strncpy(passport.psk, (char *)(privateCfg->data.nwCfg.config.psk), 36);
+        if (ginFirstInFlag) {
+            APPLOG("halDoApConnect ssid[%s] pwd[%s]", (char *)(privateCfg->data.nwCfg.config.ssid), (char *)(privateCfg->data.nwCfg.config.psk));
+            ginFirstInFlag = 0;
+            if(getDevFlag(DEV_FLAG_MODE)) {
+                ap_passport_t passport;
+                os_memset(&passport, 0, sizeof(passport));
+                os_strncpy(passport.ssid, (char *)(privateCfg->data.nwCfg.config.ssid), 36);
+                os_strncpy(passport.psk, (char *)(privateCfg->data.nwCfg.config.psk), 36);
+                wifi_register_scan_event(&passport);
+            } else {
+                ret = 1;
+                wifi_station_start_to_connect((char*)(privateCfg->data.nwCfg.config.ssid), (char *)(privateCfg->data.nwCfg.config.psk));
+            }
+        }
+        if(ginSanDone) {
+            ginSanDone = 0;
+            wifi_repeater_start_to_connect(ginSSID, ginPassword, ginChannel);
+            ret = 1;
+        }
     }
-    APPLOG("halDoApConnect ssid[%s], psk [%s]", passport.ssid, passport.psk);
-    ret = wifi_register_scan_event(&passport);
     return ret;
 }
 
 int halDoApConnecting(void *ptr, int ptrLen) {
-    halDoApConnect(ptr, ptrLen);
-    if(ginSanDone) {
-        ginFirstInFlag = 1;
-        ginSanDone = 0;
-        wifi_connect_one_sta_start(ginSSID, ginPassword, ginChannel);
-    }
+    APPLOG("halDoApConnecting ret[%d]", gin_airconfig_ap_connected);
+    ginFirstInFlag = 1;
     return gin_airconfig_ap_connected;
 }
 

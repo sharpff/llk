@@ -546,6 +546,8 @@ function s1CvtStd2Pri(json)
 	        val = ctrl["blue"]
 	        cmdTbl[10] = (val >> 8) & 0xFF
 	        cmdTbl[11] = val & 0xFF
+	        val = ctrl["wifimode"]
+	        cmdTbl[12] = val & 0xFF
 		end
 	dataStr = tableToString(cmdTbl)
 	return string.len(dataStr), dataStr
@@ -559,12 +561,12 @@ function s1CvtPri2Std(bin)
 	local dataTbl = {}
 	local str = ''
     local len = 0
-	local status = '{"light":%d,"mode":%d,"timeout":%d,"brightness":%d,"red":%d,"green":%d,"blue":%d,"service":%d}'
+	local status = '{"light":%d,"mode":%d,"timeout":%d,"brightness":%d,"red":%d,"green":%d,"blue":%d,"service":%d,"wifimode":%d}'
     local PRI2STD_LEN_NONE = 0x00000000
     local PRI2STD_LEN_INTERNAL = 0x40000000
     local PRI2STD_LEN_BOTH = 0x20000000
     local PRI2STD_LEN_MAX = 0x0000FFFF
-    local val1, val2, val3, val4, val5, val6, val7, val8
+    local val1, val2, val3, val4, val5, val6, val7, val8, val9
 	-- test only
 	-- cvtType = 0x01
 
@@ -651,10 +653,10 @@ function s1CvtPri2Std(bin)
 		end
 		print("result -> "..str..'\r\n')
 	elseif 0x20 == cvtType then
-		val1, val2, val3, val4, val5, val6, val7 = 0, 0, 0, 0, 0, 0, 0
+		val1, val2, val3, val4, val5, val6, val7, val8 = 0, 0, 0, 0, 0, 0, 0, 0
 		local lenStatus, currStatus = s1apiGetDevStatus()
 		if lenStatus <= 2 then
-			str = string.format(status, 0, 0, 0, 0, 0, 0, 0, 0)
+			str = string.format(status, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 		end
 		local id = bin:byte(1)
 		local i = 0, val
@@ -668,25 +670,26 @@ function s1CvtPri2Std(bin)
                 val5 = tb["red"]
                 val6 = tb["green"]
                 val7 = tb["blue"]
+                val8 = tb["wifimode"]
             end
             if bin:byte(2) == 1 then
                 if val1 == 0 then
-                    str = string.format(status, 1, val2, 0, val4, val5, val6, val7, 1)
+                    str = string.format(status, 1, val2, 0, val4, val5, val6, val7, 1, val8)
                 else
-                    str = string.format(status, 0, val2, 0, val4, val5, val6, val7, 0)
+                    str = string.format(status, 0, val2, 0, val4, val5, val6, val7, 0, val8)
                 end
             elseif bin:byte(2) == 2 then
-                str = string.format(status, 1, 100, 10, val4, val5, val6, val7, 1)
+                str = string.format(status, 1, 100, 10, val4, val5, val6, val7, 1, val8)
             elseif bin:byte(2) == 0xFF then
-                str = string.format(status, 1, 101, 10, val4, val5, val6, val7, 0xFF)
+                str = string.format(status, 1, 101, 10, val4, val5, val6, val7, 0xFF, val8)
             elseif bin:byte(2) == 0 then
-                str = string.format(status, val1, val2, val3, val4, val5, val6, val7, 0)
+                str = string.format(status, val1, val2, val3, val4, val5, val6, val7, 0, val8)
             end
         end
 		len = PRI2STD_LEN_BOTH
 	elseif 0x8000 == cvtType then
 		if #bin >= 11 then
-			val8 = 0
+			val8, val9 = 0, 0
             local lenStatus1, currStatus1 = s1apiGetDevStatus()
             if lenStatus1 > 2 then
 	            local tb1 = cjson.decode(currStatus1)
@@ -703,7 +706,8 @@ function s1CvtPri2Std(bin)
 	        val6 = (val6 << 8) | bin:byte(9)
 	        val7 = bin:byte(10)
 	        val7 = (val7 << 8) | bin:byte(11)
-	        str = string.format(status, val1, val2, val3, val4, val5, val6, val7, val8)
+	        val9 = bin:byte(12)
+	        str = string.format(status, val1, val2, val3, val4, val5, val6, val7, val8, val9)
 		end
 	end
 	return string.len(str) + len, str
