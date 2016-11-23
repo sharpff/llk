@@ -23,6 +23,7 @@ typedef enum {
     IO_TYPE_SOCKET = 0x8,
     IO_TYPE_PWM = 0x10,
     IO_TYPE_EINT = 0x20,
+    IO_TYPE_USER = 0x8000,
 }IO_TYPE;
 
 #ifdef LELINK_PACK

@@ -344,7 +344,7 @@ static int stateProcApConnecting(StateContext *cntx) {
         return -1;
     }
 
-    ret = halDoApConnecting(NULL, 0);
+    ret = halDoApConnecting(&ginPrivateCfg, sizeof(PrivateCfg));
     // TODO: do not reset to sniffer, it should be reset by button.
     // TIMEOUT_BEGIN(45000)
     //     ret = -1;

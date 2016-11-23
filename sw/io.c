@@ -53,9 +53,9 @@ static uint32_t ginMinSize;
 static commonManager_t ginCommonManager;
 static uartHandler_t uartHandler;
 static eintManager_t ginEINTManager;
-
 gpioManager_t ginGpioManager;
 pwmManager_t ginPWMManager;
+static userHandler_t ginUserHandler;
 
 static uint8_t ginFirstRunningFlag = 1;
 
@@ -65,6 +65,7 @@ static IOHDL ginIOHdl[] = {
     {IO_TYPE_PIPE, 0x0},
     {IO_TYPE_PWM, 0x0},
     {IO_TYPE_EINT, 0x0},
+    {IO_TYPE_USER, 0x0},
 };
 
 /*
@@ -585,11 +586,13 @@ RLED_STATE_t setResetLed(RLED_STATE_t st)
         ginFirstRunningFlag = 1;
         setPWMLedBlink(st);
         setGPIOLedBlink(st);
+        halSetLedStatus(st);
     } else if(st == RLED_STATE_RUNNING) {
         s_resetLevel = st;
         if (ginFirstRunningFlag) {
             setPWMLedBlink(st);
             setGPIOLedBlink(st);
+            halSetLedStatus(st);
             ginFirstRunningFlag = 0;
         }
     }
@@ -741,6 +744,10 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             ioHdl = &ginEINTManager;
             return ioHdl;
         }break;
+        case IO_TYPE_USER: {
+            ioHdl = &ginUserHandler;
+            return ioHdl;
+        }break;
     }
     // halUartInit()
     return NULL;
@@ -806,6 +813,12 @@ void **ioGetHdl(int *ioType) {
             }
             return &ioHdl;
         }break;
+        case IO_TYPE_USER: {
+            if (NULL == ioHdl) {
+                ioHdl = ioInit(whatCvtType, json, ret);
+            }
+            return &ioHdl;
+        }break;
     }
     // halUartInit()
     return NULL;    
@@ -829,7 +842,7 @@ IOHDL *ioGetHdlExt() {
     char json[MAX_BUF] = {0};
     int ret = 0;
     // int x = 0;
-    static uint8_t whatCvtType = 0x00;
+    static int whatCvtType = 0x00;
     if (0x00 == whatCvtType) {
         ret = sengineGetTerminalProfileCvtType(json, sizeof(json));
         if (0 >= ret) {
@@ -858,6 +871,7 @@ IOHDL *ioGetHdlExt() {
     IO_INIT_ITEM(IO_TYPE_PIPE, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_PWM, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_EINT, whatCvtType, json, ret);
+    IO_INIT_ITEM(IO_TYPE_USER, whatCvtType, json, ret);
     IO_INIT_END;
 
     // {
@@ -921,6 +935,9 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             }
             return ret;
         }break;
+        case IO_TYPE_USER: {
+            return halUserWrite(hdl, data, dataLen);
+        }break;
     }
     return 0;
 }
@@ -938,7 +955,7 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             gpioHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num; i++, q++) {
                 halGPIORead(q, &val);
-                if(0xFF == val) {
+                if(0xFF == val && q->type == GPIO_TYPE_INPUT_RESET) {
                     resetDevice();
                     return 0;
                 }
@@ -981,12 +998,16 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             eintManager_t *mgr = ((eintManager_t *)hdl);
             eintHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num ; i++, q++) {
-                halEINTRead(q, (int*)&val);
+                halEINTRead(q, &val);
+                //LELOG("ioRead IO_TYPE_EINT id[%d] val[%d]", q->id, val);
+                if(0xFF == val && q->type == GPIO_TYPE_INPUT_RESET) {
+                    resetDevice();
+                    return 0;
+                }
                 if(val > 0) {
                     data[k++] = q->id;
                     data[k++] = val;
                     q->oldState = val;
-                    //LELOG("ioRead IO_TYPE_EINT id[%d] val[%d]", q->id, val);
                 } else {
                     if(q->oldState) {
                         data[k++] = q->id;
@@ -997,6 +1018,10 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
                 }
             }
             return k;
+        }break;
+        case IO_TYPE_USER: {
+            //LELOG("halUserRead [%d][%d]", data[0], dataLen);
+            return halUserRead(hdl, data, dataLen);
         }break;
     }    
     return 0;

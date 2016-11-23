@@ -586,6 +586,24 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
 		return 0;
 }
 
+int halUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
+    return leLedRead(buf, len);
+}
+
+int halUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
+    return leLedWrite(buf, len);
+}
+
+void halSetLedStatus(RLED_STATE_t st) {
+    if (st == RLED_STATE_WIFI) {
+        leLedBlueFastBlink();
+    } else if (st == RLED_STATE_CONNECTING) {
+        leLedBlueFastBlink();
+    } else if (st == RLED_STATE_RUNNING) {
+        leLedAllOff();
+    }
+}
+
 void halCommonInit(commonManager_t* dev) {
     int i = 0;
     for(i=0; i<dev->num; i++) {

@@ -105,6 +105,11 @@ typedef struct {
     uint32_t reserved2;
 } eintHandler_t;
 
+typedef struct {
+    uint32_t reserved1;
+    uint32_t reserved2;
+} userHandler_t;
+
 #define COMMON_MAX_ID     (10)
 
 typedef struct {

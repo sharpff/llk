@@ -173,16 +173,12 @@ end
 	s1GetCvtType
   ]]
 function s1GetCvtType()
-    -- combained uart(0x1) & pwm(0x10) & pwm(0x20)
+    -- combained uart(0x1) & pwm(0x10) & eint(0x20)
     local str = [[
-    {"whatCvtType":49,
-     "common":[{"num":7,"id":"36-37-32-33-34-35-0","mux":"7-7-9-9-9-9-3"}],
+    {"whatCvtType":32801,
+     "common":[{"num":3,"id":"36-37-0","mux":"7-7-3"}],
      "uart":[{"id":1, "baud":"115200-8N1"}],  
-     "eint":[{"id":0,"gid":0,"type":2,"mode":4,"state":1,"debounce":5,"timeout":400}],
-     "pwm":[{"id":33,"type":1,"clock":1,"state":0,"frequency":5120,"duty":1024},
-            {"id":34,"type":1,"clock":1,"state":0,"frequency":5120,"duty":1024},
-            {"id":35,"type":1,"clock":1,"state":0,"frequency":5120,"duty":1024},
-            {"id":18,"type":1,"clock":1,"state":0,"frequency":5120,"duty":1024}]
+     "eint":[{"id":0,"gid":0,"type":1,"mode":4,"state":1,"debounce":5,"timeout":400}]
     }
     ]]
 	local delay = 5
@@ -268,8 +264,8 @@ function s1GetValidKind(data)
 	local WHATKIND_SUB_DEV_LEAVE = 13
 	local WHATKIND_SUB_DEV_INFO = 14
 
-    -- included eint(0x20) & pwm(0x10)
-	if 0x10 == cvtType or 0x20 == cvtType then
+    -- included eint(0x20) & user type(0x8000)
+	if 0x20 == cvtType or 0x8000 == cvtType then
 		return WHATKIND_MAIN_DEV_DATA;
 	end
 
@@ -530,24 +526,27 @@ function s1CvtStd2Pri(json)
 			print("whatWrite :")
 			LOGTBL(cmdTbl)
 			-- LOGTBL(cmdTbl)
-		elseif cvtType == 0x10 then
-			local i = 0, val
-			local j = 0
-			local aa = ctrl["pwm"]
-			if aa then
-				for j = 1, 4 do
-					val = aa[j]["id"]
-					i = i + 1
-					cmdTbl[i] = val
-					val = aa[j]["val"]
-					i = i + 1
-					cmdTbl[i] = (val >> 8) & 0xff
-					i = i + 1
-					cmdTbl[i] = val & 0xFF
-				end
-			end
+		elseif cvtType == 0x8000 then
+			local val
+			val = ctrl["light"]
+	        cmdTbl[1] = val & 0xFF
+	        val = ctrl["special"]
+	        cmdTbl[2] = val & 0xFF
+	        val = ctrl["timeout"]
+	        cmdTbl[3] = val & 0xFF
+	        val = ctrl["brightness"]
+	        cmdTbl[4] = (val >> 8) & 0xFF
+	        cmdTbl[5] = val & 0xFF
+	        val = ctrl["red"]
+	        cmdTbl[6] = (val >> 8) & 0xFF
+	        cmdTbl[7] = val & 0xFF
+	        val = ctrl["green"]
+	        cmdTbl[8] = (val >> 8) & 0xFF
+	        cmdTbl[9] = val & 0xFF
+	        val = ctrl["blue"]
+	        cmdTbl[10] = (val >> 8) & 0xFF
+	        cmdTbl[11] = val & 0xFF
 		end
-
 	dataStr = tableToString(cmdTbl)
 	return string.len(dataStr), dataStr
 end
@@ -560,12 +559,12 @@ function s1CvtPri2Std(bin)
 	local dataTbl = {}
 	local str = ''
     local len = 0
-	local status = '{"pwm":[{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d},{"id":%d,"val":%d}],"eint":[{"id":%d,"val":%d}]}'
+	local status = '{"light":%d,"special":%d,"timeout":%d,"brightness":%d,"red":%d,"green":%d,"blue":%d,"eint":[{"id":%d,"val":%d}]}'
     local PRI2STD_LEN_NONE = 0x00000000
     local PRI2STD_LEN_INTERNAL = 0x40000000
     local PRI2STD_LEN_BOTH = 0x20000000
     local PRI2STD_LEN_MAX = 0x0000FFFF
-
+    local val1, val2, val3, val4, val5, val6, val7, val8, val9
 	-- test only
 	-- cvtType = 0x01
 
@@ -652,68 +651,61 @@ function s1CvtPri2Std(bin)
 		end
 		print("result -> "..str..'\r\n')
 	elseif 0x20 == cvtType then
-		dataTbl = {33, 0, 34, 0, 35, 0, 18, 0}
+		val1, val2, val3, val4, val5, val6, val7 = 0, 0, 0, 0, 0, 0, 0
 		local lenStatus, currStatus = s1apiGetDevStatus()
 		if lenStatus <= 2 then
-			str = string.format(status, 33, 0, 34, 0, 35, 0, 18, 0, 0, 0)
+			str = string.format(status, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 		end
 		local id = bin:byte(1)
 		local i = 0, val
 		if id == 0 then
             if lenStatus > 2 then
                 local tb = cjson.decode(currStatus)
-                local pwm = tb["pwm"]
-                for j = 1, 4 do
-                    val = pwm[j]["id"]
-                    i = i + 1
-                    dataTbl[i] = val
-                    val = pwm[j]["val"]
-                    i = i + 1
-                    dataTbl[i] = val
-                end
+                val1 = tb["light"]
+                val2 = tb["special"]
+                val3 = tb["timeout"]
+                val4 = tb["brightness"]
+                val5 = tb["red"]
+                val6 = tb["green"]
+                val7 = tb["blue"]
             end
             if bin:byte(2) == 1 then
-                if dataTbl[8] == 0 then
-                    str = string.format(status, dataTbl[1], 1024, dataTbl[3], 1024, dataTbl[5], 1024, dataTbl[7], 1024, 0, 1)
+                if val1 == 0 then
+                    str = string.format(status, 1, val2, 0, val4, val5, val6, val7, 0, 1)
                 else
-                    str = string.format(status, dataTbl[1], 0, dataTbl[3], 0, dataTbl[5], 0, dataTbl[7], 0, 0, 1)
+                    str = string.format(status, 0, val2, 0, val4, val5, val6, val7, 0, 0)
                 end
             elseif bin:byte(2) == 2 then
-                str = string.format(status, dataTbl[1], 0x8001, dataTbl[3], 0x8001, dataTbl[5], 0x8001, dataTbl[7], 1024, 0, 2)
-            elseif bin:byte(2) == 3 then
-                str = string.format(status, dataTbl[1], 0x8002, dataTbl[3], 0x8002, dataTbl[5], 0x8002, dataTbl[7], 1024, 0, 3)
+                str = string.format(status, 1, 100, 10, val4, val5, val6, val7, 0, 2)
             elseif bin:byte(2) == 0xFF then
-                str = string.format(status, dataTbl[1], 0x8003, dataTbl[3], 0x8003, dataTbl[5], 0x8003, dataTbl[7], 1024, 0, 0xFF)
+                str = string.format(status, 1, 101, 10, val4, val5, val6, val7, 0, 0xFF)
             elseif bin:byte(2) == 0 then
-                str = string.format(status, dataTbl[1], dataTbl[2], dataTbl[3], dataTbl[4], dataTbl[5], dataTbl[6], dataTbl[7], dataTbl[8], 0, 0)
+                str = string.format(status, val1, val2, val3, val4, val5, val6, val7, 0, 0)
             end
         end
 		len = PRI2STD_LEN_BOTH
-	elseif 0x10 == cvtType then
-		if #bin >= 12 then
-			local id1, id2, id3, id4, val1, val2, val3, val4
-			local id5 = 0
-            local val5 = 0
+	elseif 0x8000 == cvtType then
+		if #bin >= 11 then
+			val8, val9 = 0, 0
             local lenStatus1, currStatus1 = s1apiGetDevStatus()
             if lenStatus1 > 2 then
 	            local tb1 = cjson.decode(currStatus1)
 	            local eintData = tb1["eint"]
-	            id5 = eintData[1]["id"]
-	            val5 = eintData[1]["val"]
+	            val8 = eintData[1]["id"]
+	            val9 = eintData[1]["val"]
         	end
-			id1 = bin:byte(1)
-			val1 = bin:byte(2)
-			val1 = (val1 << 8) | bin:byte(3)
-			id2 = bin:byte(4)
-			val2 = bin:byte(5)
-			val2 = (val2 << 8) | bin:byte(6)      
-			id3 = bin:byte(7)
-			val3 = bin:byte(8)
-			val3 = (val3 << 8) | bin:byte(9)         
-			id4 = bin:byte(10)
-			val4 = bin:byte(11)
-			val4 = (val4 << 8) | bin:byte(12) 
-			str = string.format(status, id1, val1, id2, val2, id3, val3, id4, val4, id5, val5)	
+			val1 = bin:byte(1)
+	        val2 = bin:byte(2)
+	        val3 = bin:byte(3)
+	        val4 = bin:byte(4)
+	        val4 = (val4 << 8) | bin:byte(5)
+	        val5 = bin:byte(6)
+	        val5 = (val5 << 8) | bin:byte(7)
+	        val6 = bin:byte(8)
+	        val6 = (val6 << 8) | bin:byte(9)
+	        val7 = bin:byte(10)
+	        val7 = (val7 << 8) | bin:byte(11)
+	        str = string.format(status, val1, val2, val3, val4, val5, val6, val7, val8, val9)
 		end
 	end
 	return string.len(str) + len, str

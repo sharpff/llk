@@ -26,6 +26,8 @@ static TimerHandle_t lelink_airconfig_timer = NULL;
 extern void smtcn_evt_handler(wifi_smart_connection_event_t event, void *data);
 extern void aes_task_init();
 extern void lelinkPltCtrlProcess(void);
+extern void leLedInit(void);
+
 int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 int airconfig_stop();
 
@@ -78,7 +80,7 @@ int airconfig_start(void *ptr, uint8_t *prov_key, int prov_key_len) {
 
 int airconfig_stop() {
     wifi_smart_connection_stop();
-    wifi_smart_connection_deinit();
+    //wifi_smart_connection_deinit();
     airconfig_reset();
     return 0;
 }
@@ -99,7 +101,7 @@ static void mtk_thread_lelink_proc(void *args) {
     int ret; 
     void *ctxR2R;
     void *ctxQ2A;
-
+    leLedInit();
     printForFac();
     CoOTAProcessing();
     printf("Build Time: " __DATE__ " " __TIME__ "\r\n");

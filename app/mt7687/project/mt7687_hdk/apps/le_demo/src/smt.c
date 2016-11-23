@@ -105,7 +105,7 @@ int lelink_recv(char *p, int len)
 #if 1
 		os_snprintf(ginSsid, frame->frame_data.beacon_info.ssid_len + 1,
 			"%s", frame->frame_data.beacon_info.ssid);
-		printf("BEACON => [%s] \r\n", frame->frame_data.beacon_info.ssid);
+		//printf("BEACON => [%s] \r\n", frame->frame_data.beacon_info.ssid);
 		// latest_ssid_crc8 = crc8(ginSsid, strlen(ginSsid));
 		// wmprintf("SSID: %s crc[0x%02x-0x%02x]\r\n", ginSsid, latest_ssid_crc8);
 #endif      

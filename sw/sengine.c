@@ -1649,7 +1649,7 @@ int sengineSetStatus(char *json, int jsonLen) {
             extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
             uint8_t  hexStr[96] = {0};
             bytes2hexStr(bin, ret, hexStr, sizeof(hexStr));
-            LELOG("bin[%s]", hexStr);
+            LELOG("ioWrite type[0x%x] bin[%s]", ioHdl[x].ioType, hexStr);
         }
 
         ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, bin, ret);
@@ -1797,15 +1797,15 @@ int senginePollingSlave(void) {
             // LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
             memcpy(datas.arrDatas, &bin[appendLen], currLen);
 
-            // if (0)
-            // {
-            //     int j = 0;
-            //     extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
-            //     uint8_t hexStr[96] = {0};
-            //     LELOG("[SENGINE]datas.arrDatas currLen[%d], appendLen[%d]", currLen, appendLen);
-            //     bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
-            //     LELOG("bin[%s]", hexStr);          
-            // }
+            if (0)
+            {
+                int j = 0;
+                extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
+                uint8_t hexStr[96] = {0};
+                LELOG("[SENGINE]datas.arrDatas currLen[%d], appendLen[%d]", currLen, appendLen);
+                bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
+                LELOG("ioRead type[0x%x] bin[%s]", ioHdl[x].ioType, hexStr);
+            }
 
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     datas.arrDatas, currLen, (uint8_t *)&whatKind, sizeof(whatKind));
@@ -1836,7 +1836,7 @@ int senginePollingSlave(void) {
                             if ((PRI2STD_LEN_INTERNAL == (PRI2STD_LEN_INTERNAL & len)) || 
                                 (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
                                 LELOGW("senginePollingSlave native status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
-                                sengineSetStatus((char *)status, (len & PRI2STD_LEN_MAX));                                
+                                sengineSetStatus((char *)status, (len & PRI2STD_LEN_MAX));
                             }
                             if (PRI2STD_LEN_MAX > len || 
                                 (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {

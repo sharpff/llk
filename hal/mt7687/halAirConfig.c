@@ -26,6 +26,7 @@ uint8_t ginSSID[16] = {0};
 uint8_t ginPassword[16] = {0};
 uint8_t ginChannel = 0;
 uint8_t ginSanDone = 0;
+static uint8_t ginFirstInFlag = 1;
 
 int halDoConfig(void *ptr, int ptrLen) {
 	int ret = 0;
@@ -114,7 +115,7 @@ static int wifi_scan_event_handler(wifi_event_t event_id, unsigned char *payload
     return 0;
 }
 
-int wifi_connect_sta_start(ap_passport_t *args) {
+int wifi_register_scan_event(ap_passport_t *args) {
     uint8_t *ssid = (uint8_t *)(args->ssid);
     strcpy((char*)ginSSID,(char*)ssid);
     strcpy((char*)ginPassword,(char *)(args->psk));
@@ -130,6 +131,10 @@ int wifi_connect_sta_start(ap_passport_t *args) {
 int halDoApConnect(void *ptr, int ptrLen) {
     int ret = 0;
 	ap_passport_t passport;
+    if(!ginFirstInFlag) {
+        return 0;
+    }
+    ginFirstInFlag = 0;
 	os_memset(&passport, 0, sizeof(passport));
     if (ptr) {
         PrivateCfg *privateCfg = (PrivateCfg *)ptr;//ssid ,passwd;
@@ -138,15 +143,14 @@ int halDoApConnect(void *ptr, int ptrLen) {
         os_strncpy(passport.psk, (char *)(privateCfg->data.nwCfg.config.psk), 36);
     }
     APPLOG("halDoApConnect ssid[%s], psk [%s]", passport.ssid, passport.psk);
-
-    ret = wifi_connect_sta_start(&passport);
-    //ret = wifi_connect_repeater_start(&passport);
+    ret = wifi_register_scan_event(&passport);
     return ret;
 }
 
 int halDoApConnecting(void *ptr, int ptrLen) {
-    if(ginSanDone)
-    {
+    halDoApConnect(ptr, ptrLen);
+    if(ginSanDone) {
+        ginFirstInFlag = 1;
         ginSanDone = 0;
         wifi_connect_one_sta_start(ginSSID, ginPassword, ginChannel);
     }
