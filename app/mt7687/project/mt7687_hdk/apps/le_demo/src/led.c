@@ -1,6 +1,7 @@
 #include "leconfig.h"
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
+#include "flash_map.h"
 #include "halHeader.h"
 #include <errno.h>
 #include "timers.h"
@@ -19,8 +20,9 @@
 
 typedef struct {
     uint8_t  light;      // on/off led switch
-    uint8_t  mode;    // read/white green/white
+    uint8_t  mode;       // read/white green/white
     uint8_t  timeout;    // led auto off time
+    uint8_t  wifimode;   // wifimode
     uint16_t brightness; // 100-1024
     uint16_t color_r;    // 0-1024
     uint16_t color_g;    // 0-1024
@@ -46,7 +48,7 @@ ledPWM_t ledPWMArray[LED_MAX_SIZE] = {
 };
 
 static ledDevice_t ledDevice = {
-    0, 0, 0, 1024, 1024, 1024, 1024
+    0, 0, 0, 0, 1024, 1024, 1024, 1024
 };
 
 typedef struct {
@@ -72,6 +74,8 @@ static ledEffect_t ledEffectDev;
 
 static TimerHandle_t ledTimerHandler = NULL;
 static uint8_t ledNeedRestoreStatus = 0;
+
+int leSetConfigMode(uint8_t mode);
 
 static void ledSetVal(int val) {
     hal_pwm_set_duty_cycle(LED_ID_RED, val);
@@ -152,9 +156,14 @@ void leLedStopBlink(void) {
 }
 
 int leLedProcessData(ledDevice_t* dev) {
+    if(dev->wifimode != ledDevice.wifimode) {
+        leSetConfigMode(dev->wifimode);
+        halReboot();
+        return 0;
+    }
     hal_pwm_set_duty_cycle(LED_ID_BRIGHT, dev->light);
-    APPLOG("leLedProcessData light[%d] mode[%d] timeout[%d] argb[%d][%d][%d][%d]", 
-        dev->light, dev->mode, dev->timeout, dev->brightness, 
+    APPLOG("leLedProcessData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
+        dev->light, dev->mode, dev->timeout, dev->timeout, dev->brightness,
         dev->color_r, dev->color_g, dev->color_b);
     if (dev->light == 0) {
         ledDevice.light = 0;
@@ -191,6 +200,7 @@ int leLedProcessData(ledDevice_t* dev) {
             hal_pwm_set_duty_cycle(LED_ID_RED, dev->color_r);
             hal_pwm_set_duty_cycle(LED_ID_GREEN, dev->color_g);
             hal_pwm_set_duty_cycle(LED_ID_BLUE, dev->color_b);
+            leLedWriteConfigData(dev);
         }
     }
     return 0;
@@ -208,8 +218,9 @@ int leLedRead(uint8_t *data, int* dataLen) {
     data[8] = ledDevice.color_g & 0xFF;
     data[9] = ledDevice.color_b >> 8;
     data[10] = ledDevice.color_b & 0xFF;
-    *dataLen = 11;
-    return 11;
+    data[11] = ledDevice.wifimode;
+    *dataLen = 12;
+    return 12;
 }
 
 int leLedWrite(const uint8_t *data, int dataLen) {
@@ -229,6 +240,7 @@ int leLedWrite(const uint8_t *data, int dataLen) {
     currLedDevice.color_b = data[9];
     currLedDevice.color_b <<= 8;
     currLedDevice.color_b |= data[10];
+    currLedDevice.wifimode |= data[11];
     leLedProcessData(&currLedDevice);
     return 11;
 }
@@ -352,8 +364,48 @@ void leLedAllOff(void) {
     leLedWrite(cmd, 11);
 }
 
+void leLedSetDefault(void) {
+    leLedProcessData(&ledDevice);
+}
+
+void leLedReset(void) {
+    ledDevice_t ledOriginData = {0, 0, 0, 0, 1024, 1024, 1024, 1024};
+    APPLOG("leLedReset");
+    halFlashErase(NULL, CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, GW_FLASH_CONF_SIZE);
+    halFlashWrite(NULL, &ledOriginData, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
+}
+
+int leLedWriteConfigData(ledDevice_t* device) {
+    int ret;
+    halFlashErase(NULL, CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, GW_FLASH_CONF_SIZE);
+    APPLOG("leLedWriteConfigData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
+        device->light, device->mode, device->timeout, device->wifimode, device->brightness, 
+        device->color_r, device->color_g, device->color_b);
+    ret = halFlashWrite(NULL, device, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
+    return ret;
+}
+
+int leLedReadConfigData(ledDevice_t* device) {
+    int ret;
+    ret = halFlashRead(NULL, device, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
+    APPLOG("leLedReadConfigData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
+        device->light, device->mode, device->timeout, device->wifimode, device->brightness, 
+        device->color_r, device->color_g, device->color_b);
+    return ret;
+}
+
+int leGetConfigMode(void) {
+    return ledDevice.wifimode;
+}
+
+int leSetConfigMode(uint8_t mode) {
+    ledDevice.wifimode = mode;
+    return leLedWriteConfigData(&ledDevice);
+}
+
 void leLedInit(void) {
     int i, cycle;
+    ledDevice_t device;
     for(i=0; i< LED_MAX_SIZE; i++) {
         hal_gpio_init(ledPWMArray[i].gid);
         hal_pinmux_set_function(ledPWMArray[i].gid, ledPWMArray[i].mux);
@@ -372,5 +424,10 @@ void leLedInit(void) {
                                        NULL,
                                        ledBlinkTimerCallback);        
     }
+    leLedReadConfigData(&device);
+    if (device.light == 0xFF) {
+        leLedReset();
+    } else {
+        memcpy(&ledDevice, &device, sizeof(ledDevice_t));
+    }
 }
-

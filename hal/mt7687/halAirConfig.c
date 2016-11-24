@@ -120,7 +120,7 @@ int halDoApConnect(void *ptr, int ptrLen) {
         if (ginFirstInFlag) {
             APPLOG("halDoApConnect ssid[%s] pwd[%s]", (char *)(privateCfg->data.nwCfg.config.ssid), (char *)(privateCfg->data.nwCfg.config.psk));
             ginFirstInFlag = 0;
-            if(getDevFlag(DEV_FLAG_MODE)) {
+            if(leGetConfigMode()) {
                 ap_passport_t passport;
                 os_memset(&passport, 0, sizeof(passport));
                 os_strncpy(passport.ssid, (char *)(privateCfg->data.nwCfg.config.ssid), 36);
