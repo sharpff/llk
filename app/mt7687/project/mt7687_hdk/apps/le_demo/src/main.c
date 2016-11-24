@@ -36,6 +36,11 @@ int8_t gin_airconfig_sniffer_got;
 
 #define AIRCONFIG_TIMEOUT (60*60*1000/portTICK_PERIOD_MS)
 
+int halResetConfigData(void) {
+    leLedReset();
+    return 0;
+}
+
 static void lelink_airconfig_timeout_timer_callback( TimerHandle_t tmr ) {
     if (tmr) {
         xTimerStop(tmr, 0);
@@ -105,7 +110,7 @@ static void mtk_thread_lelink_proc(void *args) {
     printForFac();
     CoOTAProcessing();
     printf("Build Time: " __DATE__ " " __TIME__ "\r\n");
-    ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
+    ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE - GW_FLASH_CONF_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
     if (0 > ret) {
         APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
         vTaskDelete(NULL);

@@ -49,7 +49,6 @@ typedef struct
 
 typedef enum {
     DEV_FLAG_RESET = 0x01, // reboot by reset key
-    DEV_FLAG_MODE = 0x02,  // station mode or repeater mode
 } DEV_FLAG_t;
 
 /* Read/Write info */

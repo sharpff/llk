@@ -105,3 +105,7 @@ __attribute__((weak)) int halPipeWrite(void *dev, const uint8_t *buf, uint32_t l
 __attribute__((weak)) void halSetLedStatus(RLED_STATE_t st) {
 
 }
+
+__attribute__((weak)) int halResetConfigData(void) {
+	return 0;
+}
