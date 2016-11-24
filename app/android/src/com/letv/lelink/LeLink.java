@@ -37,7 +37,7 @@ public class LeLink {
 	 * 0.2, 添加Listener onPushMessage()
 	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "0.8"; // 与以上的注释一致
+	private static final String VERSION = "0.81"; // 与以上的注释一致
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
@@ -364,11 +364,12 @@ public class LeLink {
 					e.printStackTrace();
 				}
 			}
-			LOGI("Wait over!");
+			LOGI("Wait over! for '" + mWaitGetUuid + "'");
 			if (mFindDevs.size() <= 0) {
 				if(!isDiscover && mListener != null) {
 					mListener.onGetStateBack(subcmd, mWaitGetUuid, null);
 				}
+				LOGI("Wait timeout!!");
 				return null;
 			}
 			if (isDiscover) {
@@ -676,7 +677,7 @@ public class LeLink {
 						}
 					}
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
-					//LOGI("Data:\n" + dataStr);
+					LOGI("Get '" + uuid + "' Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
 					String keyuuid = uuid = dataJson.getString(LeCmd.K.UUID);
 					JSONObject objSDev = dataJson.optJSONObject(LeCmd.K.SDEV);	
@@ -689,6 +690,7 @@ public class LeLink {
 						if (uuid.indexOf(mWaitGetUuid) >= 0) {
 							mFindDevs.clear();
 							mFindDevs.put(keyuuid, dataJson);
+							LOGI("GetState '" + keyuuid + "' Data:\n" + dataStr);
 							synchronized (mGetLock) {
 								mGetLock.notifyAll();
 							}
@@ -704,7 +706,7 @@ public class LeLink {
 							}
 						}
 					} else {
-						//LOGI("uuid = " + uuid + ", data: \n" + dataStr);
+						LOGI("Discover '" + keyuuid + "', Data:\n" + dataStr);
 						mFindDevs.put(keyuuid, dataJson);
 						if (mListener != null) {
 							mListener.onDiscoverBack(uuid, dataStr);
