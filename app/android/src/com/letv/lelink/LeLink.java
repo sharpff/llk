@@ -21,13 +21,14 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 0.6
+ * @version 0.8
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
 	/*
+	 * 0.8, Zigbee的uuid去掉mac
 	 * 0.7, Zigbee设备状态BUG
 	 * 0.6, 解决启动了两个线程的BUG
 	 * 0.5,
@@ -36,7 +37,7 @@ public class LeLink {
 	 * 0.2, 添加Listener onPushMessage()
 	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "0.7"; // 与以上的注释一致
+	private static final String VERSION = "0.8"; // 与以上的注释一致
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
@@ -677,18 +678,17 @@ public class LeLink {
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
 					//LOGI("Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
-					uuid = dataJson.getString(LeCmd.K.UUID);
+					String keyuuid = uuid = dataJson.getString(LeCmd.K.UUID);
 					JSONObject objSDev = dataJson.optJSONObject(LeCmd.K.SDEV);	
 					if (null != objSDev) {
-						uuid += dataJson.optString(LeCmd.K.ZMAC);
+						keyuuid += dataJson.optString(LeCmd.K.ZMAC);
 					}
-
 					dataJson.put(LeCmd.K.MSGSTATUS, status);
 					dataStr = dataJson.toString();
 					if (mWaitGetUuid != null) {
 						if (uuid.indexOf(mWaitGetUuid) >= 0) {
 							mFindDevs.clear();
-							mFindDevs.put(uuid, dataJson);
+							mFindDevs.put(keyuuid, dataJson);
 							synchronized (mGetLock) {
 								mGetLock.notifyAll();
 							}
@@ -705,7 +705,7 @@ public class LeLink {
 						}
 					} else {
 						//LOGI("uuid = " + uuid + ", data: \n" + dataStr);
-						mFindDevs.put(uuid, dataJson);
+						mFindDevs.put(keyuuid, dataJson);
 						if (mListener != null) {
 							mListener.onDiscoverBack(uuid, dataStr);
 						}
