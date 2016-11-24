@@ -694,20 +694,6 @@ failed:
     return ret;
 }
 
-int getSDevStatus(int index, char *sdevStatus, int len) {
-    SDevNode *arr = sdevArray();
-    PCACHE cache = sdevCache(); 
-    if (arr && cache) {
-        uint8_t uuid[MAX_UUID+1] = {0};
-        getTerminalUUID(uuid, MAX_UUID);
-        sprintf(sdevStatus, "{\"%s\":\"%s\",\"%s\":%s,\"%s\":%s,\"%s\":\"%s\",\"%s\":\"%s\"}", JSON_NAME_UUID, uuid, JSON_NAME_SDEV, arr[index].sdevInfo, 
-            JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAN, arr[index].sdevMan, JSON_NAME_SDEV_MAC, arr[index].mac);
-    } else {
-        return 0;
-    }
-    return strlen(sdevStatus);
-}
-
 void lelinkDeinit() {
     halDeLockInit();
     halDeAESInit();
@@ -2020,6 +2006,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }
 
         switch (type) {
+            case OTA_TYPE_SDEVFW:
             case OTA_TYPE_FW: {
                 node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
                 node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
@@ -2035,7 +2022,6 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
             case OTA_TYPE_AUTH:
             case OTA_TYPE_PRIVATE:
             case OTA_TYPE_SDEVINFO:
-            case OTA_TYPE_SDEVFW:
             case OTA_TYPE_FW_SCRIPT:
             case OTA_TYPE_IA_SCRIPT: {
                 otaSetLatestSig(data);

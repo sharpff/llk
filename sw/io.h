@@ -54,9 +54,10 @@ typedef enum {
 
 /* Read/Write info */
 typedef struct {
+    uint32_t sdevFWSize;
     uint8_t flag; // DEV_FLAG_t
     uint8_t locked;
-    uint8_t reserved[37];
+    uint8_t reserved[33];
 }LELINK_ALIGNED DevCfg;
 
 typedef struct
@@ -113,7 +114,8 @@ typedef struct
     uint8_t idx[SDEV_MAX_MAC]; \
     uint8_t sdevEpt[SDEV_MAX_EPT]; \
     uint8_t sdevMan[SDEV_MAX_CUST]; \
-    uint8_t reserved[4];
+    uint8_t isSDevInfoDone; \
+    uint8_t reserved[3];
 
 typedef struct {
     CACHE_NODE_NBASE;

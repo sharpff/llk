@@ -455,11 +455,7 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
 
 int getJsonArray(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
     char *tokenStart = "[", *tokenEnd = "]";
-    int ret = getJsonByToken(json, jsonLen, key, obj, objLen, tokenStart, tokenEnd, 1);
-    if (2 >= ret) {
-        return 0;
-    }
-    return ret;
+    return getJsonByToken(json, jsonLen, key, obj, objLen, tokenStart, tokenEnd, 1);
 }
 
 int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen) {

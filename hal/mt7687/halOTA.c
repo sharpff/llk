@@ -223,7 +223,8 @@ int halUpdateFirmware(OTAInfo_t *info) {
     }
 
     if (info->isCo) {
-        ret = CoOTASetFlag(1);
+        CoOTASetFlag(info->imgLen);
+        CoOTAProcessing();
     } else {
         if (0 == ret) {
             fota_trigger_update();
@@ -288,6 +289,7 @@ static size_t httpFetchData(void *priv, void *buf, size_t max_len)
 #define BOOTLOADER_MAX_MESSAGE_LENGTH 255
 #define DELAYMS_FOR_IO 5
 #define memcpy os_memcpy
+#define memset os_memset
 
 static int eUART_Write(uartHandler_t* handler, uint8_t *pu8Data, int iLength);
 static int eBL_WriteMessage(uartHandler_t* handler, uint8_t eType, uint8_t u8HeaderLength, uint8_t *pu8Header, uint8_t u8Length, uint8_t *pu8Data) {
@@ -316,17 +318,17 @@ static int eBL_WriteMessage(uartHandler_t* handler, uint8_t eType, uint8_t u8Hea
     /* Message payload */
     memcpy(&au8Msg[2 + u8HeaderLength], pu8Data, u8Length);
 
-    APPPRINTF("Tx: ");
+    // APPPRINTF("Tx: ");
     for(n = 0; n < u8HeaderLength + u8Length + 2; n++)
     {
-        APPPRINTF("%02x ", au8Msg[n]);
+        // APPPRINTF("%02x ", au8Msg[n]);
         u8CheckSum ^= au8Msg[n];
     }
-    APPPRINTF("\r\n");
 
     /* Message checksum */
     au8Msg[u8HeaderLength + u8Length + 2] = u8CheckSum;
-
+    // APPPRINTF("%02x ", u8CheckSum);
+    // APPPRINTF("\r\n");
     /* Write whole message to UART */
     return eUART_Write(handler, au8Msg, u8HeaderLength + u8Length + 3);
 }
@@ -493,7 +495,7 @@ static uint8_t eBL_Request(uartHandler_t* handler, int iTimeoutMicroseconds, uin
     // halDelayms(100);
     // TODO: 读取不完整的补丁
 
-    if (0x27 == eTxType || 0x07 == eTxType || 0x09 == eTxType) {
+    if (0x27 == eTxType || 0x07 == eTxType || 0x09 == eTxType || 0x2c == eTxType) {
         uint8_t buf[8] = {0};
         int readBytes = 0;
         int size = sizeof(buf);
@@ -502,7 +504,7 @@ static uint8_t eBL_Request(uartHandler_t* handler, int iTimeoutMicroseconds, uin
         }
         eUART_Read(handler, 2*1000*1000, size, buf, &readBytes);
         *peRxType = buf[1];
-        APPLOG("TODO: partial data?");
+        // APPLOG("TODO: partial data?");
         return buf[2];
     }
 
@@ -535,21 +537,20 @@ static int eBL_CheckResponse(const char *pcFunction, int eResponse, uint8_t eRxT
     return 0;
 }
 
-static void *OpenUART(int baud) {
-    uartHandler_t hdlUART = {0};
+static void *OpenUART(uartHandler_t *hdl, int baud) {
     hal_gpio_init(36);
     hal_pinmux_set_function(36, HAL_GPIO_36_UART2_RX_CM4);
     hal_gpio_deinit(36);
     hal_gpio_init(37);
     hal_pinmux_set_function(37, HAL_GPIO_37_UART2_TX_CM4);
     hal_gpio_deinit(37);
-    hdlUART.id = 1;
-    // hdlUART.baud = 1000000; not support
-    hdlUART.baud = baud;
-    hdlUART.dataBits = 8;
-    hdlUART.stopBits = 1;
-    hdlUART.parity = 0;
-    return halUartOpen(&hdlUART);
+    hdl->id = 1;
+    // hdl->baud = 1000000; not support
+    hdl->baud = baud;
+    hdl->dataBits = 8;
+    hdl->stopBits = 1;
+    hdl->parity = 0;
+    return halUartOpen(hdl);
 }
 
 int eBL_FlashSelectDevice(uartHandler_t* handler, uint8_t u8ManufacturerID, uint8_t u8DeviceID, uint8_t u8ChipSelect)
@@ -567,6 +568,7 @@ int eBL_FlashSelectDevice(uartHandler_t* handler, uint8_t u8ManufacturerID, uint
     au8Buffer[3] = 0;
     au8Buffer[4] = 0;
 
+    APPLOG("eBL_FlashSelectDevice... u8ManufacturerID[0x%02x] u8DeviceID[0x%02x] u8ChipSelect[0x%02x]", u8ManufacturerID, u8DeviceID, u8ChipSelect);
     eResponse = eBL_Request(handler, 1*1000*1000, 0x2c/*E_BL_MSG_TYPE_FLASH_SELECT_TYPE_REQUEST*/, 5, au8Buffer, 0, NULL, &eRxType, NULL, NULL);
     return eBL_CheckResponse(__FUNCTION__, eResponse, eRxType, 0x2d/*E_BL_MSG_TYPE_FLASH_SELECT_TYPE_RESPONSE*/);
 }
@@ -576,6 +578,7 @@ int eBL_FlashErase(uartHandler_t* handler)
     int eResponse = 0;
     uint8_t eRxType = 0;
 
+    APPLOG("eBL_FlashErase...");
     eResponse = eBL_Request(handler, 10*1000*1000, 0x07/*E_BL_MSG_TYPE_FLASH_ERASE_REQUEST*/, 0, NULL, 0, NULL, &eRxType, NULL, NULL);
     return eBL_CheckResponse(__FUNCTION__, eResponse, eRxType, 0x08/*E_BL_MSG_TYPE_FLASH_ERASE_RESPONSE*/);
 }
@@ -596,6 +599,7 @@ int eBL_FlashWrite(uartHandler_t* handler, uint32_t u32Address, uint8_t u8Length
     au8CmdBuffer[2] = (uint8_t)(u32Address >> 16) & 0xff;
     au8CmdBuffer[3] = (uint8_t)(u32Address >> 24) & 0xff;
 
+    APPLOG("eBL_FlashWrite...");
     eResponse = eBL_Request(handler, 1*1000*1000, 0x09/*E_BL_MSG_TYPE_FLASH_PROGRAM_REQUEST*/, 4, au8CmdBuffer, u8Length, pu8Buffer, &eRxType, NULL, NULL);
     return eBL_CheckResponse(__FUNCTION__, eResponse, eRxType, 0x0a/*E_BL_MSG_TYPE_FLASH_PROGRAM_RESPONSE*/);
 }
@@ -612,23 +616,135 @@ int eBL_SetBaudrate(uartHandler_t* handler, uint32_t u32Baudrate)
     // Divide 1MHz clock by baudrate to get the divisor
     // u32Divisor = (uint32_t)roundf(1000000.0 / (float)u32Baudrate);
 
-    APPLOG("Set divisor %d", u32Divisor);
-
     au8Buffer[0] = (uint8_t)u32Divisor;
     au8Buffer[1] = 0;
     au8Buffer[2] = 0;
     au8Buffer[3] = 0;
     au8Buffer[4] = 0;
 
+    APPLOG("eBL_SetBaudrate... u32Divisor[%d]", u32Divisor);
     eResponse = eBL_Request(handler, 1000*1000, 0x27/*E_BL_MSG_TYPE_SET_BAUD_REQUEST*/, 1, au8Buffer, 0, NULL, &eRxType, NULL, NULL);
     return eBL_CheckResponse(__FUNCTION__, eResponse, eRxType, 0x28/*E_BL_MSG_TYPE_SET_BAUD_RESPONSE*/);
 }
 
-int CoOTASetFlag(int flag) {
-    return 0;
+int eBL_Reset(uartHandler_t* handler)
+{
+    int eResponse = 0;
+    uint8_t eRxType = 0;
+
+    eResponse = eBL_Request(handler, 1*1000*1000, 0x14/*E_BL_MSG_TYPE_RESET_REQUEST*/, 0, NULL, 0, NULL, &eRxType, NULL, NULL);
+    return eBL_CheckResponse(__FUNCTION__, eResponse, eRxType, 0x15/*E_BL_MSG_TYPE_RESET_RESPONSE*/);
 }
 
-int CoOTAGetFlag() {
+int eBL_MemoryWrite(uartHandler_t* handler, uint32_t u32Address, uint8_t u8Length, uint8_t u8BlockSize, uint8_t *pu8Buffer)
+{
+    uint8_t au8CmdBuffer[6];
+    int eResponse = 0;
+    uint8_t eRxType = 0;
+    int i;
+
+    if(u8Length > 0xfc || pu8Buffer == NULL)
+    {
+        return -1;
+    }
+
+    au8CmdBuffer[0] = (uint8_t)(u32Address >> 0)  & 0xff;
+    au8CmdBuffer[1] = (uint8_t)(u32Address >> 8)  & 0xff;
+    au8CmdBuffer[2] = (uint8_t)(u32Address >> 16) & 0xff;
+    au8CmdBuffer[3] = (uint8_t)(u32Address >> 24) & 0xff;
+    au8CmdBuffer[4] = u8Length;
+    au8CmdBuffer[5] = 0;
+
+    /* Convert the native byte buffer into chip format */
+    if (u8BlockSize == sizeof(uint16_t))
+    {
+        for (i = 0; i < u8Length; i += sizeof(uint16_t))
+        {
+            uint16_t u16Short;
+            memcpy(&u16Short, &pu8Buffer[i], sizeof(uint16_t));
+
+            // if (psContext->sChipDetails.eEndianness == E_CHIP_LITTLE_ENDIAN)
+            // {
+            //     u16Short = htole16(u16Short);
+            // }
+            // else if (psContext->sChipDetails.eEndianness == E_CHIP_BIG_ENDIAN)
+            // {
+            //     u16Short = htobe16(u16Short);
+            // }
+            // else
+            // {
+            //     return E_PRG_BAD_PARAMETER;
+            // }
+            memcpy(&pu8Buffer[i], &u16Short, sizeof(uint16_t));
+        }
+    }
+    else if (u8BlockSize == sizeof(uint32_t))
+    {
+        for (i = 0; i < u8Length; i += sizeof(uint32_t))
+        {
+            uint32_t u32Word;
+            memcpy(&u32Word, &pu8Buffer[i], sizeof(uint32_t));
+
+            // if (psContext->sChipDetails.eEndianness == E_CHIP_LITTLE_ENDIAN)
+            // {
+            //     u32Word = htole32(u32Word);
+            // }
+            // else if (psContext->sChipDetails.eEndianness == E_CHIP_BIG_ENDIAN)
+            // {
+            //     u32Word = htobe32(u32Word);
+            // }
+            // else
+            // {
+            //     return E_PRG_BAD_PARAMETER;
+            // }
+            memcpy(&pu8Buffer[i], &u32Word, sizeof(uint32_t));
+        }
+    }
+
+    eResponse = eBL_Request(handler, 250*1000, 0x1d/*E_BL_MSG_TYPE_RAM_WRITE_REQUEST*/, 4, au8CmdBuffer, u8Length, pu8Buffer, &eRxType, NULL, NULL);
+    return eBL_CheckResponse(__FUNCTION__, eResponse, eRxType, 0x1e/*E_BL_MSG_TYPE_RAM_WRITE_RESPONSE*/);
+}
+
+void CoOTASetFlag(uint32_t flag) {
+    int ret = 0;
+    PrivateCfg priCfg;
+    APPLOG("CoOTASetFlag len[%d]", flag);
+
+    ret = lelinkStorageReadPrivateCfg(&priCfg);
+    if (0 > ret || priCfg.csum != crc8((uint8_t *)&(priCfg.data), sizeof(priCfg.data))) {
+        APPLOGE("CoOTASetFlag ret[%d] or csum Failed", ret);
+        return;
+    }
+    priCfg.data.devCfg.sdevFWSize = flag;
+    ret = lelinkStorageWritePrivateCfg(&priCfg);
+    if (0 > ret) {
+        APPLOGE("CoOTASetFlag write Failed[%d]", ret);
+        return;
+    }
+    APPLOG("CoOTASetFlag Write done");
+}
+
+int CoOTAGetFlag(int *updateSize) {
+    int ret = 0;
+    PrivateCfg priCfg;
+    ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
+    if (0 > ret) {
+        APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
+        return 0;
+    }
+    ret = lelinkStorageReadPrivateCfg(&priCfg);
+    if (0 > ret || priCfg.csum != crc8((uint8_t *)&(priCfg.data), sizeof(priCfg.data))) {
+        APPLOGW("CoOTAGetFlag ret[%d] or csum Failed", ret);
+        return 0;
+    }
+
+    if (0xFFFFFFFF == priCfg.data.devCfg.sdevFWSize || 0 == priCfg.data.devCfg.sdevFWSize) {
+        APPLOGW("CoOTAGetFlag get size[%d|%x]", priCfg.data.devCfg.sdevFWSize, priCfg.data.devCfg.sdevFWSize);
+        return 0;
+    }
+
+    *updateSize = priCfg.data.devCfg.sdevFWSize;
+    APPLOG("CoOTAGetFlag Flag got size[%d|%x]", priCfg.data.devCfg.sdevFWSize, priCfg.data.devCfg.sdevFWSize);
     return 1;
 }
 // [LEAPP] CoOTAProcessing PULLDOWN over @halOTA.c:632
@@ -656,124 +772,171 @@ int CoOTAGetFlag() {
 // eUART_Read: 03 08 00 0b 
 // [LEAPP] eBL_FlashErase: Response 00 @halOTA.c:505
 
+int OpenGPIO(gpioHandler_t *hdlGPIO, int id) {
+    int halId = 0;
+    hal_gpio_init(id);
+    if (25 == id) {
+        hal_pinmux_set_function(id, HAL_GPIO_25_GPIO25);
+    } else if (26 == id) {
+        hal_pinmux_set_function(id, HAL_GPIO_26_GPIO26);
+    } else {
+        return -1;
+    }
+    hal_gpio_deinit(id);
+    hdlGPIO->id = id;
+    hdlGPIO->dir = GPIO_DIR_OUTPUT;
+    hdlGPIO->mode = GPIO_MODE_DEFAULT; // GPIO_MODE_PULLDOWN, GPIO_MODE_PULLUP, GPIO_MODE_DEFAULT
+    if (0 > (halId = halGPIOOpen(hdlGPIO))) {
+        return -2;
+    }
+
+    return halId;
+}
+
+void CoReset(int bootOrNormal) {
+    gpioHandler_t hdlGPIOMiso = {0};
+    gpioHandler_t hdlGPIOReset = {0};
+    int ret = 0, idMiso = 25, idReset = 26;
+    APPLOG("CoReset START");
+
+    if (bootOrNormal) {
+        ret = OpenGPIO(&hdlGPIOMiso, idMiso);
+        APPLOG("CoReset Boot");
+        halGPIOWrite(&hdlGPIOMiso, 0);
+    } else {
+        ret = OpenGPIO(&hdlGPIOMiso, idMiso);
+        APPLOG("CoReset Normal");
+        halGPIOWrite(&hdlGPIOMiso, 1);
+    }
+    if (0 > ret) {
+        APPLOGE("CoReset OpenGPIO MISO");
+        return;
+    }
+    halDelayms(700);
+    // test only
+    if (0)
+    {
+        int m = 2;
+        do {
+            int k = 0;
+            halGPIORead(&hdlGPIOMiso, &k);
+            APPLOG("halGPIORead hdlGPIOMiso[%d] val[%d]", hdlGPIOMiso.id, k);
+            halDelayms(1000);
+        } while (m--);
+    }
+    // halGPIOWrite(&hdlGPIOMiso, 1);
+
+    // reset Co
+    if (0 > OpenGPIO(&hdlGPIOReset, idReset)) {
+        APPLOGE("CoReset OpenGPIO RESET");
+    }
+    halGPIOWrite(&hdlGPIOReset, 0);
+    halDelayms(500);
+    // test only
+    if (0)
+    {
+        int m = 2;
+        do {
+            int k = 0;
+            halGPIORead(&hdlGPIOReset, &k);
+            APPLOG("halGPIORead hdlGPIOReset[%d] val[%d]", hdlGPIOReset.id, k);
+            halDelayms(1000);
+        } while (m--);
+    }
+    halGPIOWrite(&hdlGPIOReset, 1);
+    // test only
+    if (0)
+    {
+        int m = 2;
+        do {
+            int k = 0;
+            halGPIORead(&hdlGPIOReset, &k);
+            APPLOG("halGPIORead recovery hdlGPIOReset[%d] val[%d]", hdlGPIOReset.id, k);
+            halDelayms(1000);
+        } while (m--);
+    }
+
+    halGPIOClose(&hdlGPIOReset);
+    halDelayms(2000);
+
+    // recover the miso, keep in normal
+    // test only
+    if (0)
+    {
+        int m = 2;
+        do {
+            int k = 0;
+            halGPIORead(&hdlGPIOMiso, &k);
+            APPLOG("halGPIORead hdlGPIOMiso[%d] val[%d]", hdlGPIOMiso.id, k);
+            halDelayms(1000);
+        } while (m--);
+    }
+    halGPIOWrite(&hdlGPIOMiso, 1);
+
+    // test only
+    if (0)
+    {
+        int m = 2;
+        do {
+            int k = 0;
+            halGPIORead(&hdlGPIOMiso, &k);
+            APPLOG("halGPIORead recovery hdlGPIOMiso[%d] val[%d]", hdlGPIOMiso.id, k);
+            halDelayms(1000);
+        } while (m--);
+    }
+    halGPIOClose(&hdlGPIOMiso);
+
+    APPLOG("CoReset END");
+}
+
 void CoOTAProcessing(void) {
     void *uart = NULL;
     uint8_t buf[512] = {0};
     int readBytes = 0, ret = 0, baud = 115200, baudBoot = 38400;
-    int n;
+    int n, updateSize = 0;
     uint8_t u8ChunkSize;
+    uartHandler_t hdlUART = {0};
 // 01 00    11 00    00    11 03
 // 01 02 10 11 02 10 02 10 11 03
-    const uint8_t reset[] = {0x01, 0x02, 0x10, 0x11, 0x02, 0x10, 0x02, 0x10, 0x11, 0x03};
-    gpioHandler_t hdlGPIO = {0};
-    uartHandler_t hdlUART = {0};
+    // const uint8_t reset[] = {0x01, 0x02, 0x10, 0x11, 0x02, 0x10, 0x02, 0x10, 0x11, 0x03};
+    // gpioHandler_t hdlGPIO = {0};
     APPLOG("CoOTAProcessing START");
-    if (!CoOTAGetFlag()) {
-        APPLOG("CoOTAGetFlag NO");
+    if (!CoOTAGetFlag(&updateSize)) {
+        APPLOGW("CoOTAGetFlag NO");
         return;
     }
 
-    // pull down MISO
-    hal_gpio_init(24);
-    hal_pinmux_set_function(24, HAL_GPIO_24_GPIO24);
-    hal_gpio_deinit(24);
-    hdlGPIO.id = 24;
-    hdlGPIO.dir = GPIO_DIR_OUTPUT;
-    hdlGPIO.mode = GPIO_MODE_PULLDOWN;
-    if (0 > halGPIOOpen(&hdlGPIO)) {
-        APPLOGE("CoOTAProcessing halGPIOOpen failed");
-        return;
-    }
-    halDelayms(700);
-    // halDelayms(20*1000);
-    APPLOG("CoOTAProcessing PULLDOWN over");
-    // halDelayms(3*1000);
+    // reset & into Boot Mode
+    APPLOG("CoOTAProcessing boot mode START");
+    CoReset(1);
+    APPLOG("CoOTAProcessing boot mode END");
 
-    // reset through UART
-    APPLOG("CoOTAProcessing to Open UART");
-    #if 0
-    hal_gpio_init(36);
-    hal_pinmux_set_function(36, HAL_GPIO_36_UART2_RX_CM4);
-    hal_gpio_deinit(36);
-    hal_gpio_init(37);
-    hal_pinmux_set_function(37, HAL_GPIO_37_UART2_TX_CM4);
-    hal_gpio_deinit(37);
+
+    // clear the uart cache
     hdlUART.id = 1;
-    // hdlUART.baud = 1000000; not support
-    hdlUART.baud = baud;
-    hdlUART.dataBits = 8;
-    hdlUART.stopBits = 1;
-    hdlUART.parity = 0;
-    uart = halUartOpen(&hdlUART);
-    if (NULL == uart) {
-        halGPIOWrite(&hdlGPIO, 1);
-        halGPIOClose(&hdlGPIO);
-        APPLOGE("CoOTAProcessing halUartOpen failed");
-        return;
-    }
-    // halDelayms(2000);
-    eUART_Write(&hdlUART, reset, sizeof(reset));
-    // halUartRead(&hdlUART, buf, sizeof(buf));
-    // halDelayms(6000);
-    // APPLOG("CoOTAProcessing to Flash Co");
-    // halDelayms(30*1000);
-    halGPIOWrite(&hdlGPIO, 1);
-    halGPIOClose(&hdlGPIO);
-
-    // 2. uart update & entry normal mode
-    // int m = 50;
-    do {
-        eUART_Read(&hdlUART, 300*1000, sizeof(buf), buf, &readBytes);
-        // readBytes = halUartRead(&hdlUART, buf, sizeof(buf));
-        APPLOGW("CoOTAProcessing halUartRead [%d]", readBytes);
-        // halDelayms(500);
-    // } while(m--);
-    } while(readBytes > 0);
-    halDelayms(3000);
     halUartClose(&hdlUART);
-    halDelayms(5000);
-    #endif
-
-    // boot init
-    hal_gpio_init(36);
-    hal_pinmux_set_function(36, HAL_GPIO_36_UART2_RX_CM4);
-    hal_gpio_deinit(36);
-    hal_gpio_init(37);
-    hal_pinmux_set_function(37, HAL_GPIO_37_UART2_TX_CM4);
-    hal_gpio_deinit(37);
-    hdlUART.id = 1;
-    // hdlUART.baud = 1000000; not support
-    hdlUART.baud = baudBoot;
-    hdlUART.dataBits = 8;
-    hdlUART.stopBits = 1;
-    hdlUART.parity = 0;
-    uart = halUartOpen(&hdlUART);
-    if (NULL == uart) {
-        APPLOGE("CoOTAProcessing halUartOpen failed for Boot");
+    if (NULL == OpenUART(&hdlUART, baudBoot)) {
+        APPLOGE("CoOTAGetFlag OpenUART Failed");
         return;
     }
-
-    int a = 0;
     do {
-        // ret = eBL_FlashSelectDevice(&hdlUART, 0xCC, 0xEE, 0);
-        {
-            int bytesRead = 0;
-            uint8_t tmp[] = {0x07, 0x2c, 0x08, 0x00, 0x00, 0x00, 0x00, 0x23};
-            eUART_Write(&hdlUART, tmp, sizeof(tmp));
-            eUART_Read(&hdlUART, 1*1000*1000, sizeof(tmp), tmp, &bytesRead);
-            // halUartWrite(&hdlUART, tmp, sizeof(tmp));
-            // halDelayms(1000);
-            // halUartRead(&hdlUART, tmp, sizeof(tmp));
-        }
-        halDelayms(1000);
-    } while (a--);
+        eUART_Read(&hdlUART, 100*1000, 1, &buf[0], &readBytes);
+        APPLOGW("CoOTAProcessing halUartRead [%d]", readBytes);
+    } while(readBytes > 0);
 
+    ret = eBL_FlashSelectDevice(&hdlUART, 0xCC, 0xEE, 0);
     if (0 != ret) {
         halUartClose(&hdlUART);
         APPLOG("CoOTAProcessing eBL_FlashSelectDevice failed [%d]", ret);
         return;
     }
-    
+    // {
+    //     int bytesRead = 0;
+    //     uint8_t tmp[] = {0x07, 0x2c, 0x08, 0x00, 0x00, 0x00, 0x00, 0x23};
+    //     eUART_Write(&hdlUART, tmp, sizeof(tmp));
+    //     eUART_Read(&hdlUART, 1*1000*1000, sizeof(tmp), tmp, &bytesRead);
+    // }
+
     ret = eBL_SetBaudrate(&hdlUART, baud);
     if (0 != ret) {
         halUartClose(&hdlUART);
@@ -782,23 +945,13 @@ void CoOTAProcessing(void) {
     }
     halUartClose(&hdlUART);
 
-    hal_gpio_init(36);
-    hal_pinmux_set_function(36, HAL_GPIO_36_UART2_RX_CM4);
-    hal_gpio_deinit(36);
-    hal_gpio_init(37);
-    hal_pinmux_set_function(37, HAL_GPIO_37_UART2_TX_CM4);
-    hal_gpio_deinit(37);
-    hdlUART.id = 1;
-    // hdlUART.baud = 1000000; not support
-    hdlUART.baud = baud;
-    hdlUART.dataBits = 8;
-    hdlUART.stopBits = 1;
-    hdlUART.parity = 0;
-    uart = halUartOpen(&hdlUART);
-    if (NULL == uart) {
+    // reopen for uart update
+    memset(&hdlUART, 0, sizeof(&hdlUART));
+    if (NULL == OpenUART(&hdlUART, baud)) {
         APPLOGE("CoOTAProcessing halUartOpen failed for Boot");
         return;
     }
+
     ret = eBL_FlashErase(&hdlUART);
     if (0 != ret) {
         halUartClose(&hdlUART);
@@ -806,18 +959,25 @@ void CoOTAProcessing(void) {
         return;
     }
 
-    // TODO: 193216 is Co FW size
-    uint32_t u32ImageLength = 193216;
+    uint32_t u32ImageLength = updateSize - 4;
     uint32_t u32FlashOffset = 0;
 #define chunkSize 128
     uint8_t chunk[chunkSize] = {0};
-    uint32_t startAddr = CM4_FLASH_TMP_ADDR;
+    // uint32_t startAddr = 0;
+    uint32_t startAddr = CM4_FLASH_TMP_ADDR + 4;
     int eStatus = 0;
     void *hdlFlash = NULL;
+    // fota_partition_t *p = NULL;
     hdlFlash = halFlashOpen();
     if (NULL == hdlFlash) {
         return;
     }
+    // p = _fota_find_partition(CM4_FLASH_TMP_ADDR);
+    // if (NULL == p)  {
+    //     halFlashClose(hdlFlash);
+    //     return;
+    // }
+    // startAddr = p->address + p->offset;
     for(n = 0; n < u32ImageLength; n += u8ChunkSize) {
         if((u32ImageLength - n) > chunkSize) {
             u8ChunkSize = chunkSize;
@@ -825,11 +985,16 @@ void CoOTAProcessing(void) {
         else {
             u8ChunkSize = u32ImageLength - n;
         }
-        halFlashRead(hdlFlash, chunk, u8ChunkSize, startAddr + n, u8ChunkSize);
+        halFlashRead(hdlFlash, chunk, u8ChunkSize, startAddr, n);
+        // eStatus = fota_read(FOTA_PARITION_TMP, chunk, u8ChunkSize);
+        if (eStatus != FOTA_STATUS_OK) {
+            APPLOGE("CoOTAProcessing fota_read Failed [%d]", eStatus);
+            return;
+        }
         APPLOG("CoOTAProcessing eBL_FlashWrite startAddr[%x + %x] u8ChunkSize[%d] ", startAddr, n, u8ChunkSize);
         if((eStatus = eBL_FlashWrite(&hdlUART, u32FlashOffset + n, u8ChunkSize, chunk)) != 0) {
-            APPLOGE("CoOTAProcessing eBL_FlashWrite failed [%d]", eStatus);
-            halFlashClose(hdlFlash);
+            APPLOGE("CoOTAProcessing eBL_FlashWrite Failed [%d]", eStatus);
+            // halFlashClose(hdlFlash);
             return;
         }
     }
@@ -838,6 +1003,7 @@ void CoOTAProcessing(void) {
     // 3. reset Co flag
     halUartClose(&hdlUART);
     CoOTASetFlag(0);
+    CoReset(0);
     APPLOG("CoOTAProcessing END");
-
+    halReboot();
 }
