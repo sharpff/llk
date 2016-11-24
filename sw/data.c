@@ -9,6 +9,7 @@
 #include "state.h"
 #include "misc.h"
 #include "version.h" // Auto generate by SVN
+#include "utility.h"
 #ifndef SW_VERSION
 #define SW_VERSION "0.9.9"
 #endif
@@ -402,7 +403,9 @@ int getTerminalStatus(char *status, int len) {
     tmpLen = strlen(status);
 
     if (sengineHasDevs()) {
-        sprintf(status + tmpLen, ",\""JSON_NAME_SDEV_NUM"\":%d,\""JSON_NAME_SDEV_VER"\":%x", sdevCache()->currsize, sdevCache()->sDevVer);
+        uint8_t tmpStr[12] = {0};
+        bytes2hexStr((uint8_t *)&(sdevCache()->sDevVer), sizeof(sdevCache()->sDevVer), tmpStr, sizeof(tmpStr));
+        sprintf(status + tmpLen, ",\""JSON_NAME_SDEV_NUM"\":%d,\""JSON_NAME_SDEV_VER"\":\"%s\"", sdevCache()->currsize, tmpStr);
         tmpLen = strlen(status);
     }
 
