@@ -45,7 +45,7 @@ int halStopConfig(void) {
 }
 
 int halDoConfiguring(void *ptr, int ptrLen) {
-    APPLOG("halDoConfiguring in hal [%d]", gin_airconfig_sniffer_got);
+    APPLOG("Mointor configuring sniffer got [%d]", gin_airconfig_sniffer_got);
 	return gin_airconfig_sniffer_got;
 }
 
