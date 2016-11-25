@@ -187,12 +187,12 @@ int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
     if(size > 0)
     {
         uint32_t i;
-        APPLOG("halUartRead [%d]",size);
+        APPPRINTF("halUartRead [%d]: ",size);
         for(i=0;i<size;i++)
         {
-            APPLOG("0x%02x ", buf[i]);
+            APPPRINTF("%02x ", buf[i]);
         }
-        APPLOG("halUartRead data end");
+        APPPRINTF("\r\n");
     }
 #endif
     return size;
@@ -214,17 +214,18 @@ int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
         send_notice = 0;
    }
 
-    // if(size > 0)
-    // {
-    //     uint32_t i;
-    //     APPPRINTF("halUartWrite [%d]: ", size);
-    //     for(i=0;i<size;i++)
-    //     {
-    //         APPPRINTF("%02x ", buf[i]);
-    //     }
-    //     APPPRINTF("\r\n");
-    // }
-
+#if 0
+    if(size > 0)
+    {
+        uint32_t i;
+        APPPRINTF("halUartWrite [%d]: ", size);
+        for(i=0;i<size;i++)
+        {
+            APPPRINTF("%02x ", buf[i]);
+        }
+        APPPRINTF("\r\n");
+    }
+#endif
    return size;
 }
 

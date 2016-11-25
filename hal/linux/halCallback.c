@@ -90,8 +90,9 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 // type = OTA_TYPE_IA_SCRIPT;
                 // type = OTA_TYPE_AUTH;
                 // type = OTA_TYPE_PRIVATE;
-                // type = OTA_TYPE_SDEVINFO;
-                type = OTA_TYPE_SDEVFW;
+                type = OTA_TYPE_SDEVINFO;
+                // type = OTA_TYPE_SDEVFW;
+                
                 switch (type) {
                     case OTA_TYPE_FW: {
                         sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mt7687_fota_le_demo.bin", type, 35);
@@ -279,7 +280,7 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len) {
     int ret = 1;
     char tmp[MAX_BUF] = {0};
-    APPLOG("halCBRemoteReq -s");
+    // APPLOG("halCBRemoteReq -s");
 
     // APPLOG("halCBRemoteReq status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \
     //     passThru[%d] uuid[%s]", 
@@ -291,7 +292,7 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
     //     cmdInfo->passThru, 
     //     cmdInfo->uuid);
     memcpy(tmp, payloadBody, len);
-    APPLOG("halCBRemoteReq len[%d][%s]", len, tmp);
+    // APPLOG("halCBRemoteReq len[%d][%s]", len, tmp);
 
     switch (cmdInfo->cmdId) {
         case LELINK_CMD_HELLO_REQ: {

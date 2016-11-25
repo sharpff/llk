@@ -41,7 +41,7 @@ extern "C"
 #define MAX_IA_BUF 64
 #define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
 
-#define SDEV_MAX_STATUS MAX_BUF/2
+#define SDEV_MAX_STATUS 384
 
 /*
  * 这些enum值通过FW脚本中的s1GetValidKind进行处理并返回
@@ -134,7 +134,7 @@ typedef struct {
      * 0x08. timeout 
      */
     uint8_t occupied;
-    uint8_t isSDevInfoDone;
+    uint8_t reserved1[3];
 }SDevNode;
 
 typedef struct {

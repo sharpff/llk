@@ -219,7 +219,7 @@ class PrivateInfo(object):
 class SDevInfo(object):
     def __init__(self):
        self.TOTAL_PAD = '\xFF'
-       self.TOTAL_SIZE = (1024*12) # 9345bytes to 12K
+       self.TOTAL_SIZE = (1024*12) # 9344 bytes to 12K
 
     def pack(self):
        self.content = ''

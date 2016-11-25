@@ -230,7 +230,6 @@ function s1OptDoSplit(data)
 			tblDataCountLen[idx + 2] = 0x00
 			idx = idx + 2
 			where = where + 7 + tmpLen
-			break
 		end
 
 		-- print("[LUA] out ========> \r\n")
@@ -324,6 +323,10 @@ function s1GetValidKind(data)
 				break
 			end
 
+			if nil ~= string.find(data, string.char(0x01, 0x80, 0x10)) then
+				ret = WHATKIND_SUB_DEV_DATA
+				break;
+			end
 		end
 
 	end
@@ -424,8 +427,8 @@ function s1CvtStd2Pri(json)
 		if 0x01 == cvtType then
 			for x = 1, 1 do
 				local sDevCtrl = ctrl["sDevCtrl"]
-				if ctrl["chnl"] then
-					local a = 0x00000800 << (ctrl["chnl"] - 11)
+				if ctrl["sDevChnl"] then
+					local a = 0x00000800 << (ctrl["sDevChnl"] - 11)
 					cmdTbl = {0x01, 0x00, 0x21, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03}
 					cmdTbl[10] = 0x00
 					cmdTbl[9] = 0xFF & (a >> 8)
@@ -436,8 +439,13 @@ function s1CvtStd2Pri(json)
 					break
 				end
 
-				if ctrl["reset"] == 1 then
+				if ctrl["sDevReset"] == 1 then
 					cmdTbl = {0x01, 0x00, 0x11, 0x00, 0x00, 0x11, 0x03}
+					break
+				end
+
+				if ctrl["sDevVer"] == 1 then
+					cmdTbl = {0x01, 0x00, 0x10, 0x00, 0x00, 0x10, 0x03}
 					break
 				end
 
@@ -595,7 +603,7 @@ function s1CvtPri2Std(bin)
 			
 			-- (RSP) ept info {"sDevQryEptInfo":2,"idx":"DB8F","pid":"0104","ept":1,"did":"0101","clu":["0000","0004"]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
-				str = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","pid":"'..bin2hex(string.sub(bin,13,14))..'","ept":'..dataTbl[12]..',"did":"'..bin2hex(string.sub(bin,15,16))..'"'
+				str = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":'..dataTbl[12]..',"sDevDes":{"ept":'..dataTbl[12]..',"pid":"'..bin2hex(string.sub(bin,13,14))..'","did":"'..bin2hex(string.sub(bin,15,16))..'"'
 				local m = 18
 				if dataTbl[m] > 0 then
 					str = str..',"cluI":['
@@ -612,7 +620,7 @@ function s1CvtPri2Std(bin)
 					end
 					str = string.sub(str,1,string.len(str) - 1)..']'
 				end
-				str = str..'}'
+				str = str..'}}'
 				if nil ~= string.find(string.char(0x04, 0x02), string.sub(bin,15,16)) then
 					len = PRI2STD_LEN_BOTH
 				end
@@ -648,6 +656,16 @@ function s1CvtPri2Std(bin)
 			-- (IAS IND) 018401000da50401050002c5eb00000000000103 
 			if nil ~= string.find(bin, string.char(0x01, 0x84, 0x01)) then
 				str = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,9,10)), bin2hex(string.sub(bin,8,8)), bin2hex(string.sub(bin,14,15)))..',"sDev":{"idx":"'..bin2hex(string.sub(bin,12,13)).. '"}}'
+				break
+			end
+			-- 01 80 10 00 04 97 00 02 00 01 03 
+			-- 01 80 10 02 10 02 14 97 02 10 02 12 02 10 02 01 03
+			-- 0180100210021497021002120210020103
+			-- ver = sdk + app
+			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x10)) then
+				-- str = '{"sDevVer":"'..bin2hex(string.sub(bin,9,10))..bin2hex(string.sub(bin,7,8))..'"}'
+				local a = bin2hex(string.sub(bin,7,7)) | ((bin2hex(string.sub(bin,8,8))) << 8) | (bin2hex(string.sub(bin,9,9)) << 16) | (bin2hex(string.sub(bin,10,10)) << 24)
+				str = '{"sDevVer":'..a..'}'
 				break
 			end
 		end
