@@ -743,6 +743,21 @@ int cloudMsgHandler(const char *data, int len) {
     return ret == WM_SUCCESS ? 1 : ret;
 }
 
+int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size) {
+    jobj_t jobj;
+    int ret = -1;
+    jsontok_t jsonToken[NUM_TOKENS];
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if(WM_SUCCESS != ret) {
+        return -1;
+    }
+    if(WM_SUCCESS != json_get_val_str(&jobj, (char *)key, info, size)) {
+        return -2;
+    }
+    return 0;
+}
+
 int printOut(const char *fmt, ...) {
     va_list args;
     memset(miscBuf, 0, MAX_BUF);

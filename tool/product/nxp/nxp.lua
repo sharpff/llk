@@ -664,7 +664,7 @@ function s1CvtPri2Std(bin)
 			-- ver = sdk + app
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x10)) then
 				-- str = '{"sDevVer":"'..bin2hex(string.sub(bin,9,10))..bin2hex(string.sub(bin,7,8))..'"}'
-				local a = bin2hex(string.sub(bin,7,7)) | ((bin2hex(string.sub(bin,8,8))) << 8) | (bin2hex(string.sub(bin,9,9)) << 16) | (bin2hex(string.sub(bin,10,10)) << 24)
+				local a = bin2hex(string.sub(bin,7,7)) | ((bin2hex(string.sub(bin,8,8))) << 24) | bin2hex(string.sub(bin,9,9)) | (bin2hex(string.sub(bin,10,10)) << 8)
 				str = '{"sDevVer":'..a..'}'
 				break
 			end

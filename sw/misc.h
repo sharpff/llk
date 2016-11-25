@@ -115,6 +115,7 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
 
 int cloudMsgHandler(const char *data, int len);
 int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen);
+int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size);
 int printOut(const char *fmt, ...);
 #ifdef __cplusplus
 }

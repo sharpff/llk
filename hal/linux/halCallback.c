@@ -68,6 +68,10 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 ret = len < strlen(cmdCtrl) ? len : strlen(cmdCtrl);
                 memcpy(data, cmdCtrl, ret);
                 APPLOG("CTRL req[%d][%s]", ret, cmdCtrl);
+            } else if (LELINK_SUBCMD_CTRL_GET_STATUS_REQ == cmdInfo->subCmdId) {
+                strcpy((char *)data, "{\"mac\":\"00158D0000F4D4E7\"}");
+                ret = strlen(data);
+                // ret = 0;
             }
         }break;
         // remote ctrl
@@ -89,8 +93,8 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 // type = OTA_TYPE_FW_SCRIPT;
                 // type = OTA_TYPE_IA_SCRIPT;
                 // type = OTA_TYPE_AUTH;
-                // type = OTA_TYPE_PRIVATE;
-                type = OTA_TYPE_SDEVINFO;
+                type = OTA_TYPE_PRIVATE;
+                // type = OTA_TYPE_SDEVINFO;
                 // type = OTA_TYPE_SDEVFW;
                 
                 switch (type) {

@@ -635,7 +635,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
         LELOG("sdevUpdate sdevStatus END ****************************");
     }
 
-    if (!(sdevCache()->sDevVer) && WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_SDEV_VER, &(sdevCache()->sDevVer))) {
+    if (!(sdevCache()->sDevVer) && WM_SUCCESS != json_get_val_int(&jobj, JSON_NAME_SDEV_VER, (int *)&(sdevCache()->sDevVer))) {
         sdevCache()->sDevVer = 0;
     }
 
@@ -1341,7 +1341,7 @@ int s1apiGetDevStatus(lua_State *L) {
     return 2;
 }
 
-static int forEachNodeSDevThruMacCB(SDevNode *currNode, void *uData) {
+int forEachNodeSDevThruMacCB(SDevNode *currNode, void *uData) {
     LELOG("[SENGINE] forEachNodeSDevThruMacCB [0x%p]", uData);
     if (0 == strcmp(currNode->mac, (char *)uData)) {
         return 1;

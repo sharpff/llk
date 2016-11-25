@@ -195,7 +195,7 @@ int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
         APPPRINTF("\r\n");
     }
 #endif
-    return size;
+    return size > 128 ? 128 : size;
 }
 
 int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
