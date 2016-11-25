@@ -12,6 +12,7 @@ $MAIN_PATH/lelinkTool.py \
     -t $MAIN_PATH/product/simu/simu.lua \
     -o ./0x1c3000.bin
 
+    # --keepud, means keep user data while reset manually, otherwise, clear user data.
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
     --ssid ff \

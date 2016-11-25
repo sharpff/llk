@@ -309,7 +309,7 @@ static int stateProcStart(StateContext *cntx) {
         }
     }
 
-    LELOG("flag = %02x", ginPrivateCfg.data.devCfg.flag);
+    LELOG("******************************flagWiFi[0x%02x], flagIfUnBind[0x%02x]", ginPrivateCfg.data.devCfg.flagWiFi, ginPrivateCfg.data.devCfg.flagIfUnBind);
     if (0 == ret) {
         if(!getDevFlag(DEV_FLAG_RESET) && !wifiConfigByMonitor) {
             wifiConfigByMonitor = 0;
@@ -532,11 +532,26 @@ int resetConfigData(void) {
     int ret = 0;
     ret = lelinkStorageReadPrivateCfg(&ginPrivateCfg);
     if (0 <= ret) {
+        // WiFi config info
         ginPrivateCfg.data.nwCfg.configStatus = 0;
         ginConfigStatus = 0;
-        ginPrivateCfg.data.devCfg.locked = 0;
+        // user info
+        if (ginPrivateCfg.data.devCfg.flagIfUnBind) {
+            ginPrivateCfg.data.devCfg.locked = 0;
+            ginPrivateCfg.data.iaCfg.num = 0;
+        }
         ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     }
+    if (0 > ret) {
+        LELOGE("resetConfigData [%d]", ret);
+        return ret;
+    }
+
+    if (0 > halResetConfigData()) {
+        LELOG("halResetConfigData [%d]", ret);
+        return ret;
+    }
+
     return ret; 
 }
 int lelinkNwPostCmdExt(const void *node) {

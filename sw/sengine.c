@@ -1840,13 +1840,8 @@ int senginePollingSlave(void) {
             }
             switch (whatKind) {
                 case WHATKIND_MAIN_DEV_RESET: {
-                        extern int resetConfigData(void);
-                        ret = resetConfigData();
-                        LELOG("resetConfigData [%d]", ret);
-                        if (0 <= ret) {
-                            setDevFlag(DEV_FLAG_RESET, 1);
-                            halReboot();
-                        }
+                        extern void resetDevice(void);
+                        resetDevice();
                     }
                     break;
                 case WHATKIND_MAIN_DEV_DATA: {

@@ -105,15 +105,15 @@ int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
 }
 
-int getDevFlag(DEV_FLAG_t flag) {
-    return !(ginPrivateCfg.data.devCfg.flag & flag);
+int getDevFlag(DEV_FLAG_t flagWiFi) {
+    return !(ginPrivateCfg.data.devCfg.flagWiFi & flagWiFi);
 }
 
-int setDevFlag(DEV_FLAG_t flag, int isSet) {
+int setDevFlag(DEV_FLAG_t flagWiFi, int isSet) {
     if(isSet) {
-        ginPrivateCfg.data.devCfg.flag &= ~flag;
+        ginPrivateCfg.data.devCfg.flagWiFi &= ~flagWiFi;
     } else {
-        ginPrivateCfg.data.devCfg.flag |= flag;
+        ginPrivateCfg.data.devCfg.flagWiFi |= flagWiFi;
     }
     return lelinkStorageWritePrivateCfg(&ginPrivateCfg);
 }

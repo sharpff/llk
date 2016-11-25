@@ -599,12 +599,8 @@ RLED_STATE_t setResetLed(RLED_STATE_t st)
     return s_resetLevel;
 }
 
-static void resetDevice(void) {
-    int ret = resetConfigData();
-    LELOG("resetConfigData [%d]", ret);
-    ret = halResetConfigData();
-    LELOG("halResetConfigData [%d]", ret);
-    if (0 <= ret) {
+void resetDevice(void) {
+    if (0 <= resetConfigData()) {
         setDevFlag(DEV_FLAG_RESET, 1);
         halReboot();
     }

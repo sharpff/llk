@@ -53,10 +53,11 @@ typedef enum {
 
 /* Read/Write info */
 typedef struct {
+    uint8_t flagIfUnBind; // UnBind if user reset manually 
     uint32_t sdevFWSize;
-    uint8_t flag; // DEV_FLAG_t
+    uint8_t flagWiFi; // DEV_FLAG_t
     uint8_t locked;
-    uint8_t reserved[33];
+    uint8_t reserved[32];
 }LELINK_ALIGNED DevCfg;
 
 typedef struct

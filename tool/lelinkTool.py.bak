@@ -17,7 +17,6 @@ class Param(object):
         self.fws = ""
         self.genpriv = False
         self.gensdev = False
-        self.keepud = False
         self.ssid = ""
         self.passwd = ""
         self.of = "out.bin"
@@ -40,15 +39,12 @@ class Param(object):
         parser.add_option("-t", "--script", type="string",
                       action="store", dest="fws", default=self.fws,
                       help="firware script file path")
-        parser.add_option("--genpriv",
-                      action="store_true", dest="genpriv", default=self.genpriv,
+        parser.add_option("--genpriv", type="int",
+                      action="store", dest="genpriv", default=self.genpriv,
                       help="Generate private info")
         parser.add_option("--gensdev",
                       action="store_true", dest="gensdev", default=self.gensdev,
-                      help="Generate private info")
-        parser.add_option("--keepud",
-                      action="store_true", dest="keepud", default=self.keepud,
-                      help="keep user data in reset manually")
+                      help="Generate sdev info")
         parser.add_option("--ssid", type="string",
                       action="store", dest="ssid", default=self.ssid,
                       help="wifi ssid")
@@ -68,7 +64,6 @@ class Param(object):
         self.fws = options.fws;
         self.genpriv = options.genpriv;
         self.gensdev = options.gensdev;
-        self.keepud = options.keepud;
         self.ssid = options.ssid;
         self.passwd = options.passwd;
         self.of = options.of;
@@ -187,7 +182,7 @@ class PrivateInfo(object):
        self.passwd = ''
        self.config = 0
        self.content = ''
-       self.unbind = 1
+       self.unbind = '\x01'
        self.DEV_CFG_SIZE = 39
        self.NET_CFG_SIZE = 100
        self.IA_CFG_SIZE = 276
@@ -197,39 +192,33 @@ class PrivateInfo(object):
         self.passwd = passwd
         if len(self.ssid) > 0:
             self.config = 1
-    def keepUD(self):
-        self.unbind = 0
+    def keepud(self):
+        self.unbind = '\x00'
 
     def pack(self):
-        self.content = ''
-        if self.unbind != 0:
-          print("aaaa self.unbind: %d" % self.unbind)
-          self.content += packPad('\x01', 1)
-        else:
-          print("bbbb self.unbind: %d" % self.unbind)
-          self.content += packPad('\x00', 1)
+       self.content = ''
+       self.content += packPad(self.unbind, 1)
+       self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE - 1)
+       self.content += struct.pack("<I", self.config)
+ 
+       self.content += struct.pack("<%ds" % (len(self.ssid) + 1), self.ssid)
+       self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.ssid) - 1)
+       self.content += struct.pack("<%ds" % (len(self.passwd) + 1), self.passwd)
+       self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.passwd) - 1)
 
-        self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE-1)
-        self.content += struct.pack("<I", self.config)
-
-        self.content += struct.pack("<%ds" % (len(self.ssid) + 1), self.ssid)
-        self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.ssid) - 1)
-        self.content += struct.pack("<%ds" % (len(self.passwd) + 1), self.passwd)
-        self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.passwd) - 1)
-
-        # pad for     
+       # pad for     
         # uint32_t ipaddr;
         # uint32_t mask;
         # uint32_t gateway;
         # uint32_t dns1;
         # uint32_t dns2;
-        self.content += packPad(self.PACK_PAD, 4*5);
-        self.content += struct.pack("<B", len(self.ssid))
-        self.content += struct.pack("<B", len(self.passwd))
+       self.content += packPad(self.PACK_PAD, 4*5);
+       self.content += struct.pack("<B", len(self.ssid))
+       self.content += struct.pack("<B", len(self.passwd))
 
-        self.content += packPad(self.PACK_PAD, (self.DEV_CFG_SIZE + self.NET_CFG_SIZE + self.IA_CFG_SIZE - len(self.content)))
-        self.content += struct.pack("<B", strCrc(self.content))
-        self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
+       self.content += packPad(self.PACK_PAD, (self.DEV_CFG_SIZE + self.NET_CFG_SIZE + self.IA_CFG_SIZE - len(self.content)))
+       self.content += struct.pack("<B", strCrc(self.content))
+       self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
 
 class SDevInfo(object):
     def __init__(self):
@@ -274,8 +263,9 @@ if __name__ == '__main__':
     if param.genpriv:
         pricfg = PrivateInfo()
         pricfg.set(param.ssid, param.passwd)
-        if param.keepud:
-          pricfg.keepUD()
+        if param.genpriv == "1":
+          print("11111")
+          pricfg.keepud()
         pricfg.pack()
         content += pricfg.content
         print "PrivateInfo: %d, " % len(pricfg.content),
