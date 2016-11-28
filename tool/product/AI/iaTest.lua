@@ -61,7 +61,7 @@ end
 ]]
 function getBeingReservedInfo()
     -- CUSTOMIZATION START
-    local tblInfo = {'10000100101000010007E81863C38E75'}
+    local tblInfo = {'10000100101000010007E81863C38E75-00124B000CC39852'}
     -- CUSTOMIZATION END
     return tblInfo
 end
@@ -122,6 +122,9 @@ end
     ./Debug/lua /home/lf/dev/rp/lelinkDev/tool/product/AI/tmpTest.lua s2IsConditionOKExt 
     "{\"status\":{},\"uuid\":\"10000100091000610006F0B429000012\"}" "{\"status\":{\"percentage\":0},\"uuid\":\"10000100091000610006F0B429000012\"}"
     "{\"status\":{},\"uuid\":\"10000100091000610006F0B429000012\"}" "{\"status\":{\"percentage\":0},\"uuid\":\"10000100091000610006F0B429000012\"}"
+
+    "{}"
+    "{\"uuid\":\"10000100101000010007E81863C38E75\",\"sDev\":{\"des\":[{\"ept\":1,\"pid\":\"0104\",\"did\":\"0402\",\"cluI\":[\"0000\"],\"cluO\":[\"0000\",\"0006\",\"0009\",\"0001\",\"0502\",\"0500\"]}],\"man\":\"0000\"},\"ip\":\"192.168.31.166\",\"sDevStatus\":{\"ias\":1},\"mac\":\"00124B000CC39852\"}"
 ]]
 function s2IsConditionOKExt(selfStatus, rmtStatus)
     local ok = 0
@@ -149,7 +152,8 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
     local tblConditions = {}
     local tblConditionsOld = {}
     local retIdx = 1;
-    local tblNewStatus = tblRmt["status"]
+    -- local tblNewStatus = tblRmt["status"]
+    local tblNewStatus = tblRmt["sDevStatus"]
     if nil == tblNewStatus then
         return ok
     end
@@ -158,14 +162,14 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
     tblConditions[retIdx] = 0
     tblConditionsOld[retIdx] = 0
     -- if nil ~= string.find(rmtUUID, '10000100101000010007E81863C38E75') then
-        if 1 == tblNewStatus["idx1"] and 0 ~= cmpValInOldStatus('10000100101000010007E81863C38E75', tblNewStatus["idx1"], "idx1") then
+        if 1 == tblNewStatus["ias"] and 0 ~= cmpValInOldStatus('10000100101000010007E81863C38E75-00124B000CC39852', tblNewStatus["ias"], "ias") then
             tblConditions[retIdx] = 1
             print('ok 1\r\n')
         end
     -- else
-        tblOldStatus = getOldStatus('10000100101000010007E81863C38E75')
+        tblOldStatus = getOldStatus('10000100101000010007E81863C38E75-00124B000CC39852')
         if tblOldStatus then
-            if 1 == tblOldStatus["idx1"] then
+            if 1 == tblOldStatus["ias"] then
                 tblConditionsOld[retIdx] = 1
                 print('okOld 1\r\n')
             end
