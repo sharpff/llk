@@ -104,6 +104,7 @@ APP_FILES       = \
                   $(APP_PATH_SRC)/smt.c \
                   $(APP_PATH_SRC)/plt.c \
                   $(APP_PATH_SRC)/led.c \
+                  $(APP_PATH_SRC)/CoOTA.c \
                   $(APP_PATH)/GCC/syscalls.c 
 
 APP_FILES      += $(APP_PATH_SRC)/network_init.c

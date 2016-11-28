@@ -20,6 +20,7 @@
 #include "bsp_gpio_ept_config.h"
 #include "network_init.h"
 #include "cli_def.h"
+#include "CoOTA.h"
 
 int gin_airconfig_channel_cared[MAX_CHANNEL_CARE];
 static TimerHandle_t lelink_airconfig_timer = NULL;
@@ -101,15 +102,14 @@ void printForFac(void) {
         mac[4], 
         mac[5]);
 }
-extern void CoOTAProcessing(void);
-extern void CoReset(int bootOrNormal);
+
 static void mtk_thread_lelink_proc(void *args) {
     int ret; 
     void *ctxR2R;
     void *ctxQ2A;
     leLedInit();
     printForFac();
-    CoReset(0);
+    CoOTAReset(0);
     CoOTAProcessing();
     printf("Build Time: " __DATE__ " " __TIME__ "\r\n");
     ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE - GW_FLASH_CONF_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
@@ -229,4 +229,18 @@ int main() {
     to be created.  See the memory management section on the FreeRTOS web site
     for more details. */
     for ( ;; );
+}
+
+
+/*
+ * These functions is called in Lelink, but depends the current App(FW). 
+ * Diff App has diff implementation. So, these should not be used in halXXX.c. 
+ * it is no need to be implemented, if there is no sub sdev(E.g. coordinator)
+ */
+__attribute__((weak)) void CoOTASetFlag(uint32_t flag) {
+    return;
+}
+
+__attribute__((weak)) void CoOTAProcessing(void) {
+    return;
 }
