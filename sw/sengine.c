@@ -133,6 +133,10 @@ static void loadSDevInfo(SDevNode *arr) {
                 arr[i].sdevEpt[0], arr[i].sdevEpt[1], arr[i].sdevEpt[2], arr[i].sdevEpt[3],
                 arr[i].sdevEpt[4], arr[i].sdevEpt[5], arr[i].sdevEpt[6], arr[i].sdevEpt[7]);
             LELOG("=======> SDevInfoCfg sdevMan[%s] ", arr[i].sdevMan);
+            LELOG("=======> SDevInfoCfg isSDevInfoDone[0x%02x] ", arr[i].isSDevInfoDone);
+            if (0x0f < arr[i].isSDevInfoDone) {
+                arr[i].isSDevInfoDone = 0;
+            }
             sdevCache()->currsize++;
             arr[i].occupied = 1;
         }
@@ -169,9 +173,9 @@ static int sdevArrayGet(int index, SDevNode *node) {
     if (0 > index && !node) {
         return -1;
     }
-    // if (!sdevArray()[index].occupied) {
-    //     return -2;
-    // }
+    if (0x08 != (0x08 & sdevArray()[index].isSDevInfoDone)) {
+        return -2;
+    }
 
     memcpy(node, &(sdevArray()[index]), sizeof(SDevNode));
     return index;
@@ -231,63 +235,6 @@ static void postStatusChanged(int plusIdx) {
     lelinkNwPostCmdExt(&node);
     // TIMEOUT_SECS_END
 }
-
-// static int sdevInfoReq(SDevNode *arr, int ioType, void *hdl) {
-//     int tmpCurrNum = 0, j = 0, ret = 0, m = 0;
-//     char jsonQuery[128] = {0};
-//     uint8_t cmd[64] = {0}, mask = 0x00;
-//     const char *fmt = "{\"%s\":%d}";
-//     for (j = 0; (j < sdevCache()->maxsize && tmpCurrNum < sdevCache()->currsize); j++) {     
-//         if (arr[j].occupied) {    
-//             if (0x01 != (0x01 & arr[j].isSDevInfoDone)) {
-//                 // TODO: 0x01. endpoint list(active request)
-//                 // "{\"sDevQryEpt\":1,\"idx\":\"ABCD\"}"
-//                 ret = sprintf(jsonQuery, "{\"%s\":%d,\"%s\":\"%s\"}", JSON_NAME_SDEV_QUERY_EPT, 1, JSON_NAME_SDEV_INDEX, arr[j].idx);
-//                 mask = 0x01;
-//             } else if (0x02 != (0x02 & arr[j].isSDevInfoDone)) {
-//                 // TODO: 0x02. man done(node descriptor request)
-//                 // "{\"sDevQryMan\":1,\"idx\":\"ABCD\"}"
-//                 ret = sprintf(jsonQuery, "{\"%s\":%d,\"%s\":\"%s\"}", JSON_NAME_SDEV_QUERY_MAN, 1, JSON_NAME_SDEV_INDEX, arr[j].idx);
-//                 mask = 0x02;
-//             } else if (0x04 != (0x04 & arr[j].isSDevInfoDone)) {
-//                 // TODO: 0x04. cluster done(simple descriptor request)
-//                 // "{\"sDevQryEptInfo\":1,\"idx\":\"ABCD\",\"ept\":1}"
-//                 for (m = 0; arr[j].sdevEpt[m] && m < SDEV_MAX_EPT; m++) {
-//                     ret = sprintf(jsonQuery, "{\"%s\":%d,\"%s\":\"%s\",\"%s\":%d}", 
-//                         JSON_NAME_SDEV_QUERY_INFO, 1, JSON_NAME_SDEV_INDEX, arr[j].idx, JSON_NAME_SDEV_EPT, arr[j].sdevEpt[m]-1);
-//                     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
-//                         (uint8_t *)jsonQuery, ret, (uint8_t *)cmd, sizeof(cmd));
-//                     if (ret <= 0) {
-//                         LELOGW("[SUBDEV] sdevInfoReq sengineCall("S1_STD2PRI") [%d]", ret);
-//                         continue;
-//                     }
-//                     ret = ioWrite(ioType, hdl, cmd, ret);
-//                     if (0 > ret) {
-//                         LELOGW("[SUBDEV] sdevInfoReq ioWrite [%d]", ret);
-//                     }
-//                 }
-//                 mask = 0x04;
-//                 arr[j].isSDevInfoDone |= mask;
-//                 continue;
-//             } else {
-//                 continue;
-//             }
-//             LELOG("arr[j].isSDevInfoDone[%02x], jsonQuery is [%d][%s]", arr[j].isSDevInfoDone, ret, jsonQuery);
-//             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
-//                 (uint8_t *)jsonQuery, ret, (uint8_t *)cmd, sizeof(cmd));
-//             if (ret <= 0) {
-//                 LELOGW("[SUBDEV] sdevInfoReq sengineCall("S1_STD2PRI") [%d]", ret);
-//                 continue;
-//             }
-//             ret = ioWrite(ioType, hdl, cmd, ret);
-//             if (0 < ret) {
-//                 arr[j].isSDevInfoDone |= mask;
-//             }
-//             tmpCurrNum++;
-//         }                        
-//     }           
-//     return 0;
-// }
 
 static int sdevInfoSerilized(const SDevNode *arr) {
     int ret = 0, i = 0;
@@ -496,9 +443,9 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
             break;
         }
     }
-    if (isClusterComplete && (0x07 == arr[index].isSDevInfoDone)) {
+    if (isClusterComplete && (0x07 == (0x07 & arr[index].isSDevInfoDone))) {
         if (arr[index].sdevMan[0]) {
-            arr[index].isSDevInfoDone = 0x08;
+            arr[index].isSDevInfoDone |= 0x08;
             
             // append 'manufacturer'
             // memset(totalJson, 0, sizeof(totalJson));

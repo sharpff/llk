@@ -16,6 +16,8 @@
 
 int getCtrlData(const char *json, int jsonLen, const char *key, char *obj, int objLen);
 extern PCACHE sdevCache();
+extern SDevNode *sdevArray();
+extern PCACHE sdevCache();
 
 /* built-in global rsa pubkey */
 const uint8_t ginPubkeyGlobalDer[] =
@@ -404,8 +406,16 @@ int getTerminalStatus(char *status, int len) {
 
     if (sengineHasDevs()) {
         uint8_t tmpStr[12] = {0};
+        SDevNode *arr = sdevArray();
+        int validSize = 0, i = 0;
+        for (i = 0; i < sdevCache()->currsize; i++) {
+            if (0x08 == (0x08 & arr[i].isSDevInfoDone)) {
+                validSize++;
+            }
+            LELOG("idx[%s] mac[%s] isSDevInfoDone[%x]", arr[i].idx, arr[i].mac, arr[i].isSDevInfoDone);
+        }
         bytes2hexStr((uint8_t *)&(sdevCache()->sDevVer), sizeof(sdevCache()->sDevVer), tmpStr, sizeof(tmpStr));
-        sprintf(status + tmpLen, ",\""JSON_NAME_SDEV_NUM"\":%d,\""JSON_NAME_SDEV_VER"\":\"%s\"", sdevCache()->currsize, tmpStr);
+        sprintf(status + tmpLen, ",\""JSON_NAME_SDEV_NUM"\":%d,\""JSON_NAME_SDEV_VER"\":\"%s\"", validSize, tmpStr);
         tmpLen = strlen(status);
     }
 
@@ -429,8 +439,6 @@ int getTerminalStatus(char *status, int len) {
     return tmpLen;
 }
 
-extern SDevNode *sdevArray();
-extern PCACHE sdevCache();
 int getSDevStatus(int index, char *sdevStatus, int len) {
     SDevNode *arr = sdevArray();
     PCACHE cache = sdevCache(); 

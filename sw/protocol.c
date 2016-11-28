@@ -1315,11 +1315,6 @@ static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dat
     }
     LELOG("cbHelloLocalReq [%s] -s", helloReq);
 
-    // if (!cmdInfo->reserved) {
-    //     ret = getSDevStatus(ginSDevCountsInDiscovery-1, rspDiscover, sizeof(rspDiscover));
-    // }
-
-    // CommonCtx *pCtx = COMM_CTX(ctx);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)helloReq, strlen(helloReq), dataOut, dataLen);
     LELOG("cbHelloLocalReq [%d] -e", ret);
     return ret;

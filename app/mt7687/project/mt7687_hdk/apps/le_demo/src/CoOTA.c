@@ -462,7 +462,8 @@ int CoOTAGetFlag(int *updateSize) {
         return 0;
     }
 
-    if (0xFFFFFFFF == priCfg.data.devCfg.sdevFWSize || 0 == priCfg.data.devCfg.sdevFWSize) {
+    if (0xFFFFFFFF == priCfg.data.devCfg.sdevFWSize || 0 == priCfg.data.devCfg.sdevFWSize || 
+        0x80000 < priCfg.data.devCfg.sdevFWSize) {
         APPLOGW("CoOTAGetFlag get size[%d|%x]", priCfg.data.devCfg.sdevFWSize, priCfg.data.devCfg.sdevFWSize);
         return 0;
     }

@@ -515,8 +515,10 @@ static int stateProcCloudAuthed(StateContext *cntx) {
                 if (arr && cache) {
                     int i = 0;
                     for (i = 0; i < cache->currsize; i++) {
-                        node.reserved = i + 1;
-                        lelinkNwPostCmd(ginCtxR2R, &node);
+                        if (0x08 == (0x08 & arr[i].isSDevInfoDone)) {
+                            node.reserved = i + 1;
+                            lelinkNwPostCmd(ginCtxR2R, &node);                            
+                        }
                     }
                     node.reserved = 0;
                 }

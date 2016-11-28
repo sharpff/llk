@@ -107,6 +107,13 @@ typedef struct
 
 
 
+/* 
+ * isSDevInfoDone identify the mask of these info
+ * 0x01. endpoint list(active response)
+ * 0x02. cluster done(simple descriptor response)
+ * 0x04. man done(node descriptor response)
+ * 0x08. it means sdev is valid 
+ */
 #define CACHE_NODE_NBASE \
     CACHE_NODE_HEADER; \
     char sdevInfo[SDEV_MAX_INFO]; \
