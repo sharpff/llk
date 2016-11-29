@@ -21,13 +21,14 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 0.8
+ * @version 0.9
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
 	/*
+	 * 0.9, 添加日志，方便调试
 	 * 0.8, Zigbee的uuid去掉mac
 	 * 0.7, Zigbee设备状态BUG
 	 * 0.6, 解决启动了两个线程的BUG
@@ -37,7 +38,7 @@ public class LeLink {
 	 * 0.2, 添加Listener onPushMessage()
 	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "0.81"; // 与以上的注释一致
+	private static final String VERSION = "0.9"; // 与以上的注释一致
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
