@@ -23,6 +23,7 @@ typedef enum {
     IO_TYPE_SOCKET = 0x8,
     IO_TYPE_PWM = 0x10,
     IO_TYPE_EINT = 0x20,
+    IO_TYPE_USER = 0x8000,
 }IO_TYPE;
 
 #ifdef LELINK_PACK
@@ -52,9 +53,11 @@ typedef enum {
 
 /* Read/Write info */
 typedef struct {
-    uint8_t flag; // DEV_FLAG_t
+    uint8_t flagIfUnBind; // UnBind if user reset manually 
+    uint32_t sdevFWSize;
+    uint8_t flagWiFi; // DEV_FLAG_t
     uint8_t locked;
-    uint8_t reserved[37];
+    uint8_t reserved[32];
 }LELINK_ALIGNED DevCfg;
 
 typedef struct
@@ -104,6 +107,13 @@ typedef struct
 
 
 
+/* 
+ * isSDevInfoDone identify the mask of these info
+ * 0x01. endpoint list(active response)
+ * 0x02. cluster done(simple descriptor response)
+ * 0x04. man done(node descriptor response)
+ * 0x08. it means sdev is valid 
+ */
 #define CACHE_NODE_NBASE \
     CACHE_NODE_HEADER; \
     char sdevInfo[SDEV_MAX_INFO]; \
@@ -111,7 +121,8 @@ typedef struct
     uint8_t idx[SDEV_MAX_MAC]; \
     uint8_t sdevEpt[SDEV_MAX_EPT]; \
     uint8_t sdevMan[SDEV_MAX_CUST]; \
-    uint8_t reserved[4];
+    uint8_t isSDevInfoDone; \
+    uint8_t reserved[3];
 
 typedef struct {
     CACHE_NODE_NBASE;

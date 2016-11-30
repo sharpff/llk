@@ -9,11 +9,15 @@
 #include "state.h"
 #include "misc.h"
 #include "version.h" // Auto generate by SVN
+#include "utility.h"
 #ifndef SW_VERSION
 #define SW_VERSION "0.9.9"
 #endif
 
 int getCtrlData(const char *json, int jsonLen, const char *key, char *obj, int objLen);
+extern PCACHE sdevCache();
+extern SDevNode *sdevArray();
+extern PCACHE sdevCache();
 
 /* built-in global rsa pubkey */
 const uint8_t ginPubkeyGlobalDer[] =
@@ -103,15 +107,15 @@ int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
 }
 
-int getDevFlag(DEV_FLAG_t flag) {
-    return !(ginPrivateCfg.data.devCfg.flag & flag);
+int getDevFlag(DEV_FLAG_t flagWiFi) {
+    return !(ginPrivateCfg.data.devCfg.flagWiFi & flagWiFi);
 }
 
-int setDevFlag(DEV_FLAG_t flag, int isSet) {
+int setDevFlag(DEV_FLAG_t flagWiFi, int isSet) {
     if(isSet) {
-        ginPrivateCfg.data.devCfg.flag &= ~flag;
+        ginPrivateCfg.data.devCfg.flagWiFi &= ~flagWiFi;
     } else {
-        ginPrivateCfg.data.devCfg.flag |= flag;
+        ginPrivateCfg.data.devCfg.flagWiFi |= flagWiFi;
     }
     return lelinkStorageWritePrivateCfg(&ginPrivateCfg);
 }
@@ -400,6 +404,21 @@ int getTerminalStatus(char *status, int len) {
     sprintf(status + tmpLen, "\",\"lock\":%d", getLock());
     tmpLen = strlen(status);
 
+    if (sengineHasDevs()) {
+        uint8_t tmpStr[12] = {0};
+        SDevNode *arr = sdevArray();
+        int validSize = 0, i = 0;
+        for (i = 0; i < sdevCache()->currsize; i++) {
+            if (0x08 == (0x08 & arr[i].isSDevInfoDone)) {
+                validSize++;
+            }
+            LELOG("idx[%s] mac[%s] isSDevInfoDone[%x]", arr[i].idx, arr[i].mac, arr[i].isSDevInfoDone);
+        }
+        bytes2hexStr((uint8_t *)&(sdevCache()->sDevVer), sizeof(sdevCache()->sDevVer), tmpStr, sizeof(tmpStr));
+        sprintf(status + tmpLen, ",\""JSON_NAME_SDEV_NUM"\":%d,\""JSON_NAME_SDEV_VER"\":\"%s\"", validSize, tmpStr);
+        tmpLen = strlen(status);
+    }
+
     tmpLen += sprintf(status + tmpLen, ",\"uuids\":%s", "[");
     for (cnt = 0, i = 0; i < ginIACache.cfg.num; i++) {
         cacheInt = &(ginIACache.cache[i]);
@@ -418,6 +437,35 @@ int getTerminalStatus(char *status, int len) {
 
     // LELOG("getTerminalStatus [%d][%s] -e", tmpLen, status);
     return tmpLen;
+}
+
+int getSDevStatus(int index, char *sdevStatus, int len) {
+    SDevNode *arr = sdevArray();
+    PCACHE cache = sdevCache(); 
+    int tmpLen = 0;
+    if (arr && cache) {
+        // uint8_t uuid[MAX_UUID+1] = {0};
+        // getTerminalUUID(uuid, MAX_UUID);
+        // sprintf(sdevStatus, "{\"%s\":\"%s\",\"%s\":%s,\"%s\":%s,\"%s\":\"%s\"}", JSON_NAME_UUID, uuid, JSON_NAME_SDEV, strlen(arr[index].sdevInfo) > 0 ? arr[index].sdevInfo : "{}", 
+        //     JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAC, arr[index].mac);
+
+        uint8_t uuid[MAX_UUID+1] = {0};
+        getTerminalUUID(uuid, MAX_UUID);
+        sprintf(sdevStatus, "{\"%s\":\"%s\"", JSON_NAME_UUID, uuid);
+        // append man start
+        sprintf(&sdevStatus[strlen(sdevStatus)], ",\"%s\":%s", JSON_NAME_SDEV, strlen(arr[index].sdevInfo) > 0 ? arr[index].sdevInfo : "{}"); 
+        sprintf(&sdevStatus[strlen(sdevStatus) - 1], ",\"%s\":\"%s\"}", JSON_NAME_SDEV_MAN, arr[index].sdevMan);
+        // append ip
+        tmpLen = strlen(sdevStatus);
+        strcpy(sdevStatus + tmpLen, ",\"ip\":\""); tmpLen = strlen(sdevStatus);
+        halGetSelfAddr(sdevStatus + tmpLen, len - tmpLen, NULL); tmpLen = strlen(sdevStatus);
+        // append sdevStatus
+        sprintf(&sdevStatus[strlen(sdevStatus)], "\",\"%s\":%s,\"%s\":\"%s\"}", JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAC, arr[index].mac);
+        // LELOG("XXXXXX[%s]", sdevStatus);
+    } else {
+        return 0;
+    }
+    return strlen(sdevStatus);
 }
 
 int getTerminalStatusS2(char *statusS2, int len) {

@@ -22,6 +22,7 @@ typedef struct CACHE
     int singleSize;
     int currsize;
     uint16_t flagAuto;
+    uint32_t sDevVer; // 0x00030001 app(0x0003) + sdk(0x0001)
 }CACHE, *PCACHE;
 
 typedef int (*NodeCB_t)(void *curr);

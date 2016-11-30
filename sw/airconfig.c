@@ -839,7 +839,7 @@ int softApCheck(void)
     if(!ginApNetCtx) {
         return -1;
     }
-    LELOG("Checking wifi configure...");
+    LELOG("softApCheck wifi configure...");
     ret = nwUDPRecvfrom(ginApNetCtx, (uint8_t *)buf, UDP_MTU, ipaddr, sizeof(ipaddr), &port);
     if(ret <= 0 ) {
         return -2;

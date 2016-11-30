@@ -71,7 +71,7 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
             status = halUpdateFirmware(&info);
             break;
         case OTA_TYPE_SDEVFW: {
-                info.isCo = 1;
+                info.isSDev = 1;
                 status = halUpdateFirmware(&info);
             }break;
         case OTA_TYPE_FW_SCRIPT:

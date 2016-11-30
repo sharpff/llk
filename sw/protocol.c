@@ -694,20 +694,6 @@ failed:
     return ret;
 }
 
-int getSDevStatus(int index, char *sdevStatus, int len) {
-    SDevNode *arr = sdevArray();
-    PCACHE cache = sdevCache(); 
-    if (arr && cache) {
-        uint8_t uuid[MAX_UUID+1] = {0};
-        getTerminalUUID(uuid, MAX_UUID);
-        sprintf(sdevStatus, "{\"%s\":\"%s\",\"%s\":%s,\"%s\":%s,\"%s\":\"%s\",\"%s\":\"%s\"}", JSON_NAME_UUID, uuid, JSON_NAME_SDEV, arr[index].sdevInfo, 
-            JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAN, arr[index].sdevMan, JSON_NAME_SDEV_MAC, arr[index].mac);
-    } else {
-        return 0;
-    }
-    return strlen(sdevStatus);
-}
-
 void lelinkDeinit() {
     halDeLockInit();
     halDeAESInit();
@@ -1329,11 +1315,6 @@ static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dat
     }
     LELOG("cbHelloLocalReq [%s] -s", helloReq);
 
-    // if (!cmdInfo->reserved) {
-    //     ret = getSDevStatus(ginSDevCountsInDiscovery-1, rspDiscover, sizeof(rspDiscover));
-    // }
-
-    // CommonCtx *pCtx = COMM_CTX(ctx);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)helloReq, strlen(helloReq), dataOut, dataLen);
     LELOG("cbHelloLocalReq [%d] -e", ret);
     return ret;
@@ -1495,12 +1476,12 @@ static int cbDiscoverStatusChangedLocalRsp(void *ctx, const CmdHeaderInfo* cmdIn
 static int cbCtrlGetStatusLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
 
     int ret = 0;
-    // char reqCtrlGetStatus[128];
+    char reqCtrlGetStatus[128];
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlGetStatusLocalReq -s");
 
-    // ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)reqCtrlGetStatus, sizeof(reqCtrlGetStatus));
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)NULL, 0, dataOut, dataLen);
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)reqCtrlGetStatus, sizeof(reqCtrlGetStatus));
+	ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)reqCtrlGetStatus, ret, dataOut, dataLen);
     
     LELOG("cbCtrlGetStatusLocalReq [%d] -e", ret);
     return ret;
@@ -1578,15 +1559,27 @@ static int cbCtrlGetStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, con
     return ret;
 }
 static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+extern int forEachNodeSDevThruMacCB(SDevNode *currNode, void *uData);
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char status[MAX_BUF] = {0};
-    LELOG("cbCtrlGetStatusLocalRsp -s");
+    char strMac[32] = {0};
+    LELOG("cbCtrlGetStatusLocalRsp [%s] -s", (char *)data);
 
-    ret = getTerminalStatus(status, sizeof(status));
+    if (!getStrValByKey((char *)data, len, JSON_NAME_SDEV_MAC, strMac, sizeof(strMac))) {
+        ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevThruMacCB, strMac);
+        if (0 <= ret) {
+            ret = getSDevStatus(ret, status, sizeof(status));
+        } else {
+            ret = 0;
+        }
+    } else {
+        ret = getTerminalStatus(status, sizeof(status));
+    }
+
     ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
     // ret = getTerminalStatus(binStatus, sizeof(binStatus));
-    LELOG("cbCtrlGetStatusLocalRsp -e");
+    LELOG("cbCtrlGetStatusLocalRsp status[%s] -e", status);
     return ret;
 }
 
@@ -2020,6 +2013,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }
 
         switch (type) {
+            case OTA_TYPE_SDEVFW:
             case OTA_TYPE_FW: {
                 node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
                 node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
@@ -2035,7 +2029,6 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
             case OTA_TYPE_AUTH:
             case OTA_TYPE_PRIVATE:
             case OTA_TYPE_SDEVINFO:
-            case OTA_TYPE_SDEVFW:
             case OTA_TYPE_FW_SCRIPT:
             case OTA_TYPE_IA_SCRIPT: {
                 otaSetLatestSig(data);

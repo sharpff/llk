@@ -25,7 +25,7 @@ typedef struct _updateInfo {
     void *session;
     unsigned int imgLen;
     unsigned int nowLen;
-    uint8_t isCo;
+    uint8_t isSDev;
     uint8_t reserved[3];
 } OTAInfo_t;
 

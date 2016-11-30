@@ -66,12 +66,16 @@ extern "C"
 #define JSON_NAME_STATUS            "status"
 #define JSON_NAME_SDEV     			"sDev"
 #define JSON_NAME_SDEV_GET_LIST     "sDevGetList"
+#define JSON_NAME_SDEV_SDEVDES      "sDevDes"
 #define JSON_NAME_SDEV_GET_INFO     "sDevGetInfo"
 #define JSON_NAME_SDEV_QUERY_EPT    "sDevQryEpt"
 #define JSON_NAME_SDEV_QUERY_MAN    "sDevQryMan"
 #define JSON_NAME_SDEV_QUERY_INFO   "sDevQryEptInfo"
 #define JSON_NAME_SDEV_STATUS       "sDevStatus"
 #define JSON_NAME_SDEV_JOIN         "sDevJoin"
+#define JSON_NAME_SDEV_LEAVE        "sDevLeave"
+#define JSON_NAME_SDEV_NUM          "sDevNum"
+#define JSON_NAME_SDEV_VER          "sDevVer"
 #define JSON_NAME_SDEV_INDEX        "idx"
 #define JSON_NAME_SDEV_EPT          "ept"
 #define JSON_NAME_SDEV_MAN          "man"
@@ -111,6 +115,7 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
 
 int cloudMsgHandler(const char *data, int len);
 int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen);
+int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size);
 int printOut(const char *fmt, ...);
 #ifdef __cplusplus
 }

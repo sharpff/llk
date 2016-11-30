@@ -455,11 +455,7 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
 
 int getJsonArray(const char *json, int jsonLen, const char *key, char *obj, int objLen) {
     char *tokenStart = "[", *tokenEnd = "]";
-    int ret = getJsonByToken(json, jsonLen, key, obj, objLen, tokenStart, tokenEnd, 1);
-    if (2 >= ret) {
-        return 0;
-    }
-    return ret;
+    return getJsonByToken(json, jsonLen, key, obj, objLen, tokenStart, tokenEnd, 1);
 }
 
 int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen) {
@@ -745,6 +741,21 @@ int cloudMsgHandler(const char *data, int len) {
         break;
     }
     return ret == WM_SUCCESS ? 1 : ret;
+}
+
+int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size) {
+    jobj_t jobj;
+    int ret = -1;
+    jsontok_t jsonToken[NUM_TOKENS];
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if(WM_SUCCESS != ret) {
+        return -1;
+    }
+    if(WM_SUCCESS != json_get_val_str(&jobj, (char *)key, info, size)) {
+        return -2;
+    }
+    return 0;
 }
 
 int printOut(const char *fmt, ...) {

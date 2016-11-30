@@ -192,6 +192,32 @@ static int changeState(int direction, StateContext *cntx, int idx) {
     return ret;
 }
 
+static void uartClear() {
+
+    IOHDL *ioHdl = NULL;
+    int x = 0, ret = 0;
+    uint8_t tmp = 0;
+    ioHdl = ioGetHdlExt();
+    LELOG("uartClear START");
+    if (NULL == ioHdl) {
+        return;
+    }
+
+    for (x = 0; x < ioGetHdlCounts(); x++) {
+        if (IO_TYPE_UART == ioHdl[x].ioType) {
+            do {
+                ret = halUartRead(ioHdl[x].hdl, &tmp, sizeof(tmp));
+                LELOG("uartClear Cleaning");
+            } while (0 < ret);
+            break;
+        }
+    }
+    LELOG("uartClear END");
+}
+
+static int sdevGetValidChannel(void) {
+    return 11;
+}
 
 int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     int i = 0, ret = 0;
@@ -206,6 +232,28 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
         if (ginStateTbl[i].stateIdCurr == ginStateCntx.stateIdCurr) {
             ret = ginStateTbl[i].fpStateCurr(&ginStateCntx);
             break;
+        }
+    }
+
+    if (sengineHasDevs()) {
+        // TODO: 
+        static int8_t onlyOnce = 0;
+        if (!onlyOnce) {
+            int chnl = sdevGetValidChannel();
+            char buf[64] = {0};
+            uartClear();
+
+            // get ver
+            snprintf(buf, sizeof(buf), "{\"sDevVer\":%d}", 1);
+            sengineSetStatus(buf, strlen(buf));
+            halDelayms(50);
+
+            // set channel
+            snprintf(buf, sizeof(buf), "{\"sDevChnl\":%d}", chnl);
+            sengineSetStatus(buf, strlen(buf));
+            halDelayms(50);
+
+            onlyOnce = 1;
         }
     }
 
@@ -246,10 +294,6 @@ static void reloadLatestPassport(void) {
     }
 }
 
-static int sdevGetValidChannel(void) {
-    return 11;
-}
-
 static int stateProcStart(StateContext *cntx) {
     int ret = 0;
 
@@ -265,7 +309,7 @@ static int stateProcStart(StateContext *cntx) {
         }
     }
 
-    LELOG("flag = %02x", ginPrivateCfg.data.devCfg.flag);
+    LELOG("******************************flagWiFi[0x%02x], flagIfUnBind[0x%02x]", ginPrivateCfg.data.devCfg.flagWiFi, ginPrivateCfg.data.devCfg.flagIfUnBind);
     if (0 == ret) {
         if(!getDevFlag(DEV_FLAG_RESET) && !wifiConfigByMonitor) {
             wifiConfigByMonitor = 0;
@@ -344,7 +388,7 @@ static int stateProcApConnecting(StateContext *cntx) {
         return -1;
     }
 
-    ret = halDoApConnecting(NULL, 0);
+    ret = halDoApConnecting(&ginPrivateCfg, sizeof(PrivateCfg));
     // TODO: do not reset to sniffer, it should be reset by button.
     // TIMEOUT_BEGIN(45000)
     //     ret = -1;
@@ -393,19 +437,6 @@ static int stateProcApConnected(StateContext *cntx) {
 
         ginPrivateCfg.data.nwCfg.configStatus = 2;
         lelinkStorageWritePrivateCfg(&ginPrivateCfg);
-    }
-
-    if (sengineHasDevs()) {
-        // TODO: 
-        static int8_t onlyOnceForChannel = 0;
-        if (!onlyOnceForChannel) {
-            int chnl = sdevGetValidChannel();
-            char buf[64] = {0};
-            snprintf(buf, sizeof(buf), "{\"chnl\":%d}", chnl);
-            LELOGE("sdevGetValidChannel [%d]", chnl);
-            sengineSetStatus(buf, strlen(buf));
-            onlyOnceForChannel = 1;
-        }
     }
     
     if (ginCtxR2R) {
@@ -484,8 +515,10 @@ static int stateProcCloudAuthed(StateContext *cntx) {
                 if (arr && cache) {
                     int i = 0;
                     for (i = 0; i < cache->currsize; i++) {
-                        node.reserved = i + 1;
-                        lelinkNwPostCmd(ginCtxR2R, &node);
+                        if (0x08 == (0x08 & arr[i].isSDevInfoDone)) {
+                            node.reserved = i + 1;
+                            lelinkNwPostCmd(ginCtxR2R, &node);                            
+                        }
                     }
                     node.reserved = 0;
                 }
@@ -501,11 +534,26 @@ int resetConfigData(void) {
     int ret = 0;
     ret = lelinkStorageReadPrivateCfg(&ginPrivateCfg);
     if (0 <= ret) {
+        // WiFi config info
         ginPrivateCfg.data.nwCfg.configStatus = 0;
         ginConfigStatus = 0;
-        ginPrivateCfg.data.devCfg.locked = 0;
+        // user info
+        if (ginPrivateCfg.data.devCfg.flagIfUnBind) {
+            ginPrivateCfg.data.devCfg.locked = 0;
+            ginPrivateCfg.data.iaCfg.num = 0;
+        }
         ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     }
+    if (0 > ret) {
+        LELOGE("resetConfigData [%d]", ret);
+        return ret;
+    }
+
+    if (0 > halResetConfigData()) {
+        LELOG("halResetConfigData [%d]", ret);
+        return ret;
+    }
+
     return ret; 
 }
 int lelinkNwPostCmdExt(const void *node) {

@@ -187,15 +187,15 @@ int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
     if(size > 0)
     {
         uint32_t i;
-        APPLOG("halUartRead [%d]",size);
+        APPPRINTF("halUartRead [%d]: ",size);
         for(i=0;i<size;i++)
         {
-            APPLOG("0x%02x ", buf[i]);
+            APPPRINTF("%02x ", buf[i]);
         }
-        APPLOG("halUartRead data end");
+        APPPRINTF("\r\n");
     }
 #endif
-    return size;
+    return size > 128 ? 128 : size;
 }
 
 int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
@@ -214,17 +214,18 @@ int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
         send_notice = 0;
    }
 
-    // if(size > 0)
-    // {
-    //     uint32_t i;
-    //     APPPRINTF("halUartWrite [%d]: ", size);
-    //     for(i=0;i<size;i++)
-    //     {
-    //         APPPRINTF("%02x ", buf[i]);
-    //     }
-    //     APPPRINTF("\r\n");
-    // }
-
+#if 0
+    if(size > 0)
+    {
+        uint32_t i;
+        APPPRINTF("halUartWrite [%d]: ", size);
+        for(i=0;i<size;i++)
+        {
+            APPPRINTF("%02x ", buf[i]);
+        }
+        APPPRINTF("\r\n");
+    }
+#endif
    return size;
 }
 
@@ -293,7 +294,7 @@ int halGPIORead(gpioHandler_t* handler, int *val) {
 
 static void halGPIOBlinkTimerCallback( TimerHandle_t tmr ) {
     gpioHandler_t *table = NULL;
-    int i,j;
+    int i;
     for(i = 0, table = ginGpioManager.table; i < ginGpioManager.num; i++, table++) {
         if (table->gpiostate == 2) {
             if (table->reserved2%4) {
@@ -584,6 +585,24 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
       	return ret;
 	else
 		return 0;
+}
+
+int halUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
+    return leLedRead(buf, len);
+}
+
+int halUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
+    return leLedWrite(buf, len);
+}
+
+void halSetLedStatus(RLED_STATE_t st) {
+    if (st == RLED_STATE_WIFI) {
+        leLedBlueFastBlink();
+    } else if (st == RLED_STATE_CONNECTING) {
+        leLedBlueFastBlink();
+    } else if (st == RLED_STATE_RUNNING) {
+        leLedSetDefault();
+    }
 }
 
 void halCommonInit(commonManager_t* dev) {
