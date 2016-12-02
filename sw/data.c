@@ -15,7 +15,6 @@
 #endif
 
 int getCtrlData(const char *json, int jsonLen, const char *key, char *obj, int objLen);
-extern PCACHE sdevCache();
 extern SDevNode *sdevArray();
 extern PCACHE sdevCache();
 
@@ -359,16 +358,35 @@ int getSSID(char *ssid, int ssidLen) {
     return strlen((const char *)ginSSID);
 }
 
-void setTerminalStatus(const char *status, int len) {
+void setTerminalAction(const char *status, int len) {
     char val[MAX_BUF] = {0};
-    //int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
-    int ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val));
-    LELOGW("setTerminalStatus [%d][%s]", ret, val);
-    if (0 >= ret) {
+    int ret = 0;
+    len = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val));
+    LELOGW("setTerminalAction [%d][%s]", len, val);
+
+    // cloud logical(push)
+    if (0 >= len) {
         cloudMsgHandler(status, len);
         return;
     }
-    sengineSetAction((char *)val, ret);
+
+    // slave logical
+    sengineSetAction((char *)val, len);
+
+    // local logical
+    ret = localActionHandler(val, len);
+    if (0 > ret) {
+        LELOGW("setTerminalAction localActionHandler[%d]", ret);
+        return;
+    }
+}
+
+int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData) {
+    LELOG("ud[%s] mac[%s] isSDevInfoDone[%02x]", currNode->ud, currNode->mac, currNode->isSDevInfoDone);
+    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        (*(int *)uData)++;
+    }
+    return 0;
 }
 
 int getTerminalStatus(char *status, int len) {
@@ -406,14 +424,8 @@ int getTerminalStatus(char *status, int len) {
 
     if (sengineHasDevs()) {
         uint8_t tmpStr[12] = {0};
-        SDevNode *arr = sdevArray();
-        int validSize = 0, i = 0;
-        for (i = 0; i < sdevCache()->currsize; i++) {
-            if (0x08 == (0x08 & arr[i].isSDevInfoDone)) {
-                validSize++;
-            }
-            LELOG("idx[%s] mac[%s] isSDevInfoDone[%x]", arr[i].idx, arr[i].mac, arr[i].isSDevInfoDone);
-        }
+        int validSize = 0;
+        qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForNumCB, &validSize);
         bytes2hexStr((uint8_t *)&(sdevCache()->sDevVer), sizeof(sdevCache()->sDevVer), tmpStr, sizeof(tmpStr));
         sprintf(status + tmpLen, ",\""JSON_NAME_SDEV_NUM"\":%d,\""JSON_NAME_SDEV_VER"\":\"%s\"", validSize, tmpStr);
         tmpLen = strlen(status);
@@ -444,14 +456,10 @@ int getSDevStatus(int index, char *sdevStatus, int len) {
     PCACHE cache = sdevCache(); 
     int tmpLen = 0;
     if (arr && cache) {
-        // uint8_t uuid[MAX_UUID+1] = {0};
-        // getTerminalUUID(uuid, MAX_UUID);
-        // sprintf(sdevStatus, "{\"%s\":\"%s\",\"%s\":%s,\"%s\":%s,\"%s\":\"%s\"}", JSON_NAME_UUID, uuid, JSON_NAME_SDEV, strlen(arr[index].sdevInfo) > 0 ? arr[index].sdevInfo : "{}", 
-        //     JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAC, arr[index].mac);
 
         uint8_t uuid[MAX_UUID+1] = {0};
         getTerminalUUID(uuid, MAX_UUID);
-        sprintf(sdevStatus, "{\"%s\":\"%s\"", JSON_NAME_UUID, uuid);
+        sprintf(sdevStatus, "{\"%s\":\"%s-%s\"", JSON_NAME_UUID, uuid, arr[index].mac);
         // append man start
         sprintf(&sdevStatus[strlen(sdevStatus)], ",\"%s\":%s", JSON_NAME_SDEV, strlen(arr[index].sdevInfo) > 0 ? arr[index].sdevInfo : "{}"); 
         sprintf(&sdevStatus[strlen(sdevStatus) - 1], ",\"%s\":\"%s\"}", JSON_NAME_SDEV_MAN, arr[index].sdevMan);
@@ -460,7 +468,7 @@ int getSDevStatus(int index, char *sdevStatus, int len) {
         strcpy(sdevStatus + tmpLen, ",\"ip\":\""); tmpLen = strlen(sdevStatus);
         halGetSelfAddr(sdevStatus + tmpLen, len - tmpLen, NULL); tmpLen = strlen(sdevStatus);
         // append sdevStatus
-        sprintf(&sdevStatus[strlen(sdevStatus)], "\",\"%s\":%s,\"%s\":\"%s\"}", JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAC, arr[index].mac);
+        sprintf(&sdevStatus[strlen(sdevStatus)], "\",\"%s\":%s,\"%s\":\"%s\"}", JSON_NAME_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAC, arr[index].mac);
         // LELOG("XXXXXX[%s]", sdevStatus);
     } else {
         return 0;

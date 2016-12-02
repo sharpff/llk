@@ -30,6 +30,7 @@ typedef int (*NodeCB_t)(void *curr);
 int qFullCache(PCACHE C);
 int qEmptyCache(PCACHE C);
 int qEnCache(PCACHE C, void *val);
+int qDeCache(PCACHE C, int idx);
 int qForEachfromCache(PCACHE C, int (*currNodeCB)(void *curr, void *uData), void *uData);
 int qCheckForClean(PCACHE C, int (*isNeedDelCB)(void *curr));
 

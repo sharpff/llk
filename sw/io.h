@@ -118,7 +118,7 @@ typedef struct
     CACHE_NODE_HEADER; \
     char sdevInfo[SDEV_MAX_INFO]; \
     char mac[SDEV_MAX_MAC]; \
-    uint8_t idx[SDEV_MAX_MAC]; \
+    uint8_t ud[SDEV_MAX_MAC]; \
     uint8_t sdevEpt[SDEV_MAX_EPT]; \
     uint8_t sdevMan[SDEV_MAX_CUST]; \
     uint8_t isSDevInfoDone; \

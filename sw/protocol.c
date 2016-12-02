@@ -93,6 +93,7 @@ extern void otaSetLatestType(int type);
 
 extern PCACHE sdevCache();
 extern SDevNode *sdevArray();
+extern int forEachNodeSDevThruMacCB(SDevNode *currNode, void *uData);
 
 typedef int (*CBLocalReq)(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len);
 typedef void (*CBRemoteRsp)(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
@@ -714,10 +715,7 @@ int lelinkDoPollingQ2A(void *ctx) {
     qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeQ2ARspCB, NULL);
 
 	qCheckForClean(&(pCtx->cacheCmd), (int(*)(void*))isNeedDelCB);
-/*
-    if (pCtx->cacheCmd.currsize)
-        LELOG("lelinkDoPollingQ2A cache[%d/%d]", pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
-*/
+
     memset(ipTmp, 0, sizeof(ipTmp));
     memset(pCtx->nwBuf, 0, sizeof(pCtx->nwBuf));
     memset(pCtx->protocolBuf, 0, sizeof(pCtx->protocolBuf));
@@ -733,42 +731,9 @@ int lelinkDoPollingQ2A(void *ctx) {
     ret = getPackage(pCtx, ipTmp, &portTmp, &cmdInfo);
     if (0 > ret) {
         return -2;
-        // if (pCtx->ctx) {
-        //     ret = getPackage(pCtx->ctx, ipTmp, &portTmp, &cmdInfo);
-        //     if (0 > ret) {
-        //         return;
-        //     }
-        // } else {
-        //     return;
-        // }
     }
-    // ret = nwUDPRecvfrom(pCtx, pCtx->nwBuf, UDP_MTU, ipTmp, MAX_IPLEN, &portTmp);
-    // if (ret <= 0)
-    // {
-    //     //LELOG("lelinkDoPollingQ2A nwUDPRecvfrom [%d] QA cache[%d/%d]", ret, pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
-    //     return;
-    // }
 
-    // if (0 > (ret = doUnpack(pCtx, pCtx->nwBuf, ret, pCtx->protocolBuf, sizeof(pCtx->protocolBuf), &cmdInfo)))
-    // {
-    //     LELOGW("lelinkDoPollingQ2A doUnpack [%d] [%s:%d]", ret, ipTmp, portTmp);
-    //     return;
-    // }
-
-
-    // TODO: drop/ignore the discovery from itself
-    // if (LELINK_CMD_DISCOVER_REQ == cmdInfo.cmdId) {
-    // if (isCommingFromItself(pCtx, ipTmp, portTmp)) {
-    //     return -3;
-    // }
     LELOG("lelinkDoPollingQ2A doUnpack [%d-%d]", cmdInfo.cmdId, cmdInfo.subCmdId);
-
-    /*
-    if (0 == (cmdId & 0x1))
-    {
-        LELOGW("lelinkDoPollingQ2A drop cmdId[%d] subCmdId[%d]", cmdId, subCmdId);
-        return;
-    }*/
 
     ret = doQ2AProcessing(pCtx, ret, &cmdInfo, ipTmp, portTmp);
 
@@ -1067,11 +1032,7 @@ static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHead
     // memset(COMM_CTX(pCtx)->nwBuf, 0, sizeof(COMM_CTX(pCtx)->nwBuf));
     // memset(COMM_CTX(pCtx)->protocolBuf, 0, sizeof(COMM_CTX(pCtx)->protocolBuf));
     ret = nwUDPRecvfrom(pCtx, COMM_CTX(pCtx)->nwBuf, UDP_MTU, ipTmp, MAX_IPLEN, port);
-    if (0 >= ret)
-    {
-        // LELOG("lelinkDoPollingR2R nwUDPRecvfrom [%d] R2R queue[%d/%d] [%d-%d]", 
-        //     ret, COMM_CTX(pCtx)->cacheCmd.currsize, COMM_CTX(pCtx)->cacheCmd.maxsize,
-        //     currNode->cmdId, currNode->subCmdId);
+    if (0 >= ret) {
         return -4;
     }
 
@@ -1376,7 +1337,21 @@ static void cbDiscoverRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const u
     LELOG("cbDiscoverRemoteRsp -e");
 }
 
-static int ginSDevCountsInDiscovery;
+
+extern int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData);
+static int16_t ginSDevCountsInDiscovery;
+static int16_t ginSDevCurrFoundIndex;
+static int forEachNodeSDevIteratorCB(SDevNode *currNode, void *uData) {
+    int16_t *foundIndex = (int16_t *)uData;
+    int16_t index = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize);
+    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        if (*foundIndex == index) {
+            *foundIndex = index + 1;
+            return 1;
+        }
+    }
+    return 0;
+}
 static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
@@ -1394,10 +1369,12 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
 }
 
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-    int ret = 0;
+    int ret = 0, validSize = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char rspDiscover[MAX_BUF] = {0};
     LELOG("cbDiscoverLocalRsp -s");
+
+
 
     // gen status
     if (0 == ginSDevCountsInDiscovery) {
@@ -1407,14 +1384,27 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
         }
     }
     else {
-        ret = getSDevStatus(ginSDevCountsInDiscovery-1, rspDiscover, sizeof(rspDiscover));
+        // TO FIND the index for sdev(valid), and the index should > ginSDevCurrFoundIndex
+        int index = 0;
+        index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevIteratorCB, &ginSDevCurrFoundIndex);
+        if (0 <= index) {
+            ret = getSDevStatus(index, rspDiscover, sizeof(rspDiscover));
+        } else {
+            ret = 0;
+        }
     }
 
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rspDiscover, ret, dataOut, dataLen);
     LELOG("cbDiscoverLocalRsp ******ret[%d] [%d] -e", ret, ginSDevCountsInDiscovery);
 
+    // clear the flag
     if (0 == ginSDevCountsInDiscovery--) {
-        ginSDevCountsInDiscovery = sdevCache()->currsize;
+        // ginSDevCountsInDiscovery = 0;
+        ginSDevCurrFoundIndex = 0;
+        if (sengineHasDevs()) {
+            qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForNumCB, &validSize);
+            ginSDevCountsInDiscovery = validSize;            
+        }
     }
     return ret;
 }
@@ -1524,7 +1514,7 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
-    setTerminalStatus((const char *)dataIn, dataLen);
+    setTerminalAction((const char *)dataIn, dataLen);
     LELOG("cbCtrlCmdRemoteReq [%d] -e", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);
@@ -1559,7 +1549,6 @@ static int cbCtrlGetStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, con
     return ret;
 }
 static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-extern int forEachNodeSDevThruMacCB(SDevNode *currNode, void *uData);
     int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char status[MAX_BUF] = {0};
@@ -1842,7 +1831,7 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     //     const char *ver = getScriptVer();
     //     LELOG("<=============================() [%d][%s]", testGetFreeHeap(0), ver);
     // }
-    setTerminalStatus((const char *)dataIn, dataLen);
+    setTerminalAction((const char *)dataIn, dataLen);
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
     return ret > 0 ? 1 : -1;

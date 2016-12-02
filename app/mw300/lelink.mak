@@ -2,7 +2,7 @@
 # For lelink lib
 #
 
-SYS_MACROS := mw300 PF_VAL=1
+SYS_MACROS := mw300 PF_VAL=1 STATIC_MEMORY_FOR_SCRIPT
 # [TOBESET] means u have to set the vars, E.g. ./build3.3.sh MYXPATH=/home/lf/dev/compiler/gcc-arm-none-eabi-4_9-2015q1/bin/ MYXPREFIX=arm-none-eabi-
 MYXPATH := 
 MYXPREFIX := 

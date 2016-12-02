@@ -204,7 +204,7 @@ static void uartClear() {
     }
 
     for (x = 0; x < ioGetHdlCounts(); x++) {
-        if (IO_TYPE_UART == ioHdl[x].ioType) {
+        if (IO_TYPE_UART == ioHdl[x].ioType && ioHdl[x].hdl) {
             do {
                 ret = halUartRead(ioHdl[x].hdl, &tmp, sizeof(tmp));
                 LELOG("uartClear Cleaning");
@@ -495,6 +495,15 @@ static int stateProcCloudLinked(StateContext *cntx) {
     return 0;
 }
 
+static int forEachNodeSDevForPostHeartBeatCB(SDevNode *currNode, void *uData) {
+    NodeData *node = (NodeData *)uData;
+    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        node->reserved = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize) + 1;
+        lelinkNwPostCmd(ginCtxR2R, node);                            
+    }
+    return 0;
+}
+
 static int stateProcCloudAuthed(StateContext *cntx) {
     if (0 == ginConfigStatus) {
         return -1;
@@ -509,18 +518,8 @@ static int stateProcCloudAuthed(StateContext *cntx) {
             lelinkNwPostCmd(ginCtxR2R, &node);
             node.seqId = 0;
             if (sengineHasDevs()) {
-                SDevNode *arr = sdevArray();
-                PCACHE cache = sdevCache(); 
-                LELOGW("******** stateProcCloudAuthed [%p] [%p] [%d]", arr, cache, cache->currsize);
-                if (arr && cache) {
-                    int i = 0;
-                    for (i = 0; i < cache->currsize; i++) {
-                        if (0x08 == (0x08 & arr[i].isSDevInfoDone)) {
-                            node.reserved = i + 1;
-                            lelinkNwPostCmd(ginCtxR2R, &node);                            
-                        }
-                    }
-                    node.reserved = 0;
+                if (sdevArray() && sdevCache()) {
+                    qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForPostHeartBeatCB, &node);
                 }
             }
         }

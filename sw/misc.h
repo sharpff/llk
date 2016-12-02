@@ -77,7 +77,8 @@ extern "C"
 #define JSON_NAME_SDEV_NUM          "sDevNum"
 #define JSON_NAME_SDEV_VER          "sDevVer"
 #define JSON_NAME_SDEV_DEL          "sDevDel"
-#define JSON_NAME_SDEV_INDEX        "idx"
+#define JSON_NAME_SDEV_CLR          "sDevClr"
+#define JSON_NAME_SDEV_USER_DATA    "ud"
 #define JSON_NAME_SDEV_EPT          "ept"
 #define JSON_NAME_SDEV_MAN          "man"
 #define JSON_NAME_SDEV_PID          "pid"
@@ -114,9 +115,11 @@ int getUUIDFromJson(const char *json, int jsonLen, char *uuid, int uuidLen);
 int getJsonOTAType(const char *json, int jsonLen, char *url, int urlLen);
 int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen);
 
+int localActionHandler(const char *data, int len);
 int cloudMsgHandler(const char *data, int len);
 int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen);
 int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size);
+int getIntValByKey(const char *json, int jsonLen, const char *key, int *val);
 int printOut(const char *fmt, ...);
 #ifdef __cplusplus
 }

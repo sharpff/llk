@@ -204,7 +204,7 @@ function s1OptDoSplit(data)
 	local tblDataCountLen = {}
 	local strDataCountLen = ""
 	local where = 1
-	local idx = 0
+	local ud = 0
 	local tblData = stringToTable(data)
 	local dataLen = 0
 	if 0x01 == cvtType then
@@ -226,9 +226,9 @@ function s1OptDoSplit(data)
 				print("[LUA E] csum failed\r\n")
 				break
 			end
-			tblDataCountLen[idx + 1] = #(whatWrite(tmpTbl)) & 0xFF
-			tblDataCountLen[idx + 2] = 0x00
-			idx = idx + 2
+			tblDataCountLen[ud + 1] = #(whatWrite(tmpTbl)) & 0xFF
+			tblDataCountLen[ud + 2] = 0x00
+			ud = ud + 2
 			where = where + 7 + tmpLen
 		end
 
@@ -461,22 +461,22 @@ function s1CvtStd2Pri(json)
 	 				break
 				end
 
-				-- "{\"sDevDel\":1,\"mac\":\"C06FA000E44CE36F\"}"
+				-- "{"ctrl":{\"sDevDel\":1,\"mac\":\"C06FA000E44CE36F\"}}"
 				if ctrl["sDevDel"] then
 				-- NXP is 01 00 47 00 0C 18 05 7D C0 6F A0 00 E4 4C E3 6F 00 00 03
 				-- RAW is 01 02 10 47 02 10 02 1C 18 02 15 7D C0 6F A0 02 10 E4 4C E3 6F 02 10 02 10 03
 					local mac = ctrl["mac"]
 					-- local addr = "1234"
-					local addr = s1apiSdevGetUserDataByMac(mac)
+					local ud = s1apiSdevGetUserDataByMac(mac)
 					local str = string.char(0x01, 0x00, 0x47, 0x00, 0x0C, 0x00)
-					str = str .. hex2bin(addr) .. hex2bin(mac) .. string.char(0x00, 0x00, 0x03)
+					str = str .. hex2bin(ud) .. hex2bin(mac) .. string.char(0x00, 0x00, 0x03)
 					cmdTbl = stringToTable(str)
 					cmdTbl[6] = csum(cmdTbl)
 					LOGTBL(cmdTbl)
 	 				break
 				end
 
-				-- "{\"sDevClr\":1}"
+				-- "{"ctrl":{\"sDevClr\":1}}"
 				if ctrl["sDevClr"] then
 					-- NXP is 01 00 12 00 00 12 03 
 					-- RAW is 01 02 10 12 02 10 02 10 12 03 
@@ -487,30 +487,30 @@ function s1CvtStd2Pri(json)
 				end
 
 				-- INTERNAL QUERY
-				-- "{\"sDevQryEpt\":1,\"idx\":\"ABCD\"}"
+				-- "{\"sDevQryEpt\":1,\"ud\":\"ABCD\"}"
 				if ctrl["sDevQryEpt"] == 1 then
 					local str = string.char(0x01, 0x00, 0x45, 0x00, 0x02, 0x00)
-					local addr = ctrl["idx"]
+					local addr = ctrl["ud"]
 					str = str..hex2bin(addr)..string.char(0x03)
 					cmdTbl = stringToTable(str)
 					cmdTbl[6] = csum(cmdTbl)
 					LOGTBL(cmdTbl)
 					break
 				end
-				-- "{\"sDevQryMan\":1,\"idx\":\"ABCD\"}"
+				-- "{\"sDevQryMan\":1,\"ud\":\"ABCD\"}"
 				if ctrl["sDevQryMan"] == 1 then
 					local str = string.char(0x01, 0x00, 0x42, 0x00, 0x02, 0x00)
-					local addr = ctrl["idx"]
+					local addr = ctrl["ud"]
 					str = str..hex2bin(addr)..string.char(0x03)
 					cmdTbl = stringToTable(str)
 					cmdTbl[6] = csum(cmdTbl)
 					LOGTBL(cmdTbl)
 					break
 				end
-				-- "{\"sDevQryEptInfo\":1,\"idx\":\"ABCD\",\"ept\":1}"
+				-- "{\"sDevQryEptInfo\":1,\"ud\":\"ABCD\",\"ept\":1}"
 				if ctrl["sDevQryEptInfo"] == 1 then
 					local str = string.char(0x01, 0x00, 0x43, 0x00, 0x03, 0x00)
-					local addr = ctrl["idx"]
+					local addr = ctrl["ud"]
 					local ept = ctrl["ept"]
 					str = str..hex2bin(addr)..string.char(ept, 0x03)
 					cmdTbl = stringToTable(str)
@@ -524,9 +524,9 @@ function s1CvtStd2Pri(json)
 					local str = string.char(0x01, 0x00, 0x92, 0x00, 0x00, 0x00, 0x02)
 					local mac = ctrl["sDev"]["mac"]
 					local dEpt = ctrl["sDev"]["ept"]
-					-- local idx = s1apiSdevGetUserDataByMac(mac)
-					local idx = string.char(0x31, 0x71)
-					str = str..idx..string.char(0x01)..string.char(dEpt)..genSDevCtrl(ctrl["sDev"], sDevCtrl)..string.char(0x03)
+					-- local ud = s1apiSdevGetUserDataByMac(mac)
+					local ud = string.char(0x31, 0x71)
+					str = str..ud..string.char(0x01)..string.char(dEpt)..genSDevCtrl(ctrl["sDev"], sDevCtrl)..string.char(0x03)
 					cmdTbl = stringToTable(str)
 					-- len
 					cmdTbl[5] = (string.len(str) - 7) & 0xff
@@ -602,9 +602,9 @@ function s1CvtPri2Std(bin)
 			print("s1CvtPri2Std\r\n")
 			LOGTBL(dataTbl)
 			bin = tableToString(dataTbl)
-			-- (RSP) ept list {"sDevQryEpt":2,"idx":"DB8F","ept":[1,2]}
+			-- (RSP) ept list {"sDevQryEpt":2,"ud":"DB8F","ept":[1,2]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x45)) then
-				str = '{"sDevQryEpt":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":['
+				str = '{"sDevQryEpt":2,"ud":"'..bin2hex(string.sub(bin,9,10))..'","ept":['
 				for i = 12, dataTbl[11]+11 do
 					str = str..dataTbl[i]..','
 				end
@@ -612,9 +612,9 @@ function s1CvtPri2Std(bin)
 				break
 			end
 			
-			-- (RSP) ept info {"sDevQryEptInfo":2,"idx":"DB8F","pid":"0104","ept":1,"did":"0101","clu":["0000","0004"]}
+			-- (RSP) ept info {"sDevQryEptInfo":2,"ud":"DB8F","pid":"0104","ept":1,"did":"0101","clu":["0000","0004"]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x43)) then
-				str = '{"sDevQryEptInfo":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","ept":'..dataTbl[12]..',"sDevDes":{"ept":'..dataTbl[12]..',"pid":"'..bin2hex(string.sub(bin,13,14))..'","did":"'..bin2hex(string.sub(bin,15,16))..'"'
+				str = '{"sDevQryEptInfo":2,"ud":"'..bin2hex(string.sub(bin,9,10))..'","ept":'..dataTbl[12]..',"sDevDes":{"ept":'..dataTbl[12]..',"pid":"'..bin2hex(string.sub(bin,13,14))..'","did":"'..bin2hex(string.sub(bin,15,16))..'"'
 				local m = 18
 				if dataTbl[m] > 0 then
 					str = str..',"cluI":['
@@ -638,18 +638,32 @@ function s1CvtPri2Std(bin)
 				break
 			end
 
-			-- (RSP) manufacture {"sDevQryMan":2,"idx":"DB8F","man":"1234"}
+			-- (RSP) manufacture {"sDevQryMan":2,"ud":"DB8F","man":"1234"}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x42)) then
-				str = '{"sDevQryMan":2,"idx":"'..bin2hex(string.sub(bin,9,10))..'","man":"'..bin2hex(string.sub(bin,11,12))..'"}'
+				local ud = bin2hex(string.sub(bin,9,10))
+				local man = bin2hex(string.sub(bin,11,12))
+				
+				-- test only START
+				local mac = s1apiSDevGetMacByUserData(bin2hex(string.sub(bin,9,10)))
+				-- local mac = "00124B000CC39852"
+				if string.find(mac, "00124B00076A76E4") then
+					man = bin2hex(string.char(0x00, 0x1C))
+				elseif string.find(mac, "00124B000CC39852") then
+					man = bin2hex(string.char(0x00, 0x1D))
+				elseif string.find(mac, "00158D0000F4D4E7") then
+					man = bin2hex(string.char(0xEE, 0xFF))
+				end
+				-- test only END
+				str = '{"sDevQryMan":2,"ud":"'..ud..'","man":"'..man..'"}'
 				break
 			end
 
 			-- INTERNAL -> EXTERNAL
 			-- (IND) join, leave
 			if nil ~= string.find(bin, string.char(0x01, 0x00, 0x4D)) then
-				-- {"sDevJoin":2,"sDev":{"idx":"DB8F","mac":"6FE34CE400A06FC0"}}
-				str = '{"sDevJoin":2,"idx":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}'
-				-- str = '{"sDevJoin":2,"sDev":{"idx":"DB8F","mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
+				-- {"sDevJoin":2,"sDev":{"ud":"DB8F","mac":"6FE34CE400A06FC0"}}
+				str = '{"sDevJoin":2,"ud":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}'
+				-- str = '{"sDevJoin":2,"sDev":{"ud":"DB8F","mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
 				break
 			end
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x48)) then
@@ -658,15 +672,15 @@ function s1CvtPri2Std(bin)
 				break
 			end
 			-- (IND) ind actions
-			-- {"sDevStatus":{"btn":1},"sDev":{"idx":"DB8F"}}
+			-- {"sDevStatus":{"btn":1},"sDev":{"ud":"DB8F"}}
 			if nil ~= string.find(bin, string.char(0x01, 0x81, 0x02)) then
-				str = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,11,12)), bin2hex(string.sub(bin,10,10)), bin2hex(string.sub(bin,17,17)))..',"sDev":{"idx":"'..bin2hex(string.sub(bin,8,9)).. '"}}'
+				str = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,11,12)), bin2hex(string.sub(bin,10,10)), bin2hex(string.sub(bin,17,17)))..',"sDev":{"ud":"'..bin2hex(string.sub(bin,8,9)).. '"}}'
 				break
 			end
 
 			-- (IAS IND) 018401000da50401050002c5eb00000000000103 
 			if nil ~= string.find(bin, string.char(0x01, 0x84, 0x01)) then
-				str = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,9,10)), bin2hex(string.sub(bin,8,8)), bin2hex(string.sub(bin,14,15)))..',"sDev":{"idx":"'..bin2hex(string.sub(bin,12,13)).. '"}}'
+				str = '{"sDevStatus":'..genStatus(bin2hex(string.sub(bin,9,10)), bin2hex(string.sub(bin,8,8)), bin2hex(string.sub(bin,14,15)))..',"sDev":{"ud":"'..bin2hex(string.sub(bin,12,13)).. '"}}'
 				break
 			end
 			-- 01 80 10 00 04 97 00 02 00 01 03 

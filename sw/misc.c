@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include "data.h"
 #include "sengine.h"
+#include "cache.h"
 
 static char miscBuf[MAX_BUF] = {0};
 
@@ -650,6 +651,43 @@ void logToMaster(const char *log) {
     halNwUDPSendto(ginLogSock, ginIP, ginPort, (const uint8_t *)log, strlen(log));
 }
 
+extern PCACHE sdevCache();
+extern int forEachNodeSDevByMacCB(SDevNode *currNode, void *uData);
+extern int sdevArrayDel(int index);
+extern void sdevArrayReset();
+int localActionHandler(const char *data, int len) {
+    int ret = 0;
+
+    if (sengineHasDevs()) {
+        int val = 0;
+        char mac[SDEV_MAX_MAC] = {0};
+        // del single sdev 
+        ret = getIntValByKey(data, len, JSON_NAME_SDEV_DEL, &val);
+        if (0 == ret) {
+            ret = getStrValByKey(data, len, JSON_NAME_SDEV_MAC, mac, sizeof(mac));
+            if (0 == ret) {
+                ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, mac);
+                if (0 <= ret) {
+                    ret = sdevArrayDel(ret);
+                    return ret >= 0 ? 0 : -2;
+                }
+                return -3;
+            } else {
+                return -4;
+            }
+        }
+
+        // clear all sdev(s) 
+        ret = getIntValByKey(data, len, JSON_NAME_SDEV_CLR, &val);
+        if (0 == ret) {
+            sdevArrayReset();
+            return 0;
+        }
+    }
+
+    return ret;
+}
+
 int cloudMsgHandler(const char *data, int len) {
 
     int ret = WM_SUCCESS, dir = 0;
@@ -757,6 +795,22 @@ int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, i
     }
     return 0;
 }
+
+int getIntValByKey(const char *json, int jsonLen, const char *key, int *val) {
+    jobj_t jobj;
+    int ret = -1;
+    jsontok_t jsonToken[NUM_TOKENS];
+
+    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
+    if(WM_SUCCESS != ret) {
+        return -1;
+    }
+    if(WM_SUCCESS != json_get_val_int(&jobj, (char *)key, val)) {
+        return -2;
+    }
+    return 0;
+}
+
 
 int printOut(const char *fmt, ...) {
     va_list args;
