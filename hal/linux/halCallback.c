@@ -89,11 +89,11 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 int type = 0, sizeOTA = 0;
                 // sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
 
-                // type = OTA_TYPE_FW;
+                type = OTA_TYPE_FW;
                 // type = OTA_TYPE_FW_SCRIPT;
                 // type = OTA_TYPE_IA_SCRIPT;
                 // type = OTA_TYPE_AUTH;
-                type = OTA_TYPE_PRIVATE;
+                // type = OTA_TYPE_PRIVATE;
                 // type = OTA_TYPE_SDEVINFO;
                 // type = OTA_TYPE_SDEVFW;
                 

@@ -134,7 +134,7 @@ typedef struct {
     int beingReservedNum;
     char ruleName[MAX_RULE_NAME];
     char beingReservedStatus[MAX_RSV_NUM][MAX_BUF];
-    uint8_t beingReservedUUID[MAX_RSV_NUM][MAX_UUID];
+    uint8_t beingReservedUUID[MAX_RSV_NUM][2*MAX_UUID];
 }IA_CACHE_INT;
 
 typedef struct {
@@ -150,8 +150,8 @@ extern ScriptCfg2 *ginScriptCfg2;
 int sengineInit(void);
 int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen);
 int sengineHasDevs(void);
-int sengineGetStatus(char *json, int jsonLen);
-int sengineSetStatus(char *json, int jsonLen);
+int sengineGetStatusVal(char *json, int jsonLen);
+int sengineSetAction(char *json, int jsonLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
 int sengineQuerySlave(QuerieType_t type);
 int senginePollingSlave(void);

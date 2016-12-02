@@ -14,7 +14,7 @@ typedef enum {
     E_PLT_TYPE_MAX,
 }E_PLT_TYPE;
 
-extern int sengineSetStatus(char *json, int jsonLen);
+extern int sengineSetAction(char *json, int jsonLen);
 extern int getVer(char fwVer[64], int size);
 extern int halGetMac(uint8_t *mac, int len);
 static const char *cmdFormat = "{\"light\":%d,\"mode\":%d,\"timeout\":%d,\"brightness\":%d,\"red\":%d,\"green\":%d,\"blue\":%d}";
@@ -117,7 +117,7 @@ void lelinkPltCtrlProcess(void) {
         case E_PLT_TYPE_CTRL: {
         	cmdType = E_PLT_TYPE_IDLE;
         	APPLOG("lelinkPltCtrlProcess ctrl\n");
-            sengineSetStatus(cmdBuff, strlen(cmdBuff));
+            sengineSetAction(cmdBuff, strlen(cmdBuff));
         }
         break;
         case E_PLT_TYPE_VERSION: {

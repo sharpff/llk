@@ -14,7 +14,7 @@
  * for standard case, ip shoudl be got from DNS only.
  */
 
-// #define DNS_IP_TEST
+#define DNS_IP_TEST
 
 #ifndef LOG_STATE
 #ifdef LELOG
@@ -245,12 +245,12 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
 
             // get ver
             snprintf(buf, sizeof(buf), "{\"sDevVer\":%d}", 1);
-            sengineSetStatus(buf, strlen(buf));
+            sengineSetAction(buf, strlen(buf));
             halDelayms(50);
 
             // set channel
             snprintf(buf, sizeof(buf), "{\"sDevChnl\":%d}", chnl);
-            sengineSetStatus(buf, strlen(buf));
+            sengineSetAction(buf, strlen(buf));
             halDelayms(50);
 
             onlyOnce = 1;

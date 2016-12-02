@@ -344,7 +344,7 @@ end
 
 -- \{\"ctrl\":\{\"reset\":1\}\}
 -- \{\"ctrl\":\{\"sDevJoin\":1\}\}
--- \{\"ctrl\":\{\"sDevLeave\":\{\"addr\":\"057d\",\"mac\":\"C06FA000E44CE36F\"\}\}\}
+-- \{\"ctrl\":\{\"sDevDel\":1,\"mac\":\"C06FA000E44CE36F\"\}\}
 -- \{\"ctrl\":\{\"sDevGetList\":1\}\}
 -- \{\"ctrl\":\{\"sDevGetInfo\":0\}\}
 -- \{\"ctrl\":\{\"pwr\":1,\"sDev\":\{\"pid\":\"0104\",\"did\":\"0107\",\"clu\":\"0006\",\"ept\":[1,2],\"mac\":\"7409E17E3376AF60\"\}\}\}
@@ -461,16 +461,27 @@ function s1CvtStd2Pri(json)
 	 				break
 				end
 
-				-- "{\"sDevLeave\":1,\"idx\":\"ABCD\",\"mac\":\"C06FA000E44CE36F\"}"
-				if ctrl["sDevLeave"] then
+				-- "{\"sDevDel\":1,\"mac\":\"C06FA000E44CE36F\"}"
+				if ctrl["sDevDel"] then
 				-- NXP is 01 00 47 00 0C 18 05 7D C0 6F A0 00 E4 4C E3 6F 00 00 03
 				-- RAW is 01 02 10 47 02 10 02 1C 18 02 15 7D C0 6F A0 02 10 E4 4C E3 6F 02 10 02 10 03
-					local addr = ctrl["idx"]
 					local mac = ctrl["mac"]
+					-- local addr = "1234"
+					local addr = s1apiSdevGetUserDataByMac(mac)
 					local str = string.char(0x01, 0x00, 0x47, 0x00, 0x0C, 0x00)
 					str = str .. hex2bin(addr) .. hex2bin(mac) .. string.char(0x00, 0x00, 0x03)
 					cmdTbl = stringToTable(str)
 					cmdTbl[6] = csum(cmdTbl)
+					LOGTBL(cmdTbl)
+	 				break
+				end
+
+				-- "{\"sDevClr\":1}"
+				if ctrl["sDevClr"] then
+					-- NXP is 01 00 12 00 00 12 03 
+					-- RAW is 01 02 10 12 02 10 02 10 12 03 
+					local str = string.char(0x01, 0x00, 0x12, 0x00, 0x00, 0x12, 0x03)
+					cmdTbl = stringToTable(str)
 					LOGTBL(cmdTbl)
 	 				break
 				end
@@ -574,7 +585,7 @@ function s1CvtPri2Std(bin)
     local PRI2STD_LEN_INTERNAL = 0x40000000
     local PRI2STD_LEN_BOTH = 0x20000000
     local PRI2STD_LEN_MAX = 0x0000FFFF
-    local val1, val2, val3, val4, val5, val6, val7, val8, val9
+    local v1, v2, v3, v4, v5, v6, v7, v8, v9
 	-- test only
 	-- cvtType = 0x01
 
@@ -637,13 +648,13 @@ function s1CvtPri2Std(bin)
 			-- (IND) join, leave
 			if nil ~= string.find(bin, string.char(0x01, 0x00, 0x4D)) then
 				-- {"sDevJoin":2,"sDev":{"idx":"DB8F","mac":"6FE34CE400A06FC0"}}
-				str = '{"sDevJoin":2,"sDev":{"idx":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
+				str = '{"sDevJoin":2,"idx":'..'"'..bin2hex(string.sub(bin,7,8))..'"'..',"mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}'
 				-- str = '{"sDevJoin":2,"sDev":{"idx":"DB8F","mac":'..'"'..bin2hex(string.sub(bin,9,16))..'"'..'}}'
 				break
 			end
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x48)) then
-				-- {"sDevLeave":2,"sDev":{mac":"6FE34CE400A06FC0"}}
-				str = '{"sDevLeave":2,"sDev":{"mac":'..'"'..bin2hex(string.sub(bin,7,14))..'"'..'}}'
+				-- {"sDevDel":2,"mac":"6FE34CE400A06FC0"}
+				str = '{"sDevDel":2,"mac":'..'"'..bin2hex(string.sub(bin,7,14))..'"'..'}'
 				break
 			end
 			-- (IND) ind actions
@@ -671,61 +682,61 @@ function s1CvtPri2Std(bin)
 		end
 		print("result -> "..str..'\r\n')
 	elseif 0x20 == cvtType then
-		val1, val2, val3, val4, val5, val6, val7, val8 = 0, 0, 0, 0, 0, 0, 0, 0
+		v1, v2, v3, v4, v5, v6, v7, v8 = 0, 0, 0, 0, 0, 0, 0, 0
 		local lenStatus, currStatus = s1apiGetDevStatus()
 		if lenStatus <= 2 then
 			str = string.format(status, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 		end
 		local id = bin:byte(1)
-		local i = 0, val
+		local i = 0, v
 		if id == 0 then
             if lenStatus > 2 then
                 local tb = cjson.decode(currStatus)
-                val1 = tb["light"]
-                val2 = tb["mode"]
-                val3 = tb["timeout"]
-                val4 = tb["brightness"]
-                val5 = tb["red"]
-                val6 = tb["green"]
-                val7 = tb["blue"]
-                val8 = tb["wifimode"]
+                v1 = tb["light"]
+                v2 = tb["mode"]
+                v3 = tb["timeout"]
+                v4 = tb["brightness"]
+                v5 = tb["red"]
+                v6 = tb["green"]
+                v7 = tb["blue"]
+                v8 = tb["wifimode"]
             end
             if bin:byte(2) == 1 then
-                if val1 == 0 then
-                    str = string.format(status, 1, val2, 0, val4, val5, val6, val7, 1, val8)
+                if v1 == 0 then
+                    str = string.format(status, 1, v2, 0, v4, v5, v6, v7, 1, v8)
                 else
-                    str = string.format(status, 0, val2, 0, val4, val5, val6, val7, 0, val8)
+                    str = string.format(status, 0, v2, 0, v4, v5, v6, v7, 0, v8)
                 end
             elseif bin:byte(2) == 2 then
-                str = string.format(status, 1, 100, 10, val4, val5, val6, val7, 1, val8)
+                str = string.format(status, 1, 100, 10, v4, v5, v6, v7, 1, v8)
             elseif bin:byte(2) == 0xFF then
-                str = string.format(status, 1, 101, 10, val4, val5, val6, val7, 0xFF, val8)
+                str = string.format(status, 1, 101, 10, v4, v5, v6, v7, 0xFF, v8)
             elseif bin:byte(2) == 0 then
-                str = string.format(status, val1, val2, val3, val4, val5, val6, val7, 0, val8)
+                str = string.format(status, v1, v2, v3, v4, v5, v6, v7, 0, v8)
             end
         end
 		len = PRI2STD_LEN_BOTH
 	elseif 0x8000 == cvtType then
 		if #bin >= 11 then
-			val8, val9 = 0, 0
+			v8, v9 = 0, 0
             local lenStatus1, currStatus1 = s1apiGetDevStatus()
             if lenStatus1 > 2 then
 	            local tb1 = cjson.decode(currStatus1)
-	            val8 = tb1["service"]
+	            v8 = tb1["service"]
         	end
-			val1 = bin:byte(1)
-	        val2 = bin:byte(2)
-	        val3 = bin:byte(3)
-	        val4 = bin:byte(4)
-	        val4 = (val4 << 8) | bin:byte(5)
-	        val5 = bin:byte(6)
-	        val5 = (val5 << 8) | bin:byte(7)
-	        val6 = bin:byte(8)
-	        val6 = (val6 << 8) | bin:byte(9)
-	        val7 = bin:byte(10)
-	        val7 = (val7 << 8) | bin:byte(11)
-	        val9 = bin:byte(12)
-	        str = string.format(status, val1, val2, val3, val4, val5, val6, val7, val8, val9)
+			v1 = bin:byte(1)
+	        v2 = bin:byte(2)
+	        v3 = bin:byte(3)
+	        v4 = bin:byte(4)
+	        v4 = (v4 << 8) | bin:byte(5)
+	        v5 = bin:byte(6)
+	        v5 = (v5 << 8) | bin:byte(7)
+	        v6 = bin:byte(8)
+	        v6 = (v6 << 8) | bin:byte(9)
+	        v7 = bin:byte(10)
+	        v7 = (v7 << 8) | bin:byte(11)
+	        v9 = bin:byte(12)
+	        str = string.format(status, v1, v2, v3, v4, v5, v6, v7, v8, v9)
 		end
 	end
 	return string.len(str) + len, str

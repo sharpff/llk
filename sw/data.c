@@ -368,7 +368,7 @@ void setTerminalStatus(const char *status, int len) {
         cloudMsgHandler(status, len);
         return;
     }
-    sengineSetStatus((char *)val, ret);
+    sengineSetAction((char *)val, ret);
 }
 
 int getTerminalStatus(char *status, int len) {
@@ -382,7 +382,7 @@ int getTerminalStatus(char *status, int len) {
     strcpy(status, "{\"status\":");
     tmpLen = strlen(status);
 
-    sengineGetStatus(status + tmpLen, len - strlen(status));
+    sengineGetStatusVal(status + tmpLen, len - strlen(status));
 
     tmpLen = strlen(status);
 
