@@ -1976,6 +1976,7 @@ static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdIn
 static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     int type = 0;
+    int force = 0;
     char url[MAX_BUF] = {0};
     // uint8_t sig[RSA_LEN] = {0};
     CmdHeaderInfo* tmpCmdInfo = (CmdHeaderInfo *)cmdInfo;
@@ -1991,7 +1992,8 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
     } else {
         NodeData node = {0};
         type = getJsonOTAType((char *)data + RSA_LEN, len - RSA_LEN, url, sizeof(url));
-        LELOG("TOTOAL[%d] type[%d] json[%d][%s] url[%s]", len, type, len - RSA_LEN, (char *)data + RSA_LEN, url);
+        ret = getIntValByKey((char *)data + RSA_LEN, len - RSA_LEN, JSON_NAME_FORCE, &force);
+        LELOG("TOTOAL[%d] type[%d] force[%d] json[%d][%s] url[%s]", len, type, force, len - RSA_LEN, (char *)data + RSA_LEN, url);
 
         {
             int i = 0; 
@@ -2050,7 +2052,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }    
         // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
         if (LELINK_ERR_SUCCESS == tmpCmdInfo->status && 
-            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_FW == type)) {
+            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_FW == type || force == 1)) {
             postReboot(ctx);
         }
     }

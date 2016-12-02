@@ -8,7 +8,7 @@ extern int getRegion(E_FLASH_TYPE type, FlashRegion *region);
 static int ginOTAType = OTA_TYPE_NONE;
 static char ginOTAUrl[MAX_BUF];
 static uint8_t ginOTASig[RSA_LEN];
-
+int8_t ginScriptUpdate = 0;
 
 const char *otaGetLatestUrl() {
     return ginOTAUrl[0] ? ginOTAUrl : NULL;
@@ -110,6 +110,7 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                             break;
                         }
                     }
+                    ginScriptUpdate = 1;
                     LELOG("OTA script type [%d] ret[%d] status[%d]", type, ret, status);
                 } else {
                     status = -1;
