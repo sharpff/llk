@@ -984,7 +984,7 @@ static int lf_s2GetSelfName(lua_State *L, uint8_t *output, int outputLen) {
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, size);
-        LEPRINTF("[SENGINE] lf_s2GetSelfName: [%d][%s]", size, output);
+        APPLOG("[SENGINE] lf_s2GetSelfName: [%d][%s]", size, output);
     } else {
         size = 0;
     }
@@ -1000,7 +1000,7 @@ static int lf_s2GetRuleType(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     *((int *)output) = lua_tointeger(L, -2);
     *(((int *)output + 1)) = lua_tointeger(L, -1);
-    LEPRINTF("[SENGINE] s2GetRuleType: repeat[%d] isAnd[%d]", *((int *)output), *(((int *)output + 1)));
+    APPLOG("[SENGINE] s2GetRuleType: repeat[%d] isAnd[%d]", *((int *)output), *(((int *)output + 1)));
 
     return 2*sizeof(int);
 }
@@ -1092,7 +1092,7 @@ static IO lf_s2IsConditionOKExt_input(lua_State *L, const uint8_t *input, int in
 static int lf_s2IsConditionOKExt(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     *((int *)output) = lua_tointeger(L, -1);
-    LEPRINTF("[SENGINE] s2IsConditionOK: [%d]", *((int *)output));
+    APPLOG("[SENGINE] s2IsConditionOK: [%d]", *((int *)output));
     return sizeof(int);
 }
 
@@ -1108,7 +1108,7 @@ static int lf_s2GetSelfCtrlCmd(lua_State *L, uint8_t *output, int outputLen) {
     const char *tmp = (const char *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
         memcpy(output, tmp, sLen); output[sLen] = 0;
-        LEPRINTF("[SENGINE] s2GetSelfCtrlCmd: [%d][%s]", sLen, output);
+        APPLOG("[SENGINE] s2GetSelfCtrlCmd: [%d][%s]", sLen, output);
     } else {
         sLen = 0;
     }

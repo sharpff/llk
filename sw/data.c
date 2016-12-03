@@ -431,15 +431,27 @@ int getTerminalStatus(char *status, int len) {
         tmpLen = strlen(status);
     }
 
-    tmpLen += sprintf(status + tmpLen, ",\"uuids\":%s", "[");
-    for (cnt = 0, i = 0; i < ginIACache.cfg.num; i++) {
+// {
+//     ginIACache.cfg.num = 2;
+//     ginIACache.cache[0].beingReservedNum = 2;
+//     strcpy(ginIACache.cache[0].ruleName, "aaa");
+//     strcpy(ginIACache.cache[0].beingReservedUUID[0], "1234");
+//     strcpy(ginIACache.cache[0].beingReservedUUID[1], "4321");
+//     ginIACache.cache[1].beingReservedNum = 2;
+//     strcpy(ginIACache.cache[1].ruleName, "bbb");
+//     strcpy(ginIACache.cache[1].beingReservedUUID[0], "12345");
+//     strcpy(ginIACache.cache[1].beingReservedUUID[1], "43216");
+// }
+    tmpLen += sprintf(status + tmpLen, ",\"uuids\":%s", "{");
+    for (i = 0; i < ginIACache.cfg.num; i++) {
         cacheInt = &(ginIACache.cache[i]);
+        tmpLen += sprintf(status + tmpLen, "%s\"%s\":[", (i > 0 ? ",":""), cacheInt->ruleName);
         for(j = 0; j < cacheInt->beingReservedNum; j++) {
-            tmpLen += sprintf(status + tmpLen, "%s\"%s\"", (cnt > 0 ? ",":""), cacheInt->beingReservedUUID[j]);
-            cnt++;
+            tmpLen += sprintf(status + tmpLen, "%s\"%s\"", (j > 0 ? ",":""), cacheInt->beingReservedUUID[j]);
         }
+        tmpLen += sprintf(status + tmpLen, "%s", "]");
     }
-    tmpLen += sprintf(status + tmpLen, "%s", "]");
+    tmpLen += sprintf(status + tmpLen, "%s", "}");
 
     // status[tmpLen] = '"'; 
     // tmpLen += 1;
