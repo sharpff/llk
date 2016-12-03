@@ -37,6 +37,7 @@ int8_t gin_airconfig_sniffer_got;
 
 #define AIRCONFIG_TIMEOUT (60*60*1000/portTICK_PERIOD_MS)
 
+// TODO: discuss (naming)
 int halResetConfigData(void) {
     leLedReset();
     return 0;

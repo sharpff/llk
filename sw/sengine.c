@@ -2138,7 +2138,7 @@ int sengineRemoveRules(const char *name) {
     }
     found = findPosForIAName(&privCfg, name, strlen(name), &whereToPut);
     if (found) {
-        privCfg.data.iaCfg.arrIA[whereToPut] = -1;
+        privCfg.data.iaCfg.arrIA[whereToPut] = 0;
         privCfg.data.iaCfg.num--;
         lelinkStorageWritePrivateCfg(&privCfg);
         return found;

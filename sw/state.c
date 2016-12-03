@@ -540,6 +540,7 @@ int resetConfigData(void) {
         if (ginPrivateCfg.data.devCfg.flagIfUnBind) {
             ginPrivateCfg.data.devCfg.locked = 0;
             ginPrivateCfg.data.iaCfg.num = 0;
+            memset(ginPrivateCfg.data.iaCfg.arrIA, 0, sizeof(ginPrivateCfg.data.iaCfg.arrIA));
         }
         ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     }

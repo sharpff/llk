@@ -352,7 +352,7 @@ int lelinkStorageWriteScriptCfg2(const void *scriptCfg) {
     if (0 > ret) {
         // a new ia item
         if (!found && 0 <= whereToPut) {
-            privCfg.data.iaCfg.arrIA[whereToPut] = -1;
+            privCfg.data.iaCfg.arrIA[whereToPut] = 0;
             privCfg.data.iaCfg.num--;
             lelinkStorageWritePrivateCfg(&privCfg);
         }
