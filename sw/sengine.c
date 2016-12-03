@@ -1708,6 +1708,22 @@ int sengineQuerySlave(QuerieType_t type)
     return 0;
 }
 
+static void sengineIODataHandler(const char *status, int len) {
+    if ((PRI2STD_LEN_INTERNAL == (PRI2STD_LEN_INTERNAL & len)) || 
+        (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
+        LELOGW("senginePollingSlave native status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
+        sengineSetAction((char *)status, (len & PRI2STD_LEN_MAX));
+    }
+    if (PRI2STD_LEN_MAX > len || 
+        (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
+        if (cacheIsChanged(status, (len & PRI2STD_LEN_MAX))) {
+            LELOGW("senginePollingSlave cloud status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
+            postStatusChanged(0);
+            sengineSetStatusVal(status, (len & PRI2STD_LEN_MAX));
+        }
+    }
+}
+
 int senginePollingSlave(void) {
     Datas datas = {0};
     char status[MAX_BUF] = {0};
@@ -1773,19 +1789,7 @@ int senginePollingSlave(void) {
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else {
-                            if ((PRI2STD_LEN_INTERNAL == (PRI2STD_LEN_INTERNAL & len)) || 
-                                (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
-                                LELOGW("senginePollingSlave native status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
-                                sengineSetAction((char *)status, (len & PRI2STD_LEN_MAX));
-                            }
-                            if (PRI2STD_LEN_MAX > len || 
-                                (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
-                                if (cacheIsChanged(status, (len & PRI2STD_LEN_MAX))) {
-                                    LELOGW("senginePollingSlave cloud status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
-                                    postStatusChanged(0);
-                                    sengineSetStatusVal(status, (len & PRI2STD_LEN_MAX));
-                                }
-                            }
+                            sengineIODataHandler(status, len);
                         }
                     }
                     break;
@@ -1822,6 +1826,7 @@ int senginePollingSlave(void) {
                             sdevInfoRsp(tmpArr, status, len);
                         } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_DATA");
+                            sengineIODataHandler(status, len);
                             if (0 > sdevUpdate(tmpArr, status, len)) {
                                 LELOGE("sdevUpdate is FAILED");
                                 break;

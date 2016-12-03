@@ -415,7 +415,7 @@ end
   ]]
 function s1CvtStd2Pri(json)
 	local cvtType = s1apiGetCurrCvtType()
-	print ('[LUA] s1CvtStd2Pri return => '..json..'\r\n')
+	print ('[LUA] s1CvtStd2Pri '..cvtType..' return => '..json..'\r\n')
 	local ctrl = cjson.decode(json)
 	local cmdTbl = {}
 	local dataStr = ""
@@ -542,7 +542,7 @@ function s1CvtStd2Pri(json)
 				end
 			end
 			cmdTbl = whatWrite(cmdTbl)
-			print("whatWrite :")
+			print("uart w:")
 			LOGTBL(cmdTbl)
 			-- LOGTBL(cmdTbl)
 		elseif cvtType == 0x8000 then
@@ -567,6 +567,8 @@ function s1CvtStd2Pri(json)
 	        cmdTbl[11] = val & 0xFF
 	        val = ctrl["wifimode"]
 	        cmdTbl[12] = val & 0xFF
+			print("user w:")
+			LOGTBL(cmdTbl)
 		end
 	dataStr = tableToString(cmdTbl)
 	return string.len(dataStr), dataStr
@@ -602,6 +604,28 @@ function s1CvtPri2Std(bin)
 			print("s1CvtPri2Std\r\n")
 			LOGTBL(dataTbl)
 			bin = tableToString(dataTbl)
+
+			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x00, 0x00, 0x04)) and 
+				dataTbl[10] == 0x49 then
+				v1, v2, v3, v4, v5, v6, v7, v8 = 0, 0, 0, 0, 0, 0, 0, 0
+				local lenStatus, currStatus = s1apiGetDevStatus()
+				if lenStatus <= 2 then
+					str = string.format(status, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+				elseif lenStatus > 2 then
+					local tb = cjson.decode(currStatus)
+					v1 = tb["light"]
+					v2 = tb["mode"]
+					v3 = tb["timeout"]
+					v4 = tb["brightness"]
+					v5 = tb["red"]
+					v6 = tb["green"]
+					v7 = tb["blue"]
+					v8 = tb["wifimode"]
+				end
+                str = string.format(status, 1, 102, 45, v4, v5, v6, v7, 0, v8)
+				len = PRI2STD_LEN_INTERNAL
+                break
+			end
 			-- (RSP) ept list {"sDevQryEpt":2,"ud":"DB8F","ept":[1,2]}
 			if nil ~= string.find(bin, string.char(0x01, 0x80, 0x45)) then
 				str = '{"sDevQryEpt":2,"ud":"'..bin2hex(string.sub(bin,9,10))..'","ept":['

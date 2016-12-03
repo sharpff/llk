@@ -361,24 +361,23 @@ int getSSID(char *ssid, int ssidLen) {
 void setTerminalAction(const char *status, int len) {
     char val[MAX_BUF] = {0};
     int ret = 0;
-    len = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val));
-    LELOGW("setTerminalAction [%d][%s]", len, val);
 
     // cloud logical(push)
-    if (0 >= len) {
+    if (0 >= (ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val)))) {
+        LELOG("setTerminalAction--cloud [%d][%s]", len, status);
         cloudMsgHandler(status, len);
-        return;
+    } else {
+        len = ret;
+        // slave logical
+        ret = sengineSetAction((char *)val, len);
+        LELOG("setTerminalAction--slave [%d][%s]", ret, val);
+
+        // local logical
+        ret = localActionHandler(val, len);
+        LELOG("setTerminalAction--local [%d][%s]", ret, val);
+
     }
 
-    // slave logical
-    sengineSetAction((char *)val, len);
-
-    // local logical
-    ret = localActionHandler(val, len);
-    if (0 > ret) {
-        LELOGW("setTerminalAction localActionHandler[%d]", ret);
-        return;
-    }
 }
 
 int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData) {
@@ -391,7 +390,7 @@ int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData) {
 
 int getTerminalStatus(char *status, int len) {
     IA_CACHE_INT *cacheInt;
-    int i, j, cnt, tmpLen = 0;
+    int i, j, tmpLen = 0;
 
     //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
 
