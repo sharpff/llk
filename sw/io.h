@@ -53,11 +53,12 @@ typedef enum {
 
 /* Read/Write info */
 typedef struct {
-    uint8_t flagIfUnBind; // UnBind if user reset manually 
-    uint32_t sdevFWSize;
     uint8_t flagWiFi; // DEV_FLAG_t
     uint8_t locked;
-    uint8_t reserved[32];
+    uint32_t sdevFWSize;
+    uint8_t reserved[31];
+    uint8_t initCfgWiFiMode; // in what WiFi config mode after reset manually (SoftAp as default)
+    uint8_t initCfgIfUnBind; // UnBind if user reset manually (UnBind as default)
 }LELINK_ALIGNED DevCfg;
 
 typedef struct
@@ -75,7 +76,7 @@ typedef struct
 
 typedef struct
 {
-    DevCfg  devCfg;
+    DevCfg devCfg;
     NwCfg nwCfg;
     IACfg iaCfg;
 }LELINK_ALIGNED PrivateData;

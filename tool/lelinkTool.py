@@ -17,6 +17,7 @@ class Param(object):
         self.fws = ""
         self.genpriv = False
         self.gensdev = False
+        self.wmode = ""
         self.keepud = False
         self.ssid = ""
         self.passwd = ""
@@ -46,6 +47,9 @@ class Param(object):
         parser.add_option("--gensdev",
                       action="store_true", dest="gensdev", default=self.gensdev,
                       help="Generate private info")
+        parser.add_option("--wmode", type="string",
+                      action="store", dest="wmode", default=self.wmode,
+                      help="wifi password")
         parser.add_option("--keepud",
                       action="store_true", dest="keepud", default=self.keepud,
                       help="keep user data in reset manually")
@@ -68,6 +72,7 @@ class Param(object):
         self.fws = options.fws;
         self.genpriv = options.genpriv;
         self.gensdev = options.gensdev;
+        self.wmode = options.wmode;
         self.keepud = options.keepud;
         self.ssid = options.ssid;
         self.passwd = options.passwd;
@@ -188,6 +193,7 @@ class PrivateInfo(object):
        self.config = 0
        self.content = ''
        self.unbind = 1
+       self.wmode = 'mon'
        self.DEV_CFG_SIZE = 39
        self.NET_CFG_SIZE = 100
        self.IA_CFG_SIZE = 276
@@ -199,19 +205,29 @@ class PrivateInfo(object):
             self.config = 1
     def keepUD(self):
         self.unbind = 0
+    def setWiFiMode(self, wmode):
+        self.wmode = wmode
 
     def pack(self):
         self.content = ''
-        if self.unbind != 0:
-          print("aaaa self.unbind: %d" % self.unbind)
+
+        self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE-2)
+        # wmode
+        print("DevCfg self.wmode: %s" % self.wmode)
+        if self.wmode == 'mon':
+          self.content += packPad('\x00', 1)
+        elif self.wmode == 'sap':
           self.content += packPad('\x01', 1)
         else:
-          print("bbbb self.unbind: %d" % self.unbind)
+          self.content += packPad('\xFF', 1)
+        # unbind
+        print("DevCfg self.unbind: %d" % self.unbind)
+        if self.unbind != 0:
+          self.content += packPad('\x01', 1)
+        else:
           self.content += packPad('\x00', 1)
 
-        self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE-1)
         self.content += struct.pack("<I", self.config)
-
         self.content += struct.pack("<%ds" % (len(self.ssid) + 1), self.ssid)
         self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.ssid) - 1)
         self.content += struct.pack("<%ds" % (len(self.passwd) + 1), self.passwd)
@@ -275,7 +291,9 @@ if __name__ == '__main__':
         pricfg = PrivateInfo()
         pricfg.set(param.ssid, param.passwd)
         if param.keepud:
-          pricfg.keepUD()
+            pricfg.keepUD()
+        if param.wmode:
+            pricfg.setWiFiMode(param.wmode)
         pricfg.pack()
         content += pricfg.content
         print "PrivateInfo: %d, " % len(pricfg.content),

@@ -13,6 +13,7 @@ $MAIN_PATH/lelinkTool.py \
     -o ./0x1c3000.bin
 
     # --keepud, means keep user data while reset manually, otherwise, clear user data.
+    # --wmode mon/sap, in what config wifi mode after reset. mon-monitor; sap-softAp;
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
     --ssid ff \

@@ -48,21 +48,23 @@
     if (0 < ((ot * ginMSDelay) / ms)) {\
         ot = 0;
 
-#define TIMEOUT_BEGIN_SEC(ss) {\
+#define TIMEOUT_BEGIN_SEC(ss, go1st) {\
     static uint32_t tsStart;\
     static uint32_t tsEnd;\
     tsEnd = halGetTimeStamp(); \
-    if (!tsStart || ss <= (tsEnd - tsStart)) {\
+    if ((go1st ? !tsStart : 0) || ss <= (tsEnd - tsStart)) {\
         tsStart = tsEnd;
+
+#define TIMEOUT_ELSE } else {
 
 #define TIMEOUT_END }}
 
 /* for softAp */
-#define SEC2LETICK(x)               ((x) * 1000 / ginMSDelay)
-#define WIFI_CFG_BY_MONITOR_TIME    SEC2LETICK(60 * 3)
-#define WIFI_CFG_BY_SOFTAP_TIME     SEC2LETICK(60 * 3)
+// #define SEC2LETICK(x)               ((x) * 1000 / ginMSDelay)
+#define WIFI_CFG_BY_MONITOR_TIME    (60 * 3)
+#define WIFI_CFG_BY_SOFTAP_TIME     (60 * 3)
 static uint8_t wifiConfigByMonitor = 0;
-static uint32_t wifiConfigTime = 0;
+// static uint32_t wifiConfigTime = 0;
 static uint32_t wifiConfigTimeout = 0;
 extern int softApStart(void);
 extern int softApCheck(void);
@@ -297,30 +299,29 @@ static void reloadLatestPassport(void) {
 static int stateProcStart(StateContext *cntx) {
     int ret = 0;
 
-    LELOG("stateProcStart [%d] -s", ret);
+    LELOG("stateProcStart -s");
     if (0 == lelinkStorageReadPrivateCfg(&ginPrivateCfg)) {
-        LELOG("lelinkStorageReadPrivateCfg [%d]", ginPrivateCfg.data.nwCfg.configStatus);
+        LELOG("lelinkStorageReadPrivateCfg configStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus);
         if (ginPrivateCfg.csum == crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
-            LELOG("csum [0x%02x]", ginPrivateCfg.csum);
             if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
                 ret = ginPrivateCfg.data.nwCfg.configStatus;
                 ginConfigStatus = 1;
             } 
         }
     }
-
-    LELOG("******************************flagWiFi[0x%02x], flagIfUnBind[0x%02x]", ginPrivateCfg.data.devCfg.flagWiFi, ginPrivateCfg.data.devCfg.flagIfUnBind);
+    LELOG("stateProcStart ret[%d]", ret);
+    LELOG("stateProcStart ********** flagWiFi[%02x] initCfgWiFiMode[%02x], initCfgIfUnBind[%02x]", 
+        ginPrivateCfg.data.devCfg.flagWiFi, 
+        ginPrivateCfg.data.devCfg.initCfgWiFiMode,
+        ginPrivateCfg.data.devCfg.initCfgIfUnBind); 
     if (0 == ret) {
-        if(!getDevFlag(DEV_FLAG_RESET) && !wifiConfigByMonitor) {
-            wifiConfigByMonitor = 0;
-            wifiConfigTimeout = WIFI_CFG_BY_SOFTAP_TIME;
-        } else {
+        if(getDevFlag(DEV_FLAG_RESET)) {
             // TODO: wait for mt7687 flash ready?
             halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
-            wifiConfigByMonitor = 1;
-            wifiConfigTimeout = WIFI_CFG_BY_MONITOR_TIME;
         }
+        wifiConfigByMonitor = ginPrivateCfg.data.devCfg.initCfgWiFiMode ? 0 : 1;
+        wifiConfigTimeout = wifiConfigByMonitor ? WIFI_CFG_BY_MONITOR_TIME : WIFI_CFG_BY_SOFTAP_TIME;
         if(wifiConfigByMonitor) {
             ret = halDoConfig(NULL, 0);
             LELOG("configure wifi by monitor(%d)", ret);
@@ -340,19 +341,31 @@ static int stateProcConfiguring(StateContext *cntx) {
         ret = 1;
     }
     if (0 == ret) {
-        if(wifiConfigTime <= wifiConfigTimeout) {
-            wifiConfigTime++;
-        }
-        if(wifiConfigTime == wifiConfigTimeout) {
+        // if(wifiConfigTime <= wifiConfigTimeout) {
+        //     wifiConfigTime++;
+        // }
+        // if(wifiConfigTime == wifiConfigTimeout) {
+        //     ret = 0;
+        //     LELOG("Configure wifi timeout!!!");
+        //     wifiConfigByMonitor ?  halStopConfig() : softApStop(0);
+        //     setResetLed(RLED_STATE_FREE);
+        //     reloadLatestPassport();
+        //     halReboot();
+        // } else {
+        //     ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
+        // }
+
+        TIMEOUT_BEGIN_SEC(wifiConfigTimeout, 0)
             ret = 0;
             LELOG("Configure wifi timeout!!!");
             wifiConfigByMonitor ?  halStopConfig() : softApStop(0);
             setResetLed(RLED_STATE_FREE);
             reloadLatestPassport();
             halReboot();
-        } else {
+        TIMEOUT_ELSE
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
-        }
+        TIMEOUT_END
+
     }
     return ret;
 }
@@ -487,7 +500,7 @@ static int stateProcCloudLinked(StateContext *cntx) {
     }
     LELOG("stateProcCloudLinked");
 
-    TIMEOUT_BEGIN_SEC(8)
+    TIMEOUT_BEGIN_SEC(8, 1)
     // TIMEOUT_BEGIN(8000)
         return -1;
     TIMEOUT_END
@@ -509,7 +522,7 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         return -1;
     }
 
-    TIMEOUT_BEGIN_SEC(12)
+    TIMEOUT_BEGIN_SEC(12, 1)
     // TIMEOUT_BEGIN(12000)
         NodeData node = {0};
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
@@ -537,7 +550,7 @@ int resetConfigData(void) {
         ginPrivateCfg.data.nwCfg.configStatus = 0;
         ginConfigStatus = 0;
         // user info
-        if (ginPrivateCfg.data.devCfg.flagIfUnBind) {
+        if (ginPrivateCfg.data.devCfg.initCfgIfUnBind) {
             ginPrivateCfg.data.devCfg.locked = 0;
             ginPrivateCfg.data.iaCfg.num = 0;
             memset(ginPrivateCfg.data.iaCfg.arrIA, 0, sizeof(ginPrivateCfg.data.iaCfg.arrIA));
