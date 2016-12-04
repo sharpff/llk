@@ -656,9 +656,9 @@ function s1CvtPri2Std(bin)
 					str = string.sub(str,1,string.len(str) - 1)..']'
 				end
 				str = str..'}}'
-				if nil ~= string.find(string.char(0x04, 0x02), string.sub(bin,15,16)) then
-					len = PRI2STD_LEN_BOTH
-				end
+				-- if nil ~= string.find(string.char(0x04, 0x02), string.sub(bin,15,16)) then
+				-- 	len = PRI2STD_LEN_BOTH
+				-- end
 				break
 			end
 
@@ -718,7 +718,7 @@ function s1CvtPri2Std(bin)
 				break
 			end
 		end
-		print("result -> "..str..'\r\n')
+		print("result -> "..str..' len '..len..'\r\n')
 	elseif 0x20 == cvtType then
 		v1, v2, v3, v4, v5, v6, v7, v8 = 0, 0, 0, 0, 0, 0, 0, 0
 		local lenStatus, currStatus = s1apiGetDevStatus()

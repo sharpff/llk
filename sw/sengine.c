@@ -1708,7 +1708,7 @@ int sengineQuerySlave(QuerieType_t type)
     return 0;
 }
 
-static void sengineIODataHandler(const char *status, int len) {
+static void sengineIODataHandler(const char *status, int len, int isSDEV) {
     if ((PRI2STD_LEN_INTERNAL == (PRI2STD_LEN_INTERNAL & len)) || 
         (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
         LELOGW("senginePollingSlave native status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
@@ -1716,10 +1716,16 @@ static void sengineIODataHandler(const char *status, int len) {
     }
     if (PRI2STD_LEN_MAX > len || 
         (PRI2STD_LEN_BOTH == (PRI2STD_LEN_BOTH & len))) {
-        if (cacheIsChanged(status, (len & PRI2STD_LEN_MAX))) {
-            LELOGW("senginePollingSlave cloud status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
-            postStatusChanged(0);
-            sengineSetStatusVal(status, (len & PRI2STD_LEN_MAX));
+        if (isSDEV) {
+            if (0 > sdevUpdate(sdevArray(), status, len)) {
+                LELOGE("sdevUpdate is FAILED");
+            }
+        } else {
+            if (cacheIsChanged(status, (len & PRI2STD_LEN_MAX))) {
+                LELOGW("senginePollingSlave cloud status("S1_PRI2STD") [%d] [%s]", (len & PRI2STD_LEN_MAX), status);
+                postStatusChanged(0);
+                sengineSetStatusVal(status, (len & PRI2STD_LEN_MAX));
+            }
         }
     }
 }
@@ -1789,7 +1795,7 @@ int senginePollingSlave(void) {
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else {
-                            sengineIODataHandler(status, len);
+                            sengineIODataHandler(status, len, 0);
                         }
                     }
                     break;
@@ -1826,11 +1832,7 @@ int senginePollingSlave(void) {
                             sdevInfoRsp(tmpArr, status, len);
                         } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_DATA");
-                            sengineIODataHandler(status, len);
-                            if (0 > sdevUpdate(tmpArr, status, len)) {
-                                LELOGE("sdevUpdate is FAILED");
-                                break;
-                            }
+                            sengineIODataHandler(status, len, 1);
                         } else if (WHATKIND_SUB_DEV_LEAVE == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_LEAVE");
                             sdevRemove(tmpArr, status, len);
