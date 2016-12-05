@@ -12,8 +12,10 @@ $MAIN_PATH/lelinkTool.py \
     -t $MAIN_PATH/product/nxp/nxp.bin \
     -o ./0x1c3000.bin
 
+# --keepud, means keep user data while reset manually, otherwise, clear user data.
+# --wmode mon/sap, in what config wifi mode after reset. mon-monitor; sap-softAp;
 $MAIN_PATH/lelinkTool.py \
-    --wmode mon \
+    --wmode sap \
     --genpriv \
     --ssid ff \
     --passwd fengfeng2qiqi \

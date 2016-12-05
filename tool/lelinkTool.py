@@ -193,7 +193,7 @@ class PrivateInfo(object):
        self.config = 0
        self.content = ''
        self.unbind = 1
-       self.wmode = 'mon'
+       self.wmode = ''
        self.DEV_CFG_SIZE = 39
        self.NET_CFG_SIZE = 100
        self.IA_CFG_SIZE = 276
@@ -215,9 +215,9 @@ class PrivateInfo(object):
         # wmode
         print("DevCfg self.wmode: %s" % self.wmode)
         if self.wmode == 'mon':
-          self.content += packPad('\x00', 1)
-        elif self.wmode == 'sap':
           self.content += packPad('\x01', 1)
+        elif self.wmode == 'sap':
+          self.content += packPad('\x00', 1)
         else:
           self.content += packPad('\xFF', 1)
         # unbind

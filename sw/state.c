@@ -320,7 +320,7 @@ static int stateProcStart(StateContext *cntx) {
             halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
         }
-        wifiConfigByMonitor = ginPrivateCfg.data.devCfg.initCfgWiFiMode ? 0 : 1;
+        wifiConfigByMonitor = ginPrivateCfg.data.devCfg.initCfgWiFiMode ? 1 : 0;
         wifiConfigTimeout = wifiConfigByMonitor ? WIFI_CFG_BY_MONITOR_TIME : WIFI_CFG_BY_SOFTAP_TIME;
         if(wifiConfigByMonitor) {
             ret = halDoConfig(NULL, 0);
