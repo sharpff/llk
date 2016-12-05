@@ -59,7 +59,7 @@ extern uint8_t le_ledon(uint8_t len, char *param[]);
 extern uint8_t le_ledoff(uint8_t len, char *param[]);
 extern uint8_t le_ledset(uint8_t len, char *param[]);
 extern uint8_t le_ledsetRGB(uint8_t len, char *param[]);
-extern uint8_t le_permitjoin(uint8_t len, char *param[]);
+extern uint8_t le_resetPID(uint8_t len, char *param[]);
 
 cmd_t le_cmd[] = {
     { "version", "software download", le_version },
@@ -67,7 +67,7 @@ cmd_t le_cmd[] = {
     { "ledoff", "led off", le_ledoff },
     { "ledset", "led set", le_ledset },
     { "ledsetRGB", "led set RGB", le_ledsetRGB },
-    { "permitjoin", "led set RGB", le_permitjoin },
+    { "resetPID", "reset PID", le_resetPID },
     { "reboot", "hardware reboot", le_reboot },
     { NULL }
 };

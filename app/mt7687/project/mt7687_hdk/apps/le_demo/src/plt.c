@@ -10,7 +10,7 @@ typedef enum {
     E_PLT_TYPE_VERSION, 
     E_PLT_TYPE_OTA, 
     E_PLT_TYPE_REBOOT,
-    E_PLT_TYPE_PERMITJOIN, 
+    E_PLT_TYPE_RESET_PID, 
     E_PLT_TYPE_MAX,
 }E_PLT_TYPE;
 
@@ -84,8 +84,8 @@ uint8_t le_ledsetRGB(uint8_t len, char *param[]) {
     return 0;
 }
 
-uint8_t le_permitjoin(uint8_t len, char *param[]) {
-	cmdType = E_PLT_TYPE_PERMITJOIN;
+uint8_t le_resetPID(uint8_t len, char *param[]) {
+	cmdType = E_PLT_TYPE_RESET_PID;
     return 0;
 }
 
@@ -144,9 +144,11 @@ void lelinkPltCtrlProcess(void) {
             cmdType = E_PLT_TYPE_IDLE;
         }
         break;
-        case E_PLT_TYPE_PERMITJOIN: {
-        	//uint8_t cmd[15] = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x7E, 0xFF, 0xFC, 0x30, 0x02, 0x10, 0x03};
-   			//halUartWrite(&uartHandler, cmd, 15);
+        case E_PLT_TYPE_RESET_PID: {
+            char tmpBuf[] = {"{\"sDevReset\":1}"};
+            // uint8_t cmd[] = {0x01, 0x02, 0x10, 0x11, 0x02, 0x10, 0x02, 0x10, 0x11, 0x03};
+            // halUartWrite(&uartHandler, cmd, sizeof(cmd));
+            sengineSetAction(tmpBuf, strlen(tmpBuf));
             cmdType = E_PLT_TYPE_IDLE;
         }
         break;

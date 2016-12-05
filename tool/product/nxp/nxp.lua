@@ -126,18 +126,18 @@ function s1GetVer()
 	-- local str = string.format('%02X ', ret)
 	-- print ("[LUA] csum "..str.."\r\n")
 
-	-- local tblData1 = {0x01, 0x80, 0x00, 0x00, 0x04, 0x99, 0x00, 0x54, 0x00, 0x49, 0x03}
+	-- local tblData1 = {0x01, 0x00, 0x11, 0x00, 0x00, 0x11, 0x03}
 	-- LOGTBL(tblData1)
 	-- LOGTBL(whatWrite(tblData1))
 
 	local tblData2 = {0x01, 0x80, 0x43, 0x00, 0x25, 0x00, 0xe9, 0x00, 0xdb, 0x8f, 0x16, 0x01, 0x01, 0x04, 0x04, 0x02, 0x02, 0x06, 0x00, 0x00, 0x00, 0x04, 0x00, 0x03, 0x00, 0x06, 0x00, 0x08, 0x00, 0x05, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x03, 0x00, 0x06, 0x00, 0x08, 0x00, 0x05, 0x03}
 	-- LOGTBL(tblData2)
-	tblData2[6] = csum(tblData2)
-	LOGTBL(whatWrite(tblData2))
+	-- tblData2[6] = csum(tblData2)
+	-- LOGTBL(whatWrite(tblData2))
 	-- s1apiOptLogTable(tblData2)
 	-- local a = tableToString(tblData2)
 	-- local a = s1apiOptTable2String(tblData2)
-	print('abc'..'\r\n')
+	-- print('abc'..'\r\n')
 	-- LOGTBL(whatRead(tblData2))
 
 
@@ -415,7 +415,7 @@ end
   ]]
 function s1CvtStd2Pri(json)
 	local cvtType = s1apiGetCurrCvtType()
-	print ('[LUA] s1CvtStd2Pri '..cvtType..' return => '..json..'\r\n')
+	print ('[LUA] s1CvtStd2Pri type['..cvtType..'] => '..json..'\r\n')
 	local ctrl = cjson.decode(json)
 	local cmdTbl = {}
 	local dataStr = ""
@@ -439,6 +439,7 @@ function s1CvtStd2Pri(json)
 					break
 				end
 
+				-- "{"ctrl":{\"sDevReset\":1}}"
 				if ctrl["sDevReset"] == 1 then
 					cmdTbl = {0x01, 0x00, 0x11, 0x00, 0x00, 0x11, 0x03}
 					break
