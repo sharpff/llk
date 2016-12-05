@@ -186,7 +186,7 @@ static void leLedGreenFastBlink(void) { // zigbee join
     ledEffectDev.size = 2;
     ledEffectDev.timeout = 30;
     ledEffectDev.rgbValue[0].a = 512;
-    ledEffectDev.rgbValue[1].b = 1024;
+    ledEffectDev.rgbValue[1].g = 1024;
     ledEffectDev.timestamp = xTaskGetTickCount();
     leLedStartBlink();
 }
