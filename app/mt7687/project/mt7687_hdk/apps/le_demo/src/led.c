@@ -311,6 +311,10 @@ static int leLedReadConfigData(ledDevice_t* device) {
     return ret;
 }
 
+int haalIsRepeater(void) {
+    return leGetConfigMode();
+}
+
 int leGetConfigMode(void) {
     return ledDevice.wifimode;
 }

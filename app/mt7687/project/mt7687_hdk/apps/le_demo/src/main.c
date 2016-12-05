@@ -36,10 +36,27 @@ int8_t gin_airconfig_sniffer_got;
 
 #define AIRCONFIG_TIMEOUT (60*60*1000/portTICK_PERIOD_MS)
 
-// TODO: discuss (naming)
-int halResetConfigData(void) {
+int salResetConfigData(void) {
     leLedReset();
     return 0;
+}
+
+int aalUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
+    return leLedRead(buf, len);
+}
+
+int aalUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
+    return leLedWrite(buf, len);
+}
+
+void aalSetLedStatus(RLED_STATE_t st) {
+    if (st == RLED_STATE_WIFI) {
+        leLedBlueSlowBlink(); // TODO: discuss (modified)
+    } else if (st == RLED_STATE_CONNECTING) {
+        leLedBlueFastBlink();
+    } else if (st == RLED_STATE_RUNNING) {
+        leLedSetDefault();
+    }
 }
 
 static void lelink_airconfig_timeout_timer_callback( TimerHandle_t tmr ) {
@@ -110,7 +127,7 @@ static void mtk_thread_lelink_proc(void *args) {
     leLedInit();
     printForFac();
     CoOTAReset(0);
-    CoOTAProcessing();
+    haalCoOTAProcessing();
     printf("Build Time: " __DATE__ " " __TIME__ "\r\n");
     ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE - GW_FLASH_CONF_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
     if (0 > ret) {
@@ -231,16 +248,3 @@ int main() {
     for ( ;; );
 }
 
-
-/*
- * These functions is called in Lelink, but depends the current App(FW). 
- * Diff App has diff implementation. So, these should not be used in halXXX.c. 
- * it is no need to be implemented, if there is no sub sdev(E.g. coordinator)
- */
-__attribute__((weak)) void CoOTASetFlag(uint32_t flag) {
-    return;
-}
-
-__attribute__((weak)) void CoOTAProcessing(void) {
-    return;
-}

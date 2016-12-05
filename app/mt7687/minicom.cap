@@ -1,0 +1,773 @@
+[LEAPP] halDoApConnecting ret[0] @halAirConfig.c:145
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LEAPP] halDoApConnecting ret[0] @halAirConfig.c:145
+[LEAPP] halDoApConnecting ret[0] @halAirConfig.c:145
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LEAPP] halDoApConnecting ret[0] @halAirConfig.c:145
+[LEAPP] halDoApConnecting ret[0] @halAirConfig.c:145
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LEAPP] halDoApConnecting ret[0] @halAirConfig.c:145
+[LEAPP] [wifibox]begin to create wifi_audio_box_socket_task. 
+ @main.c:165
+[LEAPP] [LITTLE_ENDIAN]:wifi_box_socket_test(), ip_addr = 192.168.3.8 
+ @main.c:179
+[T: 13862 M: common C: INFO F: ip_change_call_back L: 559]: ip_change_call_back
+[T: 13862 M: common C: INFO F: ip_change_call_back L: 564]: ************************
+[T: 13862 M: common C: INFO F: ip_change_call_back L: 565]: DHCP got IP:192.168.3.8
+[T: 13862 M: common C: INFO F: ip_change_call_back L: 566]: ************************
+[LEAPP] halDoApConnecting ret[1] @halAirConfig.c:145
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE] changeState to next [4] @state.c:165#9
+[LE] setResetLed state [3] @io.c:583#9
+[LEAPP] leLedProcessData light[0] mode[0] timeout[0] wifimode[0] argb[1024][1024][1024][1024] @led.c:167
+[LE] stateProcApConnected @state.c:420#9
+[LEAPP] halGetHostByName name[iot.test.leinlife.com] hostinfo[0x0x2002ec80] @halNetwork.c:118
+[LEAPP] halGetHostByName [36.110.223.249] @halNetwork.c:125
+[LE] DNS OK [36.110.223.249] @state.c:466#9
+[LE] DNS OK [] @state.c:466#9
+[LE] DNS OK [] @state.c:466#9
+[LE] DNS OK [] @state.c:466#9
+[LE] IP TEST ON ------- to connect[36.110.223.249:9003] @state.c:484#9
+[LE] nwPostCmd cmdId[87], subCmdId[1], [:0] timeoutRef[4] seqId[4] reserved[0] @protocol.c:899#9
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#9
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#9
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#9
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":0,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#9
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[1] randID[14065]  @pack.c:330#9
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#9
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#9
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#9
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#9
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#9
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#9
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#9
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":0,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#9
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[2] randID[6313]  @pack.c:330#9
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#9
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#9
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#9
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#9
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#9
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#9
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#9
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":0,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#9
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[3] randID[13582]  @pack.c:330#9
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#9
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#9
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#9
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#9
+[LE] POST getCmdRecord cmdId[87] subCmdId[1] @protocol.c:2275#9
+[LE] cbCloudGetTargetLocalReq -s @protocol.c:1582#9
+[LE] test sig len[128], total len[138] [{"lock":0}] @protocol.c:1591#9
+[LE] doPack[138] status[0] cmdId[87] subCmdId[1] seqId[4] randID[2014]  @pack.c:330#9
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#9
+[LE] cbCloudGetTargetLocalReq [266] -e @protocol.c:1598#9
+[LE] socket[2] nwUDPSendto [36.110.223.249:9003][266] @network.c:116#9
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#9
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[0] @protocol.c:1165#9
+[LE] RETRY start @protocol.c:1171#9
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[1] reserved[0] @protocol.c:899#9
+[LE] RETRY doing... retry[1] uuid[10000100131000010011000C43768701] @protocol.c:1186#9
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#9
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[0] @protocol.c:1165#9
+[LE] RETRY start @protocol.c:1171#9
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[2] reserved[0] @protocol.c:899#9
+[LE] RETRY doing... retry[1] uuid[10000100131000010011000C43768701] @protocol.c:1186#9
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#9
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[0] @protocol.c:1165#9
+[LE] RETRY start @protocol.c:1171#9
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[3] reserved[0] @protocol.c:899#9
+[LE] RETRY doing... retry[1] uuid[10000100131000010011000C43768701] @protocol.c:1186#9
+[LE] changeState to next [5] @state.c:165#10
+[LE] stateProcCloudLinked @state.c:501#10
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE] nwUDPRecvfrom [36.110.223.249:9003][234] @network.c:136#10
+[LE] unpack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:122#10
+[LEAPP] dec *len is [224] ret[0] START @halAES.c:195
+[LEAPP] dec *len is [211] @halAES.c:207
+[LEAPP] dec *len is [211] ret[0] END @halAES.c:215
+[LE] nwUnpack[162] status[0] cmdId[88] subCmdId[2] seqId[4] randID[5118]  @pack.c:271#10
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:276#10
+[LE] cbCloudGetTargetRemoteRsp -s @protocol.c:1605#10
+[LE] total[162] json[{"redirect":0,"utc":1480829452151}] @protocol.c:1606#10
+[LE] cbCloudGetTargetRemoteRsp -e @protocol.c:1635#10
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#10
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#10
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#10
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":0,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#10
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[2] randID[3348]  @pack.c:330#10
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#10
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#10
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#10
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#10
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#10
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#10
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#10
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":0,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#10
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[3] randID[21095]  @pack.c:330#10
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#10
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#10
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#10
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#10
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#10
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#10
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#10
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":0,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#10
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[1] randID[26788]  @pack.c:330#10
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#10
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#10
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#10
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#10
+[LE[E]] Protocol set 5 -> 6 @state.c:154#10
+[LE] changeState to next [6] @state.c:165#10
+[LE] nwPostCmd cmdId[91], subCmdId[1], [:0] timeoutRef[4] seqId[5] reserved[0] @protocol.c:899#10
+[LE] [SENGINE] sdevArray usage[0/16], node[SDevNBase 584 | SDevNode 972], total[flash 9344 | heap 15552] @sengine.c:116#10
+[LE] POST getCmdRecord cmdId[91] subCmdId[1] @protocol.c:2275#10
+[LE] cbCloudHeartBeatLocalReq -s @protocol.c:1687#10
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#10
+[LE] appended token [44][341] [{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{},"token":"FEFE01AB3034077EF4993BC3829C52BA"}] reserved[0] @protocol.c:1696#10
+[LE] doPack[341] status[0] cmdId[91] subCmdId[1] seqId[5] randID[3899]  @pack.c:330#10
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#10
+[LE] cbCloudHeartBeatLocalReq [522] reserved[0] -e @protocol.c:1700#10
+[LE] socket[2] nwUDPSendto [36.110.223.249:9003][522] @network.c:116#10
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE] nwUDPRecvfrom [36.110.223.249:9003][74] @network.c:136#10
+[LE] unpack encType [15]: [FEFE01AB3034077EF4993BC3829C52BA] @pack.c:122#10
+[LEAPP] dec *len is [64] ret[0] START @halAES.c:195
+[LEAPP] dec *len is [49] @halAES.c:207
+[LEAPP] dec *len is [49] ret[0] END @halAES.c:215
+[LE] nwUnpack[0] status[0] cmdId[92] subCmdId[2] seqId[5] randID[5118]  @pack.c:271#10
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:276#10
+[LE] cbCloudHeartBeatRemoteRsp -s @protocol.c:1707#10
+[LE] cbCloudHeartBeatRemoteRsp -e @protocol.c:1712#10
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#11
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[1] @protocol.c:1165#11
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[2] reserved[0] @protocol.c:899#11
+[LE] RETRY doing... retry[255] uuid[10000100131000010011000C43768701] @protocol.c:1186#11
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#11
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[1] @protocol.c:1165#11
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[3] reserved[0] @protocol.c:899#11
+[LE] RETRY doing... retry[255] uuid[10000100131000010011000C43768701] @protocol.c:1186#11
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#11
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[1] @protocol.c:1165#11
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[1] reserved[0] @protocol.c:899#11
+[LE] RETRY doing... retry[255] uuid[10000100131000010011000C43768701] @protocol.c:1186#11
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#11
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#11
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#11
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#11
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[3] randID[11304]  @pack.c:330#11
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#11
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#11
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#11
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#11
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#11
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#11
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#11
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#11
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[1] randID[20632]  @pack.c:330#11
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#11
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#11
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#11
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#11
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#11
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#11
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#11
+[LE] NO need token[298][{"status":{"light":0,"mode":0,"timeout":0,"brightness":1024,"red":1024,"green":1024,"blue":1024,"service":0,"wifimode":0},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#11
+[LE] doPack[298] status[0] cmdId[9] subCmdId[3] seqId[2] randID[1976]  @pack.c:330#11
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#11
+[LEAPP] enc *len is [352] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#11
+[LE] cbDiscoverStatusChangedLocalReq [362] -e @protocol.c:1438#11
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][362] @network.c:116#11
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#13
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[255] @protocol.c:1165#13
+[LE] RETRY is finished @protocol.c:1175#13
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#13
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[255] @protocol.c:1165#13
+[LE] RETRY is finished @protocol.c:1175#13
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#13
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[255] @protocol.c:1165#13
+[LE] RETRY is finished @protocol.c:1175#13
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LUA] total ======> 20
+[LUA] <============ 
+[LUA] s1GetValidKind start
+LOGTBL 01 84 01 00 0d 2e 5e 01 05 00 02 cc 32 00 01 00 00 00 01 03 
+[LUA] s1GetValidKind - sDevStatus ind 20
+[LUA] s1GetValidKind - ret is 11
+[LE] [SENGINE] sdevArray usage[0/16], node[SDevNBase 584 | SDevNode 972], total[flash 9344 | heap 15552] @sengine.c:116#17
+LOGTBL 01 84 02 11 02 10 02 1d 2e 5e 02 11 02 15 02 10 02 12 cc 32 02 10 02 11 02 10 02 10 02 10 02 11 03 
+s1CvtPri2Std
+LOGTBL 01 84 01 00 0d 2e 5e 01 05 00 02 cc 32 00 01 00 00 00 01 03 
+clu is 0500
+ept is 01
+val is 0001
+result -> {"sDevStatus":{"ias":1},"sDev":{"ud":"CC32"}} len 0
+[LE] WHATKIND_SUB_DEV_DATA @sengine.c:1828#17
+[LE[W]] senginePollingSlave cloud status(s1CvtPri2Std) [45] [{"sDevStatus":{"ias":1},"sDev":{"ud":"CC32"}}] @sengine.c:1720#17
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[6] reserved[0] @protocol.c:899#17
+[LE] getJsonByToken [45][{"sDevStatus":{"ias":1},"sDev":{"ud":"CC32"}}] key[sDevStatus] obj[] objLen[1280] @misc.c:411#17
+[LE] getJsonByToken len[9] start[536932406] end[536932414] @misc.c:445#17
+[LE] getJsonByToken obj[{"ias":1}] @misc.c:449#17
+[LE] sdevUpdate sdevStatus START **************************** @sengine.c:584#17
+[LE] {"sDevStatus":{"ias":1},"sDev":{"ud":"CC32"}} @sengine.c:585#17
+[LE] ud is [CC32] @sengine.c:592#17
+[LE] sdevUpdate sdevStatus END **************************** @sengine.c:608#17
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#17
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#17
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#17
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#17
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#17
+[LE] NO need token[232][{"status":{"sDevStatus":{"ias":1},"sDev":{"ud":"CC32"}},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#17
+[LE] doPack[232] status[0] cmdId[9] subCmdId[3] seqId[6] randID[22326]  @pack.c:330#17
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#17
+[LEAPP] enc *len is [288] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#17
+[LE] cbDiscoverStatusChangedLocalReq [298] -e @protocol.c:1438#17
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][298] @network.c:116#17
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#17
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#17
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#18
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#18
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#18
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#18
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#18
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#18
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#18
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#18
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#19
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[0] @protocol.c:1165#19
+[LE] RETRY start @protocol.c:1171#19
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[6] reserved[0] @protocol.c:899#19
+[LE] RETRY doing... retry[1] uuid[10000100131000010011000C43768701] @protocol.c:1186#19
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#19
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#19
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#19
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#19
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#19
+[LE] NO need token[232][{"status":{"sDevStatus":{"ias":1},"sDev":{"ud":"CC32"}},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#19
+[LE] doPack[232] status[0] cmdId[9] subCmdId[3] seqId[6] randID[32224]  @pack.c:330#19
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#19
+[LEAPP] enc *len is [288] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#19
+[LE] cbDiscoverStatusChangedLocalReq [298] -e @protocol.c:1438#19
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][298] @network.c:116#19
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#19
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#19
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#19
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#19
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#19
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#19
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#20
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#20
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#20
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#20
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#20
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#20
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#20
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#20
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#21
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#21
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#21
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[1] @protocol.c:1165#21
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[6] reserved[0] @protocol.c:899#21
+[LE] RETRY doing... retry[255] uuid[10000100131000010011000C43768701] @protocol.c:1186#21
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#21
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#21
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#21
+[LE] NO need token[232][{"status":{"sDevStatus":{"ias":1},"sDev":{"ud":"CC32"}},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#21
+[LE] doPack[232] status[0] cmdId[9] subCmdId[3] seqId[6] randID[29538]  @pack.c:330#21
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#21
+[LEAPP] enc *len is [288] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#21
+[LE] cbDiscoverStatusChangedLocalReq [298] -e @protocol.c:1438#21
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][298] @network.c:116#21
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#21
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#21
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#21
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#21
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#21
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#21
+[LE] nwPostCmd cmdId[91], subCmdId[1], [:0] timeoutRef[4] seqId[7] reserved[0] @protocol.c:899#22
+[LE] [SENGINE] sdevArray usage[0/16], node[SDevNBase 584 | SDevNode 972], total[flash 9344 | heap 15552] @sengine.c:116#22
+[LE] POST getCmdRecord cmdId[91] subCmdId[1] @protocol.c:2275#22
+[LE] cbCloudHeartBeatLocalReq -s @protocol.c:1687#22
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#22
+[LE] appended token [44][275] [{"status":{"sDevStatus":{"ias":1},"sDev":{"ud":"CC32"}},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{},"token":"FEFE01AB3034077EF4993BC3829C52BA"}] reserved[0] @protocol.c:1696#22
+[LE] doPack[275] status[0] cmdId[91] subCmdId[1] seqId[7] randID[3024]  @pack.c:330#22
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#22
+[LE] cbCloudHeartBeatLocalReq [394] reserved[0] -e @protocol.c:1700#22
+[LE] socket[2] nwUDPSendto [36.110.223.249:9003][394] @network.c:116#22
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#22
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#22
+[LE] nwUDPRecvfrom [36.110.223.249:9003][74] @network.c:136#22
+[LE] unpack encType [15]: [FEFE01AB3034077EF4993BC3829C52BA] @pack.c:122#22
+[LEAPP] dec *len is [64] ret[0] START @halAES.c:195
+[LEAPP] dec *len is [49] @halAES.c:207
+[LEAPP] dec *len is [49] ret[0] END @halAES.c:215
+[LE] nwUnpack[0] status[0] cmdId[92] subCmdId[2] seqId[7] randID[5118]  @pack.c:271#22
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:276#22
+[LE] cbCloudHeartBeatRemoteRsp -s @protocol.c:1707#22
+[LE] cbCloudHeartBeatRemoteRsp -e @protocol.c:1712#22
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#22
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#22
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#22
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#22
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#22
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#22
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#23
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[255] @protocol.c:1165#23
+[LE] RETRY is finished @protocol.c:1175#23
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#23
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#23
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#23
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#23
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#23
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#23
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#23
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#23
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#24
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#24
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#24
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#24
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#24
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#24
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#24
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#24
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#25
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#25
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#25
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#25
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#25
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#25
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#25
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#25
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#26
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#26
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#26
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#26
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#26
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#26
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#26
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#26
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#27
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#27
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#27
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#27
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#27
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#27
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#27
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#27
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#28
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#28
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#28
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#28
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#28
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#28
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#28
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#28
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#29
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#29
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#29
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#29
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#29
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#29
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#29
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#29
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#30
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#30
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#30
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#30
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#30
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#30
+[LUA] total ======> 20
+[LUA] <============ 
+[LUA] s1GetValidKind start
+LOGTBL 01 84 01 00 0d 3e 5f 01 05 00 02 cc 32 00 10 00 00 00 01 03 
+[LUA] s1GetValidKind - sDevStatus ind 20
+[LUA] s1GetValidKind - ret is 11
+[LE] [SENGINE] sdevArray usage[0/16], node[SDevNBase 584 | SDevNode 972], total[flash 9344 | heap 15552] @sengine.c:116#30
+LOGTBL 01 84 02 11 02 10 02 1d 3e 5f 02 11 02 15 02 10 02 12 cc 32 02 10 10 02 10 02 10 02 10 02 11 03 
+s1CvtPri2Std
+LOGTBL 01 84 01 00 0d 3e 5f 01 05 00 02 cc 32 00 10 00 00 00 01 03 
+clu is 0500
+ept is 01
+val is 0010
+result -> {"sDevStatus":{"ias":10},"sDev":{"ud":"CC32"}} len 0
+[LE] WHATKIND_SUB_DEV_DATA @sengine.c:1828#30
+[LE[W]] senginePollingSlave cloud status(s1CvtPri2Std) [46] [{"sDevStatus":{"ias":10},"sDev":{"ud":"CC32"}}] @sengine.c:1720#30
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[8] reserved[0] @protocol.c:899#30
+[LE] getJsonByToken [46][{"sDevStatus":{"ias":10},"sDev":{"ud":"CC32"}}] key[sDevStatus] obj[] objLen[1280] @misc.c:411#30
+[LE] getJsonByToken len[10] start[536932406] end[536932415] @misc.c:445#30
+[LE] getJsonByToken obj[{"ias":10}] @misc.c:449#30
+[LE] sdevUpdate sdevStatus START **************************** @sengine.c:584#30
+[LE] {"sDevStatus":{"ias":10},"sDev":{"ud":"CC32"}} @sengine.c:585#30
+[LE] ud is [CC32] @sengine.c:592#30
+[LE] sdevUpdate sdevStatus END **************************** @sengine.c:608#30
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#30
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#30
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#30
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#30
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#30
+[LE] NO need token[233][{"status":{"sDevStatus":{"ias":10},"sDev":{"ud":"CC32"}},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#30
+[LE] doPack[233] status[0] cmdId[9] subCmdId[3] seqId[8] randID[24931]  @pack.c:330#30
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#30
+[LEAPP] enc *len is [288] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#30
+[LE] cbDiscoverStatusChangedLocalReq [298] -e @protocol.c:1438#30
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][298] @network.c:116#30
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#31
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#31
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#31
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#31
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#31
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#31
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#31
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#31
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#32
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[0] @protocol.c:1165#32
+[LE] RETRY start @protocol.c:1171#32
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[8] reserved[0] @protocol.c:899#32
+[LE] RETRY doing... retry[1] uuid[10000100131000010011000C43768701] @protocol.c:1186#32
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#32
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#32
+[LE] POST getCmdRecord cmdId[9] subCmdId[3] @protocol.c:2275#32
+[LE] cbDiscoverStatusChangedLocalReq -s @protocol.c:1416#32
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#32
+[LE] NO need token[233][{"status":{"sDevStatus":{"ias":10},"sDev":{"ud":"CC32"}},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{}}] @protocol.c:1427#32
+[LE] doPack[233] status[0] cmdId[9] subCmdId[3] seqId[8] randID[30827]  @pack.c:330#32
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#32
+[LEAPP] enc *len is [288] ret[0] END @halAES.c:239
+[LE] pack encType [11]: [157E835E6C0BC55474ABCD91E00E6979] @pack.c:422#32
+[LE] cbDiscoverStatusChangedLocalReq [298] -e @protocol.c:1438#32
+[LE] socket[2] nwUDPSendto [255.255.255.255:59673][298] @network.c:116#32
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#32
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#32
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#32
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#32
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#32
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#32
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#33
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#33
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#33
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#33
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#33
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#33
+--------2------ #bin is 12
+LOGTBL 00 00 00 04 00 04 00 04 00 04 00 00 
+--------3------ #bin is 12
+[LE[E]] [lua engine] lua error: bad argument #9 to 'format' (number expected, got nil) => s1CvtPri2Std @sengine.c:1265#33
+[LE[W]] senginePollingSlave sengineCall(s1CvtPri2Std) [-3] @sengine.c:1790#33
+[LE] nwPostCmd cmdId[91], subCmdId[1], [:0] timeoutRef[4] seqId[9] reserved[0] @protocol.c:899#34
+[LE] [SENGINE] sdevArray usage[0/16], node[SDevNBase 584 | SDevNode 972], total[flash 9344 | heap 15552] @sengine.c:116#34
+[LE] POST getCmdRecord cmdId[91] subCmdId[1] @protocol.c:2275#34
+[LE] cbCloudHeartBeatLocalReq -s @protocol.c:1687#34
+[LE] Build Time: Dec  4 2016 12:00:08 @data.c:341#34
+[LE] appended token [44][276] [{"status":{"sDevStatus":{"ias":10},"sDev":{"ud":"CC32"}},"cloud":1,"uuid":"10000100131000010011000C43768701","ip":"192.168.3.8","ver":"6-1.0.git.006.85.gcb0740c.1-1.0","ssid":"ff","lock":0,"sDevNum":0,"sDevVer":"00040001","uuids":{},"token":"FEFE01AB3034077EF4993BC3829C52BA"}] reserved[0] @protocol.c:1696#34
+[LE] doPack[276] status[0] cmdId[91] subCmdId[1] seqId[9] randID[216]  @pack.c:330#34
+[LE] passThru[0] reserved[0] UUID[10000100131000010011000C43768701]  @pack.c:335#34
+[LE] cbCloudHeartBeatLocalReq [394] reserved[0] -e @protocol.c:1700#34
+[LE] socket[2] nwUDPSendto [36.110.223.249:9003][394] @network.c:116#34
+[LE] isNeedDelCB timeoutRef[1] cmd[9][3] left needRsp[255]  @protocol.c:1157#34
+[LE] **************** cmd[9] subCmd[3], needRsp[255] reserved2[1] @protocol.c:1165#34
+[LE] nwPostCmd cmdId[9], subCmdId[3], [255.255.255.255:59673] timeoutRef[1] seqId[8] reserved[0] @protocol.c:899#34
+[LE]

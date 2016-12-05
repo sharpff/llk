@@ -115,7 +115,7 @@ static uint8_t lelinkGetSN(uint8_t* data) {
 
 static void pltResetDevice(void) {
     int ret = resetConfigData();
-    ret = halResetConfigData();
+    ret = salResetConfigData();
     if (0 <= ret) {
         setDevFlag(DEV_FLAG_RESET, 1);
         halReboot();

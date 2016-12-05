@@ -677,6 +677,10 @@ function s1CvtPri2Std(bin)
 					man = bin2hex(string.char(0x00, 0x1D))
 				elseif string.find(mac, "00158D0000F4D4E7") then
 					man = bin2hex(string.char(0xEE, 0xFF))
+				elseif string.find(mac, "00124B000DC6A96C") then
+					man = bin2hex(string.char(0x00, 0x1D))
+				elseif string.find(mac, "00124B000DC03C5F") then
+					man = bin2hex(string.char(0x00, 0x1D))
 				end
 				-- test only END
 				str = '{"sDevQryMan":2,"ud":"'..ud..'","man":"'..man..'"}'

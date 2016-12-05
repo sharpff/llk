@@ -562,8 +562,8 @@ int resetConfigData(void) {
         return ret;
     }
 
-    if (0 > halResetConfigData()) {
-        LELOG("halResetConfigData [%d]", ret);
+    if (0 > salResetConfigData()) {
+        LELOG("salResetConfigData [%d]", ret);
         return ret;
     }
 

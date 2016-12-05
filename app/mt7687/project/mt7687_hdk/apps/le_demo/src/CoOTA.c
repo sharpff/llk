@@ -429,23 +429,23 @@ static int eBL_MemoryWrite(uartHandler_t* handler, uint32_t u32Address, uint8_t 
     return eBL_CheckResponse(__FUNCTION__, eResponse, eRxType, 0x1e/*E_BL_MSG_TYPE_RAM_WRITE_RESPONSE*/);
 }
 
-void CoOTASetFlag(uint32_t flag) {
+void haalCoOTASetFlag(uint32_t flag) {
     int ret = 0;
     PrivateCfg priCfg;
-    APPLOG("CoOTASetFlag len[%d]", flag);
+    APPLOG("haalCoOTASetFlag len[%d]", flag);
 
     ret = lelinkStorageReadPrivateCfg(&priCfg);
     if (0 > ret || priCfg.csum != crc8((uint8_t *)&(priCfg.data), sizeof(priCfg.data))) {
-        APPLOGE("CoOTASetFlag ret[%d] or csum Failed", ret);
+        APPLOGE("haalCoOTASetFlag ret[%d] or csum Failed", ret);
         return;
     }
     priCfg.data.devCfg.sdevFWSize = flag;
     ret = lelinkStorageWritePrivateCfg(&priCfg);
     if (0 > ret) {
-        APPLOGE("CoOTASetFlag write Failed[%d]", ret);
+        APPLOGE("haalCoOTASetFlag write Failed[%d]", ret);
         return;
     }
-    APPLOG("CoOTASetFlag Write done");
+    APPLOG("haalCoOTASetFlag Write done");
 }
 
 int CoOTAGetFlag(int *updateSize) {
@@ -472,8 +472,8 @@ int CoOTAGetFlag(int *updateSize) {
     APPLOG("CoOTAGetFlag Flag got size[%d|%x]", priCfg.data.devCfg.sdevFWSize, priCfg.data.devCfg.sdevFWSize);
     return 1;
 }
-// [LEAPP] CoOTAProcessing PULLDOWN over @halOTA.c:632
-// [LEAPP] CoOTAProcessing to Open UART @halOTA.c:636
+// [LEAPP] haalCoOTAProcessing PULLDOWN over @halOTA.c:632
+// [LEAPP] haalCoOTAProcessing to Open UART @halOTA.c:636
 // SELECT 
 // halUartWrite [8]: 07 2c 08 00 00 00 00 23 
 // [LEAPP] eUART_Write iLength[8] iTotalBytesWritten[8] @halOTA.c:376
@@ -614,7 +614,7 @@ void CoOTAReset(int bootOrNormal) {
     APPLOG("CoOTAReset END");
 }
 
-void CoOTAProcessing(void) {
+void haalCoOTAProcessing(void) {
     void *uart = NULL;
     uint8_t buf[512] = {0};
     int readBytes = 0, ret = 0, baud = 115200, baudBoot = 38400;
@@ -625,16 +625,16 @@ void CoOTAProcessing(void) {
 // 01 02 10 11 02 10 02 10 11 03
     // const uint8_t reset[] = {0x01, 0x02, 0x10, 0x11, 0x02, 0x10, 0x02, 0x10, 0x11, 0x03};
     // gpioHandler_t hdlGPIO = {0};
-    APPLOG("CoOTAProcessing START");
+    APPLOG("haalCoOTAProcessing START");
     if (!CoOTAGetFlag(&updateSize)) {
         APPLOGW("CoOTAGetFlag NO");
         return;
     }
 
     // reset & into Boot Mode
-    APPLOG("CoOTAProcessing boot mode START");
+    APPLOG("haalCoOTAProcessing boot mode START");
     CoOTAReset(1);
-    APPLOG("CoOTAProcessing boot mode END");
+    APPLOG("haalCoOTAProcessing boot mode END");
 
 
     // clear the uart cache
@@ -646,13 +646,13 @@ void CoOTAProcessing(void) {
     }
     do {
         eUART_Read(&hdlUART, 100*1000, 1, &buf[0], &readBytes);
-        APPLOGW("CoOTAProcessing halUartRead [%d]", readBytes);
+        APPLOGW("haalCoOTAProcessing halUartRead [%d]", readBytes);
     } while(readBytes > 0);
 
     ret = eBL_FlashSelectDevice(&hdlUART, 0xCC, 0xEE, 0);
     if (0 != ret) {
         halUartClose(&hdlUART);
-        APPLOG("CoOTAProcessing eBL_FlashSelectDevice failed [%d]", ret);
+        APPLOG("haalCoOTAProcessing eBL_FlashSelectDevice failed [%d]", ret);
         return;
     }
     // {
@@ -665,7 +665,7 @@ void CoOTAProcessing(void) {
     ret = eBL_SetBaudrate(&hdlUART, baud);
     if (0 != ret) {
         halUartClose(&hdlUART);
-        APPLOG("CoOTAProcessing eBL_SetBaudrate failed [%d]", ret);
+        APPLOG("haalCoOTAProcessing eBL_SetBaudrate failed [%d]", ret);
         return;
     }
     halUartClose(&hdlUART);
@@ -673,14 +673,14 @@ void CoOTAProcessing(void) {
     // reopen for uart update
     memset(&hdlUART, 0, sizeof(&hdlUART));
     if (NULL == OpenUART(&hdlUART, baud)) {
-        APPLOGE("CoOTAProcessing halUartOpen failed for Boot");
+        APPLOGE("haalCoOTAProcessing halUartOpen failed for Boot");
         return;
     }
 
     ret = eBL_FlashErase(&hdlUART);
     if (0 != ret) {
         halUartClose(&hdlUART);
-        APPLOG("CoOTAProcessing eBL_FlashErase failed [%d]", ret);
+        APPLOG("haalCoOTAProcessing eBL_FlashErase failed [%d]", ret);
         return;
     }
 
@@ -713,12 +713,12 @@ void CoOTAProcessing(void) {
         halFlashRead(hdlFlash, chunk, u8ChunkSize, startAddr, n);
         // eStatus = fota_read(FOTA_PARITION_TMP, chunk, u8ChunkSize);
         if (eStatus != FOTA_STATUS_OK) {
-            APPLOGE("CoOTAProcessing fota_read Failed [%d]", eStatus);
+            APPLOGE("haalCoOTAProcessing fota_read Failed [%d]", eStatus);
             return;
         }
-        APPLOG("CoOTAProcessing eBL_FlashWrite startAddr[%x + %x] u8ChunkSize[%d] ", startAddr, n, u8ChunkSize);
+        APPLOG("haalCoOTAProcessing eBL_FlashWrite startAddr[%x + %x] u8ChunkSize[%d] ", startAddr, n, u8ChunkSize);
         if((eStatus = eBL_FlashWrite(&hdlUART, u32FlashOffset + n, u8ChunkSize, chunk)) != 0) {
-            APPLOGE("CoOTAProcessing eBL_FlashWrite Failed [%d]", eStatus);
+            APPLOGE("haalCoOTAProcessing eBL_FlashWrite Failed [%d]", eStatus);
             // halFlashClose(hdlFlash);
             return;
         }
@@ -727,8 +727,8 @@ void CoOTAProcessing(void) {
 
     // 3. reset Co flag
     halUartClose(&hdlUART);
-    CoOTASetFlag(0);
+    haalCoOTASetFlag(0);
     CoOTAReset(0);
-    APPLOG("CoOTAProcessing END");
+    APPLOG("haalCoOTAProcessing END");
     halReboot();
 }
