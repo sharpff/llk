@@ -27,7 +27,6 @@ static TimerHandle_t lelink_airconfig_timer = NULL;
 extern void smtcn_evt_handler(wifi_smart_connection_event_t event, void *data);
 extern void aes_task_init();
 extern void lelinkPltCtrlProcess(void);
-extern void leLedInit(void);
 
 int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 int airconfig_stop();

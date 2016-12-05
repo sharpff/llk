@@ -83,7 +83,7 @@ static void ledSetVal(int val) {
     hal_pwm_set_duty_cycle(LED_ID_BLUE, val);
 }
 
-void ledRestoreStatus(void) {
+static void ledRestoreStatus(void) {
     ledDevice.mode = 0;
     if(ledNeedRestoreStatus) {
         ledDevice.light = 1;
@@ -143,19 +143,184 @@ reloadtimer:
     }
 }
 
-void leLedStartBlink(void) {
+static void leLedStartBlink(void) {
     if (ledTimerHandler != NULL) {
         xTimerStart(ledTimerHandler, 0);
     }
 }
 
-void leLedStopBlink(void) {
+static void leLedStopBlink(void) {
     if (ledTimerHandler != NULL) {
         xTimerStop(ledTimerHandler, 0);
     }
 }
 
-int leLedProcessData(ledDevice_t* dev) {
+void leLedBlueFastBlink(void) { // wifi connect
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 2;
+    ledEffectDev.rgbValue[0].a = 512;
+    ledEffectDev.rgbValue[0].b = 1024;
+    leLedStartBlink();
+    APPLOG("==========>leLedBlueFastBlink ledDevice.timeout[%d]", ledDevice.timeout);
+}
+
+void leLedBlueSlowBlink(void) { // wifi configure
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 200;
+    ledEffectDev.size = 2;
+    ledEffectDev.rgbValue[0].a = 512;
+    ledEffectDev.rgbValue[0].b = 1024;
+    leLedStartBlink();
+}
+
+static void leLedGreenFastBlink(void) { // zigbee join
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 2;
+    ledEffectDev.timeout = 30;
+    ledEffectDev.rgbValue[0].a = 512;
+    ledEffectDev.rgbValue[1].b = 1024;
+    ledEffectDev.timestamp = xTaskGetTickCount();
+    leLedStartBlink();
+}
+
+void leLedGreenSlowBlink(void) { // ZigBee permit join
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 200;
+    ledEffectDev.size = 2;
+    ledEffectDev.timeout = 45;
+    ledEffectDev.rgbValue[0].a = 512;
+    ledEffectDev.rgbValue[1].g = 1024;
+    ledEffectDev.timestamp = xTaskGetTickCount();
+    leLedStartBlink();
+    APPLOG("==========>leLedGreenSlowBlink ledDevice.timeout[%d]", ledDevice.timeout);
+}
+
+static void leLedRedWhiteBlink(uint8_t timeout) {
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 2;
+    ledEffectDev.timeout = timeout;
+    ledEffectDev.rgbValue[0].a = 1024;
+    ledEffectDev.rgbValue[0].r = 1024;
+    ledEffectDev.rgbValue[1].a = 1024;
+    ledEffectDev.rgbValue[1].r = 1024;
+    ledEffectDev.rgbValue[1].g = 1024;
+    ledEffectDev.rgbValue[1].b = 1024;
+    ledEffectDev.timestamp = xTaskGetTickCount();
+    leLedStartBlink();
+}
+
+static void leLedGreenWhiteBlink(uint8_t timeout) {
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 2;
+    ledEffectDev.timeout = timeout;
+    ledEffectDev.rgbValue[0].a = 1024;
+    ledEffectDev.rgbValue[0].g = 1024;
+    ledEffectDev.rgbValue[1].a = 1024;
+    ledEffectDev.rgbValue[1].r = 1024;
+    ledEffectDev.rgbValue[1].g = 1024;
+    ledEffectDev.rgbValue[1].b = 1024;
+    ledEffectDev.timestamp = xTaskGetTickCount();
+    leLedStartBlink();
+}
+
+static void leLedYellow(uint8_t timeout) {
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 1;
+    ledEffectDev.timeout = timeout;
+    ledEffectDev.rgbValue[0].a = 1024;
+    ledEffectDev.rgbValue[0].r = 1024;
+    ledEffectDev.rgbValue[0].g = 1024;
+    ledEffectDev.timestamp = xTaskGetTickCount();
+    leLedStartBlink();
+}
+
+static void leLedWhite(uint8_t timeout) {
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 1;
+    ledEffectDev.timeout = timeout;
+    ledEffectDev.rgbValue[0].a = 1024;
+    ledEffectDev.rgbValue[0].r = 1024;
+    ledEffectDev.rgbValue[0].g = 1024;
+    ledEffectDev.rgbValue[0].b = 1024;
+    ledEffectDev.timestamp = xTaskGetTickCount();
+    leLedStartBlink();
+}
+
+static void leLedRedYellowBlueBlink(void) {
+    leLedStopBlink();
+    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
+    ledEffectDev.light = 1;
+    ledEffectDev.mode = 201;
+    ledEffectDev.size = 3;
+    ledEffectDev.rgbValue[0].a = 1024;
+    ledEffectDev.rgbValue[0].r = 1024;
+    ledEffectDev.rgbValue[1].a = 1024;
+    ledEffectDev.rgbValue[1].r = 1024;
+    ledEffectDev.rgbValue[1].g = 1024;
+    ledEffectDev.rgbValue[2].a = 1024;
+    ledEffectDev.rgbValue[2].b = 1024;
+    leLedStartBlink();
+    APPLOG("==========>leLedRedYellowBlueBlink ledDevice.timeout[%d]", ledDevice.timeout);
+}
+
+void leLedReset(void) {
+    ledDevice_t ledOriginData = {0, 0, 0, 0, 1024, 1024, 1024, 1024};
+    APPLOG("leLedReset");
+    halFlashErase(NULL, CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, GW_FLASH_CONF_SIZE);
+    halFlashWrite(NULL, (uint8_t *)&ledOriginData, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
+}
+
+static int leLedWriteConfigData(ledDevice_t* device) {
+    int ret;
+    halFlashErase(NULL, CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, GW_FLASH_CONF_SIZE);
+    APPLOG("leLedWriteConfigData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
+        device->light, device->mode, device->timeout, device->wifimode, device->brightness, 
+        device->color_r, device->color_g, device->color_b);
+    ret = halFlashWrite(NULL, (uint8_t *)device, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
+    return ret;
+}
+
+static int leLedReadConfigData(ledDevice_t* device) {
+    int ret;
+    ret = halFlashRead(NULL, (uint8_t*)device, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
+    APPLOG("leLedReadConfigData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
+        device->light, device->mode, device->timeout, device->wifimode, device->brightness, 
+        device->color_r, device->color_g, device->color_b);
+    return ret;
+}
+
+int leGetConfigMode(void) {
+    return ledDevice.wifimode;
+}
+
+int leSetConfigMode(uint8_t mode) {
+    ledDevice.wifimode = mode;
+    return leLedWriteConfigData(&ledDevice);
+}
+
+static int leLedProcessData(ledDevice_t* dev) {
     if(dev->wifimode != ledDevice.wifimode) {
         leSetConfigMode(dev->wifimode);
         halReboot();
@@ -208,6 +373,11 @@ int leLedProcessData(ledDevice_t* dev) {
     return 0;
 }
 
+void leLedSetDefault(void) {
+    ledSetVal(0);
+    leLedProcessData(&ledDevice);
+}
+
 int leLedRead(uint8_t *data, int* dataLen) {
     data[0] = ledDevice.light;
     data[1] = ledDevice.mode;
@@ -247,182 +417,8 @@ int leLedWrite(const uint8_t *data, int dataLen) {
     return 11;
 }
 
-void leLedBlueFastBlink(void) { // wifi connect
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
-    ledEffectDev.size = 2;
-    ledEffectDev.rgbValue[0].a = 512;
-    ledEffectDev.rgbValue[0].b = 1024;
-    leLedStartBlink();
-    APPLOG("==========>leLedBlueFastBlink ledDevice.timeout[%d]", ledDevice.timeout);
-}
-
-void leLedBlueSlowBlink(void) { // wifi configure
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 200;
-    ledEffectDev.size = 2;
-    ledEffectDev.rgbValue[0].a = 512;
-    ledEffectDev.rgbValue[0].b = 1024;
-    leLedStartBlink();
-}
-
-void leLedGreenFastBlink(void) { // zigbee join
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
-    ledEffectDev.size = 2;
-    ledEffectDev.timeout = 30;
-    ledEffectDev.rgbValue[0].a = 512;
-    ledEffectDev.rgbValue[1].g = 1024;
-    ledEffectDev.timestamp = xTaskGetTickCount();
-    leLedStartBlink();
-}
-
-void leLedGreenSlowBlink(void) { // ZigBee permit join
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 200;
-    ledEffectDev.size = 2;
-    ledEffectDev.timeout = 45;
-    ledEffectDev.rgbValue[0].a = 512;
-    ledEffectDev.rgbValue[1].g = 1024;
-    ledEffectDev.timestamp = xTaskGetTickCount();
-    leLedStartBlink();
-    APPLOG("==========>leLedGreenSlowBlink ledDevice.timeout[%d]", ledDevice.timeout);
-}
-
-void leLedRedWhiteBlink(uint8_t timeout) {
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
-    ledEffectDev.size = 2;
-    ledEffectDev.timeout = timeout;
-    ledEffectDev.rgbValue[0].a = 1024;
-    ledEffectDev.rgbValue[0].r = 1024;
-    ledEffectDev.rgbValue[1].a = 1024;
-    ledEffectDev.rgbValue[1].r = 1024;
-    ledEffectDev.rgbValue[1].g = 1024;
-    ledEffectDev.rgbValue[1].b = 1024;
-    ledEffectDev.timestamp = xTaskGetTickCount();
-    leLedStartBlink();
-}
-
-void leLedGreenWhiteBlink(uint8_t timeout) {
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
-    ledEffectDev.size = 2;
-    ledEffectDev.timeout = timeout;
-    ledEffectDev.rgbValue[0].a = 1024;
-    ledEffectDev.rgbValue[0].g = 1024;
-    ledEffectDev.rgbValue[1].a = 1024;
-    ledEffectDev.rgbValue[1].r = 1024;
-    ledEffectDev.rgbValue[1].g = 1024;
-    ledEffectDev.rgbValue[1].b = 1024;
-    ledEffectDev.timestamp = xTaskGetTickCount();
-    leLedStartBlink();
-}
-
-void leLedYellow(uint8_t timeout) {
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
-    ledEffectDev.size = 1;
-    ledEffectDev.timeout = timeout;
-    ledEffectDev.rgbValue[0].a = 1024;
-    ledEffectDev.rgbValue[0].r = 1024;
-    ledEffectDev.rgbValue[0].g = 1024;
-    ledEffectDev.timestamp = xTaskGetTickCount();
-    leLedStartBlink();
-}
-
-void leLedWhite(uint8_t timeout) {
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
-    ledEffectDev.size = 1;
-    ledEffectDev.timeout = timeout;
-    ledEffectDev.rgbValue[0].a = 1024;
-    ledEffectDev.rgbValue[0].r = 1024;
-    ledEffectDev.rgbValue[0].g = 1024;
-    ledEffectDev.rgbValue[0].b = 1024;
-    ledEffectDev.timestamp = xTaskGetTickCount();
-    leLedStartBlink();
-}
-
-void leLedRedYellowBlueBlink(void) {
-    leLedStopBlink();
-    memset(&ledEffectDev, 0, sizeof(ledEffect_t));
-    ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
-    ledEffectDev.size = 3;
-    ledEffectDev.rgbValue[0].a = 1024;
-    ledEffectDev.rgbValue[0].r = 1024;
-    ledEffectDev.rgbValue[1].a = 1024;
-    ledEffectDev.rgbValue[1].r = 1024;
-    ledEffectDev.rgbValue[1].g = 1024;
-    ledEffectDev.rgbValue[2].a = 1024;
-    ledEffectDev.rgbValue[2].b = 1024;
-    leLedStartBlink();
-    APPLOG("==========>leLedRedYellowBlueBlink ledDevice.timeout[%d]", ledDevice.timeout);
-}
-
-void leLedAllOff(void) {
-    uint8_t cmd[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    leLedWrite(cmd, 11);
-}
-
-void leLedSetDefault(void) {
-    leLedProcessData(&ledDevice);
-}
-
-void leLedReset(void) {
-    ledDevice_t ledOriginData = {0, 0, 0, 0, 1024, 1024, 1024, 1024};
-    APPLOG("leLedReset");
-    halFlashErase(NULL, CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, GW_FLASH_CONF_SIZE);
-    halFlashWrite(NULL, &ledOriginData, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
-}
-
-int leLedWriteConfigData(ledDevice_t* device) {
-    int ret;
-    halFlashErase(NULL, CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, GW_FLASH_CONF_SIZE);
-    APPLOG("leLedWriteConfigData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
-        device->light, device->mode, device->timeout, device->wifimode, device->brightness, 
-        device->color_r, device->color_g, device->color_b);
-    ret = halFlashWrite(NULL, device, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
-    return ret;
-}
-
-int leLedReadConfigData(ledDevice_t* device) {
-    int ret;
-    ret = halFlashRead(NULL, device, sizeof(ledDevice_t), CM4_FLASH_USR_CONF_ADDR - GW_FLASH_CONF_SIZE, 0);
-    APPLOG("leLedReadConfigData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
-        device->light, device->mode, device->timeout, device->wifimode, device->brightness, 
-        device->color_r, device->color_g, device->color_b);
-    return ret;
-}
-
-int leGetConfigMode(void) {
-    return ledDevice.wifimode;
-}
-
-int leSetConfigMode(uint8_t mode) {
-    ledDevice.wifimode = mode;
-    return leLedWriteConfigData(&ledDevice);
-}
-
 void leLedInit(void) {
-    int i, cycle;
+    uint32_t i, cycle;
     ledDevice_t device;
     for(i=0; i< LED_MAX_SIZE; i++) {
         hal_gpio_init(ledPWMArray[i].gid);

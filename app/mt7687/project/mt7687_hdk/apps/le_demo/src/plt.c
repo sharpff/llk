@@ -3,6 +3,7 @@
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "halHeader.h"
+#include "io.h"
 
 typedef enum {
     E_PLT_TYPE_IDLE, 
@@ -112,6 +113,15 @@ static uint8_t lelinkGetSN(uint8_t* data) {
     return 32;
 }
 
+static void pltResetDevice(void) {
+    int ret = resetConfigData();
+    ret = halResetConfigData();
+    if (0 <= ret) {
+        setDevFlag(DEV_FLAG_RESET, 1);
+        halReboot();
+    }
+}
+
 void lelinkPltCtrlProcess(void) {
     switch (cmdType) {
         case E_PLT_TYPE_CTRL: {
@@ -121,7 +131,7 @@ void lelinkPltCtrlProcess(void) {
         }
         break;
         case E_PLT_TYPE_VERSION: {
-        	char fwVer[64] = {0}, count;
+        	char fwVer[64] = {0}, count = 1;
 		    uint8_t mac[8] = {0};
 		    cmdType = E_PLT_TYPE_IDLE;
 		    APPLOG("---------lelinkInfo----------\r\n");
@@ -154,7 +164,9 @@ void lelinkPltCtrlProcess(void) {
         break;
         case E_PLT_TYPE_REBOOT: {
             cmdType = E_PLT_TYPE_IDLE;
-            halReboot();
+            //leSetConfigMode(1);
+            //halReboot();
+            pltResetDevice();
         }
         break;
         default: 

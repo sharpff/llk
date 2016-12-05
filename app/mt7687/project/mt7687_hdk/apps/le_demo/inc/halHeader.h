@@ -52,4 +52,13 @@ int hal_vsnprintf(char *buffer, size_t n, const char *format, va_list ap);
 int hal_strcoll(const char *l, const char *r);
 void hal_abort();
 
+int leLedRead(uint8_t *data, int* dataLen);
+int leLedWrite(const uint8_t *data, int dataLen);
+void leLedBlueFastBlink(void);
+void leLedBlueSlowBlink(void);
+void leLedSetDefault(void);
+void leLedReset(void);
+void leLedInit(void);
+int leGetConfigMode(void);
+int leSetConfigMode(uint8_t mode);
 #endif
