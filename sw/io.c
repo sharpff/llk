@@ -847,6 +847,7 @@ IOHDL *ioGetHdlExt() {
             LELOG("ioGetHdl sengineGetTerminalProfileCvtType ret[%d]", ret);
             return NULL;
         }
+        // LELOG("getWhatCvtType json[%s]", json);
         whatCvtType = getWhatCvtType(json, ret);
         if (0 >= whatCvtType) {
             // LELOGW("ioGetHdl getWhatCvtType[%d] NO VALID TYPE !!!!!!!!! ", whatCvtType);

@@ -93,7 +93,7 @@ extern void otaSetLatestType(int type);
 
 extern PCACHE sdevCache();
 extern SDevNode *sdevArray();
-extern int forEachNodeSDevThruMacCB(SDevNode *currNode, void *uData);
+extern int forEachNodeSDevByMacCB(SDevNode *currNode, void *uData);
 
 typedef int (*CBLocalReq)(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len);
 typedef void (*CBRemoteRsp)(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
@@ -1255,7 +1255,7 @@ MULTI_LOCAL_RSP:
     }
     return ret;
 }
-static void postReboot(void *ctx) {
+void postReboot(void *ctx) {
     NodeData node = {0};
 
     node.cmdId = LELINK_CMD_ASYNC_REBOOT_REQ;
@@ -1556,7 +1556,7 @@ static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, cons
     LELOG("cbCtrlGetStatusLocalRsp [%s] -s", (char *)data);
 
     if (!getStrValByKey((char *)data, len, JSON_NAME_SDEV_MAC, strMac, sizeof(strMac))) {
-        ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevThruMacCB, strMac);
+        ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, strMac);
         if (0 <= ret) {
             ret = getSDevStatus(ret, status, sizeof(status));
         } else {

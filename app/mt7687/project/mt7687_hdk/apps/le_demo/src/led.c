@@ -327,7 +327,7 @@ int leSetConfigMode(uint8_t mode) {
 static int leLedProcessData(ledDevice_t* dev) {
     if(dev->wifimode != ledDevice.wifimode) {
         leSetConfigMode(dev->wifimode);
-        halReboot();
+        reboot(1);
         return 0;
     }
     hal_pwm_set_duty_cycle(LED_ID_BRIGHT, dev->light);

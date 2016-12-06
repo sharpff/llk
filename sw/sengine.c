@@ -238,6 +238,15 @@ static int forEachNodeSDevForInValid(SDevNode *currNode, void *uData) {
     return 0;
 }
 
+static int forEachNodeSDevForValid(SDevNode *currNode, void *uData) {
+    LELOG("[SENGINE] forEachNodeSDevByIdxCB currNode->ud[%s] uData[%s] isSDevInfoDone[0x%02x]", currNode->ud, uData, currNode->isSDevInfoDone);
+    if (0 == strcmp(currNode->ud, (char *)uData) && 
+        0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        return 1;
+    }
+    return 0;
+}
+
 int forEachNodeSDevByMacCB(SDevNode *currNode, void *uData) {
     LELOG("[SENGINE] forEachNodeSDevByMacCB currNode->mac[%s] uData[%s]", currNode->mac, uData);
     if (0 == strcmp(currNode->mac, (char *)uData)) {
@@ -246,13 +255,14 @@ int forEachNodeSDevByMacCB(SDevNode *currNode, void *uData) {
     return 0;
 }
 
-static int forEachNodeSDevByIdxCB(SDevNode *currNode, void *uData) {
-    LELOG("[SENGINE] forEachNodeSDevByIdxCB currNode->ud[%s] uData[%s] isSDevInfoDone[0x%02x]", currNode->ud, uData, currNode->isSDevInfoDone);
+static int forEachNodeSDevByUDCB(SDevNode *currNode, void *uData) {
+    LELOG("[SENGINE] forEachNodeSDevByUDCB [0x%p]", uData);
     if (0 == strcmp(currNode->ud, (char *)uData)) {
         return 1;
     }
     return 0;
 }
+
 
 static void postStatusChanged(int plusIdx) {
     int ret = 0;
@@ -306,12 +316,12 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
     }
 
     // find the node with ud
-    index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByIdxCB, str);
+    index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByUDCB, str);
     if (0 > index) {
         LELOGE("sdevInfoRsp ud NOT FOUND [%d]", index);
         return -4;              
     }
-    LELOG("forEachNodeSDevByIdxCB index[%d] str[%s], ud[%s] mac[%s]", index, str, arr[index].ud, arr[index].mac);
+    LELOG("forEachNodeSDevByUDCB index[%d] str[%s], ud[%s] mac[%s]", index, str, arr[index].ud, arr[index].mac);
 
     if (WM_SUCCESS == json_get_val_int(&jobj, JSON_NAME_SDEV_QUERY_EPT, &val) && 2 == val) {
         // 0x01. endpoint list(active response)
@@ -541,13 +551,16 @@ static int sdevInsert(SDevNode *arr, const char *status, int len) {
             // }
 
             // insert into a new space 
-            if (0 <= (index = qEnCache(sdevCache(), &node))) {
+            if (!qEnCache(sdevCache(), &node)) {
                 // to place in an invalid(incomplete) space
                 index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForInValid, NULL);
                 if (0 <= index) {
                     sdevArraySet(index, &node, SDEV_BUF_TYPE_HW);  
+                    LELOG("to replace in an invalid(incomplete) space[%d]", index);
+                } else {
+                    LELOGE("FAILED SDEV(s) is FULL", index);
+                    return -5;
                 }
-                LELOG("to place in an invalid(incomplete) space[%d]", index);
             }
             LELOG("sdevInsert ret[%d] index[%d] mac[%s] sdev[%s] [%p]", ret, index, node.mac, node.sdevInfo, &(sdevArray()[0]));
             // TODO: send HELLO for sdev
@@ -590,7 +603,7 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
                 return -2;
             }
             LELOG("ud is [%s]", node.ud);
-            sDevIdx = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByIdxCB, node.ud);
+            sDevIdx = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForValid, node.ud);
             if (0 <= sDevIdx) {
                 // if (0 <= sdevArrayGet(sDevIdx, &node)) {
                     memcpy(&node, &(sdevArray()[sDevIdx]), sizeof(SDevNode));
@@ -1318,22 +1331,6 @@ int s1apiGetDevStatus(lua_State *L) {
     return 2;
 }
 
-int forEachNodeSDevThruMacCB(SDevNode *currNode, void *uData) {
-    LELOG("[SENGINE] forEachNodeSDevThruMacCB [0x%p]", uData);
-    if (0 == strcmp(currNode->mac, (char *)uData)) {
-        return 1;
-    }
-    return 0;
-}
-
-int forEachNodeSDevThruUDCB(SDevNode *currNode, void *uData) {
-    LELOG("[SENGINE] forEachNodeSDevThruUDCB [0x%p]", uData);
-    if (0 == strcmp(currNode->ud, (char *)uData)) {
-        return 1;
-    }
-    return 0;
-}
-
 int s1apiSdevGetUserDataByMac(lua_State *L) {
     char *strMac = NULL;
     int ret = 0;
@@ -1346,7 +1343,7 @@ int s1apiSdevGetUserDataByMac(lua_State *L) {
     }
 
     LELOG("s1apiSdevGetUserDataByMac strMac[%s]", strMac);
-    ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevThruMacCB, strMac);
+    ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, strMac);
     if (0 > ret) {
         LELOGE("s1apiSdevGetUserDataByMac -e2");
         return 0;
@@ -1369,7 +1366,7 @@ int s1apiSDevGetMacByUserData(lua_State *L) {
     }
 
     LELOG("s1apiSDevGetMacByUserData userData[%s]", userData);
-    ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevThruUDCB, userData);
+    ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByUDCB, userData);
     if (0 > ret) {
         LELOGE("s1apiSDevGetMacByUserData -e2");
         return 0;

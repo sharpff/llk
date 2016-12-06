@@ -44,11 +44,8 @@ int qEnCache(PCACHE C, void *val) {
         return 0;
     else {
         if (!tmp->flag) {
-            if (0 == C->flagAuto) {
+            if (0 == ++(C->flagAuto)) {
                 C->flagAuto = 1;
-            }
-            else {
-                C->flagAuto++;
             }
             tmp->flag = C->flagAuto;
         }
