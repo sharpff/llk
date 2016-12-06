@@ -18,21 +18,20 @@ typedef enum {
 extern int sengineSetAction(const char *json, int jsonLen);
 extern int getVer(char fwVer[64], int size);
 extern int halGetMac(uint8_t *mac, int len);
-static const char *cmdFormat = "{\"light\":%d,\"mode\":%d,\"timeout\":%d,\"brightness\":%d,\"red\":%d,\"green\":%d,\"blue\":%d}";
-//static const char *cmdFormat = "{\"pwm\":[{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d},{\"id\":%d,\"val\":%d}]}";
+static const char *cmdFormat = "{\"light\":%d,\"mode\":%d,\"timeout\":%d,\"brightness\":%d,\"red\":%d,\"green\":%d,\"blue\":%d,\"service\":%d,\"wifimode\":%d}";
 static char cmdBuff[1024];
 static int cmdType = 0;
 
 uint8_t le_ledon(uint8_t len, char *param[]) {
     memset(cmdBuff, 0, 1024);
-    sprintf(cmdBuff, cmdFormat, 1, 0, 0, 1024, 1024, 1024, 1024);
+    sprintf(cmdBuff, cmdFormat, 1, 0, 0, 1024, 1024, 1024, 1024, 0, 0);
     cmdType = E_PLT_TYPE_CTRL;
     return 0;
 }
     
 uint8_t le_ledoff(uint8_t len, char *param[]) {
     memset(cmdBuff, 0, 1024);
-    sprintf(cmdBuff, cmdFormat, 0, 0, 0, 0, 0, 0, 0);
+    sprintf(cmdBuff, cmdFormat, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     cmdType = E_PLT_TYPE_CTRL;
     return 0;
 }
@@ -48,19 +47,19 @@ uint8_t le_ledset(uint8_t len, char *param[]) {
     duty = atoi(param[1]);
     memset(cmdBuff, 0, 1024);
     if(type == 1) {
-        sprintf(cmdBuff, cmdFormat, 1, 0, 0, 1024, duty, 0, 0);
+        sprintf(cmdBuff, cmdFormat, 1, 0, 0, 1024, duty, 0, 0, 0, 0);
     } else if (type == 2) {
-        sprintf(cmdBuff, cmdFormat, 1, 0, 0, 1024, 0, duty, 0);
+        sprintf(cmdBuff, cmdFormat, 1, 0, 0, 1024, 0, duty, 0, 0, 0);
     } else if (type == 3) {
-        sprintf(cmdBuff, cmdFormat, 1, 0, 0, 1024, 0, 0, duty);
+        sprintf(cmdBuff, cmdFormat, 1, 0, 0, 1024, 0, 0, duty, 0, 0);
     } else if (type == 4) {
-        sprintf(cmdBuff, cmdFormat, 1, 1, 10, 0, 0, 0, 0);
+        sprintf(cmdBuff, cmdFormat, 1, 1, 10, 0, 0, 0, 0, 0, 0);
     } else if (type == 5) {
-        sprintf(cmdBuff, cmdFormat, 1, 2, 10, 0, 0, 0, 0);
+        sprintf(cmdBuff, cmdFormat, 1, 2, 10, 0, 0, 0, 0, 0, 0);
     } else if (type == 6) {
-        sprintf(cmdBuff, cmdFormat, 1, 3, 10, 0, 0, 0, 0);
+        sprintf(cmdBuff, cmdFormat, 1, 3, 10, 0, 0, 0, 0, 0, 0);
     } else if (type == 7) {
-        sprintf(cmdBuff, cmdFormat, 1, 4, 10, 0, 0, 0, 0);
+        sprintf(cmdBuff, cmdFormat, 1, 4, 10, 0, 0, 0, 0, 0, 0);
     } else {
         APPLOGE("type error\n");
         return 0;
@@ -80,7 +79,7 @@ uint8_t le_ledsetRGB(uint8_t len, char *param[]) {
     G = atoi(param[1]);
     B = atoi(param[2]);
     memset(cmdBuff, 0, 1024);
-    sprintf(cmdBuff, cmdFormat,  1, 0, 0, 1024, R, G, B);
+    sprintf(cmdBuff, cmdFormat,  1, 0, 0, 1024, R, G, B, 0, 0);
     cmdType = E_PLT_TYPE_CTRL;
     return 0;
 }
