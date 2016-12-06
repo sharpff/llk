@@ -997,25 +997,31 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             eintHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num ; i++, q++) {
                 halEINTRead(q, &val);
-                //LELOG("ioRead IO_TYPE_EINT id[%d] val[%d]", q->id, val);
+                // LELOG("ioRead IO_TYPE_EINT id[%d] val[%d] old[%d]", q->id, val, q->oldState);
                 if(0xFF == val && q->type == GPIO_TYPE_INPUT_RESET) {
                     resetDevice();
                     return 0;
                 }
+                data[k++] = q->id;
+                data[k++] = val;
                 if(val > 0) {
-                    data[k++] = q->id;
-                    data[k++] = val;
+                    ret = mgr->num*2;
                     q->oldState = val;
                 } else {
                     if(q->oldState) {
-                        data[k++] = q->id;
-                        data[k++] = 0;
                         q->oldState = 0;
-                        //LELOG("ioRead IO_TYPE_EINT reset id[%d] val[%d]", q->id, 0);
+                        ret = mgr->num*2;
                     }
                 }
             }
-            return k;
+            // if (ret > 0) {
+            //     LEPRINTF("===> count[%d]\r\n", ret);
+            //     for (i = 0; i < ret; ++i) {
+            //         LEPRINTF("[0x%02x] \r\n", data[i]);
+            //     }
+            //     LEPRINTF("<=== \r\n");
+            // }
+            return ret;
         }break;
         case IO_TYPE_USER: {
             //LELOG("aalUserRead [%d][%d]", data[0], dataLen);

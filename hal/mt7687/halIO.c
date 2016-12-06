@@ -428,7 +428,7 @@ void* halPWMInit(int clock) {
 
 static void halEINTIrqHandler(void *data) {
     eintHandler_t *handler = (eintHandler_t *)data;
-    //APPLOG("halEINTIrqHandler type[%d]", handler->type);
+    // APPLOG("halEINTIrqHandler id[%d] type[%d] count[%d]", handler->id, handler->type, handler->count);
     if(handler) {
         if(handler->type > 0) {
             hal_gpio_data_t gpio_data;
