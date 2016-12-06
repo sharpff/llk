@@ -108,6 +108,9 @@ static int stateProcApConnected(StateContext *cntx);
 static int stateProcCloudLinked(StateContext *cntx);
 static int stateProcCloudAuthed(StateContext *cntx);
 
+static void uartClear();
+static int sdevGetValidChannel(void);
+
 // static void resetConfigData(void);
 // static int halDoConfig(void *ptr, int ptrLen) {
 //     int ret = 0;
@@ -129,7 +132,6 @@ StateRecord ginStateTbl[] = {
     { E_STATE_CLOUD_AUTHED, stateProcCloudAuthed, E_STATE_AP_CONNECTED, stateProcApConnected, E_STATE_NONE, 0 },
     { E_STATE_NONE, 0, E_STATE_NONE, 0, E_STATE_NONE, 0 }
 };
-
 
 int isApConnected(void)
 {
@@ -191,34 +193,21 @@ static int changeState(int direction, StateContext *cntx, int idx) {
                 break;
         }
     }
+    if (ginStateCntx.stateIdCurr == E_STATE_AP_CONNECTED && direction > 0 && sengineHasDevs()) {
+        char buf[64] = {0};
+        int chnl = sdevGetValidChannel();
+
+        uartClear();
+        // get ver
+        snprintf(buf, sizeof(buf), "{\"sDevVer\":%d}", 1);
+        sengineSetAction(buf, strlen(buf));
+        halDelayms(50);
+        // set channel
+        snprintf(buf, sizeof(buf), "{\"sDevChnl\":%d}", chnl);
+        sengineSetAction(buf, strlen(buf));
+        halDelayms(50);
+    }
     return ret;
-}
-
-static void uartClear() {
-
-    IOHDL *ioHdl = NULL;
-    int x = 0, ret = 0;
-    uint8_t tmp = 0;
-    ioHdl = ioGetHdlExt();
-    LELOG("uartClear START");
-    if (NULL == ioHdl) {
-        return;
-    }
-
-    for (x = 0; x < ioGetHdlCounts(); x++) {
-        if (IO_TYPE_UART == ioHdl[x].ioType && ioHdl[x].hdl) {
-            do {
-                ret = halUartRead(ioHdl[x].hdl, &tmp, sizeof(tmp));
-                LELOG("uartClear Cleaning");
-            } while (0 < ret);
-            break;
-        }
-    }
-    LELOG("uartClear END");
-}
-
-static int sdevGetValidChannel(void) {
-    return 11;
 }
 
 int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
@@ -234,28 +223,6 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
         if (ginStateTbl[i].stateIdCurr == ginStateCntx.stateIdCurr) {
             ret = ginStateTbl[i].fpStateCurr(&ginStateCntx);
             break;
-        }
-    }
-
-    if (sengineHasDevs()) {
-        // TODO: 
-        static int8_t onlyOnce = 0;
-        if (!onlyOnce) {
-            int chnl = sdevGetValidChannel();
-            char buf[64] = {0};
-            uartClear();
-
-            // get ver
-            snprintf(buf, sizeof(buf), "{\"sDevVer\":%d}", 1);
-            sengineSetAction(buf, strlen(buf));
-            halDelayms(50);
-
-            // set channel
-            snprintf(buf, sizeof(buf), "{\"sDevChnl\":%d}", chnl);
-            sengineSetAction(buf, strlen(buf));
-            halDelayms(50);
-
-            onlyOnce = 1;
         }
     }
 
@@ -572,3 +539,43 @@ int resetConfigData(void) {
 int lelinkNwPostCmdExt(const void *node) {
     return lelinkNwPostCmd(ginCtxR2R, node);
 }
+
+static void uartClear() {
+
+    IOHDL *ioHdl = NULL;
+    int x = 0, ret = 0;
+    uint8_t tmp = 0;
+    ioHdl = ioGetHdlExt();
+    LELOG("uartClear START");
+    if (NULL == ioHdl) {
+        return;
+    }
+
+    for (x = 0; x < ioGetHdlCounts(); x++) {
+        if (IO_TYPE_UART == ioHdl[x].ioType && ioHdl[x].hdl) {
+            do {
+                ret = halUartRead(ioHdl[x].hdl, &tmp, sizeof(tmp));
+                LELOG("uartClear Cleaning");
+            } while (0 < ret);
+            break;
+        }
+    }
+    LELOG("uartClear END");
+}
+
+static int sdevGetValidChannel(void) {
+    int16_t d11, d25;
+    int channel, ch = 11;
+    static const int16_t zbch[] = {2405, 2475}; // 11, 25
+    static const int16_t wifich[] = {0, 2412, 2417, 2422, 2427, 2432, 2437, 2442, 2447, 2452, 2457, 2462}; // 0, 1 - 11
+    if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED && ginStateCntx.stateIdCurr <= E_STATE_CLOUD_AUTHED) {
+        channel = halGetWifiChannel();
+        if(channel > 0 && channel < 12) {
+            d11 = wifich[channel] - zbch[0];
+            d25 = zbch[1] - wifich[channel];
+            ch = (d11 > d25) ? 11 : 25;
+        }
+    }
+    return ch;
+}
+

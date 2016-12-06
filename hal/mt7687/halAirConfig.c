@@ -146,6 +146,10 @@ int halDoApConnecting(void *ptr, int ptrLen) {
     return gin_airconfig_ap_connected;
 }
 
+int halGetWifiChannel() {
+    return ginChannel;
+}
+
 extern int g_supplicant_ready;
 
 void lelink_softap_setup(char *ssid, char *wpa2_passphrase) {
