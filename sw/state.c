@@ -217,8 +217,19 @@ static void uartClear() {
     LELOG("uartClear END");
 }
 
+extern uint8_t ginChannel;
+extern int8_t gin_airconfig_ap_connected;
 static int sdevGetValidChannel(void) {
-    return 11;
+    int ch = 11;
+    int16_t d11, d25;
+    static const int16_t zbch[] = {2405, 2475}; // 11, 25
+    static const int16_t wifich[] = {0, 2412, 2417, 2422, 2427, 2432, 2437, 2442, 2447, 2452, 2457, 2462}; // 0, 1 - 11
+    if(gin_airconfig_ap_connected && ginChannel) {
+        d11 = wifich[ginChannel] - zbch[0];
+        d25 = zbch[1] - wifich[ginChannel];
+        ch = (d11 > d25) ? 11 : 25;
+    }
+    return ch;
 }
 
 int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
