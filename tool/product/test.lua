@@ -68,11 +68,11 @@ end
 --[[ MUST
    判断halPipeRead()得到的数据是什么类型的数据
         0, 无效数据
-        1, 设备状态数据
-        2, wifi重置数据
+        1, wifi重置数据
+        2, 设备状态数据
 ]]
 function s1GetValidKind(bin)
-	local tb = cjson.decode(bin) -- {"type":1, "data":"..."}
+	local tb = cjson.decode(bin) -- {"type":2, "data":"..."}
 	return tb["type"]
 end
 

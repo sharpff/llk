@@ -1,5 +1,9 @@
-#include "halHeader.h"
+#include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include "halHeader.h"
+#include "leconfig.h"
 
 void *halUartOpen(uartHandler_t* handler) {
     return (void *)0xffffffff;
@@ -58,7 +62,7 @@ int halPWMOpen(pwmHandler_t *handler) {
 }
 
 void* halPWMInit(int clock) {
-    return 0xffffffff;
+    return (void *)0xffffffff;
 }
 
 int halEINTClose(eintHandler_t *handler) {
@@ -103,16 +107,16 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size){
     return 0;
 }
 
-int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
+int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin){
     int fd, ret, append;
     char fileName[64] = {0};
     sprintf(fileName, "./0x%x.bin", startAddr);
     fd = open(fileName, O_WRONLY | O_CREAT);
     if (0 >= fd) {
-        printf("WRITE FAILED [%d]\r\n", errno);
+        APPLOG("WRITE FAILED [%d]\r\n", errno);
         return fd;
     }
-
+    lseek(fd, offsetToBegin, SEEK_SET);
     ret = write(fd, data, len);
     append = GET_PAGE_SIZE(len) - len;
     if (0 < append) {
@@ -122,22 +126,24 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr){
         }
     }
     close(fd);
-    printf("WRITE OK [%s] size[0x%x]\r\n", fileName, ret);
+    APPLOG("WRITE OK [%s] size[0x%x]\r\n", fileName, ret);
     return ret;
 }
 
-int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr){
+int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t offsetToBegin){
     int fd, ret;
     char fileName[64] = {0};
     sprintf(fileName, "./0x%x.bin", startAddr);
     fd = open(fileName, O_RDONLY);
     if (0 >= fd) {
         // printf("errno [%d]", errno);
+        // APPLOG("READ FAILED [%d]", errno);
         return fd;
     }
+    lseek(fd, offsetToBegin, SEEK_SET);
     ret = read(fd, data, len);
     close(fd);
-    // printf("READ OK [%s]", fileName);
+    // APPLOG("READ OK [%s]", fileName);
     return ret;
 }
 
@@ -175,8 +181,8 @@ int halPipeClose(void *dev) {
 
 /*
  *  功能: 读取设备数据。包括2类数据(与固件脚本保持一致, 固件中判断数据类型)
- *      1, 设备状态数据
- *      2, wifi重置数据
+ *      1, wifi重置数据
+ *      2, 设备状态数据
  *  
  *  参数:
  *      dev: Pipe的handle
@@ -187,6 +193,7 @@ int halPipeClose(void *dev) {
  *      读取到的数据
  */
 int halPipeRead(void *dev, uint8_t *buf, uint32_t len) {
+    int n = 0;
     char data[128];
 
     if(sStatePwr == 1 && sStatePercent < 100) {
@@ -196,9 +203,12 @@ int halPipeRead(void *dev, uint8_t *buf, uint32_t len) {
         sStatePercent -= 10;
     }
     /*snprintf(data, sizeof(data), "{\"type\":2, \"data\":{\"pwr\":%d,\"percentage\":%d}}", sStatePwr, sStatePercent);*/
-    snprintf(data, sizeof(data), "{\"type\":2, \"data\":{\"percentage\":%d}}", sStatePercent);
-    memcpy(buf, data, sizeof(data));
-    return sizeof(data);
+    /*snprintf(data, sizeof(data), "{\"type\":2, \"data\":{\"percentage\":%d, \"pwr\":1}}", sStatePercent);*/
+    data[n++] = 2;
+    n += snprintf(data + 1, sizeof(data) - 1, "{\"percentage\":%d, \"pwr\":1}", sStatePercent);
+    memcpy(buf, data, n);
+    /*printf("halPipeRead(%lu):%s\n", strlen((char *)buf), (char *)buf);*/
+    return strlen(data);
 }
 
 /*
@@ -225,7 +235,7 @@ int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len) {
     char data[128] = {0};
 
     memcpy(data, buf, len);
-    printf("halPipeWrite(%d):%s\n", len, data);
+    /*printf("halPipeWrite(%d):%s\n", len, data);*/
     if(len > 20) { // {"ctrl":{"action":1}}
         sStatePwr = (sStatePwr + 1) % 3;
         sStatePercent = (sStatePwr == 1) ? 0 : 100;
