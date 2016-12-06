@@ -586,13 +586,13 @@ RLED_STATE_t setResetLed(RLED_STATE_t st)
         ginFirstRunningFlag = 1;
         setPWMLedBlink(st);
         setGPIOLedBlink(st);
-        halSetLedStatus(st);
+        aalSetLedStatus(st);
     } else if(st == RLED_STATE_RUNNING) {
         s_resetLevel = st;
         if (ginFirstRunningFlag) {
             setPWMLedBlink(st);
             setGPIOLedBlink(st);
-            halSetLedStatus(st);
+            aalSetLedStatus(st);
             ginFirstRunningFlag = 0;
         }
     }
@@ -934,7 +934,7 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             return ret;
         }break;
         case IO_TYPE_USER: {
-            return halUserWrite(hdl, data, dataLen);
+            return aalUserWrite(hdl, data, dataLen);
         }break;
     }
     return 0;
@@ -1018,8 +1018,8 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             return k;
         }break;
         case IO_TYPE_USER: {
-            //LELOG("halUserRead [%d][%d]", data[0], dataLen);
-            return halUserRead(hdl, data, dataLen);
+            //LELOG("aalUserRead [%d][%d]", data[0], dataLen);
+            return aalUserRead(hdl, data, dataLen);
         }break;
     }    
     return 0;

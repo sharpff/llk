@@ -223,8 +223,8 @@ int halUpdateFirmware(OTAInfo_t *info) {
     }
 
     if (info->isSDev) {
-        CoOTASetFlag(info->imgLen);
-        CoOTAProcessing();
+        haalCoOTASetFlag(info->imgLen);
+        haalCoOTAProcessing();
     } else {
         if (0 == ret) {
             fota_trigger_update();

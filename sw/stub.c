@@ -1,11 +1,11 @@
 #include "leconfig.h"
 #include "io.h"
 
-__attribute__((weak)) int halUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
+__attribute__((weak)) int aalUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
     return 0;
 }
 
-__attribute__((weak)) int halUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
+__attribute__((weak)) int aalUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
     return 0;
 }
 
@@ -102,10 +102,10 @@ __attribute__((weak)) int halPipeWrite(void *dev, const uint8_t *buf, uint32_t l
     return len;
 }
 
-__attribute__((weak)) void halSetLedStatus(RLED_STATE_t st) {
+__attribute__((weak)) void aalSetLedStatus(RLED_STATE_t st) {
 
 }
 
-__attribute__((weak)) int halResetConfigData(void) {
+__attribute__((weak)) int salResetConfigData(void) {
 	return 0;
 }
