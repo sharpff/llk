@@ -102,6 +102,10 @@ __attribute__((weak)) int halPipeWrite(void *dev, const uint8_t *buf, uint32_t l
     return len;
 }
 
+__attribute__((weak)) int halGetWifiChannel() {
+    return 0;
+}
+
 __attribute__((weak)) void aalSetLedStatus(RLED_STATE_t st) {
 
 }

@@ -217,17 +217,18 @@ static void uartClear() {
     LELOG("uartClear END");
 }
 
-extern uint8_t ginChannel;
-extern int8_t gin_airconfig_ap_connected;
 static int sdevGetValidChannel(void) {
-    int ch = 11;
     int16_t d11, d25;
+    int channel, ch = 11;
     static const int16_t zbch[] = {2405, 2475}; // 11, 25
     static const int16_t wifich[] = {0, 2412, 2417, 2422, 2427, 2432, 2437, 2442, 2447, 2452, 2457, 2462}; // 0, 1 - 11
-    if(gin_airconfig_ap_connected && ginChannel) {
-        d11 = wifich[ginChannel] - zbch[0];
-        d25 = zbch[1] - wifich[ginChannel];
-        ch = (d11 > d25) ? 11 : 25;
+    if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED && ginStateCntx.stateIdCurr <= E_STATE_CLOUD_AUTHED) {
+        channel = halGetWifiChannel();
+        if(channel > 0 && channel < 12) {
+            d11 = wifich[channel] - zbch[0];
+            d25 = zbch[1] - wifich[channel];
+            ch = (d11 > d25) ? 11 : 25;
+        }
     }
     return ch;
 }
