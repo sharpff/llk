@@ -8,9 +8,9 @@
 #include "queue.h"
 #include "nvdm.h"
 
-void CoOTAProcessing(void);
+void haalCoOTAProcessing(void);
 void CoOTAReset(int bootOrNormal);
 int CoOTAGetFlag(int *updateSize);
-void CoOTASetFlag(uint32_t flag);
+void haalCoOTASetFlag(uint32_t flag);
 
 #endif
