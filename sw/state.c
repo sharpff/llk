@@ -52,7 +52,7 @@
     static uint32_t tsStart;\
     static uint32_t tsEnd;\
     tsEnd = halGetTimeStamp(); \
-    if ((go1st ? !tsStart : 0) || ss <= (tsEnd - tsStart)) {\
+    if ((go1st ? !tsStart : 0) || (ss <= (tsEnd - tsStart) && tsStart)) {\
         tsStart = tsEnd;
 
 #define TIMEOUT_ELSE } else {
@@ -286,8 +286,10 @@ static int stateProcStart(StateContext *cntx) {
             // TODO: wait for mt7687 flash ready?
             halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
+            wifiConfigByMonitor = ginPrivateCfg.data.devCfg.initCfgWiFiMode ? 1 : 0;
+        } else {
+            wifiConfigByMonitor = !(ginPrivateCfg.data.devCfg.initCfgWiFiMode) ? 1 : 0;
         }
-        wifiConfigByMonitor = ginPrivateCfg.data.devCfg.initCfgWiFiMode ? 1 : 0;
         wifiConfigTimeout = wifiConfigByMonitor ? WIFI_CFG_BY_MONITOR_TIME : WIFI_CFG_BY_SOFTAP_TIME;
         if(wifiConfigByMonitor) {
             ret = halDoConfig(NULL, 0);
@@ -324,7 +326,7 @@ static int stateProcConfiguring(StateContext *cntx) {
 
         TIMEOUT_BEGIN_SEC(wifiConfigTimeout, 0)
             ret = 0;
-            LELOG("Configure wifi timeout!!!");
+            LELOG("Configure wifi timeout!!! start[%d] end[%d]", tsEnd, tsStart);
             wifiConfigByMonitor ?  halStopConfig() : softApStop(0);
             setResetLed(RLED_STATE_FREE);
             reloadLatestPassport();
@@ -579,3 +581,11 @@ static int sdevGetValidChannel(void) {
     return ch;
 }
 
+extern void postReboot(void *ctx);
+void reboot(int isAsync) {
+    if (isAsync) {
+        postReboot(ginCtxR2R);
+    } else {
+        halReboot();
+    }
+}

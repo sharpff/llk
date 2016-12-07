@@ -546,6 +546,7 @@ function s1CvtStd2Pri(json)
 			print("uart w:")
 			LOGTBL(cmdTbl)
 			-- LOGTBL(cmdTbl)
+			-- "{\"ctrl\":{\"light\":1,\"mode\":0,\"timeout\":0,\"brightness\":552,\"red\":0,\"green\":0,\"blue\":0,\"service\":0,\"wifimode\":1}}"
 		elseif cvtType == 0x8000 then
 			local val
 			val = ctrl["light"]
