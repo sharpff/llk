@@ -1173,7 +1173,7 @@ int sengineInit(void) {
     ginScriptCfg = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
     ginScriptCfg2 = (ScriptCfg2 *)halCalloc(1, sizeof(ScriptCfg2));
 #else
-    #if defined(PF_VAL) && (PF_VAL == 6) // for MT7687
+    #if defined(PF_VAL) && (PF_VAL == 6 || PF_VAL == 9) // for MT7687
         static volatile ScriptCfg inScriptCfg __attribute__((section(".tcmBSS")));
         static volatile ScriptCfg2 inScriptCfg2 __attribute__((section(".tcmBSS")));
     #else

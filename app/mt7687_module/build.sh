@@ -4,7 +4,7 @@ COPY="cp -prf"
 MKDIR="mkdir -p"
 MAIN_PATH="`pwd`/../../"
 PATH_LELINK=../../lib
-PF=mt7687
+PF=mt7687_module
 
 
 if [ ! -n "$MTSDK7687" ]; then

@@ -2184,7 +2184,7 @@ static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, co
     // char uuid[64] = {0};
     // char query[128] = {0};
     LELOG("cbCloudIndStatusRemoteReq -s");
-    // LELOG("[%d][%s]", len, data);
+    LELOG("[%d][%s]", len, data);
     senginePollingRules((char *)data, len);
     halCBRemoteReq(ctx, cmdInfo, data, len);
     LELOG("cbCloudIndStatusRemoteReq -e");
