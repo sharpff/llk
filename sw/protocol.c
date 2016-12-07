@@ -1344,6 +1344,7 @@ static int16_t ginSDevCurrFoundIndex;
 static int forEachNodeSDevIteratorCB(SDevNode *currNode, void *uData) {
     int16_t *foundIndex = (int16_t *)uData;
     int16_t index = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize);
+    LELOG("[SENGINE] forEachNodeSDevIteratorCB *foundIndex[%d] index[%d] isSDevInfoDone[%02x]", *foundIndex, index, currNode->isSDevInfoDone);
     if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
         if (*foundIndex == index) {
             *foundIndex = index + 1;
@@ -1372,7 +1373,7 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     int ret = 0, validSize = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char rspDiscover[MAX_BUF] = {0};
-    LELOG("cbDiscoverLocalRsp -s");
+    LELOG("cbDiscoverLocalRsp ======> -s");
 
 
 
@@ -1388,6 +1389,7 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
         int index = 0;
         index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevIteratorCB, &ginSDevCurrFoundIndex);
         if (0 <= index) {
+            LELOG("cbDiscoverLocalRsp ginSDevCurrFoundIndex[%d] index[%d]", ginSDevCurrFoundIndex, index);
             ret = getSDevStatus(index, rspDiscover, sizeof(rspDiscover));
         } else {
             ret = 0;
@@ -1395,7 +1397,7 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     }
 
 	ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rspDiscover, ret, dataOut, dataLen);
-    LELOG("cbDiscoverLocalRsp ******ret[%d] [%d] -e", ret, ginSDevCountsInDiscovery);
+    LELOG("cbDiscoverLocalRsp <====== ret[%d] [%d] -e", ret, ginSDevCountsInDiscovery);
 
     // clear the flag
     if (0 == ginSDevCountsInDiscovery--) {
@@ -1689,10 +1691,10 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     getTerminalTokenStr(token, sizeof(token));
     if (!cmdInfo->reserved) {
         ret = getTerminalStatus(status, sizeof(status));
-        ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
     } else {
         ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
     }
+    ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
     LELOG("appended token [%d][%d] [%s] reserved[%d]", ret, strlen(status), status, cmdInfo->reserved);
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
