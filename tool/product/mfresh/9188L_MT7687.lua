@@ -58,8 +58,8 @@ function s1GetCvtType()
     -- combained uart(0x1)
     local str = [[
     {"whatCvtType":1,
-     "common":[{"num":2,"id":"36-37","mux":"7-7"}],
-     "uart":[{"id":1, "baud":"115200-8N1"}]
+     "common":[{"num":2,"id":"2-3","mux":"7-7"}],
+     "uart":[{"id":0, "baud":"115200-8N1"}]
     }
     ]]
     local delay = 5
