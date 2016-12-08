@@ -1373,7 +1373,7 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     int ret = 0, validSize = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char rspDiscover[MAX_BUF] = {0};
-    LELOG("cbDiscoverLocalRsp ======> -s");
+    LELOG("cbDiscoverLocalRsp ======> ginSDevCountsInDiscovery[%d] -s", ginSDevCountsInDiscovery);
 
 
 
@@ -1406,6 +1406,8 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
         if (sengineHasDevs()) {
             qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForNumCB, &validSize);
             ginSDevCountsInDiscovery = validSize;            
+        } else {
+            ginSDevCountsInDiscovery = 0;
         }
     }
     return ret;

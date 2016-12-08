@@ -279,11 +279,11 @@ static int stateProcStart(StateContext *cntx) {
         if (ginPrivateCfg.csum == crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
             if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
                 ret = ginPrivateCfg.data.nwCfg.configStatus;
+                LELOG("stateProcStart ssid[%s] psk[%s]", ginPrivateCfg.data.nwCfg.config.ssid, ginPrivateCfg.data.nwCfg.config.psk);
                 ginConfigStatus = 1;
             } 
         }
     }
-    LELOG("stateProcStart ret[%d]", ret);
     LELOG("stateProcStart ********** flagWiFi[%02x] initCfgWiFiMode[%02x], initCfgIfUnBind[%02x]", 
         ginPrivateCfg.data.devCfg.flagWiFi, 
         ginPrivateCfg.data.devCfg.initCfgWiFiMode,
