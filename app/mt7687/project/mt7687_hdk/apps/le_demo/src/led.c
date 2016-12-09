@@ -330,7 +330,13 @@ static int leLedProcessData(ledDevice_t* dev) {
         reboot(1);
         return 0;
     }
-    hal_pwm_set_duty_cycle(LED_ID_BRIGHT, dev->light);
+    
+    if (dev->light) {
+        hal_pwm_set_duty_cycle(LED_ID_BRIGHT, dev->brightness);
+    } else {
+        hal_pwm_set_duty_cycle(LED_ID_BRIGHT, 0);
+    }
+    
     APPLOG("leLedProcessData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
         dev->light, dev->mode, dev->timeout, dev->timeout, dev->brightness,
         dev->color_r, dev->color_g, dev->color_b);
