@@ -105,7 +105,15 @@ static uint8_t lelinkGetSN(uint8_t* data) {
 	if (valid_bit == 0) {
     	return 0;
     }
-	SYSefuse_Read16Bytes(0x90, (uint32_t *)data+16, &valid_bit, 0);
+    //APPLOG("SN H 16: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 
+	//	        data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], 
+	//	        data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]);
+    //APPLOG("delay 1 s, then read another 16 bytes");
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+	SYSefuse_Read16Bytes(0x90, (uint32_t *)(data+16), &valid_bit, 0);
+	//APPLOG("SN L 16: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 
+	//	        data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23], 
+	//	        data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31]);
 	if (valid_bit == 0) {
     	return 0;
     }
