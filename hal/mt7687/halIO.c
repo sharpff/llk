@@ -229,6 +229,24 @@ int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
    return size;
 }
 
+static void setGPIOMode(int gpioID, int mode) {
+    switch(mode) {
+        case GPIO_MODE_DEFAULT:
+        break;
+        case GPIO_MODE_PULLUP:
+            hal_gpio_pull_up(gpioID);
+        break;
+        case GPIO_MODE_PULLDOWN:
+            hal_gpio_pull_down(gpioID);
+        break;
+        case GPIO_MODE_NOPULL:
+            hal_gpio_disable_pull(gpioID);
+        break;
+        default:
+        break;
+    }
+}
+
 void *halGPIOInit(void) {
     return 0xABCEFFFF;
 }
@@ -257,22 +275,7 @@ int halGPIOOpen(gpioHandler_t* handler) {
         default:
             return -1;
     }
-
-    switch(handler->mode) {
-    	case GPIO_MODE_DEFAULT:
-    	    break;
-        case GPIO_MODE_PULLUP:
-            hal_gpio_pull_up(handler->id);
-            break;
-        case GPIO_MODE_PULLDOWN:
-            hal_gpio_pull_down(handler->id);
-            break;
-        case GPIO_MODE_NOPULL:
-            hal_gpio_disable_pull(handler->id);
-            break;
-        default:
-            break;
-    }
+    setGPIOMode(handler->id, handler->mode);
     return handler->id;
 }
 
@@ -492,8 +495,8 @@ int halEINTOpen(eintHandler_t *handler) {
     hal_eint_config_t eint_config;
     hal_gpio_init(handler->gid);
     hal_gpio_set_direction(handler->gid, HAL_GPIO_DIRECTION_INPUT);
-    hal_gpio_disable_pull(handler->gid);
-    eint_config.trigger_mode = handler->mode;
+    setGPIOMode(handler->gid, handler->mode);
+    eint_config.trigger_mode = handler->trigger;
     eint_config.debounce_time = handler->debounce;
     hal_eint_init(handler->id, &eint_config);
     APPLOG("halEINTOpen id[%d] gid[%d] mode[%d] debounce[%d] timeout[%d]",

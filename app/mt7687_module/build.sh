@@ -98,8 +98,8 @@ if [ "$1" != "clean" ]; then
         $COPY ./middleware/MTK/smtcn/src/*.c $MTSDK7687/middleware/MTK/smtcn/src
         $COPY ./middleware/MTK/smtcn/inc/*.h $MTSDK7687/middleware/MTK/smtcn/inc
         $COPY ./middleware/third_party/httpclient/src/*.c   $MTSDK7687/middleware/third_party/httpclient/src/
-	$COPY $MAIN_PATH/hal/$PF/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
-	$COPY $MAIN_PATH/hal/$PF/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
+	$COPY $MAIN_PATH/hal/mt7687/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
+	$COPY $MAIN_PATH/hal/mt7687/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/hal
 	# for lelink
 	$COPY ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/
 	rm $MTSDK7687/out/mt7687_hdk/le_demo/*.bin

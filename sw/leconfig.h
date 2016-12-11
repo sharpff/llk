@@ -50,9 +50,16 @@ typedef struct {
     uint8_t id;
     uint8_t dir;
     uint8_t mode;
-    uint8_t type;
+    uint8_t type; // 0-normal gpio; 1-reset for lelink
     uint8_t state;
     uint8_t oldState;
+    /*
+     * gpiostate will be filled in lelink while lelink to contorl(write) gpio. 
+     * this val should be checked in halGPIOWrite.
+     * 1/0 is normal gpio state, just do write(1/0). 
+     * 2-quick blink and 3-slow blink should be implemented if nesassary.
+     * "longTime":xxx and "shortTime":yyy in sw script has been abolished.
+     */
     uint8_t gpiostate;
     void* handler;
     uint32_t reserved1;
@@ -90,6 +97,7 @@ typedef struct {
     uint8_t id;
     uint8_t gid;
     uint8_t mode;
+    uint8_t trigger;
     uint8_t type;
     uint8_t state;
     uint8_t oldState;

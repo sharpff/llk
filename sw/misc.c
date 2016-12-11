@@ -333,6 +333,9 @@ int getEINTInfo(const char *json, int jsonLen, eintHandler_t *table, int n) {
             if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_MODE, &tmp)) == WM_SUCCESS) {
                 table[i].mode = tmp;
             }
+            if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_TRIGGER, &tmp)) == WM_SUCCESS) {
+                table[i].trigger = tmp;
+            }
             if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_STATE, &tmp)) == WM_SUCCESS) {
                 table[i].state = tmp;
             }
@@ -342,8 +345,8 @@ int getEINTInfo(const char *json, int jsonLen, eintHandler_t *table, int n) {
             if((ret = json_get_val_int(&jobj, JSON_NAME_EINT_TIMEOUT, &tmp)) == WM_SUCCESS) {
                 table[i].timeout = tmp;
             }
-            LELOG("EINT id[%d], gid[%d], mode[%d], debounce[%d], timeout[%d]",
-                table[i].id, table[i].gid, table[i].mode, table[i].debounce, table[i].timeout);
+            LELOG("EINT id[%d], gid[%d], mode[%d], trigger[%d], debounce[%d], timeout[%d]",
+                table[i].id, table[i].gid, table[i].mode, table[i].trigger, table[i].debounce, table[i].timeout);
             json_release_composite_object(&jobj);
         }
     }

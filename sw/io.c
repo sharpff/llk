@@ -556,21 +556,23 @@ static void setPWMLedBlink(RLED_STATE_t st) {
 static void setGPIOLedBlink(RLED_STATE_t st) {
     gpioHandler_t *q = ginGpioManager.table;
     int i;
+    APPLOG("setGPIOLedBlink ginGpioManager.num[%d] st[%d]", ginGpioManager.num, st);
     if (st == RLED_STATE_WIFI) {
         for(i = 0; i < ginGpioManager.num ; i++, q++) {
-            if (q->type == PWM_TYPE_OUTPUT_RESET) {
+            if (q->type == GPIO_TYPE_OUTPUT_RESET) {
                 halGPIOWrite(q, 3);
             }
         }
     } else if (st == RLED_STATE_CONNECTING) {
         for(i = 0; i < ginGpioManager.num ; i++, q++) {
-            if (q->type == PWM_TYPE_OUTPUT_RESET) {
+            APPLOG("setGPIOLedBlink i[%d] type[%d]", i, q->type);
+            if (q->type == GPIO_TYPE_OUTPUT_RESET) {
                 halGPIOWrite(q, 2);
             }
         }
     } else if (st == RLED_STATE_RUNNING) {
         for(i = 0; i < ginGpioManager.num ; i++, q++) {
-            if (q->type == PWM_TYPE_OUTPUT_RESET) {
+            if (q->type == GPIO_TYPE_OUTPUT_RESET) {
                 halGPIOWrite(q, q->state);
             }
         }

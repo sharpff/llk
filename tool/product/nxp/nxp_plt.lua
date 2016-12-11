@@ -178,8 +178,8 @@ function s1GetCvtType()
     {"whatCvtType":32801,
      "common":[{"num":4,"id":"36-37-0-1","mux":"7-7-3-3"}],
      "uart":[{"id":1, "baud":"115200-8N1"}],
-     "eint":[{"id":0,"gid":0,"type":1,"mode":4,"state":1,"debounce":5,"timeout":400},
-             {"id":1,"gid":1,"type":0,"mode":3,"state":1,"debounce":5,"timeout":400}]
+     "eint":[{"id":0,"gid":0,"type":1,"mode":3,"trigger":4,"state":1,"debounce":5,"timeout":400},
+             {"id":1,"gid":1,"type":0,"mode":3,"trigger":3,"state":0,"debounce":5,"timeout":400}]
     }
     ]]
 	local delay = 5
