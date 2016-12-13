@@ -750,7 +750,7 @@ function s1CvtPri2Std(bin)
         else
 			if val2 == 1 then
 			    if v1 == 0 then
-			        str = string.format(status, 1, v2, 0, v4, v5, v6, v7, 1, v8)
+			        str = string.format(status, 1, v2, 0, v4, v5, v6, v7, 0, v8)
 			    else
 			        str = string.format(status, 0, v2, 0, v4, v5, v6, v7, 0, v8)
 			    end

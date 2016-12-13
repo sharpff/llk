@@ -14,8 +14,8 @@
 #define LED_MAX_SIZE 4
 
 #define LED_ID_RED    35
-#define LED_ID_BLUE   34
-#define LED_ID_GREEN  33
+#define LED_ID_BLUE   33
+#define LED_ID_GREEN  34
 #define LED_ID_BRIGHT 18
 
 typedef struct {
@@ -42,8 +42,8 @@ typedef struct {
 
 ledPWM_t ledPWMArray[LED_MAX_SIZE] = {
     {LED_ID_RED, 34, 9, 1, 0, 5120, 1024, 0},
-    {LED_ID_BLUE, 33, 9, 1, 0, 5120, 1024, 0},
-    {LED_ID_GREEN, 32, 9, 1, 0, 5120, 1024, 0},
+    {LED_ID_BLUE, 32, 9, 1, 0, 5120, 1024, 0},
+    {LED_ID_GREEN, 33, 9, 1, 0, 5120, 1024, 0},
     {LED_ID_BRIGHT, 35, 9, 1, 0, 5120, 1024, 0},
 };
 
