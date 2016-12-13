@@ -186,7 +186,7 @@ static void leLedGreenFastBlink(void) { // zigbee join
     ledEffectDev.size = 2;
     ledEffectDev.timeout = 30;
     ledEffectDev.rgbValue[0].a = 512;
-    ledEffectDev.rgbValue[1].g = 1024;
+    ledEffectDev.rgbValue[0].g = 1024;
     ledEffectDev.timestamp = xTaskGetTickCount();
     leLedStartBlink();
 }
@@ -199,7 +199,7 @@ void leLedGreenSlowBlink(void) { // ZigBee permit join
     ledEffectDev.size = 2;
     ledEffectDev.timeout = 45;
     ledEffectDev.rgbValue[0].a = 512;
-    ledEffectDev.rgbValue[1].g = 1024;
+    ledEffectDev.rgbValue[0].g = 1024;
     ledEffectDev.timestamp = xTaskGetTickCount();
     leLedStartBlink();
     APPLOG("==========>leLedGreenSlowBlink ledDevice.timeout[%d]", ledDevice.timeout);
@@ -338,7 +338,7 @@ static int leLedProcessData(ledDevice_t* dev) {
     }
     
     APPLOG("leLedProcessData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
-        dev->light, dev->mode, dev->timeout, dev->timeout, dev->brightness,
+        dev->light, dev->mode, dev->timeout, dev->wifimode, dev->brightness,
         dev->color_r, dev->color_g, dev->color_b);
     if (dev->light == 0) {
         ledDevice.light = 0;
