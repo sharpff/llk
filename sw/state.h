@@ -23,6 +23,7 @@ typedef enum {
 int isApConnected(void);
 int isCloudAuthed(void);
 StateId changeStateId(StateId state);
+StateId getStateId(void);
 int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a);
 int lelinkNwPostCmdExt(const void *node);
 

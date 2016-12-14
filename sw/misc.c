@@ -634,19 +634,40 @@ CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen,
 }
 
 
-static int ginLogSock;
+#include "state.h"
+static int ginLogSock = -1;
 static int ginDir;
 static char ginIP[MAX_IPLEN];
 static int ginPort;
-// static int ginDir = 1;
-// static char ginIP[MAX_IPLEN] = {"192.168.3.100"};
-// static int ginPort = 1234;
+
+// #define ABC
+#ifdef ABC
+void startLog2Master(void) {
+    ginPort = 1234;
+    strcpy(ginIP, "10.75.137.116");
+    int broadcastEnable = 1, ret = 0;
+    if (-1 == ginLogSock) {
+        ret = halNwNew(0, 0, &ginLogSock, &broadcastEnable);
+        if (ret) {
+            ginDir = 0;
+        } else {
+            ginDir = 1;
+            // ginDir = 1;
+        }
+    }     
+}
+#endif
 
 void setLogDir(int dir) {
     ginDir = dir;
 }
 
-int getLogDir(void) {
+static int getLogDir(void) {
+#ifdef ABC
+    if(getStateId() >= E_STATE_AP_CONNECTED && getStateId() <= E_STATE_CLOUD_AUTHED) {
+        startLog2Master();
+    }
+#endif
     return ginDir;
 }
 
@@ -734,7 +755,7 @@ int cloudMsgHandler(const char *data, int len) {
         }break;
         case CLOUD_MSG_KEY_LOG2MASTER: {
             int broadcastEnable = 1;
-            if (!ginLogSock) {
+            if (-1 == ginLogSock) {
                 ret = halNwNew(0, 0, &ginLogSock, &broadcastEnable);
                 if (ret) {
                     LELOGW("halNwNew [%d]", ret);

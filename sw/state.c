@@ -152,6 +152,10 @@ StateId changeStateId(StateId state) {
     return ginStateCntx.stateIdCurr; 
 }
 
+StateId getStateId(void) { 
+    return ginStateId;
+}
+
 static int changeState(int direction, StateContext *cntx, int idx) {
     int ret = 0;
 

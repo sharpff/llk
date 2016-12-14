@@ -203,7 +203,7 @@ void leLedGreenSlowBlink(void) { // ZigBee permit join
     ledEffectDev.light = 1;
     ledEffectDev.mode = 200;
     ledEffectDev.size = 2;
-    ledEffectDev.timeout = 45;
+    ledEffectDev.timeout = ledDevice.timeout;
     ledEffectDev.rgbValue[0].a = 512;
     ledEffectDev.rgbValue[0].g = 1024;
     ledEffectDev.timestamp = xTaskGetTickCount();
