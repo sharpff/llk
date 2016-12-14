@@ -18,8 +18,8 @@
 #define LED_ID_GREEN  34
 #define LED_ID_BRIGHT 18
 
-float color_w_r = 0.7;
-float color_w_g = 0.8;
+float color_w_r = 1.0;
+float color_w_g = 1.0;
 float color_w_b = 1.0;
 
 typedef struct {
