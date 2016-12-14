@@ -1736,6 +1736,9 @@ static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo,
         ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
     }
 
+    if (sengineHasDevs()) {
+        senginePollingRules(status, sizeof(status));
+    }
     // if (0 < ret) {
     //     getTerminalTokenStr(token, sizeof(token));
     //     sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);

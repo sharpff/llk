@@ -18,8 +18,8 @@
 #define LED_ID_GREEN  34
 #define LED_ID_BRIGHT 18
 
-float color_w_r = 1.0;
-float color_w_g = 1.0;
+float color_w_r = 0.7;
+float color_w_g = 0.8;
 float color_w_b = 1.0;
 
 typedef struct {
@@ -337,9 +337,7 @@ static int leLedProcessData(ledDevice_t* dev) {
         return 0;
     }
     
-    if (dev->light) {
-        hal_pwm_set_duty_cycle(LED_ID_BRIGHT, dev->brightness);
-    } else {
+    if (!dev->light) {
         hal_pwm_set_duty_cycle(LED_ID_BRIGHT, 0);
     }
     
@@ -377,6 +375,7 @@ static int leLedProcessData(ledDevice_t* dev) {
             }
         } else {
             // save rgb value and switch
+            hal_pwm_set_duty_cycle(LED_ID_BRIGHT, dev->brightness);
             ledNeedRestoreStatus = 1;
             memcpy(&ledDevice, dev, sizeof(ledDevice_t));
             xTimerStop(ledTimerHandler, 0);
