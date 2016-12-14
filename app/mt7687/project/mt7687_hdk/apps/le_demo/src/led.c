@@ -18,6 +18,10 @@
 #define LED_ID_GREEN  34
 #define LED_ID_BRIGHT 18
 
+float color_w_r = 1.0;
+float color_w_g = 1.0;
+float color_w_b = 1.0;
+
 typedef struct {
     uint8_t  light;      // on/off led switch
     uint8_t  mode;       // read/white green/white
@@ -41,10 +45,10 @@ typedef struct {
 }ledPWM_t;
 
 ledPWM_t ledPWMArray[LED_MAX_SIZE] = {
-    {LED_ID_RED, 34, 9, 1, 0, 5120, 1024, 0},
-    {LED_ID_BLUE, 32, 9, 1, 0, 5120, 1024, 0},
-    {LED_ID_GREEN, 33, 9, 1, 0, 5120, 1024, 0},
-    {LED_ID_BRIGHT, 35, 9, 1, 0, 5120, 1024, 0},
+    {LED_ID_RED, 34, 9, 1, 0, 20000, 1024, 0},
+    {LED_ID_BLUE, 32, 9, 1, 0, 20000, 1024, 0},
+    {LED_ID_GREEN, 33, 9, 1, 0, 20000, 1024, 0},
+    {LED_ID_BRIGHT, 35, 9, 1, 0, 20000, 1024, 0},
 };
 
 static ledDevice_t ledDevice = {
@@ -88,9 +92,9 @@ static void ledRestoreStatus(void) {
     if(ledNeedRestoreStatus) {
         ledDevice.light = 1;
         hal_pwm_set_duty_cycle(LED_ID_BRIGHT, ledDevice.brightness);
-        hal_pwm_set_duty_cycle(LED_ID_RED, ledDevice.color_r);
-        hal_pwm_set_duty_cycle(LED_ID_GREEN, ledDevice.color_g);
-        hal_pwm_set_duty_cycle(LED_ID_BLUE, ledDevice.color_b);
+        hal_pwm_set_duty_cycle(LED_ID_RED, ledDevice.color_r*color_w_r);
+        hal_pwm_set_duty_cycle(LED_ID_GREEN, ledDevice.color_g*color_w_g);
+        hal_pwm_set_duty_cycle(LED_ID_BLUE, ledDevice.color_b*color_w_b);
     } else {
         ledDevice.light = 0;
         hal_pwm_set_duty_cycle(LED_ID_BRIGHT, 0);
@@ -119,20 +123,22 @@ static void ledBlinkTimerCallback( TimerHandle_t tmr ) {
     }
     if(ledEffectDev.size == 1) {
         hal_pwm_set_duty_cycle(LED_ID_BRIGHT, ledEffectDev.rgbValue[0].a);
-        hal_pwm_set_duty_cycle(LED_ID_RED, ledEffectDev.rgbValue[0].r);
-        hal_pwm_set_duty_cycle(LED_ID_GREEN, ledEffectDev.rgbValue[0].g);
-        hal_pwm_set_duty_cycle(LED_ID_BLUE, ledEffectDev.rgbValue[0].b);
+        hal_pwm_set_duty_cycle(LED_ID_RED, ledEffectDev.rgbValue[0].r*color_w_r);
+        hal_pwm_set_duty_cycle(LED_ID_GREEN, ledEffectDev.rgbValue[0].g*color_w_g);
+        hal_pwm_set_duty_cycle(LED_ID_BLUE, ledEffectDev.rgbValue[0].b*color_w_b);
         goto reloadtimer;
     }
     if (ledEffectDev.mode == 200) {
         timeout = 4;
+    } else if (ledEffectDev.mode == 202) {
+        timeout = 1;
     }
     if (ledEffectDev.count%timeout == 0) {
         int index = ledEffectDev.curr%ledEffectDev.size;
         hal_pwm_set_duty_cycle(LED_ID_BRIGHT, ledEffectDev.rgbValue[index].a);
-        hal_pwm_set_duty_cycle(LED_ID_RED, ledEffectDev.rgbValue[index].r);
-        hal_pwm_set_duty_cycle(LED_ID_GREEN, ledEffectDev.rgbValue[index].g);
-        hal_pwm_set_duty_cycle(LED_ID_BLUE, ledEffectDev.rgbValue[index].b);
+        hal_pwm_set_duty_cycle(LED_ID_RED, ledEffectDev.rgbValue[index].r*color_w_r);
+        hal_pwm_set_duty_cycle(LED_ID_GREEN, ledEffectDev.rgbValue[index].g*color_w_g);
+        hal_pwm_set_duty_cycle(LED_ID_BLUE, ledEffectDev.rgbValue[index].b*color_w_b);
         ledEffectDev.curr++;
     }
     ledEffectDev.count++;
@@ -159,7 +165,7 @@ void leLedBlueFastBlink(void) { // wifi connect
     leLedStopBlink();
     memset(&ledEffectDev, 0, sizeof(ledEffect_t));
     ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
+    ledEffectDev.mode = 202;
     ledEffectDev.size = 2;
     ledEffectDev.rgbValue[0].a = 512;
     ledEffectDev.rgbValue[0].b = 1024;
@@ -339,7 +345,7 @@ static int leLedProcessData(ledDevice_t* dev) {
     
     APPLOG("leLedProcessData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
         dev->light, dev->mode, dev->timeout, dev->wifimode, dev->brightness,
-        dev->color_r, dev->color_g, dev->color_b);
+        dev->color_r*color_w_r, dev->color_g*color_w_g, dev->color_b*color_w_b);
     if (dev->light == 0) {
         ledDevice.light = 0;
         ledDevice.mode = 0;
@@ -374,9 +380,9 @@ static int leLedProcessData(ledDevice_t* dev) {
             ledNeedRestoreStatus = 1;
             memcpy(&ledDevice, dev, sizeof(ledDevice_t));
             xTimerStop(ledTimerHandler, 0);
-            hal_pwm_set_duty_cycle(LED_ID_RED, dev->color_r);
-            hal_pwm_set_duty_cycle(LED_ID_GREEN, dev->color_g);
-            hal_pwm_set_duty_cycle(LED_ID_BLUE, dev->color_b);
+            hal_pwm_set_duty_cycle(LED_ID_RED, dev->color_r*color_w_r);
+            hal_pwm_set_duty_cycle(LED_ID_GREEN, dev->color_g*color_w_g);
+            hal_pwm_set_duty_cycle(LED_ID_BLUE, dev->color_b*color_w_b);
             leLedWriteConfigData(dev);
         }
     }
@@ -435,11 +441,12 @@ void leLedInit(void) {
         hal_pinmux_set_function(ledPWMArray[i].gid, ledPWMArray[i].mux);
         hal_gpio_deinit(ledPWMArray[i].gid);
     }
-    hal_pwm_init(1); // 2M clock
+    hal_pwm_init(2); // 20M clock
     for(i=0; i< LED_MAX_SIZE; i++) {
         hal_pwm_set_frequency(ledPWMArray[i].id, ledPWMArray[i].frequency, &cycle);
         hal_pwm_start(ledPWMArray[i].id);
         hal_pwm_set_duty_cycle(ledPWMArray[i].id, 0);
+        APPLOG("leLedInit pwd id[%d] cycle[%d]", ledPWMArray[i].id, cycle);
     }
     if (ledTimerHandler == NULL) {
         ledTimerHandler = xTimerCreate("led_blink_timer",
