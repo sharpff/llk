@@ -1428,6 +1428,10 @@ static int cbDiscoverStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdIn
         ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
     }
 
+    if (sengineHasDevs()) {
+        senginePollingRules(status, sizeof(status));
+    }
+
     LELOG("NO need token[%d][%s]", ret, status);
     // test only
     // static int mm = 0;
