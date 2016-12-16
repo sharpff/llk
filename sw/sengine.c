@@ -1433,7 +1433,7 @@ int s2apiSetCurrStatus(lua_State *L) {
         if (0 == strcmp(ginIACache.cache[m].ruleName, strSelfName)) {
             for (n = 0; n < MAX_RSV_NUM; n++) {
                 // LELOG("[%d] [%s] <=> [%s]", n, ginIACache.cache[m].beingReservedUUID[n], strUUID); 
-                if (0 == memcmp(ginIACache.cache[m].beingReservedUUID[n], strUUID, MAX_UUID)) {
+                if (0 == memcmp(ginIACache.cache[m].beingReservedUUID[n], strUUID, strlen(strUUID))) {
                     memcpy(ginIACache.cache[m].beingReservedStatus[n], strReservedStatus, MIN(lenReservedStatus, (sizeof(ginIACache.cache[m].beingReservedStatus[n]))));
                     ginIACache.cache[m].beingReservedStatus[n][MIN(lenReservedStatus, (sizeof(ginIACache.cache[m].beingReservedStatus[n]))-1)] = 0;
                     ret = 1;
@@ -1473,11 +1473,11 @@ int s2apiGetLatestStatus(lua_State *L) {
     }
 
     for (m = 0; m < MAX_IA && 0 == ret; m++) {
-        // LELOG("[%d] [%s] <=> [%s]", m, ginIACache.cache[m].ruleName, strSelfName); 
+        // LELOG("[%d] [%s] <=> [%s]", m, ginIACache.cache[m].ruleName, strSelfName);
         if (0 == strcmp(ginIACache.cache[m].ruleName, strSelfName)) {
             int hasNewTbl = 0;
             for (n = 0; n < MAX_RSV_NUM; n++) {
-                // LELOG("[%d] [%s] <=> [%s]", n, ginIACache.cache[m].beingReservedUUID[n], strUUID); 
+                // LELOG("[%d] [%s] <=> [%s]", n, ginIACache.cache[m].beingReservedUUID[n], ginIACache.cache[m].beingReservedStatus[n]);
                 if (ginIACache.cache[m].beingReservedUUID[n][0] && ginIACache.cache[m].beingReservedStatus[n][0]) {
                     /* create table. */
                     if (!hasNewTbl) {
@@ -1495,6 +1495,7 @@ int s2apiGetLatestStatus(lua_State *L) {
         }
     }
 
+    LELOG("s2apiGetLatestStatus [%d] -e", ret);
     return ret;
 }
 
@@ -1861,7 +1862,7 @@ int senginePollingSlave(void) {
 
 int sengineS2GetBeingReservedInfo(const ScriptCfg2 *scriptCfg2, uint8_t strBeingReserved[MAX_RSV_NUM][2*MAX_UUID]) {
     int ret = 0, count = 0, i;
-    uint8_t tmpBeingReserved[sizeof(int) + (MAX_RSV_NUM*MAX_UUID)] = {0};
+    uint8_t tmpBeingReserved[sizeof(int) + (MAX_RSV_NUM*(2*MAX_UUID))] = {0};
     char *tmp = NULL;
 
     if (NULL == strBeingReserved) {
@@ -1881,9 +1882,9 @@ int sengineS2GetBeingReservedInfo(const ScriptCfg2 *scriptCfg2, uint8_t strBeing
     // point to the list of being reserved uuidList
     tmp = (char *)tmpBeingReserved + sizeof(int);
     for (i = 0; i < count; i++) {
-        memcpy(strBeingReserved[i], tmp, MAX_UUID);
-        tmp += MAX_UUID;
-        LELOGW("strBeingReserved[%d][%s]", MAX_UUID, strBeingReserved[i]);
+        memcpy(strBeingReserved[i], tmp, (2*MAX_UUID));
+        tmp += (2*MAX_UUID);
+        LELOGW("strBeingReserved[%d][%s]", (2*MAX_UUID), strBeingReserved[i]);
     }
 
     return count;

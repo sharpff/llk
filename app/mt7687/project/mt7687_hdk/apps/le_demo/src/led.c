@@ -188,7 +188,7 @@ static void leLedGreenFastBlink(void) { // zigbee join
     leLedStopBlink();
     memset(&ledEffectDev, 0, sizeof(ledEffect_t));
     ledEffectDev.light = 1;
-    ledEffectDev.mode = 201;
+    ledEffectDev.mode = 202;
     ledEffectDev.size = 2;
     ledEffectDev.timeout = 30;
     ledEffectDev.rgbValue[0].a = 512;

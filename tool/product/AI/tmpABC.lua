@@ -19,19 +19,23 @@ end
     INTERNAL
 ]]
 function getOldStatus(uuid)
-	local l, n = s2GetSelfName()
-	local tblOldStatus = s2apiGetLatestStatus(l, n)
+    local l, n = s2GetSelfName()
+    local tblOldStatus = s2apiGetLatestStatus(l, n)
 
-	if tblOldStatus then 
-		for _, jsonOldStatus in pairs(tblOldStatus) do
+    -- tblOldStatus = {'{"status":{"ias":10},"utcH":0,"utcL":1481787894,"uuid":"10000100131000010011B01BD2F00003-00124B000E8855F5"}'}
+
+
+    if tblOldStatus then 
+        for _, jsonOldStatus in pairs(tblOldStatus) do
 			uuid = string.gsub(uuid, "-", ".")
-			if nil ~= string.find(jsonOldStatus, uuid) then
-				local tbl = cjson.decode(jsonOldStatus)
-				return tbl["status"]
-			end
-		end
-	end
-	return nil
+            if nil ~= string.find(jsonOldStatus, uuid) then
+                local tbl = cjson.decode(jsonOldStatus)
+                return tbl["status"]
+            else
+            end
+        end
+    end
+    return nil
 end
 
 --[[
@@ -40,6 +44,7 @@ end
 function cmpValInOldStatus(uuid, val, token)
     local l, n = s2GetSelfName()
     local ret = -2
+    print ('cmpValInOldStatus '..uuid..'\r\n')
 
     local tblOldStatus = getOldStatus(uuid)
     if tblOldStatus then
@@ -59,7 +64,7 @@ end
 ]]
 function getBeingReservedInfo()
 	-- CUSTOMIZATION START
-	local tblInfo = {${UUIDS}}
+	local tblInfo = {'10000100131000010011B01BD2F00003-00124B000CC39852'}
 	-- CUSTOMIZATION END
 	return tblInfo
 end
@@ -94,8 +99,8 @@ function s2IsValid(selfStatus)
 	
 	-- E.g. 16/12/1 0:00:00 is 0x583F6800
 	-- CUSTOMIZATION START
-	local utcBaseH = ${UTCH}
-	local utcBaseL = ${UTCL}
+	local utcBaseH = 0
+	local utcBaseL = 1480677886
 	-- CUSTOMIZATION END
 	if (cmpUTC(utcH, utcL, utcBaseH, utcBaseL) <= 0) then 
 		valid = 1
@@ -113,7 +118,7 @@ function s2GetRuleType()
 	local isAND = 0
 	-- repeating call or status trig, AND or OR
 	-- CUSTOMIZATION START
-	repeatOrTrig = ${ISREPEAT}
+	repeatOrTrig = 0
 	isAND = 0 -- ignore it
 	-- CUSTOMIZATION END
 	return repeatOrTrig, isAND
@@ -169,24 +174,48 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 	-- CONDITION(s) START
 	tblConditions[retIdx] = 0
 	tblConditionsOld[retIdx] = 0
-	if ${REF_VAL} ${OPERATOR} tblNewStatus["${STATUS_KEY}"] and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") and 
-		rmtUUID == '${UUID}' then
+	if 1 == tblNewStatus["ias"] and 0 ~= cmpValInOldStatus('10000100131000010011B01BD2F00003-00124B000CC39852', tblNewStatus["ias"], "ias") and 
+		rmtUUID == '10000100131000010011B01BD2F00003-00124B000CC39852' then
 		tblConditions[retIdx] = 1
 		print('ok 1\r\n')
 	end
-    local tblOldStatus = getOldStatus('${UUID}')
+    local tblOldStatus = getOldStatus('10000100131000010011B01BD2F00003-00124B000CC39852')
     if tblOldStatus then
-		if ${REF_VAL} ${OPERATOR} tblOldStatus["${STATUS_KEY}"] then
+		if 1 == tblOldStatus["ias"] then
 			tblConditionsOld[retIdx] = 1
 			print('okOld 1\r\n')
 		end
 	end
 	retIdx = retIdx + 1
 	
-	${CONDITIONS}
-	-- CONDITION(s) END
+	-- 	tblConditions[retIdx] = 0
+	-- tblConditionsOld[retIdx] = 0
+	-- if 0 == tblNewStatus["idx2"] and 0 ~= cmpValInOldStatus('10000100101000010007E81863C38E75', tblNewStatus["idx2"], "idx2") then
+	-- 	tblConditions[retIdx] = 1
+	-- 	print('ok 2\r\n')
+	-- end
+ --    local tblOldStatus = getOldStatus('10000100101000010007E81863C38E75')
+ --    if tblOldStatus then
+	-- 	if 0 == tblOldStatus["idx2"] then
+	-- 		tblConditionsOld[retIdx] = 1
+	-- 		print('okOld 2\r\n')
+	-- 	end
+	-- end
+	-- retIdx = retIdx + 1
+	
 
-	${CONDITIONS_CHECK}
+	-- CONDITION(s) END
+	if 1 == tblConditions[1] then
+		ok = 1
+	end
+
+	-- if 1 == tblConditions[1] and 1 == tblConditionsOld[2] then
+	-- 	ok = 1
+	-- end
+	-- if 1 == tblConditions[2] and 1 == tblConditionsOld[1] then
+	-- 	ok = 1
+	-- end
+
 	-- CUSTOMIZATION END
 
 	if ((toStoreStatus == 1) and 
@@ -209,7 +238,7 @@ end
 function s2GetSelfName()
 	local name = ''
 	-- CUSTOMIZATION START
-	name = '${INAME}'
+	name = '2016120219244600018'
 	-- CUSTOMIZATION END
 	return string.len(name), name
 end
@@ -227,7 +256,7 @@ function s2GetSelfCtrlCmd()
 	local selfCtrl = ''
 	
 	-- CUSTOMIZATION START
-	selfCtrl = '${ACTION}'
+	selfCtrl = '{"light":1,"brightness":1024,"red":0,"green":1024,"blue":0,"mode":1,"timeout":0,"wifimode":0}'
 	-- CUSTOMIZATION END
 	return string.len(selfCtrl), selfCtrl
 end
