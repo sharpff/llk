@@ -44,7 +44,6 @@
 
 extern void *halFlashOpen(void);
 extern int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSelfRuleName, int *whereToPut);
-extern int resetConfigData(void);
 static FlashRegion ginRegion[E_FLASH_TYPE_MAX];
 static uint32_t ginStartAddr;
 static uint32_t ginTotalSize;
@@ -602,7 +601,7 @@ RLED_STATE_t setResetLed(RLED_STATE_t st)
 }
 
 void resetDevice(void) {
-    if (0 <= resetConfigData()) {
+    if (0 <= resetConfigData(0)) {
         setDevFlag(DEV_FLAG_RESET, 1);
         halReboot();
     }

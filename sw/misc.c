@@ -724,18 +724,20 @@ int cloudMsgHandler(const char *data, int len) {
         jsontok_t jsonToken[NUM_TOKENS];
         jobj_t jobj;
         case CLOUD_MSG_KEY_LOCK: {
-            int locked = 0;
+            int lock = 0;
             ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
                 ret = LELINK_ERR_LOCK_UNLOCK;
                 break;
             }
 
-            if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_LOCK, &locked))) {
+            if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_LOCK, &lock))) {
                 ret = LELINK_ERR_LOCK_UNLOCK;
                 break;
             }
-            setLock(locked ? 1 : 0);
+            if (getLock() && 0 == lock) {
+                resetConfigData(1);
+            }
         }break;
         case CLOUD_MSG_KEY_DO_IA: {
             char name[MAX_RULE_NAME] = {0};

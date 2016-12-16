@@ -77,7 +77,6 @@ extern int softApStop(int success);
 extern PCACHE sdevCache();
 extern SDevNode *sdevArray();
 
-int resetConfigData(void);
 
 typedef struct {
     StateId stateIdCurr;
@@ -526,16 +525,19 @@ static int stateProcCloudAuthed(StateContext *cntx) {
     return 0;
 }
 
-int resetConfigData(void) {
+int resetConfigData(int bussinessOnly) {
 
     int ret = 0;
     ret = lelinkStorageReadPrivateCfg(&ginPrivateCfg);
     if (0 <= ret) {
+        if (!bussinessOnly) {
         // WiFi config info
-        ginPrivateCfg.data.nwCfg.configStatus = 0;
-        ginConfigStatus = 0;
+            ginPrivateCfg.data.nwCfg.configStatus = 0;
+            ginConfigStatus = 0;            
+        }
+
         // user info
-        if (ginPrivateCfg.data.devCfg.initCfgIfUnBind) {
+        if (bussinessOnly || ginPrivateCfg.data.devCfg.initCfgIfUnBind) {
             ginPrivateCfg.data.devCfg.locked = 0;
             ginPrivateCfg.data.iaCfg.num = 0;
             memset(ginPrivateCfg.data.iaCfg.arrIA, 0, sizeof(ginPrivateCfg.data.iaCfg.arrIA));
@@ -547,9 +549,11 @@ int resetConfigData(void) {
         return ret;
     }
 
-    if (0 > salResetConfigData()) {
-        LELOG("salResetConfigData [%d]", ret);
-        return ret;
+    if (bussinessOnly || ginPrivateCfg.data.devCfg.initCfgIfUnBind) {
+        if (0 > salResetConfigData()) {
+            LELOGE("salResetConfigData [%d]", ret);
+            return ret;
+        }
     }
 
     return ret; 
