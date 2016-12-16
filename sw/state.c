@@ -14,7 +14,7 @@
  * for standard case, ip shoudl be got from DNS only.
  */
 
-#define DNS_IP_TEST
+// #define DNS_IP_TEST
 
 #ifndef LOG_STATE
 #ifdef LELOG
@@ -443,6 +443,7 @@ static int stateProcApConnected(StateContext *cntx) {
         ret = lelinkStorageReadAuthCfg(&authCfg);
         if ((0 <= ret) && (authCfg.csum == crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data)))) {
             memset(ip, 0, sizeof(ip));
+            TIMEOUT_BEGIN_SEC(20, 1)
             if (!halGetHostByName(authCfg.data.remote, ip, 4*32)) { // dns
                 int k = 0;
                 for (k = 0; k < 4; k++) {
@@ -463,6 +464,7 @@ static int stateProcApConnected(StateContext *cntx) {
                 strcpy(COMM_CTX(ginCtxR2R)->remoteIP, authCfg.data.remote);
                 COMM_CTX(ginCtxR2R)->remotePort = authCfg.data.port;
             }
+            TIMEOUT_END
             #ifdef DNS_IP_TEST
             LELOG("IP TEST ON ------- to connect[%s:%d]", COMM_CTX(ginCtxR2R)->remoteIP, COMM_CTX(ginCtxR2R)->remotePort);
             node.cmdId = LELINK_CMD_CLOUD_GET_TARGET_REQ;
