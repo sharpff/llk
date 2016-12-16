@@ -735,8 +735,12 @@ int cloudMsgHandler(const char *data, int len) {
                 ret = LELINK_ERR_LOCK_UNLOCK;
                 break;
             }
-            if (getLock() && 0 == lock) {
-                resetConfigData(1);
+            if (lock) {
+                setLock(1);
+            } else {
+                if (getLock()) {
+                    resetConfigData(1);
+                }
             }
         }break;
         case CLOUD_MSG_KEY_DO_IA: {
