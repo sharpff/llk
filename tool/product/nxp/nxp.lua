@@ -445,11 +445,13 @@ function s1CvtStd2Pri(json)
 					break
 				end
 
+				-- "{"ctrl":{\"sDevVer\":1}}"
 				if ctrl["sDevVer"] == 1 then
 					cmdTbl = {0x01, 0x00, 0x10, 0x00, 0x00, 0x10, 0x03}
 					break
 				end
 
+				-- "{"ctrl":{\"sDevJoin\":45}}"
 				if ctrl["sDevJoin"] then
 					cmdTbl = {0x01, 0x00, 0x49, 0x00, 0x04, 0x00, 0xFF, 0xFC, 0x00, 0x00, 0x03}
 					cmdTbl[9] = ctrl["sDevJoin"]

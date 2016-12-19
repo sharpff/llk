@@ -64,7 +64,7 @@ end
 ]]
 function getBeingReservedInfo()
 	-- CUSTOMIZATION START
-	local tblInfo = {'10000100131000010011B01BD2F00003-00124B000CC39852'}
+	local tblInfo = {'10000100131000010011B01BD2F00023-00124B000E883C28'}
 	-- CUSTOMIZATION END
 	return tblInfo
 end
@@ -174,12 +174,12 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 	-- CONDITION(s) START
 	tblConditions[retIdx] = 0
 	tblConditionsOld[retIdx] = 0
-	if 1 == tblNewStatus["ias"] and 0 ~= cmpValInOldStatus('10000100131000010011B01BD2F00003-00124B000CC39852', tblNewStatus["ias"], "ias") and 
-		rmtUUID == '10000100131000010011B01BD2F00003-00124B000CC39852' then
+	if 1 == tblNewStatus["ias"] and 0 ~= cmpValInOldStatus('10000100131000010011B01BD2F00023-00124B000E883C28', tblNewStatus["ias"], "ias") and 
+		rmtUUID == '10000100131000010011B01BD2F00023-00124B000E883C28' then
 		tblConditions[retIdx] = 1
 		print('ok 1\r\n')
 	end
-    local tblOldStatus = getOldStatus('10000100131000010011B01BD2F00003-00124B000CC39852')
+    local tblOldStatus = getOldStatus('10000100131000010011B01BD2F00023-00124B000E883C28')
     if tblOldStatus then
 		if 1 == tblOldStatus["ias"] then
 			tblConditionsOld[retIdx] = 1
@@ -256,7 +256,7 @@ function s2GetSelfCtrlCmd()
 	local selfCtrl = ''
 	
 	-- CUSTOMIZATION START
-	selfCtrl = '{"light":1,"brightness":1024,"red":0,"green":1024,"blue":0,"mode":1,"timeout":0,"wifimode":0}'
+	selfCtrl = '{"light":1,"brightness":1024,"red":0,"green":1024,"blue":0,"mode":2,"timeout":0,"wifimode":0}'
 	-- CUSTOMIZATION END
 	return string.len(selfCtrl), selfCtrl
 end
