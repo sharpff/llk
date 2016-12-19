@@ -524,20 +524,20 @@ void CoOTAReset(int bootOrNormal) {
     int ret = 0, idMiso = 25, idReset = 26;
     APPLOG("CoOTAReset START");
 
-    if (bootOrNormal) {
-        ret = OpenGPIO(&hdlGPIOMiso, idMiso);
-        APPLOG("CoOTAReset Boot");
-        halGPIOWrite(&hdlGPIOMiso, 0);
-    } else {
-        ret = OpenGPIO(&hdlGPIOMiso, idMiso);
-        APPLOG("CoOTAReset Normal");
-        halGPIOWrite(&hdlGPIOMiso, 1);
-    }
-    if (0 > ret) {
+    if (0 > OpenGPIO(&hdlGPIOMiso, idMiso)) {
         APPLOGE("CoOTAReset OpenGPIO MISO");
         return;
     }
+
+    if (bootOrNormal) {
+        APPLOG("CoOTAReset Boot");
+        halGPIOWrite(&hdlGPIOMiso, 0);
+    } else {
+        APPLOG("CoOTAReset Normal");
+        halGPIOWrite(&hdlGPIOMiso, 1);
+    }
     halDelayms(700);
+    
     // test only
     if (0)
     {
