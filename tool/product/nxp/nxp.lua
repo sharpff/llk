@@ -165,7 +165,7 @@ function s1GetVer()
 	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
 	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
 	-- s1apiOptLogTable(tblData3)
-	local str = '1.0.1'
+	local str = '1.0.2'
 	return string.len(str), str
 end
 
