@@ -165,7 +165,7 @@ function s1GetVer()
 	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
 	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
 	-- s1apiOptLogTable(tblData3)
-	local str = '1.0.1'
+	local str = '1.0.2'
 	return string.len(str), str
 end
 
@@ -176,9 +176,10 @@ function s1GetCvtType()
     -- combained uart(0x1) & pwm(0x10) & eint(0x20)
     local str = [[
     {"whatCvtType":32801,
-     "common":[{"num":3,"id":"36-37-0","mux":"7-7-3"}],
-     "uart":[{"id":1, "baud":"115200-8N1"}],  
-     "eint":[{"id":0,"gid":0,"type":1,"mode":3,"trigger":4,"state":1,"debounce":5,"timeout":400}]
+     "common":[{"num":4,"id":"36-37-0-1","mux":"7-7-3-3"}],
+     "uart":[{"id":1, "baud":"115200-8N1"}],
+     "eint":[{"id":0,"gid":0,"type":1,"mode":3,"trigger":4,"state":1,"debounce":5,"timeout":400},
+             {"id":1,"gid":1,"type":0,"mode":3,"trigger":3,"state":0,"debounce":5,"timeout":400}]
     }
     ]]
 	local delay = 5
@@ -551,26 +552,66 @@ function s1CvtStd2Pri(json)
 			-- "{\"ctrl\":{\"light\":1,\"mode\":0,\"timeout\":0,\"brightness\":552,\"red\":0,\"green\":0,\"blue\":0,\"service\":0,\"wifimode\":1}}"
 		elseif cvtType == 0x8000 then
 			local val
+			local lenStatus, currStatus = s1apiGetDevStatus()
+			if lenStatus > 2 then
+				local tb = cjson.decode(currStatus)
+				val = tb["light"]
+		        cmdTbl[1] = val & 0xFF
+		        val = tb["mode"]
+		        cmdTbl[2] = val & 0xFF
+		        val = tb["timeout"]
+		        cmdTbl[3] = val & 0xFF
+		        val = tb["brightness"]
+		        cmdTbl[4] = (val >> 8) & 0xFF
+		        cmdTbl[5] = val & 0xFF
+		        val = tb["red"]
+		        cmdTbl[6] = (val >> 8) & 0xFF
+		        cmdTbl[7] = val & 0xFF
+		        val = tb["green"]
+		        cmdTbl[8] = (val >> 8) & 0xFF
+		        cmdTbl[9] = val & 0xFF
+		        val = tb["blue"]
+		        cmdTbl[10] = (val >> 8) & 0xFF
+		        cmdTbl[11] = val & 0xFF
+		        val = tb["wifimode"]
+		        cmdTbl[12] = val & 0xFF
+			end
 			val = ctrl["light"]
-	        cmdTbl[1] = val & 0xFF
+			if val ~= nil then
+                cmdTbl[1] = val & 0xFF
+            end
 	        val = ctrl["mode"]
-	        cmdTbl[2] = val & 0xFF
+	        if val ~= nil then
+                cmdTbl[2] = val & 0xFF
+	        end
 	        val = ctrl["timeout"]
-	        cmdTbl[3] = val & 0xFF
+	        if val ~= nil then
+                cmdTbl[3] = val & 0xFF
+	        end
 	        val = ctrl["brightness"]
-	        cmdTbl[4] = (val >> 8) & 0xFF
-	        cmdTbl[5] = val & 0xFF
+	        if val ~= nil then
+                cmdTbl[4] = (val >> 8) & 0xFF
+                cmdTbl[5] = val & 0xFF
+	        end
 	        val = ctrl["red"]
-	        cmdTbl[6] = (val >> 8) & 0xFF
-	        cmdTbl[7] = val & 0xFF
+	        if val ~= nil then
+                cmdTbl[6] = (val >> 8) & 0xFF
+                cmdTbl[7] = val & 0xFF
+	        end
 	        val = ctrl["green"]
-	        cmdTbl[8] = (val >> 8) & 0xFF
-	        cmdTbl[9] = val & 0xFF
+	        if val ~= nil then
+                cmdTbl[8] = (val >> 8) & 0xFF
+                cmdTbl[9] = val & 0xFF
+	        end
 	        val = ctrl["blue"]
-	        cmdTbl[10] = (val >> 8) & 0xFF
-	        cmdTbl[11] = val & 0xFF
+	        if val ~= nil then
+                cmdTbl[10] = (val >> 8) & 0xFF
+                cmdTbl[11] = val & 0xFF
+	        end
 	        val = ctrl["wifimode"]
-	        cmdTbl[12] = val & 0xFF
+	        if val ~= nil then
+                cmdTbl[12] = val & 0xFF
+	        end
 			print("user w:")
 			LOGTBL(cmdTbl)
 		end
@@ -733,33 +774,34 @@ function s1CvtPri2Std(bin)
 		if lenStatus <= 2 then
 			str = string.format(status, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 		end
-		local id = bin:byte(1)
+		local val1 = bin:byte(2)
+		local val2 = bin:byte(4)
 		local i = 0, v
-		if id == 0 then
-            if lenStatus > 2 then
-                local tb = cjson.decode(currStatus)
-                v1 = tb["light"]
-                v2 = tb["mode"]
-                v3 = tb["timeout"]
-                v4 = tb["brightness"]
-                v5 = tb["red"]
-                v6 = tb["green"]
-                v7 = tb["blue"]
-                v8 = tb["wifimode"]
-            end
-            if bin:byte(2) == 1 then
-                if v1 == 0 then
-                    str = string.format(status, 1, v2, 0, v4, v5, v6, v7, 0, v8)
-                else
-                    str = string.format(status, 0, v2, 0, v4, v5, v6, v7, 0, v8)
-                end
-            elseif bin:byte(2) == 2 then
-                str = string.format(status, 1, 100, 10, v4, v5, v6, v7, 1, v8)
-            elseif bin:byte(2) == 0xFF then
-                str = string.format(status, 1, 101, 10, v4, v5, v6, v7, 0xFF, v8)
-            elseif bin:byte(2) == 0 then
-                str = string.format(status, v1, v2, v3, v4, v5, v6, v7, 0, v8)
-            end
+        if lenStatus > 2 then
+            local tb = cjson.decode(currStatus)
+            v1 = tb["light"]
+            v2 = tb["mode"]
+            v3 = tb["timeout"]
+            v4 = tb["brightness"]
+            v5 = tb["red"]
+            v6 = tb["green"]
+            v7 = tb["blue"]
+            v8 = tb["wifimode"]
+        end
+        if val1 == 0xFF then
+            str = string.format(status, 1, 101, 10, v4, v5, v6, v7, 0xFF, v8)
+        else
+			if val2 == 1 then
+			    if v1 == 0 then
+			        str = string.format(status, 1, v2, 0, v4, v5, v6, v7, 0, v8)
+			    else
+			        str = string.format(status, 0, v2, 0, v4, v5, v6, v7, 0, v8)
+			    end
+			elseif val2 == 2 then
+			    str = string.format(status, 1, 100, 10, v4, v5, v6, v7, 1, v8)
+			elseif val2 == 0 then
+			    str = string.format(status, v1, v2, v3, v4, v5, v6, v7, 0, v8)
+			end
         end
 		len = PRI2STD_LEN_BOTH
 	elseif 0x8000 == cvtType then
