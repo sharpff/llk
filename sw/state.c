@@ -51,13 +51,14 @@
 #define TIMEOUT_BEGIN_SEC(ss, go1st) {\
     static uint32_t tsStart;\
     static uint32_t tsEnd;\
-    static uint8_t tmpGo1st = go1st; \
+    uint8_t tmpGo1st = go1st; \
+    tmpGo1st = go1st ? (cntx->stateIdCurr != cntx->from ? 1 : 0) : 0;\
     if (!tsStart) { \
         tsStart = tsEnd = halGetTimeStamp(); \
     } \
     tsEnd = halGetTimeStamp(); \
     if (tmpGo1st || ss <= (tsEnd - tsStart)) { \
-        tsStart = tsEnd; tmpGo1st = 0;
+        tsStart = tsEnd;
 
 #define TIMEOUT_ELSE } else {
 
@@ -80,7 +81,7 @@ extern SDevNode *sdevArray();
 
 typedef struct {
     StateId stateIdCurr;
-    int worked;
+    int from;
 }StateContext;
 
 
@@ -162,6 +163,7 @@ static int changeState(int direction, StateContext *cntx, int idx) {
         direction = ginStateId - ginStateCntx.stateIdCurr;
         LELOGE("Protocol set %d -> %d", ginStateCntx.stateIdCurr, ginStateId);
     }
+    ginStateCntx.from = ginStateCntx.stateIdCurr;
     if (0 > direction) {
         if (E_STATE_NONE != ginStateTbl[idx].stateIdPrev) {
             ginStateCntx.stateIdCurr = ginStateTbl[idx].stateIdPrev;
@@ -484,7 +486,7 @@ static int stateProcCloudLinked(StateContext *cntx) {
     }
     LELOG("stateProcCloudLinked");
 
-    TIMEOUT_BEGIN_SEC(8, 1)
+    TIMEOUT_BEGIN_SEC(8, 0)
     // TIMEOUT_BEGIN(8000)
         return -1;
     TIMEOUT_END
