@@ -63,7 +63,7 @@ unsigned char channel_times[14] = {0};
 #endif
 
 #define SMTCN_RX_QUEUE_SIZE        4
-#define USE_SMTCN_STATIC_BUF
+// #define USE_SMTCN_STATIC_BUF
 
 #ifdef USE_SMTCN_STATIC_BUF
 #define SMTCN_STATIC_BUF_COUNT     (SMTCN_RX_QUEUE_SIZE + 1)
