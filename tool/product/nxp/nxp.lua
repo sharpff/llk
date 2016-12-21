@@ -165,7 +165,7 @@ function s1GetVer()
 	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
 	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
 	-- s1apiOptLogTable(tblData3)
-	local str = '1.0.2'
+	local str = '1.0.3'
 	return string.len(str), str
 end
 
@@ -179,7 +179,7 @@ function s1GetCvtType()
      "common":[{"num":4,"id":"36-37-0-1","mux":"7-7-3-3"}],
      "uart":[{"id":1, "baud":"115200-8N1"}],
      "eint":[{"id":0,"gid":0,"type":1,"mode":3,"trigger":4,"state":1,"debounce":5,"timeout":400},
-             {"id":1,"gid":1,"type":0,"mode":3,"trigger":3,"state":0,"debounce":5,"timeout":400}]
+             {"id":1,"gid":1,"type":2,"mode":3,"trigger":4,"state":0,"debounce":5,"timeout":400}]
     }
     ]]
 	local delay = 5
@@ -553,14 +553,12 @@ function s1CvtStd2Pri(json)
 		elseif cvtType == 0x8000 then
 			local val
 			local lenStatus, currStatus = s1apiGetDevStatus()
+            cmdTbl[2] = 0
+            cmdTbl[3] = 0
 			if lenStatus > 2 then
 				local tb = cjson.decode(currStatus)
 				val = tb["light"]
 		        cmdTbl[1] = val & 0xFF
-		        val = tb["mode"]
-		        cmdTbl[2] = val & 0xFF
-		        val = tb["timeout"]
-		        cmdTbl[3] = val & 0xFF
 		        val = tb["brightness"]
 		        cmdTbl[4] = (val >> 8) & 0xFF
 		        cmdTbl[5] = val & 0xFF
@@ -797,7 +795,7 @@ function s1CvtPri2Std(bin)
 			    else
 			        str = string.format(status, 0, v2, 0, v4, v5, v6, v7, 0, v8)
 			    end
-			elseif val2 == 2 then
+			elseif val2 == 0xFF then
 			    str = string.format(status, 1, 100, 10, v4, v5, v6, v7, 1, v8)
 			elseif val2 == 0 then
 			    str = string.format(status, v1, v2, v3, v4, v5, v6, v7, 0, v8)

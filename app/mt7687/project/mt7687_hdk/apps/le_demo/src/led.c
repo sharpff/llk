@@ -10,7 +10,7 @@
 #include "hal_gpio.h"
 #include "io.h"
 
-#define LED_BLINK_TIMEOUT (500/portTICK_PERIOD_MS)
+#define LED_BLINK_TIMEOUT (10/portTICK_PERIOD_MS)
 #define LED_MAX_SIZE 4
 
 #define LED_ID_RED    35
@@ -105,7 +105,7 @@ static void ledRestoreStatus(void) {
 }
 
 static void ledBlinkTimerCallback( TimerHandle_t tmr ) {
-    int timeout = 2;
+    int timeout = 100;
     if(ledEffectDev.light == 0) {
         hal_pwm_set_duty_cycle(LED_ID_BRIGHT, 0);
         return;
@@ -129,9 +129,9 @@ static void ledBlinkTimerCallback( TimerHandle_t tmr ) {
         goto reloadtimer;
     }
     if (ledEffectDev.mode == 200) {
-        timeout = 4;
+        timeout = 200;
     } else if (ledEffectDev.mode == 202) {
-        timeout = 1;
+        timeout = 50;
     }
     if (ledEffectDev.count%timeout == 0) {
         int index = ledEffectDev.curr%ledEffectDev.size;
