@@ -608,12 +608,16 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
                 // if (0 <= sdevArrayGet(sDevIdx, &node)) {
                     memcpy(&node, &(sdevArray()[sDevIdx]), sizeof(SDevNode));
                     LELOG("old[%s] new[%s]", node.sdevStatus, buf);
-                    if (0 != memcmp(node.sdevStatus, buf, strlen(buf))) {
-                        postStatusChanged(sDevIdx + 1);
-                    }
+                    ret = memcmp(node.sdevStatus, buf, strlen(buf));
                     memset(node.sdevStatus, 0, sizeof(node.sdevStatus));
                     strcpy(node.sdevStatus, buf);
                     sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_STATUS);  
+                    if (0 != ret) {
+                        postStatusChanged(sDevIdx + 1);
+                        if (0 < getSDevStatus(sDevIdx, buf, sizeof(buf))) {
+                            senginePollingRules(buf, sizeof(buf));
+                        }
+                    }
                     LELOG("=> sDevIdx[%d] ud[%s] mac[%s] sdev[%s] sdevStatus[%s]", sDevIdx, node.ud, node.mac, node.sdevInfo, node.sdevStatus);
                 // }
             }
