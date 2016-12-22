@@ -427,7 +427,7 @@ int leLedWrite(const uint8_t *data, int dataLen) {
     currLedDevice.color_b = data[9];
     currLedDevice.color_b <<= 8;
     currLedDevice.color_b |= data[10];
-    currLedDevice.wifimode |= data[11];
+    currLedDevice.wifimode = data[11];
     leLedProcessData(&currLedDevice);
     return 11;
 }
