@@ -1042,6 +1042,10 @@ static int lf_s2GetBeingReservedInfo(lua_State *L, uint8_t *output, int outputLe
         if (tmp) {
             n = strlen(tmp);
             memcpy(output + tmpLen, tmp, n);
+            if (0 < 2*MAX_UUID - n) {
+                memset(output + tmpLen + n, 0, 2*MAX_UUID - n);
+                n = 2*MAX_UUID;
+            }
             LEPRINTF("[SENGINE] s2GetBeingReservedInfo: [%d][%s]", n, output + tmpLen);
             tmpLen += n;
             // output[tmpLen] = 0;
