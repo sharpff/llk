@@ -2066,8 +2066,10 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     }
 
     // for every single rule
-    ginIACache.cfg.num = 0;
-    for (i = 0; i < privCfg.data.iaCfg.num; i++) {
+    ginIACache.cfg.num = privCfg.data.iaCfg.num;
+    for (i = 0; i < MAX_IA; i++) {
+        LELOGW("senginePollingRules privCfg.data.iaCfg.arrIA[%d] [%d]", i, privCfg.data.iaCfg.arrIA[i]);
+        ginIACache.cfg.arrIA[i] = privCfg.data.iaCfg.arrIA[i];
         if (0 < privCfg.data.iaCfg.arrIA[i]) {
             memset(ginScriptCfg2, 0, sizeof(ScriptCfg2));
             ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, i);
@@ -2104,7 +2106,6 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
 
             sengineS2RuleHandler(ginScriptCfg2, tmpLocalJson, tmpLocalJsonLen, 
                 tmpRmtJsonLen > 0 ? tmpRmtJson : NULL, tmpRmtJsonLen, &(ginIACache.cache[i]));
-            ginIACache.cfg.num++;
         }
     }
     LELOG("senginePollingRules -e ");

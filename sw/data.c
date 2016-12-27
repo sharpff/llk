@@ -390,7 +390,7 @@ int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData) {
 
 int getTerminalStatus(char *status, int len) {
     IA_CACHE_INT *cacheInt;
-    int i, j, tmpLen = 0;
+    int i, j, tmpLen = 0, abc = 0;
 
     //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
 
@@ -441,10 +441,14 @@ int getTerminalStatus(char *status, int len) {
 //     strcpy(ginIACache.cache[1].beingReservedUUID[0], "12345");
 //     strcpy(ginIACache.cache[1].beingReservedUUID[1], "43216");
 // }
+    LELOG("getTerminalStatus ginIACache.cfg.num [%d] <==========", ginIACache.cfg.num);
     tmpLen += sprintf(status + tmpLen, ",\"uuids\":%s", "{");
-    for (i = 0; i < ginIACache.cfg.num; i++) {
+    for (i = 0; i < MAX_IA; i++) {
+        if (0 >= ginIACache.cfg.arrIA[i]) {
+            continue;
+        }
         cacheInt = &(ginIACache.cache[i]);
-        tmpLen += sprintf(status + tmpLen, "%s\"%s\":[", (i > 0 ? ",":""), cacheInt->ruleName);
+        tmpLen += sprintf(status + tmpLen, "%s\"%s\":[", (0 != abc ? ",":""), cacheInt->ruleName); abc = 1;
         for(j = 0; j < cacheInt->beingReservedNum; j++) {
             tmpLen += sprintf(status + tmpLen, "%s\"%s\"", (j > 0 ? ",":""), cacheInt->beingReservedUUID[j]);
         }
