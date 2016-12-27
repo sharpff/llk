@@ -357,13 +357,13 @@ static int leLedProcessData(ledDevice_t* dev) {
         ledDevice.timeout = dev->timeout;
         if (dev->mode > 0) {
             if (dev->mode == 1) {
-                leLedRedWhiteBlink(dev->timeout);
+                leLedRedWhiteBlink(10);
             } else if (dev->mode == 2) {
-                leLedGreenWhiteBlink(dev->timeout);
+                leLedGreenWhiteBlink(10);
             } else if (dev->mode == 3) {
-                leLedYellow(dev->timeout);
+                leLedYellow(60);
             } else if (dev->mode == 4) {
-                leLedWhite(dev->timeout);
+                leLedWhite(60);
             } else if (dev->mode == 100) {
                 leLedRedYellowBlueBlink();
             } else if (dev->mode == 101) {
