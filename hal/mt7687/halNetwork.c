@@ -150,8 +150,8 @@ int halGetHostByName(const char *name, char ip[4][32], int len) {
                               1,
                               &hostByName)) {
             LOG_E(common, "create host name task fail");
-            return 0;
+            return -2;
         }
     }
-    return 0;
+    return -3;
 }
