@@ -1159,13 +1159,14 @@ static int isNeedDelCB(NodeData *currNode) {
 
         // for retry
         if ((LELINK_CMD_DISCOVER_REQ == currNode->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) ||
+            (LELINK_CMD_CTRL_REQ == currNode->cmdId && LELINK_SUBCMD_CTRL_CMD_REQ == currNode->subCmdId) ||
             (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId)) {
             uint8_t bRspFlag = 0x01; // for unicast
             NodeData node = {0};
             LELOG("**************** cmd[%d] subCmd[%d], needRsp[%d] reserved2[%d]", 
                 currNode->cmdId, currNode->subCmdId, currNode->needRsp, currNode->reserved2);
             if (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) {
-                bRspFlag = 0xFF; // for multicast
+                bRspFlag = 0xFF; // for broadcast
             }
             if (!currNode->reserved2) {
                 currNode->reserved2 = RETRY_TIMES;
@@ -1519,7 +1520,7 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
-    setTerminalAction((const char *)dataIn, dataLen);
+    setTerminalAction(cmdInfo, (const char *)dataIn, dataLen);
     LELOG("cbCtrlCmdRemoteReq [%d] -e", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);
@@ -1836,7 +1837,7 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     //     const char *ver = getScriptVer();
     //     LELOG("<=============================() [%d][%s]", testGetFreeHeap(0), ver);
     // }
-    setTerminalAction((const char *)dataIn, dataLen);
+    setTerminalAction(cmdInfo, (const char *)dataIn, dataLen);
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
     return ret > 0 ? 1 : -1;

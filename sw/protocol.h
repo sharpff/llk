@@ -38,6 +38,7 @@ enum
     LELINK_ERR_BAD_TOKEN_ERR            = -119,             /*错误的token*/
     LELINK_ERR_LOGIC_ERR1               = -120,             /*错误的logic1*/
     LELINK_ERR_LOGIC_ERR2               = -121,             /*错误的logic2*/
+    LELINK_ERR_LOGIC_ERR3               = -122,             /*错误的logic3*/
     
     
     LELINK_ERR_PARAM_INVALID            = -1000,            /*参数数据有误*/

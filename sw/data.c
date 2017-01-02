@@ -358,24 +358,48 @@ int getSSID(char *ssid, int ssidLen) {
     return strlen((const char *)ginSSID);
 }
 
-void setTerminalAction(const char *status, int len) {
+
+static int isRetryPackage(const void *cmdInfo) {
+    static uint8_t latestUUID[MAX_UUID];
+    static uint16_t latestSeqId;
+    int ret = 0;
+    const CmdHeaderInfo *p = (const CmdHeaderInfo *)cmdInfo;
+    // LELOGW("isRetryPackage [%d] [%s]", latestSeqId, p->uuid);
+    // if ((LELINK_CMD_DISCOVER_REQ == p->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == p->subCmdId) ||
+    //     (LELINK_CMD_CTRL_REQ == p->cmdId) ||
+    //     (LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ == p->cmdId)) {
+        if (latestSeqId == p->seqId && !memcmp(latestUUID, p->uuid, MAX_UUID)) {
+              // LELOGW("isRetryPackage 1 ==================================");
+                ret = 1;
+        } else {
+            // LELOGW("isRetryPackage 2 ==================================");
+            memcpy(latestUUID, p->uuid, MAX_UUID);
+            latestSeqId = p->seqId;
+        }
+    // }
+    return ret;
+}
+
+void setTerminalAction(const void *cmdInfo, const char *status, int len) {
     char val[MAX_BUF] = {0};
     int ret = 0;
-
+    
+    if (!isRetryPackage(cmdInfo)) {
     // cloud logical(push)
-    if (0 >= (ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val)))) {
-        LELOG("setTerminalAction--cloud [%d][%s]", len, status);
-        cloudMsgHandler(status, len);
-    } else {
-        len = ret;
+        if (0 >= (ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val)))) {
+            LELOG("setTerminalAction--cloud [%d][%s]", len, status);
+            cloudMsgHandler(status, len);
+        } else {
+            len = ret;
         // slave logical
-        ret = sengineSetAction((char *)val, len);
-        LELOG("setTerminalAction--slave [%d][%s]", ret, val);
+            ret = sengineSetAction((char *)val, len);
+            LELOG("setTerminalAction--slave [%d][%s]", ret, val);
 
         // local logical
-        ret = localActionHandler(val, len);
-        LELOG("setTerminalAction--local [%d][%s]", ret, val);
+            ret = localActionHandler(val, len);
+            LELOG("setTerminalAction--local [%d][%s]", ret, val);
 
+        }
     }
 
 }
