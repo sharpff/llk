@@ -1348,7 +1348,7 @@ static int forEachNodeSDevIteratorCB(SDevNode *currNode, void *uData) {
     int16_t index = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize);
     LELOG("[SENGINE] forEachNodeSDevIteratorCB *foundIndex[%d] index[%d] isSDevInfoDone[%02x]", *foundIndex, index, currNode->isSDevInfoDone);
     if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
-        if (*foundIndex == index) {
+        if (*foundIndex <= index) {
             *foundIndex = index + 1;
             return 1;
         }
@@ -1391,8 +1391,8 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
         int index = 0;
         index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevIteratorCB, &ginSDevCurrFoundIndex);
         if (0 <= index) {
-            LELOG("cbDiscoverLocalRsp ginSDevCurrFoundIndex[%d] index[%d]", ginSDevCurrFoundIndex, index);
             ret = getSDevStatus(index, rspDiscover, sizeof(rspDiscover));
+            LELOG("index[%d] ginSDevCurrFoundIndex[%d] ret[%d][%s]", index, ginSDevCurrFoundIndex, ret, rspDiscover);
         } else {
             ret = 0;
         }
