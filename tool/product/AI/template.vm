@@ -169,14 +169,14 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 	-- CONDITION(s) START
 	tblConditions[retIdx] = 0
 	tblConditionsOld[retIdx] = 0
-	if ${REF_VAL} ${OPERATOR} tblNewStatus["${STATUS_KEY}"] and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") and 
+	if tblNewStatus["${STATUS_KEY}"] ${OPERATOR} ${REF_VAL} and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") and 
 		rmtUUID == '${UUID}' then
 		tblConditions[retIdx] = 1
 		print('ok 1\r\n')
 	end
     local tblOldStatus = getOldStatus('${UUID}')
     if tblOldStatus then
-		if ${REF_VAL} ${OPERATOR} tblOldStatus["${STATUS_KEY}"] then
+		if tblOldStatus["${STATUS_KEY}"] ${OPERATOR} ${REF_VAL} then
 			tblConditionsOld[retIdx] = 1
 			print('okOld 1\r\n')
 		end
