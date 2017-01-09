@@ -445,7 +445,7 @@ static int stateProcApConnected(StateContext *cntx) {
         if ((0 <= ret) && (authCfg.csum == crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data)))) {
             memset(ip, 0, sizeof(ip));
             // TIMEOUT_BEGIN_SEC(20, 1)
-            if (!halGetHostByName(authCfg.data.remote, ip, 4*32)) { // dns
+            if (!halGetHostByNameNB(authCfg.data.remote, ip, 4*32)) { // dns
                 int k = 0;
                 for (k = 0; k < 4; k++) {
                     LELOG("DNS OK [%s]", ip[k]);

@@ -532,11 +532,12 @@ void CoOTAReset(int bootOrNormal) {
     if (bootOrNormal) {
         APPLOG("CoOTAReset Boot");
         halGPIOWrite(&hdlGPIOMiso, 0);
+        halDelayms(700);
     } else {
         APPLOG("CoOTAReset Normal");
         halGPIOWrite(&hdlGPIOMiso, 1);
+        halDelayms(50);
     }
-    halDelayms(700);
     
     // test only
     if (0)
@@ -556,7 +557,7 @@ void CoOTAReset(int bootOrNormal) {
         APPLOGE("CoOTAReset OpenGPIO RESET");
     }
     halGPIOWrite(&hdlGPIOReset, 0);
-    halDelayms(500);
+    halDelayms(50);
     // test only
     if (0)
     {
@@ -582,7 +583,7 @@ void CoOTAReset(int bootOrNormal) {
     }
 
     halGPIOClose(&hdlGPIOReset);
-    halDelayms(2000);
+    halDelayms(50);
 
     // recover the miso, keep in normal
     // test only
