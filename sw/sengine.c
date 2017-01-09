@@ -926,6 +926,7 @@ static int lf_s1CvtStd2Pri(lua_State *L, uint8_t *output, int outputLen) {
     int size = MIN(sLen, outputLen);
     const uint8_t *tmp = (const uint8_t *)lua_tostring(L, -1);
     if (tmp && 0 < size) {
+        // int i;
         memcpy(output, tmp, size);
         // LEPRINTF("[SENGINE]_s1CvtStd2Pri_[%d]_cmd: ", size);
         // for (i = 0; i < size; i++) {
@@ -1592,8 +1593,18 @@ int s1apiOptString2Table(lua_State *L) {
     return 1;
 }
 
+// temp code, will delete when script update
+int sengineIs1Version() {
+    char* p = getScriptVer();
+    if(p[0] == '1' && p[1] == '-') {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 int sengineSetAction(const char *json, int jsonLen) {
-    int ret = 0;
+    int ret = 0, type, len, i, j, ret1;
     uint8_t bin[512] = {0};
     char jsonMerged[2*MAX_BUF] = {0};
     // char *jsonOut = json;
@@ -1640,20 +1651,39 @@ int sengineSetAction(const char *json, int jsonLen) {
 
         {
             extern int bytes2hexStr(const uint8_t *src, int srcLen, uint8_t *dst, int dstLen);
-            uint8_t  hexStr[96] = {0};
+            uint8_t  hexStr[240] = {0};
             bytes2hexStr(bin, ret, hexStr, sizeof(hexStr));
-            LELOG("ioWrite type[0x%x] bin[%s]", ioHdl[x].ioType, hexStr);
+            LELOG("ioWrite type[0x%x] len[%d] bin[%s]", ioHdl[x].ioType, ret, hexStr);
         }
 
-        ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, bin, ret);
-        if (ret <= 0) {
-            LELOGW("sengineSetAction ioWrite [%d]", ret);
-            continue;
+        if (sengineIs1Version()) {
+            ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, bin, ret);
+            if (ret <= 0) {
+                LELOGW("sengineSetStatus ioWrite [%d]", ret);
+                continue;
+            }
+        } else {
+            for ( i=0; i<ret; ) {
+                type = bin[i];
+                len = bin[i+1];
+                for (j = 0; j < ioGetHdlCounts(); j++) {
+                    if (type == ioHdl[j].ioType) {
+                        if (NULL == ioHdl[j].hdl) {
+                            LELOGW("ioWrite type[0x%x] hdl is NULL", ioHdl[x].ioType);
+                        } else {
+                            ret1 = ioWrite(ioHdl[j].ioType, ioHdl[j].hdl, &bin[i+2], len);
+                            // LELOG("ioWrite data[0x%x] len[%d]", bin[2], len);
+                            if (ret1 <= 0) {
+                                LELOGW("sengineSetStatus ioWrite [%d]", ret);
+                            }
+                        }
+                     }
+                }
+                i = i+len+2;
+                // LELOGW("ioWrite next i = [%d] [%d]", i, ret);
+            }
         }
-
     FOR_EACH_IO_HDL_END;
-    
-    // }
 
     return ret;
 }
