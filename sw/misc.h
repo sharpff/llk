@@ -89,6 +89,8 @@ extern "C"
 #define JSON_NAME_SDEV_CLU_OUT      "cluO"
 #define JSON_NAME_SDEV_MAC		    "mac"
 #define JSON_NAME_SDEV_DES		    "des"
+#define JSON_NAME_SDEV_PROPERTY     "property"
+#define JSON_NAME_SDEV_KIND         "kind"
 #define JSON_NAME_LOG2MASTER        "log2M"
 
 typedef enum {

@@ -678,7 +678,7 @@ void logToMaster(const char *log) {
 extern PCACHE sdevCache();
 extern int forEachNodeSDevByMacCB(SDevNode *currNode, void *uData);
 extern int sdevArrayDel(int index);
-extern void sdevArrayReset();
+extern int sdevArrayReset();
 int localActionHandler(const char *data, int len) {
     int ret = 0;
 
@@ -704,8 +704,8 @@ int localActionHandler(const char *data, int len) {
         // clear all sdev(s) 
         ret = getIntValByKey(data, len, JSON_NAME_SDEV_CLR, &val);
         if (0 == ret) {
-            sdevArrayReset();
-            return 0;
+            ret = sdevArrayReset();
+            return ret >= 0 ? 0 : -5;
         }
     }
 

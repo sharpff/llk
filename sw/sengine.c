@@ -83,7 +83,8 @@ typedef enum {
     SDEV_BUF_TYPE_NONE,
     SDEV_BUF_TYPE_STATUS,
     SDEV_BUF_TYPE_INFO,
-    SDEV_BUF_TYPE_HW
+    SDEV_BUF_TYPE_HW,
+    SDEV_BUF_TYPE_MARK_DEL
 }SDEV_BUF_TYPE;
 
 IA_CACHE ginIACache;
@@ -184,12 +185,15 @@ static void sdevArraySet(int index, const SDevNode *node, SDEV_BUF_TYPE bufType)
         case SDEV_BUF_TYPE_HW: {
             memcpy(&sdevArray()[index].ud, node->ud, sizeof(node->ud));
             memcpy(&sdevArray()[index].mac, node->mac, sizeof(node->mac));
-        }break;
+            }break;
         case SDEV_BUF_TYPE_INFO: {
                 memcpy(&(sdevArray()[index]).sdevInfo, node->sdevInfo, sizeof(node->sdevInfo));
             }break;
         case SDEV_BUF_TYPE_STATUS: {
                 memcpy(&(sdevArray()[index]).sdevStatus, node->sdevStatus, sizeof(node->sdevStatus));
+            }break;
+        case SDEV_BUF_TYPE_MARK_DEL: {
+                (sdevArray()[index]).isSDevInfoDone = 0x10;
             }break;
         default: 
             // LELOGE("NO MATCHED BUF TYPE FOR SDEV");
@@ -214,11 +218,17 @@ static void sdevArraySet(int index, const SDevNode *node, SDEV_BUF_TYPE bufType)
 //     return index;
 // }
 
+extern void postSDevRecordChanged(int index, int kind);
 int sdevArrayDel(int index) {
     int ret = 0;
-    if (0 <= (ret = qDeCache(sdevCache(), index))) {
-        sdevInfoSerilized(sdevArray());
+    uint8_t restore = sdevArray()[index].isSDevInfoDone;
+    sdevArraySet(index, NULL, SDEV_BUF_TYPE_MARK_DEL);
+    ret = sdevInfoSerilized(sdevArray());
+    if (0 > ret) {
+        sdevArray()[index].isSDevInfoDone = restore;
+        return ret;
     }
+    postSDevRecordChanged(index, 2);
     return ret;
 }
 
@@ -226,9 +236,13 @@ static int sdevArrayDelCB(NodeData *currNode) {
     return 1;
 }
 
-void sdevArrayReset() {
+int sdevArrayReset() {
+    int ret = 0;
     qCheckForClean(sdevCache(), (int(*)(void*))sdevArrayDelCB);
-    sdevInfoSerilized(sdevArray());
+    ret = sdevInfoSerilized(sdevArray());
+    if (0 <= ret) {
+        postSDevRecordChanged(0, 4);
+    }
 }
 
 static int forEachNodeSDevForInValid(SDevNode *currNode, void *uData) {
@@ -484,10 +498,12 @@ static int sdevInfoRsp(SDevNode *arr, const char *status, int len) {
 
             // sprintf(&(arr[index].sdevInfo[strlen(arr[index].sdevInfo) - 1]), ",\"%s\":\"%s\"}", JSON_NAME_SDEV_MAN, arr[index].sdevMan);
 
-            sdevInfoSerilized(arr);
-
+            ret = sdevInfoSerilized(arr);
             LELOG("COMPLETED =======> sdevInfoRsp[%d] arr[%d].sdevEpt[%d] is [%x] mac[%s], ud[%s], sdevMan[%s]", 
                 index, index, i, arr[index].sdevEpt[i], arr[index].mac, arr[index].ud, arr[index].sdevMan);
+            if (0 <= ret) {
+                postSDevRecordChanged(index, 1);
+            }
         }
     }
 
@@ -674,7 +690,7 @@ static int sdevRemove(SDevNode *arr, const char *status, int len) {
     ret = sdevArrayDel(index);
     LELOG("sdevRemove sdevArrayDel[%d] END ****************************", ret);
 
-    return 0;
+    return ret >= 0 ? 0 : -7;
 }
 
 

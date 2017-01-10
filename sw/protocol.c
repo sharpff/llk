@@ -164,8 +164,8 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
 static void cbCloudReportRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
-// static int cbCloudReportOTADoLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
-// static void cbCloudReportOTADoRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudSDevRecordChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbCloudSDevRecordChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudMsgCtrlC2RDoOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
@@ -263,8 +263,9 @@ static CmdRecord tblCmdType[] = {
     // query ota
     { LELINK_CMD_CLOUD_REPORT_REQ, LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ, cbCloudReportOTAQueryLocalReq, NULL },
     { LELINK_CMD_CLOUD_REPORT_RSP, LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP, cbCloudReportOTAQueryRemoteRsp, NULL },
-    // { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_REQ, cbCloudReportOTADoLocalReq, NULL },
-    // { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_RSP, cbCloudReportOTADoRemoteRsp, NULL },
+    // sub devs record changed
+    { LELINK_CMD_CLOUD_REPORT_REQ, LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_REQ, cbCloudSDevRecordChangedLocalReq, NULL },
+    { LELINK_CMD_CLOUD_REPORT_RSP, LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_RSP, cbCloudSDevRecordChangedRemoteRsp, NULL },
     // cloud push ota
     { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_OTA_REQ, NULL, cbCloudIndOTARemoteReq },
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_OTA_RSP, NULL, cbCloudIndOTALocalRsp},
@@ -1167,7 +1168,6 @@ static int isNeedDelCB(NodeData *currNode) {
 
         // for retry
         if ((LELINK_CMD_DISCOVER_REQ == currNode->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) ||
-            (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId)) {
             (LELINK_CMD_CTRL_REQ == currNode->cmdId && LELINK_SUBCMD_CTRL_CMD_REQ == currNode->subCmdId) ||
             (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId) || 
             (LELINK_CMD_CLOUD_ONLINE_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_ONLINE_REQ == currNode->subCmdId)) {
@@ -1268,12 +1268,21 @@ MULTI_LOCAL_RSP:
     }
     return ret;
 }
-void postReboot(void *ctx) {
-    NodeData node = {0};
 
+void postReboot(void) {
+    NodeData node = {0};
     node.cmdId = LELINK_CMD_ASYNC_REBOOT_REQ;
     node.subCmdId = LELINK_SUBCMD_ASYNC_REBOOT_REQ;
-    lelinkNwPostCmd(ctx, &node);
+    lelinkNwPostCmdExt(&node);
+}
+
+void postSDevRecordChanged(int index, int kind) {
+    NodeData node = {0};
+    node.cmdId = LELINK_CMD_CLOUD_REPORT_REQ;
+    node.subCmdId = LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_REQ;
+    node.reserved = index + 1;
+    node.reserved1 = kind;
+    lelinkNwPostCmdExt(&node);
 }
 /* hello */
 static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
@@ -1655,21 +1664,33 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
 static int cbCloudOnlineLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     char token[2*AES_LEN + 1] = {0};
-
     char status[MAX_BUF] = {0};
 
     LELOG("cbCloudOnlineLocalReq -s");
     // TODO: token should be encrypted by T-pubkey
-    getTerminalTokenStr(token, sizeof(token));
     if (!cmdInfo->reserved) {
-        ret = getTerminalStatus(status, sizeof(status));
+        int encLen = 0;
+        getTerminalTokenStr(token, sizeof(token));
+        uint8_t pubkey[256] = {0};
+        uint8_t encToken[RSA_LEN] = {0};
+        int pubkeyLen = getTerminalPublicKey(pubkey, sizeof(pubkey));
+        encLen = rsaEncrypt(pubkey, pubkeyLen, token, strlen(token), encToken, sizeof(encToken));
+        LELOG("rsaEncrypt ret[%d] token[%s]", ret, token);
+        if (0 >= encLen) {
+            return -1;
+        }
+        memcpy(status, encToken, encLen);
+        ret = getTerminalStatus(status + encLen, sizeof(status) - encLen) + encLen;
     } else {
         ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
     }
-    ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    LELOG("appended token [%d][%d] [%s] reserved[%d]", ret, strlen(status), status, cmdInfo->reserved);
+    // LELOG("No token [%d][%d] status[%s] reserved[%d]", ret, strlen(status + RSA_LEN), status + RSA_LEN, cmdInfo->reserved);
+    // status[ret] = '}';
+    // ret += 1;
+    // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    LELOG("No token [%d][%d] status[%s] reserved[%d]", ret, strlen(status + RSA_LEN), status + RSA_LEN, cmdInfo->reserved);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
     LELOG("cbCloudOnlineLocalReq [%d] reserved[%d] -e", ret, cmdInfo->reserved);
     return ret;
@@ -1780,7 +1801,7 @@ static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo,
     // } 
     LELOG("No need token [%s]", status);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
     LELOG("cbCloudStatusChangedLocalReq [%d] -e", ret);
     return ret;
@@ -1803,7 +1824,7 @@ static int cbCloudIAExeNotifyLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, u
         return -1;
     }
     snprintf(status, sizeof(status), "{\"name\": \"%s\"}", ginIACache.cache[cmdInfo->reserved].ruleName);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     LELOG("cbCloudIAExeNotifyLocalReq -e");
     return ret;
 }
@@ -1906,7 +1927,7 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
 
     ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)query, sizeof(query));
     // sprintf(report, "{\"query\":\"%s\"}", query);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
 
     LELOG("cbCloudReportLocalReq -e");
     return ret;
@@ -1961,6 +1982,48 @@ static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdIn
     otaSetLatestSig(dataIn);
     halCBRemoteRsp(ctx, cmdInfo, dataIn + RSA_LEN, dataLen - RSA_LEN);
     LELOG("cbCloudReportOTAQueryRemoteRsp -e");
+    return;
+}
+
+static int cbCloudSDevRecordChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    // char token[2*AES_LEN + 1] = {0};
+
+    char status[MAX_BUF] = {0};
+
+    LELOG("cbCloudSDevRecordChangedLocalReq -s");
+    // TODO: token should be encrypted by T-pubkey
+    // getTerminalTokenStr(token, sizeof(token));
+    ret = sprintf(status, "{\"%s\":%d,\"%s\":", JSON_NAME_SDEV_KIND, cmdInfo->reserved1, JSON_NAME_SDEV_PROPERTY);
+    // reset sdev
+    if (!cmdInfo->reserved) {
+        uint8_t tmpUUID[MAX_UUID] = {0};
+        uint8_t tmpStr[2*MAX_UUID + 1] = {0};
+        ret = getTerminalUUID(tmpUUID, sizeof(tmpUUID));
+        bytes2hexStr(tmpUUID, ret, tmpStr, sizeof(tmpStr));
+        ret = sprintf(status + ret, "{\"%s\":\"%s\"}", JSON_NAME_UUID, tmpStr);
+    } else { // del sdev
+        // check if the del pos has been re-occupied.
+        if (0x10 == (0x10 & sdevArray()[cmdInfo->reserved-1].isSDevInfoDone)) {
+            ret = getSDevStatus(cmdInfo->reserved-1, status + ret, sizeof(status) - ret);
+        } else {
+            strcpy(status + ret, "{}"); ret += 2;
+        }
+    }
+    // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    status[ret] = '}';
+    ret += 1;
+    LELOG("appended token [%d][%d] [%s] reserved[%d] reserved1[%d]", ret, strlen(status), status, cmdInfo->reserved, cmdInfo->reserved1);
+
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    
+    LELOG("cbCloudSDevRecordChangedLocalReq [%d] reserved[%d] -e", ret, cmdInfo->reserved);
+    return ret;
+}
+
+static void cbCloudSDevRecordChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    LELOG("cbCloudSDevRecordChangedRemoteRsp -s");
+    LELOG("cbCloudSDevRecordChangedRemoteRsp -e");
     return;
 }
 
@@ -2094,7 +2157,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
         if (LELINK_ERR_SUCCESS == tmpCmdInfo->status && 
             (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_SDEVINFO == type || OTA_TYPE_FW == type || force)) {
-            postReboot(ctx);
+            postReboot();
         }
     }
     LELOG("intDoOTA type[%d], status[%d]", type, tmpCmdInfo->status);

@@ -14,7 +14,7 @@
  * for standard case, ip shoudl be got from DNS only.
  */
 
-// #define DNS_IP_TEST
+#define DNS_IP_TEST
 
 #ifndef LOG_STATE
 #ifdef LELOG
@@ -536,7 +536,7 @@ static int stateProcCloudOnlining(StateContext *cntx) {
         return -1;
     }
 
-    LELOG("stateProcCloudOnlining");
+    LELOG("stateProcCloudOnlining=====================================");
 
     TIMEOUT_BEGIN_SEC(8, 0)
     // TIMEOUT_BEGIN(8000)
@@ -640,10 +640,10 @@ static int sdevGetValidChannel(void) {
     return ch;
 }
 
-extern void postReboot(void *ctx);
+extern void postReboot();
 void reboot(int isAsync) {
     if (isAsync) {
-        postReboot(ginCtxR2R);
+        postReboot();
     } else {
         halReboot();
     }

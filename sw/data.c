@@ -462,7 +462,7 @@ int getTerminalStatus(char *status, int len) {
     tmpLen += 1;
     //
 
-    // LELOG("getTerminalStatus [%d][%s] -e", tmpLen, status);
+    LELOG("getTerminalStatus [%d][%s] -e", tmpLen, status);
     return tmpLen;
 }
 
