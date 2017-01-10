@@ -309,7 +309,7 @@ void getOriRemoteServer(char *ip, int len, uint16_t *port) {
 }
 
 uint16_t getProtocolVer() {
-    return 0x0001;
+    return 0x0002;
 }
 
 const char *getSWVer() {
