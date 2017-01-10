@@ -1596,7 +1596,7 @@ int s1apiOptString2Table(lua_State *L) {
 // temp code, will delete when script update
 int sengineIs1Version() {
     char* p = getScriptVer();
-    if(p[0] == '1' && p[1] == '-') {
+    if(p[0] == '1' && p[1] == '.') {
         return 1;
     } else {
         return 0;
@@ -1659,7 +1659,7 @@ int sengineSetAction(const char *json, int jsonLen) {
         if (sengineIs1Version()) {
             ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, bin, ret);
             if (ret <= 0) {
-                LELOGW("sengineSetStatus ioWrite [%d]", ret);
+                LELOGW("sengineSetStatus ioWrite1.0 [%d]", ret);
                 continue;
             }
         } else {
@@ -1674,7 +1674,7 @@ int sengineSetAction(const char *json, int jsonLen) {
                             ret1 = ioWrite(ioHdl[j].ioType, ioHdl[j].hdl, &bin[i+2], len);
                             // LELOG("ioWrite data[0x%x] len[%d]", bin[2], len);
                             if (ret1 <= 0) {
-                                LELOGW("sengineSetStatus ioWrite [%d]", ret);
+                                LELOGW("sengineSetStatus ioWrite2.0 [%d]", ret);
                             }
                         }
                      }
