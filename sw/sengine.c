@@ -1680,6 +1680,7 @@ int sengineSetAction(const char *json, int jsonLen) {
                      }
                 }
                 i = i+len+2;
+                halDelayms(100);
                 // LELOGW("ioWrite next i = [%d] [%d]", i, ret);
             }
         }
