@@ -5,32 +5,30 @@ package com.letv.lelink;
  * Lelink Android平台接入SDK接口参数.<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br><br>
  * 
- * 接口函数中使用到的参数.<br>
- * 
  * @author  feiguoyou@letv.com
  * 
  */
 public class LeCmd {
-	public static final int HELLO_REQ = 7;
-	public static final int HELLO_RSP = 8;
-	public static final int DISCOVER_REQ = 9;
-	public static final int DISCOVER_RSP = 10;
-	public static final int CTRL_REQ = 15;
-	public static final int CTRL_RSP = 16;
-	public static final int CLOUD_GET_TARGET_REQ = 87;
-	public static final int CLOUD_GET_TARGET_RSP = 88;
-	public static final int CLOUD_AUTH_REQ = 89;
-    public static final int CLOUD_AUTH_RSP = 90;
-	public static final int CLOUD_HEARTBEAT_REQ = 91;
-	public static final int CLOUD_HEARTBEAT_RSP = 92;
-	public static final int CLOUD_REPORT_REQ = 93;
-	public static final int CLOUD_REPORT_RSP = 94;
-	public static final int CLOUD_MSG_CTRL_C2R_REQ = 95;
-	public static final int CLOUD_MSG_CTRL_C2R_RSP = 96;
-	public static final int CLOUD_MSG_CTRL_R2T_REQ = 97;
-	public static final int CLOUD_MSG_CTRL_R2T_RSP = 98;
-	public static final int CLOUD_IND_REQ = 99;
-	public static final int CLOUD_IND_RSP = 100;
+	public static final int HELLO_REQ = 7; /** 设备配置完成 */
+	public static final int HELLO_RSP = 8; /** 回复HELLO_REQ */
+	public static final int DISCOVER_REQ = 9; /** 发现命令 */
+	public static final int DISCOVER_RSP = 10; /** 回复DISCOVER_REQ */
+	public static final int CTRL_REQ = 15; /** 局域网控制 */
+	public static final int CTRL_RSP = 16; /** 回复CTRL_REQ */
+	public static final int CLOUD_GET_TARGET_REQ = 87; /** 云认证 */
+	public static final int CLOUD_GET_TARGET_RSP = 88; /** 回复CLOUD_GET_TARGET_REQ */
+	public static final int CLOUD_AUTH_REQ = 89; /** 二次认证 */
+    public static final int CLOUD_AUTH_RSP = 90; /** 回复CLOUD_AUTH_REQ  */
+	public static final int CLOUD_HEARTBEAT_REQ = 91; /** 心跳命令 */
+	public static final int CLOUD_HEARTBEAT_RSP = 92; /** 回复CLOUD_HEARTBEAT_REQ */
+	public static final int CLOUD_REPORT_REQ = 93; /** 信息上报 */
+	public static final int CLOUD_REPORT_RSP = 94; /** 回复CLOUD_REPORT_REQ */
+	public static final int CLOUD_MSG_CTRL_C2R_REQ = 95; /** 远程控制(控制端到云端) */
+	public static final int CLOUD_MSG_CTRL_C2R_RSP = 96; /** 回复CLOUD_MSG_CTRL_C2R_REQ  */
+	public static final int CLOUD_MSG_CTRL_R2T_REQ = 97; /** 远程控制(云端到受控端) */
+	public static final int CLOUD_MSG_CTRL_R2T_RSP = 98; /** 回复CLOUD_MSG_CTRL_R2T_REQ */
+	public static final int CLOUD_IND_REQ = 99; /** 云端推送 */
+	public static final int CLOUD_IND_RSP = 100; /** 回复CLOUD_IND_REQ */
 
 	/** 子命令集 */
 	public class Sub {
