@@ -25,7 +25,7 @@ endif
 
 SOURCEFILES := $(MAIN_PATH)/hal/$(PLATFORM)/halAES.c $(MAIN_PATH)/hal/$(PLATFORM)/halAirConfig.c $(MAIN_PATH)/hal/$(PLATFORM)/halCallback.c $(MAIN_PATH)/hal/$(PLATFORM)/halConvertor.c \
 	$(MAIN_PATH)/hal/$(PLATFORM)/halIO.c $(MAIN_PATH)/hal/$(PLATFORM)/halMD5.c $(MAIN_PATH)/hal/$(PLATFORM)/halNetwork.c $(MAIN_PATH)/hal/$(PLATFORM)/halOS.c $(MAIN_PATH)/hal/$(PLATFORM)/halOTA.c \
-	$(MAIN_PATH)/hal/$(PLATFORM)/halRSA.c main.c
+	$(MAIN_PATH)/hal/$(PLATFORM)/halRSA.c $(MAIN_PATH)/hal/$(PLATFORM)/httpc.c main.c
 EXTERNAL_LIBS := 
 EXTERNAL_LIBS_COPIED := $(foreach lib, $(EXTERNAL_LIBS),$(BINARYDIR)/$(notdir $(lib)))
 
@@ -206,3 +206,5 @@ $(BINARYDIR)/halOTA.o : $(MAIN_PATH)/hal/$(PLATFORM)/halOTA.c $(all_make_files) 
 $(BINARYDIR)/halRSA.o : $(MAIN_PATH)/hal/$(PLATFORM)/halRSA.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
+$(BINARYDIR)/httpc.o : $(MAIN_PATH)/hal/$(PLATFORM)/httpc.c $(all_make_files) |$(BINARYDIR)
+	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
