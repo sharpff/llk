@@ -1677,10 +1677,16 @@ int sengineSetAction(const char *json, int jsonLen) {
                                 LELOGW("sengineSetStatus ioWrite2.0 [%d]", ret);
                             }
                         }
+                        i = i+len+2;
+                        if(i < ret)
+                        {
+                            uint8_t bin[MAX_BUF] = {0};
+                            halDelayms(100);
+                            ioRead(ioHdl[j].ioType, ioHdl[j].hdl, bin, sizeof(bin));
+                        }
+                        break;
                      }
                 }
-                i = i+len+2;
-                halDelayms(100);
                 // LELOGW("ioWrite next i = [%d] [%d]", i, ret);
             }
         }
