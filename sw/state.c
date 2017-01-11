@@ -502,15 +502,14 @@ static int stateProcCloudLinked(StateContext *cntx) {
     return 0;
 }
 
-// static int forEachNodeSDevForPostOnlineCB(SDevNode *currNode, void *uData) {
-//     NodeData *node = (NodeData *)uData;
-//     if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
-//         node->reserved = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize) + 1;
-//         node->seqId = 0;
-//         lelinkNwPostCmd(ginCtxR2R, node);                            
-//     }
-//     return 0;
-// }
+static int forEachNodeSDevForPostOnlineCB(SDevNode *currNode, void *uData) {
+    NodeData *node = (NodeData *)uData;
+    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        node->reserved = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize) + 1;
+        lelinkNwPostCmd(ginCtxR2R, node);                            
+    }
+    return 0;
+}
 
 // static int stateProcCloudAuthed(StateContext *cntx) {
 //     int ret = 0;
@@ -538,6 +537,12 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         node.subCmdId = LELINK_SUBCMD_CLOUD_ONLINE_REQ;
         if (ginCtxR2R) {
             lelinkNwPostCmd(ginCtxR2R, &node);
+            node.seqId = 0;
+            if (sengineHasDevs()) {
+                if (sdevArray() && sdevCache()) {
+                    qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForPostOnlineCB, &node);
+                }
+            }
         }
     TIMEOUT_END
 
@@ -550,7 +555,6 @@ static int stateProcCloudOnline(StateContext *cntx) {
     }
 
     TIMEOUT_BEGIN_SEC(12, 1)
-    // TIMEOUT_BEGIN(12000)
         NodeData node = {0};
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
