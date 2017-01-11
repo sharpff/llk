@@ -111,7 +111,7 @@ static int stateProcApConnecting(StateContext *cntx);
 static int stateProcApConnected(StateContext *cntx);
 static int stateProcCloudLinked(StateContext *cntx);
 static int stateProcCloudAuthed(StateContext *cntx);
-static int stateProcCloudOnlining(StateContext *cntx);
+// static int stateProcCloudOnlining(StateContext *cntx);
 static int stateProcCloudOnline(StateContext *cntx);
 
 static void uartClear();
@@ -136,7 +136,7 @@ StateRecord ginStateTbl[] = {
     { E_STATE_AP_CONNECTED, stateProcApConnected, E_STATE_AP_CONNECTING, stateProcApConnecting, E_STATE_CLOUD_LINKED, stateProcCloudLinked },
     { E_STATE_CLOUD_LINKED, stateProcCloudLinked, E_STATE_AP_CONNECTED, stateProcApConnected, E_STATE_CLOUD_AUTHED, stateProcCloudAuthed },
     { E_STATE_CLOUD_AUTHED, stateProcCloudAuthed, E_STATE_AP_CONNECTED, stateProcApConnected, E_STATE_CLOUD_ONLINE, stateProcCloudOnline },
-    { E_STATE_CLOUD_ONLINING, stateProcCloudOnlining, E_STATE_AP_CONNECTED, stateProcApConnected, E_STATE_CLOUD_ONLINE, stateProcCloudOnline },
+    // { E_STATE_CLOUD_ONLINING, stateProcCloudOnlining, E_STATE_AP_CONNECTED, stateProcApConnected, E_STATE_CLOUD_ONLINE, stateProcCloudOnline },
     { E_STATE_CLOUD_ONLINE, stateProcCloudOnline, E_STATE_AP_CONNECTED, stateProcApConnected, E_STATE_NONE, 0 },
     { E_STATE_NONE, 0, E_STATE_NONE, 0, E_STATE_NONE, 0 }
 };
@@ -148,7 +148,7 @@ int isApConnected(void)
 
 int isCloudAuthed(void)
 {
-    return (ginStateCntx.stateIdCurr == E_STATE_CLOUD_AUTHED);
+    return (ginStateCntx.stateIdCurr >= E_STATE_CLOUD_AUTHED);
 }
 
 StateId changeStateId(StateId state) {
@@ -165,7 +165,7 @@ static int changeState(int direction, StateContext *cntx, int idx) {
 
     if(ginStateId != E_STATE_NONE) {
         direction = ginStateId - ginStateCntx.stateIdCurr;
-        LELOGE("Protocol set %d -> %d", ginStateCntx.stateIdCurr, ginStateId);
+        LELOG("Protocol set %d -> %d", ginStateCntx.stateIdCurr, ginStateId);
     }
     ginStateCntx.from = ginStateCntx.stateIdCurr;
     if (0 > direction) {
@@ -243,7 +243,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     senginePollingSlave();
     TIMEOUT_END
 
-    if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED && ginStateCntx.stateIdCurr <= E_STATE_CLOUD_AUTHED) {
+    if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED) {
         TIMEOUT_BEGIN(1000)
         senginePollingRules(NULL, 0);
         TIMEOUT_END
@@ -472,6 +472,10 @@ static int stateProcApConnected(StateContext *cntx) {
             TIMEOUT_END
             #ifdef DNS_IP_TEST
             LELOG("IP TEST ON ------- to connect[%s:%d]", COMM_CTX(ginCtxR2R)->remoteIP, COMM_CTX(ginCtxR2R)->remotePort);
+            // node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
+            // node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;
+            // node.cmdId = LELINK_CMD_CLOUD_ONLINE_REQ;
+            // node.subCmdId = LELINK_SUBCMD_CLOUD_ONLINE_REQ;
             node.cmdId = LELINK_CMD_CLOUD_GET_TARGET_REQ;
             node.subCmdId = LELINK_SUBCMD_CLOUD_GET_TARGET_REQ;
             if (lelinkNwPostCmd(COMM_CTX(ginCtxR2R), &node)) {
@@ -498,49 +502,43 @@ static int stateProcCloudLinked(StateContext *cntx) {
     return 0;
 }
 
-static int forEachNodeSDevForPostOnlineCB(SDevNode *currNode, void *uData) {
-    NodeData *node = (NodeData *)uData;
-    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
-        node->reserved = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize) + 1;
-        node->seqId = 0;
-        lelinkNwPostCmd(ginCtxR2R, node);                            
-    }
-    return 0;
-}
+// static int forEachNodeSDevForPostOnlineCB(SDevNode *currNode, void *uData) {
+//     NodeData *node = (NodeData *)uData;
+//     if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+//         node->reserved = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize) + 1;
+//         node->seqId = 0;
+//         lelinkNwPostCmd(ginCtxR2R, node);                            
+//     }
+//     return 0;
+// }
+
+// static int stateProcCloudAuthed(StateContext *cntx) {
+//     int ret = 0;
+//     NodeData node = {0};
+//     if (0 == ginConfigStatus) {
+//         return -1;
+//     }
+
+//     LELOG("stateProcCloudAuthed");
+//     ret = 1;
+
+//     return ret ? 1 : 0;
+// }
 
 static int stateProcCloudAuthed(StateContext *cntx) {
-    int ret = 0;
-    NodeData node = {0};
     if (0 == ginConfigStatus) {
         return -1;
     }
 
     LELOG("stateProcCloudAuthed");
-    
-    if (ginCtxR2R) {
+
+    TIMEOUT_BEGIN_SEC(6, 1)
+        NodeData node = {0};
         node.cmdId = LELINK_CMD_CLOUD_ONLINE_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_ONLINE_REQ;
-        ret = lelinkNwPostCmd(ginCtxR2R, &node) ;
-        if (sengineHasDevs()) {
-            if (sdevArray() && sdevCache()) {
-                qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForPostOnlineCB, &node);
-            }
+        if (ginCtxR2R) {
+            lelinkNwPostCmd(ginCtxR2R, &node);
         }
-    }
-
-    return ret ? 1 : 0;
-}
-
-static int stateProcCloudOnlining(StateContext *cntx) {
-    if (0 == ginConfigStatus) {
-        return -1;
-    }
-
-    LELOG("stateProcCloudOnlining=====================================");
-
-    TIMEOUT_BEGIN_SEC(8, 0)
-    // TIMEOUT_BEGIN(8000)
-        return -1;
     TIMEOUT_END
 
     return 0;
@@ -629,7 +627,7 @@ static int sdevGetValidChannel(void) {
     int channel, ch = 11;
     static const int16_t zbch[] = {2405, 2475}; // 11, 25
     static const int16_t wifich[] = {0, 2412, 2417, 2422, 2427, 2432, 2437, 2442, 2447, 2452, 2457, 2462}; // 0, 1 - 11
-    if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED && ginStateCntx.stateIdCurr <= E_STATE_CLOUD_AUTHED) {
+    if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED) {
         channel = halGetWifiChannel();
         if(channel > 0 && channel < 12) {
             d11 = wifich[channel] - zbch[0];

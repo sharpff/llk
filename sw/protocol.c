@@ -902,8 +902,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
         LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == node_p->subCmdId) {
         node_p->timeoutRef = 1;
     }
-    if ((LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->subCmdId) || 
-        (LELINK_CMD_CLOUD_ONLINE_REQ == node_p->cmdId && LELINK_SUBCMD_CLOUD_ONLINE_REQ == node_p->subCmdId)) {
+    if (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->subCmdId) {
         node_p->timeoutRef = 3;
     }
     LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d] seqId[%d] reserved[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef, node_p->seqId, node_p->reserved);
@@ -1169,8 +1168,7 @@ static int isNeedDelCB(NodeData *currNode) {
         // for retry
         if ((LELINK_CMD_DISCOVER_REQ == currNode->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) ||
             (LELINK_CMD_CTRL_REQ == currNode->cmdId && LELINK_SUBCMD_CTRL_CMD_REQ == currNode->subCmdId) ||
-            (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId) || 
-            (LELINK_CMD_CLOUD_ONLINE_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_ONLINE_REQ == currNode->subCmdId)) {
+            (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId)) {
             uint8_t bRspFlag = 0x01; // for unicast
             NodeData node = {0};
             LELOG("**************** cmd[%d] subCmd[%d], needRsp[%d] reserved2[%d]", 
@@ -1201,8 +1199,10 @@ static int isNeedDelCB(NodeData *currNode) {
         }
 
         switch (currNode->cmdId) {
+            case LELINK_CMD_CLOUD_ONLINE_REQ:
             case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
-                if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ && !(currNode->reserved)) {
+                if ((currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ || LELINK_SUBCMD_CLOUD_ONLINE_REQ == currNode->subCmdId) &&
+                    !(currNode->reserved)) {
                     if (!flagHeartBeatMinus()) {
                         changeStateId(E_STATE_AP_CONNECTED);
                         flagHeartBeatReset();
@@ -1761,7 +1761,7 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, NULL, 0, dataOut, dataLen);
     
-    LELOG("cbCloudHeartBeatLocalReq -e", ret);
+    LELOG("cbCloudHeartBeatLocalReq [%d] -e", ret);
     return ret;
 }
 
