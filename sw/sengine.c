@@ -241,8 +241,9 @@ int sdevArrayReset() {
     qCheckForClean(sdevCache(), (int(*)(void*))sdevArrayDelCB);
     ret = sdevInfoSerilized(sdevArray());
     if (0 <= ret) {
-        postSDevRecordChanged(0, 4);
+        postSDevRecordChanged(-1, 4);
     }
+    return ret;
 }
 
 static int forEachNodeSDevForInValid(SDevNode *currNode, void *uData) {
@@ -296,6 +297,7 @@ static void postStatusChanged(int plusIdx) {
         } else
         strcpy(node.ndIP, br);
         node.ndPort = NW_SELF_PORT;
+        lelinkNwPostCmdExt(&node);
     }
     lelinkNwPostCmdExt(&node);
     // TIMEOUT_SECS_END

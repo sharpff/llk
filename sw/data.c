@@ -484,7 +484,7 @@ int getSDevStatus(int index, char *sdevStatus, int len) {
         halGetSelfAddr(sdevStatus + tmpLen, len - tmpLen, NULL); tmpLen = strlen(sdevStatus);
         // append sdevStatus
         sprintf(&sdevStatus[strlen(sdevStatus)], "\",\"%s\":%s,\"%s\":\"%s\"}", JSON_NAME_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAC, arr[index].mac);
-        // LELOG("XXXXXX[%s]", sdevStatus);
+        LELOG("getSDevStatus[%s]", sdevStatus);
     } else {
         return 0;
     }

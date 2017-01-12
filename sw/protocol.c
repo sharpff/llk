@@ -1166,16 +1166,16 @@ static int isNeedDelCB(NodeData *currNode) {
             currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->needRsp);
 
         // for retry
-        if ((LELINK_CMD_DISCOVER_REQ == currNode->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) ||
+        if (/*(LELINK_CMD_DISCOVER_REQ == currNode->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) ||*/
             (LELINK_CMD_CTRL_REQ == currNode->cmdId && LELINK_SUBCMD_CTRL_CMD_REQ == currNode->subCmdId) ||
             (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId)) {
             uint8_t bRspFlag = 0x01; // for unicast
             NodeData node = {0};
             LELOG("**************** cmd[%d] subCmd[%d], needRsp[%d] reserved2[%d]", 
                 currNode->cmdId, currNode->subCmdId, currNode->needRsp, currNode->reserved2);
-            if (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) {
-                bRspFlag = 0xFF; // for multicast
-            }
+            // if (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) {
+            //     bRspFlag = 0xFF; // for multicast
+            // }
             if (!currNode->reserved2) {
                 currNode->reserved2 = RETRY_TIMES;
                 LELOG("RETRY start");
@@ -1491,13 +1491,14 @@ static int cbDiscoverStatusChangedLocalRsp(void *ctx, const CmdHeaderInfo* cmdIn
 
 static int cbCtrlGetStatusLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
 
-    int ret = 0;
+    int ret = 0, encType = -1;
     char reqCtrlGetStatus[128];
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlGetStatusLocalReq -s");
 
     ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)reqCtrlGetStatus, sizeof(reqCtrlGetStatus));
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)reqCtrlGetStatus, ret, dataOut, dataLen);
+    encType = cmdInfo->token[0] ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+	ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)reqCtrlGetStatus, ret, dataOut, dataLen);
     
     LELOG("cbCtrlGetStatusLocalReq [%d] -e", ret);
     return ret;
@@ -1575,7 +1576,7 @@ static int cbCtrlGetStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, con
     return ret;
 }
 static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-    int ret = 0;
+    int ret = 0, encType = -1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char status[MAX_BUF] = {0};
     char strMac[32] = {0};
@@ -1592,7 +1593,8 @@ static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, cons
         ret = getTerminalStatus(status, sizeof(status));
     }
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
+    encType = isCloudAuthed() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+    ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
     // ret = getTerminalStatus(binStatus, sizeof(binStatus));
     LELOG("cbCtrlGetStatusLocalRsp status[%s] -e", status);
     return ret;
@@ -1665,30 +1667,33 @@ static int cbCloudOnlineLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
     int ret = 0;
     char token[2*AES_LEN + 1] = {0};
     char status[MAX_BUF] = {0};
-
+    int encLen = 0;
+    uint8_t pubkey[256] = {0};
+    uint8_t encToken[RSA_LEN] = {0};
+    int pubkeyLen = 0;
     LELOG("cbCloudOnlineLocalReq -s");
+    
+    getTerminalTokenStr(token, sizeof(token));
+    pubkeyLen = getTerminalPublicKey(pubkey, sizeof(pubkey));
+    encLen = rsaEncrypt(pubkey, pubkeyLen, (const uint8_t *)token, strlen(token), encToken, sizeof(encToken));
+    LELOG("rsaEncrypt ret[%d] token[%s]", ret, token);
+    if (0 >= encLen) {
+        return -1;
+    }
+    memcpy(status, encToken, encLen);
+
     // TODO: token should be encrypted by T-pubkey
     if (!cmdInfo->reserved) {
-        int encLen = 0;
-        getTerminalTokenStr(token, sizeof(token));
-        uint8_t pubkey[256] = {0};
-        uint8_t encToken[RSA_LEN] = {0};
-        int pubkeyLen = getTerminalPublicKey(pubkey, sizeof(pubkey));
-        encLen = rsaEncrypt(pubkey, pubkeyLen, token, strlen(token), encToken, sizeof(encToken));
-        LELOG("rsaEncrypt ret[%d] token[%s]", ret, token);
-        if (0 >= encLen) {
-            return -1;
-        }
-        memcpy(status, encToken, encLen);
-        ret = getTerminalStatus(status + encLen, sizeof(status) - encLen) + encLen;
+        ret = getTerminalStatus(status + encLen, sizeof(status) - encLen);
     } else {
-        ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
+        ret = getSDevStatus(cmdInfo->reserved-1, status + encLen, sizeof(status) - encLen);
     }
+    ret += encLen;
     // LELOG("No token [%d][%d] status[%s] reserved[%d]", ret, strlen(status + RSA_LEN), status + RSA_LEN, cmdInfo->reserved);
     // status[ret] = '}';
     // ret += 1;
     // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    LELOG("No token [%d][%d] status[%s] reserved[%d]", ret, strlen(status + RSA_LEN), status + RSA_LEN, cmdInfo->reserved);
+    LELOG("No token [%d] status[%s] reserved[%d]", ret, status + encLen, cmdInfo->reserved);
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
@@ -1987,6 +1992,7 @@ static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdIn
 
 static int cbCloudSDevRecordChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
+    int preLen = 0;
     // char token[2*AES_LEN + 1] = {0};
 
     char status[MAX_BUF] = {0};
@@ -1994,28 +2000,30 @@ static int cbCloudSDevRecordChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdI
     LELOG("cbCloudSDevRecordChangedLocalReq -s");
     // TODO: token should be encrypted by T-pubkey
     // getTerminalTokenStr(token, sizeof(token));
-    ret = sprintf(status, "{\"%s\":%d,\"%s\":", JSON_NAME_SDEV_KIND, cmdInfo->reserved1, JSON_NAME_SDEV_PROPERTY);
+    preLen = sprintf(status, "{\"%s\":%d,\"%s\":", JSON_NAME_SDEV_KIND, cmdInfo->reserved1, JSON_NAME_SDEV_PROPERTY);
     // reset sdev
     if (!cmdInfo->reserved) {
         uint8_t tmpUUID[MAX_UUID] = {0};
-        uint8_t tmpStr[2*MAX_UUID + 1] = {0};
-        ret = getTerminalUUID(tmpUUID, sizeof(tmpUUID));
-        bytes2hexStr(tmpUUID, ret, tmpStr, sizeof(tmpStr));
-        ret = sprintf(status + ret, "{\"%s\":\"%s\"}", JSON_NAME_UUID, tmpStr);
+        char tmpStr[MAX_UUID + 1] = {0};
+        getTerminalUUID(tmpUUID, sizeof(tmpUUID));
+        memcpy(tmpStr, tmpUUID, MAX_UUID);
+        ret = sprintf(status + preLen, "{\"%s\":\"%s\"}", JSON_NAME_UUID, tmpStr);
     } else { // del sdev
         // check if the del pos has been re-occupied.
-        if (0x10 == (0x10 & sdevArray()[cmdInfo->reserved-1].isSDevInfoDone)) {
-            ret = getSDevStatus(cmdInfo->reserved-1, status + ret, sizeof(status) - ret);
+        if (0x08 <= sdevArray()[cmdInfo->reserved-1].isSDevInfoDone) {
+            ret = getSDevStatus(cmdInfo->reserved-1, status + preLen, sizeof(status) - preLen);
         } else {
-            strcpy(status + ret, "{}"); ret += 2;
+            // strcpy(status + preLen, "{}"); ret = 2;
+            LELOGE("sdev has been re-occupied!!!");
+            return -1;
         }
     }
     // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    status[ret] = '}';
-    ret += 1;
-    LELOG("appended token [%d][%d] [%s] reserved[%d] reserved1[%d]", ret, strlen(status), status, cmdInfo->reserved, cmdInfo->reserved1);
+    status[preLen + ret] = '}';
+    ret = preLen + ret + 1;
+    LELOG("appended token [%d][%s] reserved[%d] reserved1[%d]", ret, status, cmdInfo->reserved, cmdInfo->reserved1);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
     LELOG("cbCloudSDevRecordChangedLocalReq [%d] reserved[%d] -e", ret, cmdInfo->reserved);
     return ret;
