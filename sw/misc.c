@@ -724,7 +724,7 @@ int cloudMsgHandler(const char *data, int len) {
         jsontok_t jsonToken[NUM_TOKENS];
         jobj_t jobj;
         case CLOUD_MSG_KEY_LOCK: {
-            int lock = 0;
+            int lock = 0, uid = 0;
             ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
                 ret = LELINK_ERR_LOCK_UNLOCK;
@@ -736,7 +736,11 @@ int cloudMsgHandler(const char *data, int len) {
                 break;
             }
             if (lock) {
-                setLock(1);
+                if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_UID, &uid))) {
+                    ret = LELINK_ERR_LOCK_UNLOCK;
+                    break;
+                }
+                setLock(1, uid);
             } else {
                 if (getLock()) {
                     resetConfigData(1);

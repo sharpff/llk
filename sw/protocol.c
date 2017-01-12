@@ -1380,12 +1380,13 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbDiscoverRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
+    
     // it is not comming from simu
-    if (memcmp(cmdInfo->uuid, "d05bca44feb34aeca2dd", 20)) {
-        if (isCloudAuthed() && getLock()) {
-            return -1; // drop this req, it means no rsp
-        }
-    }
+    // if (memcmp(cmdInfo->uuid, "d05bca44feb34aeca2dd", 20)) {
+    //     if (isCloudOnlined() && getLock()) {
+    //         return -1; // drop this req, it means no rsp
+    //     }
+    // }
 
     LELOG("cbDiscoverRemoteReq [%d] -e", ret + ginSDevCountsInDiscovery);
     return ret + ginSDevCountsInDiscovery;
@@ -1557,7 +1558,7 @@ static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint
     char rspCtrlCmd[MAX_BUF] = {0};
     LELOG("cbCtrlCmdLocalRsp -s");
     ret = getTerminalStatus(rspCtrlCmd, sizeof(rspCtrlCmd));
-    encType = isCloudAuthed() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+    encType = isCloudOnlined() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspCtrlCmd, strlen(rspCtrlCmd), dataOut, dataLen);
     LELOG("cbCtrlCmdLocalRsp -e");
     senginePollingSlave();
@@ -1593,7 +1594,7 @@ static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, cons
         ret = getTerminalStatus(status, sizeof(status));
     }
 
-    encType = isCloudAuthed() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+    encType = isCloudOnlined() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
     // ret = getTerminalStatus(binStatus, sizeof(binStatus));
     LELOG("cbCtrlGetStatusLocalRsp status[%s] -e", status);

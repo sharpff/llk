@@ -95,15 +95,20 @@ int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
 //     return 0;
 // }
 
-int setLock(int locked) {
+int setLock(int locked, int uid) {
     int ret = 0;
     ginPrivateCfg.data.devCfg.locked = locked;
+    ginPrivateCfg.data.devCfg.uid = uid;
     ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     return 0 <= ret ? 1 : 0;
 }
 
 int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
+}
+
+int getUID() {
+    return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.uid;
 }
 
 int getDevFlag(DEV_FLAG_t flagWiFi) {
@@ -403,7 +408,7 @@ int getTerminalStatus(char *status, int len) {
 
     tmpLen = strlen(status);
 
-    sprintf(status + tmpLen, ",\"cloud\":%d", isCloudAuthed());
+    sprintf(status + tmpLen, ",\"cloud\":%d", isCloudOnlined());
     tmpLen = strlen(status);
 
     strcpy(status + tmpLen, ",\"uuid\":\""); tmpLen = strlen(status);
@@ -419,6 +424,9 @@ int getTerminalStatus(char *status, int len) {
     getSSID(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
 
     sprintf(status + tmpLen, "\",\"lock\":%d", getLock());
+    tmpLen = strlen(status);
+
+    sprintf(status + tmpLen, ",\"uid\":%d", getUID());
     tmpLen = strlen(status);
 
     if (sengineHasDevs()) {

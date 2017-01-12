@@ -151,6 +151,11 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 		return ok
 	end
 
+	local rmtUID = tblRmt["uid"]
+	if nil == rmtUID or rmtUID ~= ${UID} then
+		return ok
+	end
+
 	-- CUSTOMIZATION START
 
 	local tblOldStatus = {}

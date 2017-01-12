@@ -141,14 +141,16 @@ StateRecord ginStateTbl[] = {
     { E_STATE_NONE, 0, E_STATE_NONE, 0, E_STATE_NONE, 0 }
 };
 
-int isApConnected(void)
-{
+int isApConnected(void) {
     return ginPrivateCfg.data.nwCfg.configStatus > 1;
 }
 
-int isCloudAuthed(void)
-{
+int isCloudAuthed(void) {
     return (ginStateCntx.stateIdCurr >= E_STATE_CLOUD_AUTHED);
+}
+
+int isCloudOnlined(void) {
+    return (ginStateCntx.stateIdCurr >= E_STATE_CLOUD_ONLINE);
 }
 
 StateId changeStateId(StateId state) {

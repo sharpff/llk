@@ -284,7 +284,7 @@ static void postStatusChanged(int plusIdx) {
     NodeData node = {0};
     node.reserved = plusIdx;
     // TIMEOUT_SECS_BEGIN(1)
-    if (isCloudAuthed() && getLock()) {
+    if (isCloudOnlined() && getLock()) {
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
     } else {
@@ -2020,7 +2020,7 @@ int sengineS2RuleHandler(const ScriptCfg2 *scriptCfg2,
         // 5. do ctrl
         ret = sengineSetAction((char *)buf, ret);
         LELOG("sengineS2RuleHandler sengineSetAction DONE [%d]", ret);      
-        if (isCloudAuthed()) {
+        if (isCloudOnlined()) {
             NodeData node = {0};
             node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
             node.subCmdId = LELINK_SUBCMD_CLOUD_IA_EXE_NOTIFY_REQ;

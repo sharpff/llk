@@ -38,7 +38,7 @@ int getTerminalStatusS2(char *statusS2, int len);
 int cacheIsChanged(const char *status, int len);
 void setSSID(const char *ssid, int ssidLen);
 
-int setLock(int locked);
+int setLock(int locked, int uid);
 int getLock();
 int getDevFlag(DEV_FLAG_t flag);
 int setDevFlag(DEV_FLAG_t flag, int isSet);
