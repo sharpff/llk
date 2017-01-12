@@ -483,6 +483,10 @@ int getSDevStatus(int index, char *sdevStatus, int len) {
         uint8_t uuid[MAX_UUID+1] = {0};
         getTerminalUUID(uuid, MAX_UUID);
         sprintf(sdevStatus, "{\"%s\":\"%s-%s\"", JSON_NAME_UUID, uuid, arr[index].mac);
+
+        // append uid 
+        sprintf(&sdevStatus[strlen(sdevStatus)], ",\"uid\":%d", getUID());
+
         // append man start
         sprintf(&sdevStatus[strlen(sdevStatus)], ",\"%s\":%s", JSON_NAME_SDEV, strlen(arr[index].sdevInfo) > 0 ? arr[index].sdevInfo : "{}"); 
         sprintf(&sdevStatus[strlen(sdevStatus) - 1], ",\"%s\":\"%s\"}", JSON_NAME_SDEV_MAN, arr[index].sdevMan);
