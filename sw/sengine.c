@@ -1614,7 +1614,7 @@ int s1apiOptString2Table(lua_State *L) {
 // temp code, will delete when script update
 int sengineIs1Version() {
     const char* p = getScriptVer();
-    if(p[0] == '1' && p[1] == '-') {
+    if(p[0] == '1' && p[1] == '.') {
         return 1;
     } else {
         return 0;
