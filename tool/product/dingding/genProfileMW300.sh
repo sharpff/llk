@@ -26,8 +26,7 @@ $MAIN_PATH/lelinkTool.py \
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid ff \
-    --passwd fengfeng2qiqi \
+    --wmode mon \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \

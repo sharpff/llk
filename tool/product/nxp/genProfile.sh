@@ -17,8 +17,8 @@ $MAIN_PATH/lelinkTool.py \
 $MAIN_PATH/lelinkTool.py \
     --wmode sap \
     --genpriv \
-    --ssid ff \
-    --passwd fengfeng2qiqi \
+    --ssid Xiaomi_Lelink \
+    --passwd 987654321 \
     -o ./0x1c8000.bin
 
 # IA 

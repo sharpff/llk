@@ -56,7 +56,8 @@ typedef struct {
     uint8_t flagWiFi; // DEV_FLAG_t
     uint8_t locked;
     uint32_t sdevFWSize;
-    uint8_t reserved[31];
+    int32_t uid;
+    uint8_t reserved[27];
     uint8_t initCfgWiFiMode; // in what WiFi config mode after reset manually (SoftAp as default, 0xFF/0x01 monitor; 0x00 softAP)
     uint8_t initCfgIfUnBind; // UnBind if user reset manually (UnBind as default)
 }LELINK_ALIGNED DevCfg;

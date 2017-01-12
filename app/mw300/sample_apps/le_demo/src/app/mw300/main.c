@@ -677,10 +677,11 @@ end:
 void le_reboot(int argc, char **argv) {
     app_reboot(REASON_USER_REBOOT);
 }
-
+extern void cmd_httpc_post(int argc, char *argv[]);
 static struct cli_command le_utils[] = { 
     {"lo", "letv ota", le_ota},
-    {"reboot", "letv reboot", le_reboot}
+    {"reboot", "letv reboot", le_reboot}/*,
+    {"httpc-post", NULL, cmd_httpc_post}*/
 };
 
 int le_utils_cli_init(void)                                                                                                                                            
