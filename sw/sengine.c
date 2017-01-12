@@ -1677,7 +1677,7 @@ int sengineSetAction(const char *json, int jsonLen) {
         if (sengineIs1Version()) {
             ret = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, bin, ret);
             if (ret <= 0) {
-                LELOGW("sengineSetStatus ioWrite [%d]", ret);
+                LELOGW("sengineSetStatus ioWrite1.0 [%d]", ret);
                 continue;
             }
         } else {
@@ -1692,12 +1692,19 @@ int sengineSetAction(const char *json, int jsonLen) {
                             ret1 = ioWrite(ioHdl[j].ioType, ioHdl[j].hdl, &bin[i+2], len);
                             // LELOG("ioWrite data[0x%x] len[%d]", bin[2], len);
                             if (ret1 <= 0) {
-                                LELOGW("sengineSetStatus ioWrite [%d]", ret);
+                                LELOGW("sengineSetStatus ioWrite2.0 [%d]", ret);
                             }
                         }
+                        i = i+len+2;
+                        if(i < ret)
+                        {
+                            uint8_t bin[MAX_BUF] = {0};
+                            halDelayms(100);
+                            ioRead(ioHdl[j].ioType, ioHdl[j].hdl, bin, sizeof(bin));
+                        }
+                        break;
                      }
                 }
-                i = i+len+2;
                 // LELOGW("ioWrite next i = [%d] [%d]", i, ret);
             }
         }

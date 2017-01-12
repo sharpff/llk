@@ -291,6 +291,14 @@ static void leLedRedYellowBlueBlink(void) {
     APPLOG("==========>leLedRedYellowBlueBlink ledDevice.timeout[%d]", ledDevice.timeout);
 }
 
+static void leLedLightOn(void) {
+    leLedStopBlink();
+    hal_pwm_set_duty_cycle(LED_ID_BRIGHT, ledDevice.brightness);
+    hal_pwm_set_duty_cycle(LED_ID_RED, ledDevice.color_r*color_w_r);
+    hal_pwm_set_duty_cycle(LED_ID_GREEN, ledDevice.color_g*color_w_g);
+    hal_pwm_set_duty_cycle(LED_ID_BLUE, ledDevice.color_b*color_w_b);
+}
+
 void leLedReset(void) {
     ledDevice_t ledOriginData = {0, 0, 0, 0, 1024, 1024, 1024, 1024};
     APPLOG("leLedReset");
@@ -364,6 +372,8 @@ static int leLedProcessData(ledDevice_t* dev) {
                 leLedYellow(60);
             } else if (dev->mode == 4) {
                 leLedWhite(60);
+            } else if (dev->mode == 5) {
+                leLedLightOn();
             } else if (dev->mode == 100) {
                 leLedRedYellowBlueBlink();
             } else if (dev->mode == 101) {

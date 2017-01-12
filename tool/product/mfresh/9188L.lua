@@ -42,7 +42,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '2.0.0'
+	local str = '2.0.1'
 	return string.len(str), str
 end
 
@@ -138,7 +138,7 @@ function s1CvtStd2Pri(json)
 		else
 			local tb = cjson.decode(currStatus)
 			local pwr_old = tb["pwr"]
-			if pwr_old == 0 and speed ~= 6 then
+			if pwr_old == 0 and speed ~= nil and speed ~= 6 then
 				offset = 27
 			end
 		end
