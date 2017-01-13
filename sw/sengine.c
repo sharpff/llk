@@ -290,7 +290,9 @@ static void postStatusChanged(int plusIdx) {
     } else {
         char br[MAX_IPLEN] = {0};
         node.cmdId = LELINK_CMD_DISCOVER_REQ;
-        node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;        
+        node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;    
+        node.rspVal = 1;
+        node.noAck = 1;
         ret = halGetBroadCastAddr(br, sizeof(br));
         if (0 >= ret) {
             strcpy(br, "255.255.255.255");

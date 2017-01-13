@@ -216,13 +216,13 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payl
     APPLOG("halCBRemoteRsp id[%d][%d] [%d][%s] -s", cmdInfo->cmdId, cmdInfo->subCmdId, len, tmpBuf);
     memcpy(tmpUUID, cmdInfo->uuid, MAX_UUID);
     // APPLOG("halCBRemoteRsp status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \
-    //     passThru[%d] uuid[%s]", 
+    //     noAck[%d] uuid[%s]", 
     //     cmdInfo->status, 
     //     cmdInfo->cmdId, 
     //     cmdInfo->subCmdId, 
     //     cmdInfo->seqId, 
     //     cmdInfo->randID, 
-    //     cmdInfo->passThru, 
+    //     cmdInfo->noAck, 
     //     tmpUUID);
     // APPLOG("halCBRemoteRsp len[%d][%s]", len, payloadBody);
 
@@ -290,13 +290,13 @@ int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *paylo
     // APPLOG("halCBRemoteReq -s");
 
     // APPLOG("halCBRemoteReq status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] \
-    //     passThru[%d] uuid[%s]", 
+    //     noAck[%d] uuid[%s]", 
     //     cmdInfo->status, 
     //     cmdInfo->cmdId, 
     //     cmdInfo->subCmdId, 
     //     cmdInfo->seqId, 
     //     cmdInfo->randID, 
-    //     cmdInfo->passThru, 
+    //     cmdInfo->noAck, 
     //     cmdInfo->uuid);
     memcpy(tmp, payloadBody, len);
     // APPLOG("halCBRemoteReq len[%d][%s]", len, tmp);

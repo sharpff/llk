@@ -45,7 +45,7 @@ extern "C"
     ((CmdHeader *)(cmdHeader))->cmdId = cmdInfo->cmdId; \
     ((CmdHeader *)(cmdHeader))->seqId = cmdInfo->seqId > 0 ? cmdInfo->seqId : genSeqId(); \
     ((CmdHeader *)(cmdHeader))->randID = genRand(); \
-    ((CmdHeader *)(cmdHeader))->passThru = cmdInfo->passThru; \
+    ((CmdHeader *)(cmdHeader))->noAck = cmdInfo->noAck; \
     ((CmdHeader *)(cmdHeader))->reserved = cmdInfo->reserved; \
     ((CmdHeader *)(cmdHeader))->reserved1 = cmdInfo->reserved1; \
     ((CmdHeader *)(cmdHeader))->reserved2 = cmdInfo->reserved2; \

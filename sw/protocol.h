@@ -214,7 +214,7 @@ typedef enum
     uint16_t cmdId; \
     uint16_t seqId; \
     uint16_t randID; \
-    uint8_t passThru; \
+    uint8_t noAck; \
     uint8_t reserved; \
     uint8_t reserved1; \
     uint8_t reserved2; \
@@ -241,7 +241,7 @@ typedef struct {
     uint32_t timeoutRef;
     uint16_t ndPort;
     uint8_t needReq;
-    uint8_t needRsp;
+    uint8_t rspVal;
 }NodeData;
 
 #define COMM_CTX(a) ((CommonCtx *)(a))

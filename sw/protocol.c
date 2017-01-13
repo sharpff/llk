@@ -852,7 +852,7 @@ static int doQ2ARemoteReq(void *ctx,
     if ((CBRemoteReq) remoteReqPtr->procQ2A) {
         localRspPtr = getCmdRecord(cmdInfo->cmdId + 1, cmdInfo->subCmdId + 1);
         repeat = ((CBRemoteReq) remoteReqPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen);
-        if (!localRspPtr || 0 > repeat) {
+        if (!localRspPtr || 0 > repeat || cmdInfo->noAck) {
             return -0xB;
         }
         ((CmdHeaderInfo *)cmdInfo)->cmdId++;
@@ -888,7 +888,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     
     node_p->pCtx = pCtx;
     node_p->needReq = 1;
-    node_p->needRsp = (LELINK_CMD_DISCOVER_REQ == node_p->cmdId) || (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == node_p->subCmdId && LELINK_CMD_CTRL_REQ == node_p->cmdId) ? 0xFF : 1;
+    node_p->rspVal = !node_p->rspVal ? ((LELINK_CMD_DISCOVER_REQ == node_p->cmdId) || (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == node_p->subCmdId && LELINK_CMD_CTRL_REQ == node_p->cmdId) ? 0xFF : 1) : 0;
     node_p->randID = genRand();
     node_p->seqId = node_p->seqId ? node_p->seqId : genSeqId();
     if (!node_p->uuid[0])
@@ -918,7 +918,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     // node.subCmdId = cmdInfo.subCmdId;
     // node.seqId = cmdInfo.seqId;
     // node.randID = genRand();
-    // node.passThru = cmdInfo.passThru;
+    // node.noAck = cmdInfo.noAck;
     // node.reserved = cmdInfo.reserved;
     // node.reserved1 = cmdInfo.reserved1;
     // node.reserved2 = cmdInfo.reserved2;
@@ -929,7 +929,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     // node.timeStamp = halGetTimeStamp();
     // node.timeoutRef = 5;
     // node.needReq = 1;
-    // node.needRsp = 0;
+    // node.rspVal = 0;
     // memcpy(node.ndIP, ipTmp, MAX_IPLEN);
     // node.ndPort = portTmp;
 
@@ -1027,10 +1027,10 @@ static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *toke
 static int forEachNodeR2RFindNode(NodeData *currNode, void *uData) {
     CmdHeaderInfo *cmdInfo = (CmdHeaderInfo *)uData;
     if (currNode->seqId == cmdInfo->seqId) {
-        if (0 < currNode->needRsp) {
-            currNode->needRsp--;
+        if (0 < currNode->rspVal) {
+            currNode->rspVal--;
+            return 1;
         }
-        return 1;
     }
     return 0;
 }
@@ -1085,7 +1085,7 @@ static int forEachNodeR2RPostSendCB(NodeData *currNode, void *uData)
         if (0 >= len)
         {
             currNode->needReq = 0;
-            currNode->needRsp = 0;
+            currNode->rspVal = 0;
             return 0;
         }
 
@@ -1108,7 +1108,7 @@ static int forEachNodeR2RPostSendCB(NodeData *currNode, void *uData)
             return -2;
         }
 
-        //currNode->needRsp = 1;
+        //currNode->rspVal = 1;
         currNode->needReq = 0;
     }
 
@@ -1162,8 +1162,8 @@ static int isNeedDelCB(NodeData *currNode) {
     // timeout
     int ret = 0;
     if (currNode->timeoutRef && (halGetTimeStamp() - currNode->timeStamp) > currNode->timeoutRef) {
-        LELOG("isNeedDelCB timeoutRef[%d] cmd[%d][%d] left needRsp[%d] ", 
-            currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->needRsp);
+        LELOG("isNeedDelCB timeoutRef[%d] cmd[%d][%d] left rspVal[%d] ", 
+            currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->rspVal);
 
         // for retry
         if ((LELINK_CMD_CLOUD_HEARTBEAT_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ == currNode->subCmdId) ||
@@ -1171,8 +1171,8 @@ static int isNeedDelCB(NodeData *currNode) {
             (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId)) {
             uint8_t bRspFlag = 0x01; // for unicast
             NodeData node = {0};
-            LELOG("**************** cmd[%d] subCmd[%d], needRsp[%d] reserved2[%d]", 
-                currNode->cmdId, currNode->subCmdId, currNode->needRsp, currNode->reserved2);
+            LELOG("**************** cmd[%d] subCmd[%d], rspVal[%d] reserved2[%d]", 
+                currNode->cmdId, currNode->subCmdId, currNode->rspVal, currNode->reserved2);
             // if (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) {
             //     bRspFlag = 0xFF; // for multicast
             // }
@@ -1181,7 +1181,7 @@ static int isNeedDelCB(NodeData *currNode) {
                 LELOG("RETRY start");
             }
             // no need to retry OR has got rsp already
-            if (RETRY_TIMES < currNode->reserved2 || bRspFlag > currNode->needRsp) {
+            if (RETRY_TIMES < currNode->reserved2 || bRspFlag > currNode->rspVal) {
                 LELOG("RETRY is finished");
             } else {
                 node.cmdId = currNode->cmdId;
@@ -1220,7 +1220,7 @@ static int isNeedDelCB(NodeData *currNode) {
     }
 
     // has been sent
-    if (!currNode->needRsp && !currNode->needReq) {
+    if (!currNode->rspVal && !currNode->needReq) {
         ret = 1;
     }
 
@@ -1259,7 +1259,7 @@ MULTI_LOCAL_RSP:
         node.timeStamp = halGetTimeStamp();
         node.timeoutRef = 30;
         node.needReq = 1;
-        node.needRsp = 0;
+        node.rspVal = 0;
         memcpy(node.ndIP, ip, MAX_IPLEN);
         node.ndPort = port;
         node.seqId = cmdInfo->seqId;

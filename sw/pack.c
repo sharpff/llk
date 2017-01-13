@@ -245,7 +245,7 @@ int doUnpack(void *ctx,
     cmdInfo->cmdId = cmdHeader->cmdId;
     cmdInfo->seqId = cmdHeader->seqId;
     cmdInfo->randID = cmdHeader->randID;
-    cmdInfo->passThru = cmdHeader->passThru;
+    cmdInfo->noAck = cmdHeader->noAck;
     cmdInfo->reserved = cmdHeader->reserved;
     cmdInfo->reserved1 = cmdHeader->reserved1;
     cmdInfo->reserved2 = cmdHeader->reserved2;
@@ -270,8 +270,8 @@ int doUnpack(void *ctx,
         cmdInfo->seqId, 
         cmdInfo->randID); 
     
-    LELOG("passThru[%d] reserved[%d] UUID[%s] ", 
-        cmdInfo->passThru, 
+    LELOG("noAck[%d] reserved[%d] UUID[%s] ", 
+        cmdInfo->noAck, 
         cmdInfo->reserved, 
         tmpUUID);
     }
@@ -329,8 +329,8 @@ int doPack(void *ctx,
         cmdInfo->seqId, 
         cmdInfo->randID); 
     
-    LELOG("passThru[%d] reserved[%d] UUID[%s] ", 
-        cmdInfo->passThru, 
+    LELOG("noAck[%d] reserved[%d] UUID[%s] ", 
+        cmdInfo->noAck, 
         cmdInfo->reserved, 
         tmpUUID);
     }
@@ -355,7 +355,7 @@ int doPack(void *ctx,
             cmdHeader->cmdId = cmdInfo->cmdId; 
             cmdHeader->seqId = cmdInfo->seqId > 0 ? cmdInfo->seqId : genSeqId(); 
             cmdHeader->randID = genRand();
-            cmdHeader->passThru = cmdInfo->passThru; 
+            cmdHeader->noAck = cmdInfo->noAck; 
             cmdHeader->reserved = cmdInfo->reserved; 
             getTerminalUUID(cmdHeader->uuid, MAX_UUID);
 
