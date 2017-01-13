@@ -14,7 +14,7 @@
  * for standard case, ip shoudl be got from DNS only.
  */
 
-#define DNS_IP_TEST
+// #define DNS_IP_TEST
 
 #ifndef LOG_STATE
 #ifdef LELOG

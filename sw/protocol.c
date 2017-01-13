@@ -888,7 +888,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     
     node_p->pCtx = pCtx;
     node_p->needReq = 1;
-    node_p->needRsp = (LELINK_CMD_DISCOVER_REQ == node_p->cmdId) ? 0xFF : 1;
+    node_p->needRsp = (LELINK_CMD_DISCOVER_REQ == node_p->cmdId) || (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == node_p->subCmdId && LELINK_CMD_CTRL_REQ == node_p->cmdId) ? 0xFF : 1;
     node_p->randID = genRand();
     node_p->seqId = node_p->seqId ? node_p->seqId : genSeqId();
     if (!node_p->uuid[0])
@@ -1166,7 +1166,7 @@ static int isNeedDelCB(NodeData *currNode) {
             currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->needRsp);
 
         // for retry
-        if (/*(LELINK_CMD_DISCOVER_REQ == currNode->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) ||*/
+        if ((LELINK_CMD_CLOUD_HEARTBEAT_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ == currNode->subCmdId) ||
             (LELINK_CMD_CTRL_REQ == currNode->cmdId && LELINK_SUBCMD_CTRL_CMD_REQ == currNode->subCmdId) ||
             (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId)) {
             uint8_t bRspFlag = 0x01; // for unicast
@@ -1393,7 +1393,7 @@ static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const ui
 }
 
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-    int ret = 0, validSize = 0;
+    int ret = 0, validSize = 0, encType = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char rspDiscover[MAX_BUF] = {0};
     LELOG("cbDiscoverLocalRsp ======> ginSDevCountsInDiscovery[%d] -s", ginSDevCountsInDiscovery);
@@ -1419,8 +1419,9 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
         }
     }
 
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rspDiscover, ret, dataOut, dataLen);
-    LELOG("cbDiscoverLocalRsp <====== ret[%d] [%d] -e", ret, ginSDevCountsInDiscovery);
+    encType = (LELINK_CMD_CTRL_RSP == cmdInfo->cmdId && LELINK_SUBCMD_CTRL_GET_STATUS_RSP == cmdInfo->subCmdId) ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+	ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspDiscover, ret, dataOut, dataLen);
+    LELOG("cbDiscoverLocalRsp <====== ret[%d] [%d] cmd[%d][%d] -e", ret, ginSDevCountsInDiscovery, cmdInfo->cmdId, cmdInfo->subCmdId);
 
     // clear the flag
     if (0 == ginSDevCountsInDiscovery--) {
@@ -1572,33 +1573,34 @@ static int cbCtrlGetStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, con
     // LELOG("[%d][%s]", dataLen, dataIn);
     // test only
     // resetConfigData();
-    
+    ret = cbDiscoverRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCtrlGetStatusRemoteReq -e");
     return ret;
 }
 static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-    int ret = 0, encType = -1;
-    // CommonCtx *pCtx = COMM_CTX(ctx);
-    char status[MAX_BUF] = {0};
-    char strMac[32] = {0};
-    LELOG("cbCtrlGetStatusLocalRsp [%s] -s", (char *)data);
+    // int ret = 0, encType = -1;
+    // // CommonCtx *pCtx = COMM_CTX(ctx);
+    // char status[MAX_BUF] = {0};
+    // char strMac[32] = {0};
+    // LELOG("cbCtrlGetStatusLocalRsp [%s] cmd[%d][%d] -s", (char *)data, cmdInfo->cmdId, cmdInfo->subCmdId);
 
-    if (!getStrValByKey((char *)data, len, JSON_NAME_SDEV_MAC, strMac, sizeof(strMac))) {
-        ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, strMac);
-        if (0 <= ret) {
-            ret = getSDevStatus(ret, status, sizeof(status));
-        } else {
-            ret = 0;
-        }
-    } else {
-        ret = getTerminalStatus(status, sizeof(status));
-    }
+    // if (!getStrValByKey((char *)data, len, JSON_NAME_SDEV_MAC, strMac, sizeof(strMac))) {
+    //     ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, strMac);
+    //     if (0 <= ret) {
+    //         ret = getSDevStatus(ret, status, sizeof(status));
+    //     } else {
+    //         ret = 0;
+    //     }
+    // } else {
+    //     ret = getTerminalStatus(status, sizeof(status));
+    // }
 
-    encType = isCloudOnlined() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
-    ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
-    // ret = getTerminalStatus(binStatus, sizeof(binStatus));
-    LELOG("cbCtrlGetStatusLocalRsp status[%s] -e", status);
-    return ret;
+    // encType = isCloudOnlined() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+    // ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
+    // // ret = getTerminalStatus(binStatus, sizeof(binStatus));
+    // LELOG("cbCtrlGetStatusLocalRsp status[%s] -e", status);
+    // return ret;
+    return cbDiscoverLocalRsp(ctx, cmdInfo, data, len, dataOut, dataLen);
 }
 
 static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
@@ -1694,7 +1696,7 @@ static int cbCloudOnlineLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
     // status[ret] = '}';
     // ret += 1;
     // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    LELOG("No token [%d] status[%s] reserved[%d]", ret, status + encLen, cmdInfo->reserved);
+    // LELOG("No token [%d] status[%s] reserved[%d]", ret, status + encLen, cmdInfo->reserved);
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
@@ -1760,11 +1762,28 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
     LELOG("cbCloudAuthRemoteRsp -e");
 }
 
+static int forEachNodeSDevLogCB(SDevNode *currNode, void *uData) {
+    char *sdevStatus = (char *)uData;
+    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        int16_t index = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize);
+        memset(sdevStatus, 0, MAX_BUF);
+        getSDevStatus(index, sdevStatus, MAX_BUF);
+        // LELOG("[SENGINE] forEachNodeSDevLogCB [%s]", sdevStatus);
+    }
+    return 0;
+}
+
 static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
 
     LELOG("cbCloudHeartBeatLocalReq -s");
-
+    if (1) {
+        char buf[MAX_BUF] = {0};
+        getTerminalStatus(buf, sizeof(buf));
+        if (sengineHasDevs()) {
+            qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevLogCB, (void *)buf);
+        }
+    }
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, NULL, 0, dataOut, dataLen);
     
     LELOG("cbCloudHeartBeatLocalReq [%d] -e", ret);
@@ -1805,7 +1824,7 @@ static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo,
     //     getTerminalTokenStr(token, sizeof(token));
     //     sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
     // } 
-    LELOG("No need token [%s]", status);
+    // LELOG("No need token [%s]", status);
 
     ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
