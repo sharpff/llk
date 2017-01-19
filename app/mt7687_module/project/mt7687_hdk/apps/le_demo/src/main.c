@@ -148,7 +148,7 @@ static void mtk_thread_lelink_proc(void *args) {
 
     while (1) {
         lelinkPltCtrlProcess();
-        lelinkPollingState(100, ctxR2R, ctxQ2A);
+        lelinkPollingState(1, ctxR2R, ctxQ2A);
     }
 
     lelinkNwDelete(ctxR2R);

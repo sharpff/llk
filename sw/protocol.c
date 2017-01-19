@@ -1786,7 +1786,7 @@ static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     }
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, NULL, 0, dataOut, dataLen);
     
-    LELOG("cbCloudHeartBeatLocalReq [%d] -e", ret);
+    LELOG("cbCloudHeartBeatLocalReq [%d] getProtocolVer[%d] -e", ret, getProtocolVer());
     return ret;
 }
 

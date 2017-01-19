@@ -18,7 +18,7 @@
     usleep(ms*1000)
 
 // test only
-#define SELF_IP "192.168.31.238"
+#define SELF_IP "192.168.31.230"
 // #define SELF_IP "192.168.1.133"
 //#define SELF_IP "192.168.67.19"
 // #define SELF_IP "192.168.1.113"

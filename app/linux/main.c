@@ -133,7 +133,8 @@ redo:
         // node.ndPort = TEST_PORT;
         node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ;
-
+        // node.rspVal = 1;
+        // node.noAck = 1;
         // set peer uuid
         memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
 

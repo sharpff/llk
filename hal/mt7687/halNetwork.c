@@ -119,7 +119,7 @@ static void hal_hostbyname_proc(void *args) {
     os_memset(ginIP, 0, 32);
     while (1) {
         hostinfo = lwip_gethostbyname(name);
-        APPLOG("halGetHostByName name[%s] hostinfo[%p]", name, hostinfo);
+        // APPLOG("halGetHostByName name[%s] hostinfo[%p]", name, hostinfo);
         if (NULL != hostinfo) {
             break;
         }

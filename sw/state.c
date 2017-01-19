@@ -353,7 +353,9 @@ static int stateProcConfiguring(StateContext *cntx) {
                 wifiConfigByMonitor ?  halStopConfig() : softApStop(1);
             }
         TIMEOUT_ELSE
+            TIMEOUT_BEGIN_SEC(1, 1)
             ret = wifiConfigByMonitor ? halDoConfiguring(NULL, 0) : !softApCheck();
+            TIMEOUT_END
         TIMEOUT_END
 
     }
@@ -407,7 +409,7 @@ static int stateProcApConnected(StateContext *cntx) {
     int count = 3;
     NodeData node = {0};
 
-    LELOG("stateProcApConnected");
+    // LELOG("stateProcApConnected");
 
     if (0 == ginConfigStatus) {
         return sta;
@@ -450,7 +452,7 @@ static int stateProcApConnected(StateContext *cntx) {
         ret = lelinkStorageReadAuthCfg(&authCfg);
         if ((0 <= ret) && (authCfg.csum == crc8((uint8_t *)&(authCfg.data), sizeof(authCfg.data)))) {
             memset(ip, 0, sizeof(ip));
-            // TIMEOUT_BEGIN_SEC(20, 1)
+            TIMEOUT_BEGIN_SEC(1, 1)
             if (!halGetHostByNameNB(authCfg.data.remote, ip, 4*32)) { // dns
                 int k = 0;
                 for (k = 0; k < 4; k++) {
@@ -472,7 +474,7 @@ static int stateProcApConnected(StateContext *cntx) {
                 strcpy(COMM_CTX(ginCtxR2R)->remoteIP, authCfg.data.remote);
                 COMM_CTX(ginCtxR2R)->remotePort = authCfg.data.port;
             }
-            // TIMEOUT_END
+            TIMEOUT_END
             #ifdef DNS_IP_TEST
             LELOG("IP TEST ON ------- to connect[%s:%d]", COMM_CTX(ginCtxR2R)->remoteIP, COMM_CTX(ginCtxR2R)->remotePort);
             // node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
@@ -495,7 +497,7 @@ static int stateProcCloudLinked(StateContext *cntx) {
     if (0 == ginConfigStatus) {
         return -1;
     }
-    LELOG("stateProcCloudLinked");
+    // LELOG("stateProcCloudLinked");
 
     TIMEOUT_BEGIN_SEC(8, 0)
     // TIMEOUT_BEGIN(8000)
@@ -532,7 +534,7 @@ static int stateProcCloudAuthed(StateContext *cntx) {
         return -1;
     }
 
-    LELOG("stateProcCloudAuthed");
+    // LELOG("stateProcCloudAuthed");
 
     TIMEOUT_BEGIN_SEC(6, 1)
         NodeData node = {0};

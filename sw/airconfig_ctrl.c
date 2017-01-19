@@ -88,6 +88,7 @@ static int inner_new_broadcast(airconfig_ctx_t *ctx) {
     
     ctx->address.sin_family = AF_INET;
     ctx->address.sin_addr.s_addr = inet_addr(br);
+    // ctx->address.sin_addr.s_addr = inet_addr("192.168.31.164");
     ctx->address.sin_port = htons((u_short)LECONFIG_PORT);
     
     return sock;

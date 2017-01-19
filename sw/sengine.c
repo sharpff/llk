@@ -284,7 +284,7 @@ static void postStatusChanged(int plusIdx) {
     NodeData node = {0};
     node.reserved = plusIdx;
     // TIMEOUT_SECS_BEGIN(1)
-    if (isCloudOnlined() && getLock()) {
+    if (isCloudOnlined()) {
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ;
     } else {
