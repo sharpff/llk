@@ -19,10 +19,10 @@ public class MainActivity extends Activity {
 	private JSONObject mJsonData = null;
 	
 	private static boolean TEST_WIFI_CONFIG = true;
-	private static boolean TEST_SDK_AUTH = true;
-	private static boolean TEST_DISCOVER_DEV = true;
-	private static boolean TEST_GET_STATE =  true;
-	private static boolean TEST_CTRL_DEV = true;
+	private static boolean TEST_SDK_AUTH = false;
+	private static boolean TEST_DISCOVER_DEV = false;
+	private static boolean TEST_GET_STATE =  false;
+	private static boolean TEST_CTRL_DEV = false;
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
@@ -80,10 +80,11 @@ public class MainActivity extends Activity {
 					mJsonCmd = new JSONObject();
 					// mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
 					mJsonCmd.put(LeCmd.K.TIMEOUT, mDiscoverTimeout);
-					mJsonCmd.put(LeCmd.K.SSID, "ff");
-					// mJsonCmd.put(LeCmd.K.APSSID, "ff");
-					mJsonCmd.put(LeCmd.K.PASSWD, "fengfeng2qiqi");
-					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
+					mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_Lelink");
+					// mJsonCmd.put(LeCmd.K.APSSID, "tplink");
+					mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
+					mJsonCmd.put(LeCmd.K.TYPE, 8);
+//					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
 					// mJsonCmd.put(LeCmd.K.AESKEY, "4d90c52bea5259b95b53d33c63a706e2");
 					// AESKEY is optional
 //					mJsonCmd.put(LeCmd.K.AESKEY, "157e835e6c0bc55474abcd91e00e6979");

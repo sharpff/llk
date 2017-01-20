@@ -17,6 +17,7 @@
 #include "airconfig_ctrl.h"
 #include "protocol.h"
 #include "data.h"
+#include "airhug_wave.h"
 
 extern "C" {
     int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey);
@@ -92,6 +93,11 @@ int initTask(char *json)
 	return ret;
 }
 
+static void sleepms(uint16_t ms)
+{
+    usleep(ms * 1000);
+}
+
 int airConfig(void *ptr, char *json)
 {
     int ret = -1;
@@ -118,7 +124,10 @@ int airConfig(void *ptr, char *json)
 		aesKey = NULL;
 	}
 
-    if(type < 3) {
+    if(type == 8) {
+        APPLOGW("airConfig airhug_wave : ssid '%s', passwd '%s'", ssid, passwd);
+        airhug_wave((char *)ssid, (char *)passwd, sleepms);
+    } else if(type < 3) {
         sprintf(configInfo, configFmt, ssid, passwd, aesKey, type, delay);
         ret = lelinkDoConfig(configInfo);
         if (0 > ret) {

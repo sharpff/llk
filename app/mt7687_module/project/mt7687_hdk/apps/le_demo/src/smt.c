@@ -80,6 +80,7 @@ int lelink_reset(void) {
 	gin_airconfig_channel_locked = 0;
 	ak_status = AK_RCV_PRE;
 	airconfig_reset();
+    airhug_reset();
 	return 0;
 }
 

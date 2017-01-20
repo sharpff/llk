@@ -104,6 +104,7 @@ if [ "$1" != "clean" ]; then
 	$COPY ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/
 	rm $MTSDK7687/out/mt7687_hdk/le_demo/*.bin
 	$COPY $MAIN_PATH/sw/airconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	$COPY $MAIN_PATH/sw/airhug.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	$COPY $MAIN_PATH/sw/io.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	$COPY $MAIN_PATH/sw/leconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	$COPY $MAIN_PATH/sw/ota.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
