@@ -13,6 +13,13 @@ extern "C"
 #include "halHeader.h"
 #endif /* __LE_SDK__ */
 
+
+#if defined(PF_VAL) && (PF_VAL == 7) // for EMW3081(iar compiler)
+#define LELINK_WEAK __weak
+#else 
+#define LELINK_WEAK __attribute__((weak))
+#endif
+
 #if defined(WIN32) || defined(EMW3081)
 #define LELINK_ALIGNED
 #define LELINK_PACK

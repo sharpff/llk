@@ -1365,7 +1365,7 @@ static int16_t ginSDevCountsInDiscovery;
 static int16_t ginSDevCurrFoundIndex;
 static int forEachNodeSDevIteratorCB(SDevNode *currNode, void *uData) {
     int16_t *foundIndex = (int16_t *)uData;
-    int16_t index = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize);
+    int16_t index = (((uint8_t *)currNode - (uint8_t *)sdevCache()->pBase)/sdevCache()->singleSize);
     LELOG("[SENGINE] forEachNodeSDevIteratorCB *foundIndex[%d] index[%d] isSDevInfoDone[%02x]", *foundIndex, index, currNode->isSDevInfoDone);
     if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
         if (*foundIndex <= index) {
@@ -1765,7 +1765,7 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
 static int forEachNodeSDevLogCB(SDevNode *currNode, void *uData) {
     char *sdevStatus = (char *)uData;
     if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
-        int16_t index = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize);
+        int16_t index = (((uint8_t *)currNode - (uint8_t *)sdevCache()->pBase)/sdevCache()->singleSize);
         memset(sdevStatus, 0, MAX_BUF);
         getSDevStatus(index, sdevStatus, MAX_BUF);
         // LELOG("[SENGINE] forEachNodeSDevLogCB [%s]", sdevStatus);

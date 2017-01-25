@@ -1,115 +1,115 @@
 #include "leconfig.h"
 #include "io.h"
 
-__attribute__((weak)) int aalUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
+LELINK_WEAK int aalUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
     return 0;
 }
 
-__attribute__((weak)) int aalUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
+LELINK_WEAK int aalUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
     return 0;
 }
 
-__attribute__((weak)) void *halUartOpen(uartHandler_t* handler) {
+LELINK_WEAK void *halUartOpen(uartHandler_t* handler) {
     return (void *)0xffffffff;
 }
 
-__attribute__((weak)) int halUartClose(uartHandler_t* handler) {
+LELINK_WEAK int halUartClose(uartHandler_t* handler) {
     return 0;
 }
 
-__attribute__((weak)) int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
+LELINK_WEAK int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
     return 0;
 }
 
-__attribute__((weak)) int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
+LELINK_WEAK int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
     return 0;
 }
 
-__attribute__((weak)) void *halGPIOInit(void) {
+LELINK_WEAK void *halGPIOInit(void) {
     return (void *)0xffffffff;
 }
 
-__attribute__((weak)) int halGPIOClose(gpioHandler_t* handler) {
+LELINK_WEAK int halGPIOClose(gpioHandler_t* handler) {
     return 0;
 }
 
-__attribute__((weak)) int halGPIOOpen(gpioHandler_t* handler) {
+LELINK_WEAK int halGPIOOpen(gpioHandler_t* handler) {
     return -1;
 }
 
-__attribute__((weak)) int halGPIORead(gpioHandler_t* handler, int *val) {
+LELINK_WEAK int halGPIORead(gpioHandler_t* handler, int *val) {
     *val = 1;
     return 0;
 }
 
-__attribute__((weak)) int halGPIOWrite(gpioHandler_t* handler, const int val) {
+LELINK_WEAK int halGPIOWrite(gpioHandler_t* handler, const int val) {
     return 0;
 }
 
-__attribute__((weak)) void halPWMWrite(pwmHandler_t *handler, uint32_t percent) {
+LELINK_WEAK void halPWMWrite(pwmHandler_t *handler, uint32_t percent) {
     return;
 }
 
-__attribute__((weak)) void halPWMRead(pwmHandler_t *handler, uint32_t *percent) {
+LELINK_WEAK void halPWMRead(pwmHandler_t *handler, uint32_t *percent) {
     return;
 }
 
-__attribute__((weak)) void halPWMSetFrequency(pwmHandler_t *handler) {
+LELINK_WEAK void halPWMSetFrequency(pwmHandler_t *handler) {
     return;
 }
 
-__attribute__((weak)) int halPWMClose(pwmHandler_t *handler) {
+LELINK_WEAK int halPWMClose(pwmHandler_t *handler) {
     return 0;
 }
 
-__attribute__((weak)) int halPWMOpen(pwmHandler_t *handler) {
+LELINK_WEAK int halPWMOpen(pwmHandler_t *handler) {
     return 0;
 }
 
-__attribute__((weak)) void* halPWMInit(int clock) {
+LELINK_WEAK void* halPWMInit(int clock) {
     return (void *)0xffffffff;
 }
 
-__attribute__((weak)) int halEINTClose(eintHandler_t *handler) {
+LELINK_WEAK int halEINTClose(eintHandler_t *handler) {
     return 0;
 }
 
-__attribute__((weak)) int halEINTOpen(eintHandler_t *handler) {
+LELINK_WEAK int halEINTOpen(eintHandler_t *handler) {
     return 0;
 }
 
-__attribute__((weak)) int halEINTRead(eintHandler_t* handler, int *val) {
+LELINK_WEAK int halEINTRead(eintHandler_t* handler, int *val) {
     return 0;
 }
 
-__attribute__((weak)) void halCommonInit(commonManager_t* dev) {
+LELINK_WEAK void halCommonInit(commonManager_t* dev) {
     return;
 }
 
-__attribute__((weak)) void *halPipeOpen(char *name) {
+LELINK_WEAK void *halPipeOpen(char *name) {
     return (void *)0xffffffff;
 }
 
-__attribute__((weak)) int halPipeClose(void *dev) {
+LELINK_WEAK int halPipeClose(void *dev) {
     return 0;
 }
 
-__attribute__((weak)) int halPipeRead(void *dev, uint8_t *buf, uint32_t len) {
+LELINK_WEAK int halPipeRead(void *dev, uint8_t *buf, uint32_t len) {
     return 0;
 }
 
-__attribute__((weak)) int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len) {
+LELINK_WEAK int halPipeWrite(void *dev, const uint8_t *buf, uint32_t len) {
     return len;
 }
 
-__attribute__((weak)) int halGetWifiChannel() {
+LELINK_WEAK int halGetWifiChannel() {
     return 0;
 }
 
-__attribute__((weak)) void aalSetLedStatus(RLED_STATE_t st) {
+LELINK_WEAK void aalSetLedStatus(RLED_STATE_t st) {
 
 }
 
-__attribute__((weak)) int salResetConfigData(void) {
+LELINK_WEAK int salResetConfigData(void) {
 	return 0;
 }

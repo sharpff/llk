@@ -510,7 +510,7 @@ static int stateProcCloudLinked(StateContext *cntx) {
 static int forEachNodeSDevForPostOnlineCB(SDevNode *currNode, void *uData) {
     NodeData *node = (NodeData *)uData;
     if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
-        node->reserved = (((void *)currNode - (void *)sdevCache()->pBase)/sdevCache()->singleSize) + 1;
+        node->reserved = (((uint8_t *)currNode - (uint8_t *)sdevCache()->pBase)/sdevCache()->singleSize) + 1;
         lelinkNwPostCmd(ginCtxR2R, node);                            
     }
     return 0;
