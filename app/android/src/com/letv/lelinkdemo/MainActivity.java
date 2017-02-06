@@ -6,7 +6,9 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.letv.lelink.LeCmd;
 import com.letv.lelink.LeLink;
@@ -19,10 +21,10 @@ public class MainActivity extends Activity {
 	private JSONObject mJsonData = null;
 	
 	private static boolean TEST_WIFI_CONFIG = true;
-	private static boolean TEST_SDK_AUTH = false;
-	private static boolean TEST_DISCOVER_DEV = false;
-	private static boolean TEST_GET_STATE =  false;
-	private static boolean TEST_CTRL_DEV = false;
+	private static boolean TEST_SDK_AUTH = true;
+	private static boolean TEST_DISCOVER_DEV = true;
+	private static boolean TEST_GET_STATE =  true;
+	private static boolean TEST_CTRL_DEV = true;
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
@@ -35,20 +37,25 @@ public class MainActivity extends Activity {
 	private static int mWifiConfigTimeout = (60 * 5);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;
+	
+	private TextView mTextView = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		mTextView = (TextView) findViewById(R.id.hello);
 		
 		Log.i(TAG, LeLink.getSdkInfo());
 		if (LeLink.setContext(getApplicationContext(), mLeLinkListener, "11:22:33:44:55:66")) {
-			Log.i(TAG, "SDKUUID: " + LeLink.getSdkUUID());
+			Log.i(TAG, "\n\nSDKUUID: " + LeLink.getSdkUUID());
 			mLeLink = LeLink.getInstance();
 			Log.i(TAG, LeLink.getSdkInfo());
+			mTextView.append("\n\nInfo:\n " + LeLink.getSdkInfo());
 			mTestThread.start();
 		} else {
 			Log.e(TAG, "Failed to setContext");
+			mTextView.append("\nFailed to setContext");
 		}
 	}
 
@@ -65,9 +72,11 @@ public class MainActivity extends Activity {
 			 * 
 			 * 进入该函数，首先发送一次发现包。然后等待timeout时间，最后返回大这timeout期间收到的发现回复的设备。
 			 */
-			Log.w(TAG, "Get SDK uuid");
+			Log.w(TAG, "Get SDK uuid ...");
+			mHandler.sendMessage(mHandler.obtainMessage(0, "Get SDK uuid ..."));
 			sdkUUID = LeLink.getSdkUUID();
 			Log.i(TAG, "SDK UUID: " + sdkUUID);
+			mHandler.sendMessage(mHandler.obtainMessage(0, "SDK UUID: " + sdkUUID));
 			
 			if (TEST_WIFI_CONFIG) {
 				/*
@@ -76,14 +85,14 @@ public class MainActivity extends Activity {
 				 * 在timeout时间内，不断重复发送配置包。如果期间收到hello,则退出该函数。
 				 */
 				Log.e(TAG, "Wifi config test...");
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Wifi config test..."));
 				try {
 					mJsonCmd = new JSONObject();
-					// mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
-					mJsonCmd.put(LeCmd.K.TIMEOUT, mDiscoverTimeout);
+					mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
 					mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_Lelink");
 					// mJsonCmd.put(LeCmd.K.APSSID, "tplink");
 					mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
-					mJsonCmd.put(LeCmd.K.TYPE, 8);
+					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_AIRHUG);
 //					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
 					// mJsonCmd.put(LeCmd.K.AESKEY, "4d90c52bea5259b95b53d33c63a706e2");
 					// AESKEY is optional
@@ -93,15 +102,18 @@ public class MainActivity extends Activity {
 					return;
 				}
 				if (mLeLink.airConfig(mJsonCmd.toString()) == 0) {
-					Log.w(TAG, "airConfig ok!\n");
+					Log.w(TAG, "airConfig ok!");
+					mHandler.sendMessage(mHandler.obtainMessage(0, "airConfig ok!"));
 				} else {
 					Log.e(TAG, "airConfig timeout");
+					mHandler.sendMessage(mHandler.obtainMessage(0, "airConfig timeout"));
 					return;
 				}
 			}
 			
 			while (TEST_SDK_AUTH && true) {
 				Log.e(TAG, "Waitting auth...");
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Waitting auth..."));
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
@@ -120,11 +132,14 @@ public class MainActivity extends Activity {
 				 * 进入该函数，首先发送一次发现包。然后等待timeout时间，最后返回大这timeout期间收到的发现回复的设备。
 				 */
 				Log.e(TAG, "Device discover test...");
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Device discover test..."));
 				retData = mLeLink.discover(mDiscoverTimeout);
 				if (retData != null) {
 					Log.w(TAG, "find devices:\n" + retData);
+					mHandler.sendMessage(mHandler.obtainMessage(0, "find devices:\n" + retData));
 				} else {
 					Log.e(TAG, "Can't find device!");
+					mHandler.sendMessage(mHandler.obtainMessage(0, "Can't find device!"));
 					return;
 				}
 				if (TEST_AUTO_UUID) {
@@ -152,6 +167,7 @@ public class MainActivity extends Activity {
 				 * 如果是该设备需要远程控制，则必须先通过该函数广域网获得到token.
 				 */
 				Log.e(TAG, "Get device state test...");
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Get device state test..."));
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.GET_STATE_CMD);
@@ -167,8 +183,10 @@ public class MainActivity extends Activity {
 				retData = mLeLink.getState(mJsonCmd.toString(), mJsonData.toString());
 				if (retData != null) {
 					Log.w(TAG, "get state:\n" + retData);
+					mHandler.sendMessage(mHandler.obtainMessage(0, "get state:\n" + retData));
 				} else {
 					Log.e(TAG, "Can't get state");
+					mHandler.sendMessage(mHandler.obtainMessage(0, "Can't get state"));
 					return;
 				}
 				/* 得到设备的token */
@@ -191,7 +209,8 @@ public class MainActivity extends Activity {
 				 * 如果该设备已经连接云，则必须传入token(由getState广域网获得)
 				 */
 				dataStr = mTestCtrlCmd;
-				Log.e(TAG, "Control device test...\n" + dataStr);
+				Log.e(TAG, "Control device test..." + dataStr);
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Can't get state"));
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_DEV_CMD);
@@ -206,8 +225,10 @@ public class MainActivity extends Activity {
 				retData = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
 				if (retData != null) {
 					Log.w(TAG, "ctrl return:\n" + retData);
+					mHandler.sendMessage(mHandler.obtainMessage(0, "ctrl return:\n" + retData));
 				} else {
 					Log.e(TAG, "Can't ctrl");
+					mHandler.sendMessage(mHandler.obtainMessage(0, "Can't ctrl"));
 					return;
 				}
 			}
@@ -220,6 +241,7 @@ public class MainActivity extends Activity {
 				 * 如果是该设备需要远程控制，则必须先通过该函数广域网获得到token.
 				 */
 				Log.e(TAG, "OTA check test...");
+				mHandler.sendMessage(mHandler.obtainMessage(0, "OTA check test..."));
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_REPORT_OTA_QUERY_REQ);
@@ -239,8 +261,10 @@ public class MainActivity extends Activity {
 				retData = mLeLink.getState(mJsonCmd.toString(), mJsonData.toString());
 				if (retData != null) {
 					Log.w(TAG, "OTA state:\n" + retData);
+					mHandler.sendMessage(mHandler.obtainMessage(0, "OTA state:\n" + retData));
 				} else {
 					Log.e(TAG, "Can't check OTA");
+					mHandler.sendMessage(mHandler.obtainMessage(0, "Can't check OTA"));
 					return;
 				}
 			}
@@ -249,7 +273,8 @@ public class MainActivity extends Activity {
 				 * 触发OTA升级 必须传入subcmd, uuid, token, timeout
 				 */
 				dataStr = retData;
-				Log.e(TAG, "Do OTA test...\n" + dataStr);
+				Log.e(TAG, "Do OTA test..." + dataStr);
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Do OTA test..."));
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_REQ);
@@ -262,6 +287,7 @@ public class MainActivity extends Activity {
 				}
 				retData = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
 				Log.e(TAG, "Do OTA: " + retData);
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Do OTA: " + retData));
 			}
 		}
 	});
@@ -271,42 +297,55 @@ public class MainActivity extends Activity {
 		public void onStateChange(String uuid, String dataStr) {
 			String str = String.format("onStateChange(%s):\n%s", uuid, dataStr);
 			Log.e(TAG, str);
+			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
 
 		@Override
 		public void onCloudStateChange(boolean isCloud) {
 			String str = String.format("onCloudStateChange: %s", isCloud);
 			Log.e(TAG, str);
+			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
 
 		@Override
 		public void onAirConfigBack(String uuid, String dataStr) {
 			String str = String.format("onAirConfigBack: %s, %s", uuid, dataStr);
 			Log.e(TAG, str);
+			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
 
 		@Override
 		public void onDiscoverBack(String uuid, String dataStr) {
 			String str = String.format("onDiscoverBack(%s):\n%s", uuid, dataStr);
 			Log.e(TAG, str);
+			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
 
 		@Override
 		public void onGetStateBack(int subcmd, String uuid, String dataStr) {
 			String str = String.format("onGetStateBack-%d(%s):\n%s", subcmd, uuid, dataStr);
 			Log.e(TAG, str);
+			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
 
 		@Override
 		public void onCtrlBack(int subcmd, String uuid, String dataStr) {
 			String str = String.format("onCtrlBack-%d(%s):\n%s", subcmd, uuid, dataStr);
 			Log.e(TAG, str);
+			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
 
 		@Override
 		public void onPushMessage(String dataStr) {
 			String str = String.format("onPushMessage:\n%s", dataStr);
 			Log.e(TAG, str);
+			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
+	};
+	private Handler mHandler = new Handler() {
+		public void handleMessage(android.os.Message msg) {
+			mTextView.append("\n\n");
+			mTextView.append((CharSequence) msg.obj);
+		};
 	};
 }

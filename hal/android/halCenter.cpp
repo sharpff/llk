@@ -124,10 +124,7 @@ int airConfig(void *ptr, char *json)
 		aesKey = NULL;
 	}
 
-    if(type == 8) {
-        APPLOGW("airConfig airhug_wave : ssid '%s', passwd '%s'", ssid, passwd);
-        airhug_wave((char *)ssid, (char *)passwd, sleepms);
-    } else if(type < 3) {
+    if(type < 3) {
         sprintf(configInfo, configFmt, ssid, passwd, aesKey, type, delay);
         ret = lelinkDoConfig(configInfo);
         if (0 > ret) {
@@ -140,7 +137,10 @@ int airConfig(void *ptr, char *json)
         }
     } else if (3 == type) {
         ret = softApDoConfig(ssid, passwd, delay, aesKey);
-    }
+    } else if(4 == type) {
+        APPLOGW("airConfig airhug_wave : ssid '%s', passwd '%s'", ssid, passwd);
+        ret = airhug_wave((char *)ssid, (char *)passwd, sleepms);
+    } 
     return ret;
 }
 

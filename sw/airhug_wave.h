@@ -16,11 +16,7 @@
 extern "C" {
 #endif
 
-
 int airhug_wave(char *ssid, char *passwd, void (*delayms)(uint16_t ms));
-
-void airhug_wave_break(void);
-
 
 #ifdef __cplusplus
 }

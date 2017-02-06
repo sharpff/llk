@@ -18,14 +18,13 @@
 #include <netinet/in.h>
 #include <pthread.h> 
 #include <arpa/inet.h>
+#include "leconfig.h"
 #include "airhug_wave.h"
 
 #define SYN_DATA1   (0x46)
 #define SYN_DATA2   (0x45)
 #define SYN_BASE    (0x02)
 #define SYN_OFFSET  (0x49)
-
-static int s_live = 0;
 
 static uint8_t calcrc(uint8_t *ptr, uint32_t len);
 
@@ -48,8 +47,6 @@ int airhug_wave(char *ssid, char *passwd, void (*delayms)(uint16_t ms))
     uint8_t sync0[4] = {SYN_DATA1, SYN_DATA2, 0, SYN_BASE};
     uint8_t sync1[4] = {SYN_DATA1, SYN_DATA2, 0, SYN_BASE + SYN_OFFSET};
 
-    s_live = 1;
-
     if(!ssid || !passwd || !delayms) {
         goto out;
     }
@@ -70,24 +67,21 @@ int airhug_wave(char *ssid, char *passwd, void (*delayms)(uint16_t ms))
         LELOGE("setsockopt failed!\n");
         goto out;
     }
-    while(s_live) 
-    {
-        for(i = 0; s_live && i < n; ) {
-            if(airhug_send(sockfd, sync0)) {
+    for(i = 0; i < n; ) {
+        if(airhug_send(sockfd, sync0)) {
+            goto out;
+        }
+        if(airhug_send(sockfd, sync1)) {
+            goto out;
+        }
+        delayms(10);
+        for(j = 0; j < 2; j++) {
+            one[3] = SYN_BASE + i;
+            one[0] = data[i++];
+            one[1] = data[i++];
+            one[2] = one[0] + one[1];
+            if(airhug_send(sockfd, one)) {
                 goto out;
-            }
-            if(airhug_send(sockfd, sync1)) {
-                goto out;
-            }
-            delayms(10);
-            for(j = 0; s_live && j < 2; j++) {
-                one[3] = SYN_BASE + i;
-                one[0] = data[i++];
-                one[1] = data[i++];
-                one[2] = one[0] + one[1];
-                if(airhug_send(sockfd, one)) {
-                    goto out;
-                }
             }
         }
     }
@@ -98,11 +92,6 @@ out:
     }
 
     return ret;
-}
-
-void airhug_wave_break(void)
-{
-    s_live = 0;
 }
 
 static uint8_t calcrc(uint8_t *ptr, uint32_t len)

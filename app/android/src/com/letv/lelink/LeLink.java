@@ -21,13 +21,14 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 0.9
+ * @version 1.0
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
 	/*
+	 * 1.0, 添加airhug配置入网方式
 	 * 0.9, 添加日志，方便调试
 	 * 0.8, Zigbee的uuid去掉mac
 	 * 0.7, Zigbee设备状态BUG
@@ -38,7 +39,7 @@ public class LeLink {
 	 * 0.2, 添加Listener onPushMessage()
 	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "0.9"; // 与以上的注释一致
+	private static final String VERSION = "1.0"; // 与以上的注释一致
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
@@ -205,7 +206,15 @@ public class LeLink {
 	 * 必须传入参数: ssid, passwd, timeout.<br>
 	 * 
 	 * @param jsonStr
-	 *            String ssid, String passwd, String apSsid(only for LeCmd.V.AIR_CONFIG_TYPE_SOFTAP), int timeout(sec)
+	 *            String ssid, String passwd, String apSsid(only for type == LeCmd.V.AIR_CONFIG_TYPE_SOFTAP), int type, int timeout(sec)<br>
+	 *            <p>
+	 *            type(LeCmd.K.TYPE)有四种方式: <br>
+	 *            <ol>
+	 *            		<li>LeCmd.V.AIR_CONFIG_TYPE_MULTICAST (默认该方式) </li>
+	 *            		<li>LeCmd.V.AIR_CONFIG_TYPE_BROADCAST </li>
+	 *            		<li>LeCmd.V.AIR_CONFIG_TYPE_SOFTAP </li>
+	 *            		<li>LeCmd.V.AIR_CONFIG_TYPE_AIRHUG </li>
+	 *            </ol>
 	 * 
 	 * @return -1 - 错误; 0 - 成功; 1 - 超时
 	 */
