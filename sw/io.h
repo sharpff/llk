@@ -212,7 +212,7 @@ int ioGetHdlCounts();
 int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen);
 void ioDeinit(int ioType, void *hdl);
-
+void resetDevice(void);
 typedef enum {
     GPIO_DIR_INPUT = 0,
     GPIO_DIR_OUTPUT,

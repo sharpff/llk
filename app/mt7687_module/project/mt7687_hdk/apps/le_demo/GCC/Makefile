@@ -144,6 +144,10 @@ CFLAGS          += -I$(SOURCE_DIR)/middleware/MTK/homekit/inc
 CFLAGS          += -DDEBUG
 endif
 
+ifeq ($(LELINK_RELEASE_ENABLE),y)
+CFLAGS          += -DLELINK_RELEASE
+endif
+
 ##############################################################################
 #
 # SDK object files

@@ -90,22 +90,6 @@ function s1GetQueries(queryType)
 end
 
 --[[ MUST
-	WIFI 重置命令判别
-]]
-function s1GetValidKind(data)
-	local cvtType = s1apiGetCurrCvtType()
-	local dataTbl = nil
-	local tmp = stringToTable(data)
-	if 0x01 == cvtType then
-		dataTbl = stringToTable(data)
-		if 0x14 == dataTbl[2] then
-			return 1
-		end
-	end
-	return 2
-end
-
---[[ MUST
 ]]
 -- {"ctrl":{"pwr":1,"speed":4,"os-pm2.5":276,"reset-time":1}}
 -- 开，关，设置风速模式(1,2,3,智能,夜间,喷射)，重置滤网，室外PM2.5
@@ -190,7 +174,7 @@ function s1CvtStd2Pri(json)
 			count = 54
 	    end
 	end
-    LOGTBL(cmdtb)
+    -- LOGTBL(cmdtb)
     local cmd = tableToString(cmdtb)
     return count, cmd
 end
@@ -224,6 +208,9 @@ function s1CvtPri2Std(bin)
 			local humidity = dataTbl[20]
 			local mode = dataTbl[6] - 0x4F
 			local pm = dataTbl[16]
+			if 0x14 == dataTbl[2] then
+				s1apiRebootDevice()
+			end
 			pm = (pm << 8) | dataTbl[15]
 			if lastData == nil then
 				lastData = 0

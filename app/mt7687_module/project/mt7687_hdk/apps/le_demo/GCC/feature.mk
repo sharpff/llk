@@ -31,3 +31,4 @@ MTK_ALINK_ENABLE                    = n
 MTK_LELINK_ENABLE                   = y
 MTK_IPERF_ENABLE                    = n
 MTK_MAIN_CONSOLE_UART2_ENABLE       = y
+LELINK_RELEASE_ENABLE               = n

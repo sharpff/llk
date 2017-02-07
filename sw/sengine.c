@@ -77,6 +77,7 @@ typedef struct
 {
     const char *func_name;
     LF_IMPL lf_impl;
+    int exist;
 }FUNC_LIST;
 
 typedef enum {
@@ -290,14 +291,15 @@ static void postStatusChanged(int plusIdx) {
     } else {
         char br[MAX_IPLEN] = {0};
         node.cmdId = LELINK_CMD_DISCOVER_REQ;
-        node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;    
+        node.subCmdId = LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ;
         node.rspVal = 1;
         node.noAck = 1;
         ret = halGetBroadCastAddr(br, sizeof(br));
         if (0 >= ret) {
             strcpy(br, "255.255.255.255");
-        } else
-        strcpy(node.ndIP, br);
+        } else {
+            strcpy(node.ndIP, br);
+        }
         node.ndPort = NW_SELF_PORT;
         lelinkNwPostCmdExt(&node);
     }
@@ -1158,42 +1160,57 @@ static int lf_s2GetSelfCtrlCmd(lua_State *L, uint8_t *output, int outputLen) {
     return sLen;
 }
 static FUNC_LIST func_list[] = {
-    { S1_GET_CVTTYPE, { lf_s1GetCvtType_input, lf_s1GetCvtType } },
-    { S1_OPT_HAS_SUBDEVS, { lf_s1OptHasSubDevs_input, lf_s1OptHasSubDevs } },
-    { S1_GET_QUERIES, { lf_s1GetQueries_input, lf_s1GetQueries } },
-    { S1_OPT_DO_SPLIT, { lf_s1OptDoSplit_input, lf_s1OptDoSplit } },
-    { S1_STD2PRI, { lf_s1CvtStd2Pri_input, lf_s1CvtStd2Pri } },
-    { S1_PRI2STD, { lf_s1CvtPri2Std_input, lf_s1CvtPri2Std } },
-    { S1_GET_VALIDKIND, { lf_s1GetValidKind_input, lf_s1GetValidKind } },
-    { S1_OPT_MERGE_ST2ACT, { lf_s1OptMergeCurrStatus2Action_input, lf_s1OptMergeCurrStatus2Action } },
-    { S1_GET_VER, { lf_s1GetVer_input, lf_s1GetVer } },
-    { S2_IS_VALID, { lf_s2IsValid_input, lf_s2IsValid } },
-    // { S2_IS_VALID_EXT, { lf_s2IsValidExt_input, lf_s2IsValidExt } },
-    { S2_GET_SELFNAME, { lf_s2GetSelfName_input, lf_s2GetSelfName } },
-    { S2_GET_RULETYPE, { lf_s2GetRuleType_input, lf_s2GetRuleType } },
-    { S2_GET_BERESERVED, { lf_s2GetBeingReservedInfo_input, lf_s2GetBeingReservedInfo } },
-    { S2_GET_ISOK, { lf_s2IsConditionOK_input, lf_s2IsConditionOK } },
-    { S2_GET_ISOK_EXT, { lf_s2IsConditionOKExt_input, lf_s2IsConditionOKExt } },
-    { S2_GET_BECMD, { lf_s2GetSelfCtrlCmd_input, lf_s2GetSelfCtrlCmd } },
-    { NULL, { 0, 0 } }
+    { S1_GET_CVTTYPE, { lf_s1GetCvtType_input, lf_s1GetCvtType }, 0 },
+    { S1_OPT_HAS_SUBDEVS, { lf_s1OptHasSubDevs_input, lf_s1OptHasSubDevs }, 0 },
+    { S1_GET_QUERIES, { lf_s1GetQueries_input, lf_s1GetQueries }, 0 },
+    { S1_OPT_DO_SPLIT, { lf_s1OptDoSplit_input, lf_s1OptDoSplit }, 0 },
+    { S1_STD2PRI, { lf_s1CvtStd2Pri_input, lf_s1CvtStd2Pri }, 0 },
+    { S1_PRI2STD, { lf_s1CvtPri2Std_input, lf_s1CvtPri2Std }, 0 },
+    { S1_GET_VALIDKIND, { lf_s1GetValidKind_input, lf_s1GetValidKind }, 0 },
+    { S1_OPT_MERGE_ST2ACT, { lf_s1OptMergeCurrStatus2Action_input, lf_s1OptMergeCurrStatus2Action }, 0 },
+    { S1_GET_VER, { lf_s1GetVer_input, lf_s1GetVer }, 0 },
+    { S2_IS_VALID, { lf_s2IsValid_input, lf_s2IsValid }, 0 },
+    // { S2_IS_VALID_EXT, { lf_s2IsValidExt_input, lf_s2IsValidExt }, 0 },
+    { S2_GET_SELFNAME, { lf_s2GetSelfName_input, lf_s2GetSelfName }, 0 },
+    { S2_GET_RULETYPE, { lf_s2GetRuleType_input, lf_s2GetRuleType }, 0 },
+    { S2_GET_BERESERVED, { lf_s2GetBeingReservedInfo_input, lf_s2GetBeingReservedInfo }, 0 },
+    { S2_GET_ISOK, { lf_s2IsConditionOK_input, lf_s2IsConditionOK }, 0 },
+    { S2_GET_ISOK_EXT, { lf_s2IsConditionOKExt_input, lf_s2IsConditionOKExt }, 0 },
+    { S2_GET_BECMD, { lf_s2GetSelfCtrlCmd_input, lf_s2GetSelfCtrlCmd }, 0 },
+    { NULL, { 0, 0 }, 0 }
 };
 
-LF_IMPL get_lf_impl(const char *func_name, int *param_num)
-{
+LF_IMPL get_lf_impl(const char *func_name, int *param_num) {
     int i = 0;
     LF_IMPL impl = { 0, 0 };
-    for (i = 0; i < (sizeof(func_list) / sizeof(FUNC_LIST)-1); i++)
-    {
-        if (0 == strcmp(func_name, func_list[i].func_name))
-        {
+    for (i = 0; i < (sizeof(func_list) / sizeof(FUNC_LIST)-1); i++) {
+        if (0 == strcmp(func_name, func_list[i].func_name)) {
             //*param_num = func_list[i].param_num;
             impl.lf_impl_input = func_list[i].lf_impl.lf_impl_input;
             impl.lf_impl_func = func_list[i].lf_impl.lf_impl_func;
             return impl;
         }
     }
-
     return impl;
+}
+
+int isIfExist(const char *func_name) {
+    int i = 0;
+    for (i = 0; i < (sizeof(func_list) / sizeof(FUNC_LIST)-1); i++) {
+        if (0 == strcmp(func_name, func_list[i].func_name)) {
+            return func_list[i].exist;
+        }
+    }
+    return 0;
+}
+
+void setIfExist(const char *func_name, int exist) {
+    int i = 0;
+    for (i = 0; i < (sizeof(func_list) / sizeof(FUNC_LIST)-1); i++) {
+        if (0 == strcmp(func_name, func_list[i].func_name)) {
+            func_list[i].exist = exist;
+        }
+    }
 }
 
 int sengineInit(void) {
@@ -1249,11 +1266,19 @@ int s1apiSDevGetMacByUserData(lua_State *L);
 int s1apiOptString2Table(lua_State *L);
 int s1apiOptTable2String(lua_State *L);
 int s1apiOptLogTable(lua_State *L);
+int s1apiRebootDevice(lua_State *L);
 
 int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen)
 {
     int ret = 0;
-    lua_State *L = luaL_newstate();
+    lua_State *L = NULL;
+
+    if(isIfExist(funcName) < 0) {
+        LELOGE("[lua engine] sengineCall NO function => %s", funcName);
+        return -1;
+    }
+
+    L = luaL_newstate();
 
     // lua_register(L, "bitshift", bitshift);
     // lua_register(L, "bitshiftL", bitshiftL);
@@ -1270,6 +1295,8 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     lua_register(L, "s1apiOptString2Table", s1apiOptString2Table);
     lua_register(L, "s1apiOptTable2String", s1apiOptTable2String);
     lua_register(L, "s1apiOptLogTable", s1apiOptLogTable);
+    lua_register(L, "s1apiRebootDevice", s1apiRebootDevice);
+
     // lua_register(L, "csum", csum);
     
     // LELOG("[lua engine] START [%s]----------------", funcName);
@@ -1306,11 +1333,13 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
                 strcmp(S1_OPT_DO_SPLIT, funcName))
                 LELOGE("[lua engine] lua error: %s => %s", err, funcName);
             lua_pop(L, 1);
+            setIfExist(funcName, -1);
             ret = -3;
         }
         else
         {
             // int param_num = 0;
+            setIfExist(funcName, 1);
             if (lf_impl.lf_impl_func)
             {
                 ret = lf_impl.lf_impl_func(L, output, outputLen);
@@ -1345,6 +1374,11 @@ int sengineHasDevs(void) {
 
 int s1apiGetCurrCvtType(lua_State *L) {
     lua_pushnumber(L, ginCurrCvtType);    //key  
+    return 1;
+}
+
+int s1apiRebootDevice(lua_State *L) {
+    resetDevice();
     return 1;
 }
 
@@ -1658,8 +1692,8 @@ int sengineSetAction(const char *json, int jsonLen) {
                 (uint8_t *)jsonMerged, ret, (uint8_t *)jsonMerged, sizeof(jsonMerged));
             if (0 < ret) {
                 jsonLen = ret;
+                LELOGW("sengineSetAction sengineCall("S1_OPT_MERGE_ST2ACT") [%d] [%d][%s]", ret, jsonLen, jsonMerged);
             }
-            LELOGW("sengineSetAction sengineCall("S1_OPT_MERGE_ST2ACT") [%d] [%d][%s]", ret, jsonLen, jsonMerged);
         }
 
         ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
@@ -1798,7 +1832,7 @@ int senginePollingSlave(void) {
     char status[MAX_BUF] = {0};
     uint8_t bin[MAX_BUF] = {0};
     uint16_t currLen = 0, appendLen = 0;
-    int whatKind = 0, ret = 0, size = 0, i;
+    int whatKind = WHATKIND_MAIN_DEV_DATA, ret = 0, size = 0, i;
 
     FOR_EACH_IO_HDL_START;
         currLen = 0;
@@ -1836,13 +1870,12 @@ int senginePollingSlave(void) {
                 bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
                 LELOG("ioRead type[0x%x] bin[%s]", ioHdl[x].ioType, hexStr);
             }
-
             ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     datas.arrDatas, currLen, (uint8_t *)&whatKind, sizeof(whatKind));
             // LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
             if (0 >= ret) {
                 LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
-                continue;
+                // continue;
             }
             switch (whatKind) {
                 case WHATKIND_MAIN_DEV_RESET: {
@@ -2085,30 +2118,28 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     int tmpRmtJsonLen = 0;
     char tmpLocalJson[MAX_BUF] = {0};
     int tmpLocalJsonLen = 0;
-
-    PrivateCfg privCfg;
+    PrivateCfg* privCfg = NULL;
     // char strBeingReserved[64] = {0};
 
     // LELOG("senginePollingRules -s ");
-    ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
-        LELOGW("senginePollingRules lelinkStorageReadPrivateCfg csum FAILED");
-        return -1;
-    }
-    // LELOG("sengineFindRule [%d][%d]", privCfg.data.iaCfg.num);
-
-    if (0 >= privCfg.data.iaCfg.num || MAX_IA < privCfg.data.iaCfg.num) {
+    // ret = lelinkStorageReadPrivateCfg(&privCfg);
+    // if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    //     LELOGW("senginePollingRules lelinkStorageReadPrivateCfg csum FAILED");
+    //     return -1;
+    // }
+    getPrivateConfigure(&privCfg);
+    if (0 >= privCfg->data.iaCfg.num || MAX_IA < privCfg->data.iaCfg.num) {
         // LELOGW("senginePollingRules rules num[%d]", privCfg.data.iaCfg.num);
         return 0;
     }
-    LELOGW("senginePollingRules rules num[%d] ", privCfg.data.iaCfg.num);
+    LELOGW("senginePollingRules rules num[%d] ", privCfg->data.iaCfg.num);
 
     // remote json
     if (jsonRmt && 0 < jsonLen) {
         // gen s2 json format
         tmpRmtJsonLen = genS2Json(jsonRmt, jsonLen, jsonRmt, jsonLen, tmpRmtJson, sizeof(tmpRmtJson));
         if (0 >= tmpRmtJsonLen) {
-            LELOGW("senginePollingRules genS2Json [%d]", ret);
+            LELOGW("senginePollingRules genS2Json [%d]", tmpRmtJsonLen);
             return -2;
         }
     } else {
@@ -2118,16 +2149,16 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
     // local json
     tmpLocalJsonLen = getTerminalStatusS2(tmpLocalJson, sizeof(tmpLocalJson));
     if (0 >= tmpLocalJsonLen) {
-        LELOGW("senginePollingRules getTerminalStatusS2 [%d]", ret);
+        LELOGW("senginePollingRules getTerminalStatusS2 [%d]", tmpLocalJsonLen);
         return -3;
     }
 
     // for every single rule
-    ginIACache.cfg.num = privCfg.data.iaCfg.num;
+    // ginIACache.cfg.num = privCfg->data.iaCfg.num;
     for (i = 0; i < MAX_IA; i++) {
-        LELOGW("senginePollingRules privCfg.data.iaCfg.arrIA[%d] [%d]", i, privCfg.data.iaCfg.arrIA[i]);
-        ginIACache.cfg.arrIA[i] = privCfg.data.iaCfg.arrIA[i];
-        if (0 < privCfg.data.iaCfg.arrIA[i]) {
+        LELOGW("senginePollingRules privCfg->data.iaCfg.arrIA[%d] [%d]", i, privCfg->data.iaCfg.arrIA[i]);
+        ginIACache.cfg.arrIA[i] = privCfg->data.iaCfg.arrIA[i];
+        if (0 < privCfg->data.iaCfg.arrIA[i]) {
             memset(ginScriptCfg2, 0, sizeof(ScriptCfg2));
             ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, i);
             if (0 > ret) {
@@ -2190,23 +2221,25 @@ int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSe
 }
 
 int sengineRemoveRules(const char *name) {
-    int ret, whereToPut = -1, found = 0;
-    PrivateCfg privCfg;
+    int whereToPut = -1, found = 0;
+    PrivateCfg* privCfg = NULL;
     LELOG("sengineRemoveRules -s ");
     if (NULL == name) {
         LELOGE("sengineRemoveRules name NULL");
         return -1;
     }
-    ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
-        LELOGE("sengineRemoveRules lelinkStorageWriteScriptCfg2 csum FAILED");
-        return -2;
-    }
-    found = findPosForIAName(&privCfg, name, strlen(name), &whereToPut);
+    // ret = lelinkStorageReadPrivateCfg(&privCfg);
+    // if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    //     LELOGE("sengineRemoveRules lelinkStorageWriteScriptCfg2 csum FAILED");
+    //     return -2;
+    // }
+    getPrivateConfigure(&privCfg);
+
+    found = findPosForIAName(privCfg, name, strlen(name), &whereToPut);
     if (found) {
-        privCfg.data.iaCfg.arrIA[whereToPut] = 0;
-        privCfg.data.iaCfg.num--;
-        lelinkStorageWritePrivateCfg(&privCfg);
+        privCfg->data.iaCfg.arrIA[whereToPut] = 0;
+        privCfg->data.iaCfg.num--;
+        lelinkStorageWritePrivateCfg(privCfg);
         return found;
     }    
 
