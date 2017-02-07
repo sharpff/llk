@@ -351,7 +351,7 @@ static int leLedProcessData(ledDevice_t* dev) {
     
     APPLOG("leLedProcessData light[%d] mode[%d] timeout[%d] wifimode[%d] argb[%d][%d][%d][%d]", 
         dev->light, dev->mode, dev->timeout, dev->wifimode, dev->brightness,
-        dev->color_r*color_w_r, dev->color_g*color_w_g, dev->color_b*color_w_b);
+        dev->color_r, dev->color_g, dev->color_b);
     if (dev->light == 0) {
         ledDevice.light = 0;
         ledDevice.mode = 0;

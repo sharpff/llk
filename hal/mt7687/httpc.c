@@ -10,8 +10,7 @@
 // ------------------------------------------------------
 #include "leconfig.h"
 #include "httpc.h"
-#define ASSERT(exp) \
- (void)( (exp) || (APPLOGE("%s", #exp)))
+#define ASSERT(exp)
 #define httpc_entry(...)
 #define net_get_sock_error(x) x
 #define net_socket socket

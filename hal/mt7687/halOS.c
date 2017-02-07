@@ -176,3 +176,8 @@ uint32_t halGetCurrentTaskId(void) {
     return (uint32_t)xTaskGetCurrentTaskHandle();
 }
 
+unsigned long halLogTimeStamp(void) {
+    struct os_time t = {0};
+    os_get_time(&t);
+    return (unsigned long)((t.sec*1000)+t.usec);
+}

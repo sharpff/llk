@@ -374,9 +374,11 @@ int lelinkStorageWritePrivateCfg(const PrivateCfg *privateCfg) {
 
 int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     int ret = 0;
-
     ret = storageRead(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg), 0);
-
+    if (privateCfg->csum != crc8((const uint8_t *)&(privateCfg->data), sizeof(privateCfg->data))) {
+        LELOGW("lelinkStorageReadPrivateCfg csum FAILED");
+        ret = -4;
+    }
     return ret;
 }
 

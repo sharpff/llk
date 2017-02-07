@@ -145,6 +145,10 @@ int isApConnected(void) {
     return ginPrivateCfg.data.nwCfg.configStatus > 1;
 }
 
+void getPrivateConfigure(PrivateCfg** cfg) {
+    *cfg = &ginPrivateCfg;
+}
+
 int isCloudAuthed(void) {
     return (ginStateCntx.stateIdCurr >= E_STATE_CLOUD_AUTHED);
 }

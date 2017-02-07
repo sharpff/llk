@@ -113,3 +113,7 @@ LELINK_WEAK void aalSetLedStatus(RLED_STATE_t st) {
 LELINK_WEAK int salResetConfigData(void) {
 	return 0;
 }
+
+LELINK_WEAK unsigned long halLogTimeStamp(void) {
+      return 0;
+}

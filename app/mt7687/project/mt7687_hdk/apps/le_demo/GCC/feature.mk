@@ -30,3 +30,4 @@ MTK_OS_CPU_UTILIZATION_ENABLE       = y
 MTK_ALINK_ENABLE                    = n
 MTK_LELINK_ENABLE                   = y
 MTK_IPERF_ENABLE                    = n
+LELINK_RELEASE_ENABLE               = n

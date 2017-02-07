@@ -343,7 +343,7 @@ int getVer(char fwVer[64], int size) {
     }
     memset(fwVer, 0, size);
     sprintf(fwVer, "%d-%s-%s", PF_VAL, getSWVer(), getScriptVer());
-    LELOG("Build Time: " __DATE__ " " __TIME__ "");
+    // LELOG("Build Time: " __DATE__ " " __TIME__ "");
     return 0;
 }
 
@@ -387,7 +387,7 @@ static int isRetryPackage(const void *cmdInfo) {
 
 void setTerminalAction(const void *cmdInfo, const char *status, int len) {
     char val[MAX_BUF] = {0};
-    int ret = 0;
+    int ret = 0, ret1;
     
     if (!isRetryPackage(cmdInfo)) {
     // cloud logical(push)
@@ -398,12 +398,10 @@ void setTerminalAction(const void *cmdInfo, const char *status, int len) {
             len = ret;
         // slave logical
             ret = sengineSetAction((char *)val, len);
-            LELOG("setTerminalAction--slave [%d][%s]", ret, val);
 
         // local logical
-            ret = localActionHandler(val, len);
-            LELOG("setTerminalAction--local [%d][%s]", ret, val);
-
+            ret1 = localActionHandler(val, len);
+            LELOG("setTerminalAction[%s]-- slave[%d] local[%d]", val, ret, ret1);
         }
     }
 
