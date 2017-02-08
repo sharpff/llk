@@ -233,15 +233,11 @@ uint16_t halRand();
 int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey);
 extern unsigned long halLogTimeStamp(void);
 
-#ifndef LELINK_RELEASE
 #define applog(_mod_name_, _fmt_, ...) \
     { \
         const char * p = (const char *)strrchr(__FILE__, '/'); \
         printOut("[%u][%s] "_fmt_" @%s:%d\r\n", halLogTimeStamp(), _mod_name_, ##__VA_ARGS__, p ? (p + 1) : __FILE__, __LINE__); \
     }
-#else
-#define applog(_mod_name_, _fmt_, ...)
-#endif
 
 #define APPLOG(...) \
     applog("LEAPP", ##__VA_ARGS__)

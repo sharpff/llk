@@ -1,9 +1,10 @@
+#include "leconfig.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "halHeader.h"
 #include "mico.h"
 #include "MicoSocket.h"
+#include "t11_debug.h"
 
 #define  MAXINTERFACES  5
 
@@ -84,7 +85,7 @@ int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int l
     to_addr.s_port = port;
     to_addr.s_ip = inet_addr(ip);
     ret = sendto(sock, buf, len, 0, (struct sockaddr *) &to_addr, sizeof(to_addr));
-    APPLOG("send data done, sock = %d, ip = %s, port = %d, buf = %p, len = %d", sock, ip, port, buf, len);
+    // APPLOG("send1 data done, sock = %d, ip = %s, port = %d, buf = %p, len = %d", sock, ip, port, buf, len);
     //t11_print_mem(buf, len);
     return ret;
 }

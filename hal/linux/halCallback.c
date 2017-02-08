@@ -99,11 +99,13 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 
                 switch (type) {
                     case OTA_TYPE_FW: {
-                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mt7687_fota_le_demo.bin", type, 35);
+                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mico_app.bin", type, 35);
+                        // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mt7687_fota_le_demo.bin", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo.bin", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/le_demo.bin", type, 35);
                     } break;
                     case OTA_TYPE_FW_SCRIPT: {
+                            sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/9188L.lua", type, 0);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/lbest.lua", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/nxp.bin", type, 0);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/kfr.lua", type, 35);
@@ -111,7 +113,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/foree.lua", type, 35);
                         // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dingding_1.1.1.lua", type, 35);
                         // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dingdingMT7687.lua", type, 35);
-                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dingdingMW300.lua", type, 35);
+                        // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dingdingMW300.lua", type, 35);
                         // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/dooya.lua", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar.lua", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/honyar2.lua", type, 35);

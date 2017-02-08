@@ -328,15 +328,11 @@ typedef unsigned int uint32_t;
     ot = halGetTimeStamp(); \
     }}
 
-#ifndef LELINK_RELEASE
 #define lelog(_mod_name_, _fmt_, ...) \
     { \
         const char * p = (const char *)strrchr(__FILE__, '/'); \
         printOut("[%u][%s] "_fmt_" @%s:%d#%u\r\n", halLogTimeStamp(), _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
     }
-#else
-#define lelog(_mod_name_, _fmt_, ...)
-#endif
 
 #define DEBUG_VERBOSE
 #define DEBUG_WARNING

@@ -11,8 +11,8 @@
 #include "leconfig.h"
 #include <errno.h>
 #include "httpc.h"
-#define ASSERT(exp) \
- (void)( (exp) || (APPLOGE("%s", #exp)))
+// #define ASSERT(exp) \
+//  (void)( (exp) || (APPLOGE("%s", #exp)))
 #define httpc_entry(...)
 #define net_get_sock_error(x) x
 #define net_socket socket
@@ -134,7 +134,7 @@ typedef struct {
 static int _http_raw_recv(session_t *s, char *buf, int maxlen,
 			  int wait_for_to)
 {
-	ASSERT(maxlen != 0);
+	APPASSERT(maxlen != 0);
 
 	int rv;
 	unsigned int ceiling = halGetTimeStamp() + 1;
@@ -1035,7 +1035,7 @@ static int _http_prepare_req(session_t *s, const http_req_t *req,
 		_http_add_header(s, "Connection", "keep-alive");
 
 	if (field_flags & HDR_ADD_CONN_CLOSE) {
-		ASSERT(!(field_flags & HDR_ADD_CONN_KEEP_ALIVE));
+		APPASSERT(!(field_flags & HDR_ADD_CONN_KEEP_ALIVE));
 		_http_add_header(s, "Connection", "close");
 	}
 	if (field_flags & HDR_ADD_CONTENT_TYPE_JSON) {
@@ -1244,7 +1244,7 @@ static int load_header_fields(char *header, int len, int *off,
 			break;
 		}
 		/* FIXME: can this happen ? */
-		ASSERT(header[offset] != '\r' && header[offset + 1] != '\n');
+		APPASSERT(header[offset] != '\r' && header[offset + 1] != '\n');
 
 		/* Extract the name-value pair */
 		pair = &header[offset];
@@ -1540,7 +1540,7 @@ static int _http_get_response_hdr_value(session_t *s,
 {
 	/* We should already know the offset from where the name-value
 	   pairs in the http header start */
-	ASSERT(s->pbuf.hdr_fields_start_offset != -1);
+	APPASSERT(s->pbuf.hdr_fields_start_offset != -1);
 
 	/* Create a local copy as this function may be called more than
 	   once */
@@ -1558,7 +1558,7 @@ static int _http_get_response_hdr_value(session_t *s,
 			break;
 		}
 		/* FIXME: can this happen ? */
-		ASSERT(header[offset] != '\r' && header[offset + 1] != '\n');
+		APPASSERT(header[offset] != '\r' && header[offset + 1] != '\n');
 
 		int pair_len;
 		char *name, *val;

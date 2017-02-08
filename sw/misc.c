@@ -848,15 +848,23 @@ int getIntValByKey(const char *json, int jsonLen, const char *key, int *val) {
 
 int printOut(const char *fmt, ...) {
     va_list args;
+#ifndef LELINK_RELEASE
     memset(miscBuf, 0, MAX_BUF);
     va_start(args, fmt);
     vsnprintf(miscBuf, sizeof(miscBuf), fmt, args);
     va_end(args);
+#endif
     if (getLogDir()) {
+#ifdef LELINK_RELEASE
+        memset(miscBuf, 0, MAX_BUF);
+        va_start(args, fmt);
+        vsnprintf(miscBuf, sizeof(miscBuf), fmt, args);
+        va_end(args);
+#endif
         logToMaster(miscBuf);
-        halPrint(miscBuf);
-    } else {
-        halPrint(miscBuf);
     }
+#ifndef LELINK_RELEASE
+    halPrint(miscBuf);
+#endif
     return 0;
 }
