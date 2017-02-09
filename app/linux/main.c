@@ -357,6 +357,10 @@ int main(int argc, char *argv[]) {
 }
 
 #else
+static void sleepms(uint16_t ms)
+{
+    usleep(ms * 1000);
+}
 
 int main(int argc, char** argv) {
     char configInfo[256] = {0};
@@ -412,6 +416,7 @@ int main(int argc, char** argv) {
     }
 #else
     while (1) {
+    #if 0
         sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
         APPLOG("start => %s", configInfo);
         APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
@@ -425,6 +430,9 @@ int main(int argc, char** argv) {
             APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
         }
 
+    #else
+        ret = airhug_wave((char *)ssid, (char *)passwd, sleepms);
+    #endif
     }
 #endif
 	return (EXIT_SUCCESS);
