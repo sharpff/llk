@@ -87,6 +87,7 @@ if [ "$1" != "clean" ]; then
         cp ./project/mt7687_hdk/apps/le_demo/src/main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
         cp ./driver/board/mt76x7_hdk/lib/libbsp.a $MTSDK7687/driver/board/mt76x7_hdk/lib
         cp ./driver/board/mt76x7_hdk/lib/libhal.a $MTSDK7687/driver/board/mt76x7_hdk/lib
+        cp ./driver/chip/mt7687/wifi_n9/WIFI_RAM_CODE_MT76X7_in_flash.bin $MTSDK7687/driver/chip/mt7687/wifi_n9
         $COPY ./driver/board/mt76x7_hdk/bootloader/src/mt7687/hw_uart.c $MTSDK7687/driver/board/mt76x7_hdk/bootloader/src/mt7687
         $COPY ./project/mt7687_hdk/template/download/flash_download.ini $MTSDK7687/project/mt7687_hdk/template/download
         $COPY ./project/mt7687_hdk/apps/le_demo/inc/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
