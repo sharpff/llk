@@ -192,7 +192,7 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
     int ret = 0;
     os_memset(g_data_buffer, 0, MAX_BUF);
     if (!type) {
-        APPLOG("dec *len is [%d] ret[%d] START", *len, ret);
+        // APPLOG("dec *len is [%d] ret[%d] START", *len, ret);
         mbedtls_aes_setkey_dec(&ginAESCtx, key, keyLen);
         ret = mbedtls_aes_crypt_cbc(&ginAESCtx, MBEDTLS_AES_DECRYPT, *len, iv, data, g_data_buffer);
         // for (i = 0; i < *len; i++) {
@@ -204,7 +204,7 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
         // APPPRINTF("\r\n");
         if (0 == ret) {
             *len -= g_data_buffer[*len - 1];
-            APPLOG("dec *len is [%d]", *len);
+            // APPLOG("dec *len is [%d]", *len);
             if(*len <= MAX_BUF) {
                 os_memcpy(data, g_data_buffer, *len);
             } else {
@@ -212,7 +212,7 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
                 APPLOG("dec error");
             }
         }
-        APPLOG("dec *len is [%d] ret[%d] END", *len, ret);
+        // APPLOG("dec *len is [%d] ret[%d] END", *len, ret);
 
     } else {
         int blocks = 0, padSize = 0, i = 0;
@@ -236,7 +236,7 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
         if (0 == ret) {
             os_memcpy(data, g_data_buffer, *len);
         }
-        APPLOG("enc *len is [%d] ret[%d] END", *len, ret);
+        // APPLOG("enc *len is [%d] ret[%d] END", *len, ret);
     }
     
 

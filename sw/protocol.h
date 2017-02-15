@@ -100,7 +100,11 @@ typedef enum
      * a request comming from cloud.
      */
     LELINK_CMD_CLOUD_IND_REQ = 99,
-    LELINK_CMD_CLOUD_IND_RSP
+    LELINK_CMD_CLOUD_IND_RSP,
+
+    LELINK_CMD_CLOUD_ONLINE_REQ = 101,
+    LELINK_CMD_CLOUD_ONLINE_RSP
+
 }E_LELINK_CMD;
 
 typedef enum
@@ -179,8 +183,8 @@ typedef enum
     LELINK_SUBCMD_CLOUD_REPORT_RSP,
     LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ,
     LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP,
-    LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_REQ,
-    LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_RSP,
+    LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_REQ,
+    LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_RSP,
     /*
      * belong to LELINK_CMD_CLOUD_IND_XXX_XXX
      */    
@@ -199,7 +203,10 @@ typedef enum
     LELINK_SUBCMD_ASYNC_OTA_REQ = 1,
     LELINK_SUBCMD_ASYNC_OTA_RSP,
     LELINK_SUBCMD_ASYNC_REBOOT_REQ = 1,
-    LELINK_SUBCMD_ASYNC_REBOOT_RSP
+    LELINK_SUBCMD_ASYNC_REBOOT_RSP,
+
+    LELINK_SUBCMD_CLOUD_ONLINE_REQ = 1,
+    LELINK_SUBCMD_CLOUD_ONLINE_RSP
 }E_LELINK_SUBCMD;
     
 #define CMD_HEADER_INFO_1ST \
@@ -207,7 +214,7 @@ typedef enum
     uint16_t cmdId; \
     uint16_t seqId; \
     uint16_t randID; \
-    uint8_t passThru; \
+    uint8_t noAck; \
     uint8_t reserved; \
     uint8_t reserved1; \
     uint8_t reserved2; \
@@ -234,7 +241,7 @@ typedef struct {
     uint32_t timeoutRef;
     uint16_t ndPort;
     uint8_t needReq;
-    uint8_t needRsp;
+    uint8_t rspVal;
 }NodeData;
 
 #define COMM_CTX(a) ((CommonCtx *)(a))

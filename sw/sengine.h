@@ -126,8 +126,7 @@ typedef struct {
 typedef struct {
     CACHE_NODE_NBASE;
     char sdevStatus[SDEV_MAX_STATUS]; // as json object "sDevStatus"
-    uint8_t occupied;
-    uint8_t reserved1[3];
+    uint8_t reserved1[4];
 }SDevNode;
 
 typedef struct {

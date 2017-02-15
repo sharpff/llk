@@ -149,7 +149,7 @@ int nwGetCmd(CommonCtx *ctx_p, void **node)
     }
 
     return 0;
-    //return ctx_p->needReq || ctx_p->needRsp;
+    //return ctx_p->needReq || ctx_p->rspVal;
 }
 */
 

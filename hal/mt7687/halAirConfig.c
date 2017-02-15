@@ -141,7 +141,7 @@ int halDoApConnect(void *ptr, int ptrLen) {
 }
 
 int halDoApConnecting(void *ptr, int ptrLen) {
-    APPLOG("halDoApConnecting ret[%d]", gin_airconfig_ap_connected);
+    // APPLOG("halDoApConnecting ret[%d]", gin_airconfig_ap_connected);
     ginFirstInFlag = 1;
     return gin_airconfig_ap_connected;
 }

@@ -678,7 +678,7 @@ void logToMaster(const char *log) {
 extern PCACHE sdevCache();
 extern int forEachNodeSDevByMacCB(SDevNode *currNode, void *uData);
 extern int sdevArrayDel(int index);
-extern void sdevArrayReset();
+extern int sdevArrayReset();
 int localActionHandler(const char *data, int len) {
     int ret = 0;
 
@@ -704,8 +704,8 @@ int localActionHandler(const char *data, int len) {
         // clear all sdev(s) 
         ret = getIntValByKey(data, len, JSON_NAME_SDEV_CLR, &val);
         if (0 == ret) {
-            sdevArrayReset();
-            return 0;
+            ret = sdevArrayReset();
+            return ret >= 0 ? 0 : -5;
         }
     }
 
@@ -724,7 +724,7 @@ int cloudMsgHandler(const char *data, int len) {
         jsontok_t jsonToken[NUM_TOKENS];
         jobj_t jobj;
         case CLOUD_MSG_KEY_LOCK: {
-            int lock = 0;
+            int lock = 0, uid = 0;
             ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)buf, ret);
             if (WM_SUCCESS != ret) {
                 ret = LELINK_ERR_LOCK_UNLOCK;
@@ -736,7 +736,11 @@ int cloudMsgHandler(const char *data, int len) {
                 break;
             }
             if (lock) {
-                setLock(1);
+                if (WM_SUCCESS != (ret = json_get_val_int(&jobj, JSON_NAME_UID, &uid))) {
+                    ret = LELINK_ERR_LOCK_UNLOCK;
+                    break;
+                }
+                setLock(1, uid);
             } else {
                 if (getLock()) {
                     resetConfigData(1);
@@ -844,15 +848,23 @@ int getIntValByKey(const char *json, int jsonLen, const char *key, int *val) {
 
 int printOut(const char *fmt, ...) {
     va_list args;
+#ifndef LELINK_RELEASE
     memset(miscBuf, 0, MAX_BUF);
     va_start(args, fmt);
     vsnprintf(miscBuf, sizeof(miscBuf), fmt, args);
     va_end(args);
+#endif
     if (getLogDir()) {
+#ifdef LELINK_RELEASE
+        memset(miscBuf, 0, MAX_BUF);
+        va_start(args, fmt);
+        vsnprintf(miscBuf, sizeof(miscBuf), fmt, args);
+        va_end(args);
+#endif
         logToMaster(miscBuf);
-        halPrint(miscBuf);
-    } else {
-        halPrint(miscBuf);
     }
+#ifndef LELINK_RELEASE
+    halPrint(miscBuf);
+#endif
     return 0;
 }

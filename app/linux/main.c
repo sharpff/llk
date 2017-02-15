@@ -46,6 +46,8 @@ redo:
             int ret = 0;
             node.cmdId = LELINK_CMD_DISCOVER_REQ; 
             node.subCmdId = LELINK_SUBCMD_DISCOVER_REQ;
+            // node.rspVal = 1;
+            // node.noAck = 1;
 
             ret = halGetBroadCastAddr(br, sizeof(br));
             if (0 >= ret) {
@@ -63,6 +65,8 @@ redo:
             strncpy(node.ndIP, ginCtrlIP, MAX_IPLEN); // TODO: caution 
             // strncpy(node.ndIP, "192.168.3.100", MAX_IPLEN); // TODO: caution
             node.ndPort = LOCAL_TEST_PORT;
+            // node.rspVal = 1;
+            // node.noAck = 1;
             // APPLOG("2 cmdId[%d], subCmdId[%d]\r\n", node.cmdId, node.subCmdId);
             APPLOGE("1 cmdId[%d]", node.cmdId);
             if (!node.uuid[0]) {
@@ -129,7 +133,8 @@ redo:
         // node.ndPort = TEST_PORT;
         node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ;
-
+        // node.rspVal = 1;
+        // node.noAck = 1;
         // set peer uuid
         memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
 
@@ -343,7 +348,7 @@ int main(int argc, char *argv[]) {
     }
 
     while (1) {
-        lelinkPollingState(100, ctxR2R, ctxQ2A);
+        lelinkPollingState(1, ctxR2R, ctxQ2A);
         
         // lelinkDoPollingQ2A(ctxQ2A);
         // lelinkDoPollingR2R(ctxR2R);

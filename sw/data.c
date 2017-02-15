@@ -95,15 +95,20 @@ int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
 //     return 0;
 // }
 
-int setLock(int locked) {
+int setLock(int locked, int uid) {
     int ret = 0;
     ginPrivateCfg.data.devCfg.locked = locked;
+    ginPrivateCfg.data.devCfg.uid = uid;
     ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
     return 0 <= ret ? 1 : 0;
 }
 
 int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
+}
+
+int getUID() {
+    return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.uid;
 }
 
 int getDevFlag(DEV_FLAG_t flagWiFi) {
@@ -309,7 +314,7 @@ void getOriRemoteServer(char *ip, int len, uint16_t *port) {
 }
 
 uint16_t getProtocolVer() {
-    return 0x0001;
+    return 0x0002;
 }
 
 const char *getSWVer() {
@@ -338,7 +343,7 @@ int getVer(char fwVer[64], int size) {
     }
     memset(fwVer, 0, size);
     sprintf(fwVer, "%d-%s-%s", PF_VAL, getSWVer(), getScriptVer());
-    LELOG("Build Time: " __DATE__ " " __TIME__ "");
+    // LELOG("Build Time: " __DATE__ " " __TIME__ "");
     return 0;
 }
 
@@ -382,7 +387,7 @@ static int isRetryPackage(const void *cmdInfo) {
 
 void setTerminalAction(const void *cmdInfo, const char *status, int len) {
     char val[MAX_BUF] = {0};
-    int ret = 0;
+    int ret = 0, ret1;
     
     if (!isRetryPackage(cmdInfo)) {
     // cloud logical(push)
@@ -393,12 +398,10 @@ void setTerminalAction(const void *cmdInfo, const char *status, int len) {
             len = ret;
         // slave logical
             ret = sengineSetAction((char *)val, len);
-            LELOG("setTerminalAction--slave [%d][%s]", ret, val);
 
         // local logical
-            ret = localActionHandler(val, len);
-            LELOG("setTerminalAction--local [%d][%s]", ret, val);
-
+            ret1 = localActionHandler(val, len);
+            LELOG("setTerminalAction[%s]-- slave[%d] local[%d]", val, ret, ret1);
         }
     }
 
@@ -427,7 +430,7 @@ int getTerminalStatus(char *status, int len) {
 
     tmpLen = strlen(status);
 
-    sprintf(status + tmpLen, ",\"cloud\":%d", isCloudAuthed());
+    sprintf(status + tmpLen, ",\"cloud\":%d", isCloudOnlined());
     tmpLen = strlen(status);
 
     strcpy(status + tmpLen, ",\"uuid\":\""); tmpLen = strlen(status);
@@ -443,6 +446,9 @@ int getTerminalStatus(char *status, int len) {
     getSSID(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
 
     sprintf(status + tmpLen, "\",\"lock\":%d", getLock());
+    tmpLen = strlen(status);
+
+    sprintf(status + tmpLen, ",\"uid\":%d", getUID());
     tmpLen = strlen(status);
 
     if (sengineHasDevs()) {
@@ -486,7 +492,7 @@ int getTerminalStatus(char *status, int len) {
     tmpLen += 1;
     //
 
-    // LELOG("getTerminalStatus [%d][%s] -e", tmpLen, status);
+    LELOG("getTerminalStatus [%d][%s] -e", tmpLen, status);
     return tmpLen;
 }
 
@@ -499,6 +505,10 @@ int getSDevStatus(int index, char *sdevStatus, int len) {
         uint8_t uuid[MAX_UUID+1] = {0};
         getTerminalUUID(uuid, MAX_UUID);
         sprintf(sdevStatus, "{\"%s\":\"%s-%s\"", JSON_NAME_UUID, uuid, arr[index].mac);
+
+        // append uid 
+        sprintf(&sdevStatus[strlen(sdevStatus)], ",\"uid\":%d", getUID());
+
         // append man start
         sprintf(&sdevStatus[strlen(sdevStatus)], ",\"%s\":%s", JSON_NAME_SDEV, strlen(arr[index].sdevInfo) > 0 ? arr[index].sdevInfo : "{}"); 
         sprintf(&sdevStatus[strlen(sdevStatus) - 1], ",\"%s\":\"%s\"}", JSON_NAME_SDEV_MAN, arr[index].sdevMan);
@@ -508,7 +518,7 @@ int getSDevStatus(int index, char *sdevStatus, int len) {
         halGetSelfAddr(sdevStatus + tmpLen, len - tmpLen, NULL); tmpLen = strlen(sdevStatus);
         // append sdevStatus
         sprintf(&sdevStatus[strlen(sdevStatus)], "\",\"%s\":%s,\"%s\":\"%s\"}", JSON_NAME_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAC, arr[index].mac);
-        // LELOG("XXXXXX[%s]", sdevStatus);
+        LELOG("getSDevStatus[%s]", sdevStatus);
     } else {
         return 0;
     }

@@ -56,7 +56,8 @@ typedef struct {
     uint8_t flagWiFi; // DEV_FLAG_t
     uint8_t locked;
     uint32_t sdevFWSize;
-    uint8_t reserved[31];
+    int32_t uid;
+    uint8_t reserved[27];
     uint8_t initCfgWiFiMode; // in what WiFi config mode after reset manually (SoftAp as default, 0xFF/0x01 monitor; 0x00 softAP)
     uint8_t initCfgIfUnBind; // UnBind if user reset manually (UnBind as default)
 }LELINK_ALIGNED DevCfg;
@@ -211,7 +212,7 @@ int ioGetHdlCounts();
 int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen);
 void ioDeinit(int ioType, void *hdl);
-
+void resetDevice(void);
 typedef enum {
     GPIO_DIR_INPUT = 0,
     GPIO_DIR_OUTPUT,

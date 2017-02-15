@@ -13,6 +13,13 @@ extern "C"
 #include "halHeader.h"
 #endif /* __LE_SDK__ */
 
+
+#if defined(PF_VAL) && (PF_VAL == 7) // for EMW3081(iar compiler)
+#define LELINK_WEAK __weak
+#else 
+#define LELINK_WEAK __attribute__((weak))
+#endif
+
 #if defined(WIN32) || defined(EMW3081)
 #define LELINK_ALIGNED
 #define LELINK_PACK
@@ -224,12 +231,12 @@ int halGetHostByName(const char *name, char ip[4][32], int len);
 uint16_t halRand();
 
 int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey);
-
+extern unsigned long halLogTimeStamp(void);
 
 #define applog(_mod_name_, _fmt_, ...) \
     { \
         const char * p = (const char *)strrchr(__FILE__, '/'); \
-        printOut("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : __FILE__, __LINE__); \
+        printOut("[%u][%s] "_fmt_" @%s:%d\r\n", halLogTimeStamp(), _mod_name_, ##__VA_ARGS__, p ? (p + 1) : __FILE__, __LINE__); \
     }
 
 #define APPLOG(...) \
@@ -243,6 +250,15 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, c
 
 #define APPPRINTF(...) \
     printOut(__VA_ARGS__)
+
+#define APPASSERT(x) \
+    { \
+        if (!(x))  { \
+            const char * p = (const char *)strrchr(__FILE__, '/'); \
+            while (1) { \
+            printOut("********LEAPP[ASSERT] in file:%s line:%d\r\n", p ? (p + 1) : __FILE__, __LINE__); } \
+        } \
+    }
 
 #define halMalloc(size)        halMallocEx(size, __FILE__, __LINE__)
 #define halCalloc(n, size)     halCallocEx(n, size, __FILE__, __LINE__)

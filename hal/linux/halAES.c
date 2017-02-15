@@ -56,7 +56,11 @@ int halAES(uint8_t *key, uint32_t keyLen, uint8_t *iv, uint8_t *data, uint32_t *
         // APPPRINTF("\r\n");
         if (0 == ret) {
             *len -= out[*len - 1];
-            memcpy(data, out, *len > maxLen ? maxLen : *len);
+            if(*len <= MAX_BUF) {
+                memcpy(data, out, *len > maxLen ? maxLen : *len);
+            } else {
+                ret = -1;
+            }
         }
         APPLOG("dec *len is [%d] ret[%d] END", *len, ret);
 

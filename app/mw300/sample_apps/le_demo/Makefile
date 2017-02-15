@@ -64,6 +64,7 @@ EXTRACFLAGS += -I./src/hal/mw300
 
 
 SRCS = ./app/mw300/main.c \
+	./app/mw300/httpc_post.c \
 	./hal/mw300/halAES.c \
 	./hal/mw300/halAirConfig.c \
 	./hal/mw300/halCallback.c \

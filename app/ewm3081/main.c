@@ -223,7 +223,7 @@ int lelink_main() {
     while (1) {
         //100
         //uint32_t time_start = mico_get_time();
-        StateId stateId = lelinkPollingState(50, ctxR2R, ctxQ2A);
+        StateId stateId = lelinkPollingState(1, ctxR2R, ctxQ2A);
         //debug("stateId = %d, used time %d ms",stateId,mico_get_time()-time_start);
         //show_mem_info();
         //idx++;
