@@ -23,8 +23,9 @@
 
 #define SYN_DATA1   (0x46)
 #define SYN_DATA2   (0x45)
-#define SYN_BASE    (0x02)
-#define SYN_OFFSET  (0x49)
+#define SYN_BASE    (0x20)
+#define SYN_OFFSET  (0x08)
+
 
 static uint8_t calcrc(uint8_t *ptr, uint32_t len);
 

@@ -18,7 +18,7 @@
 #define SYN_DATA1   (0x46)
 #define SYN_DATA2   (0x45)
 #define SYN_BASE    (0x02)
-#define SYN_OFFSET  (0x49)
+#define SYN_OFFSET  (0x08)
 
 #define MAX_WAIT_DEV    8
 

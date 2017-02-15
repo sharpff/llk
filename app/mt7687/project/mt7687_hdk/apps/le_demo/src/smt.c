@@ -98,10 +98,10 @@ int lelink_recv(char *p, int len) {
 		tmp_dest = (uint8_t*)frame->frame_data.data_info.dest;
 		tmp_bssid = (uint8_t*)frame->frame_data.data_info.bssid;
 		tmp_src  = (uint8_t*)frame->frame_data.data_info.src; 
-        /*APPLOG("SRC %02x:%02x:%02x:%02x:%02x:%02x DST %02x:%02x:%02x:%02x:%02x:%02x BSSID %02x:%02x:%02x:%02x:%02x:%02x len %3d",*/
-                /*tmp_src[0], tmp_src[1], tmp_src[2],tmp_src[3],tmp_src[4],tmp_src[5],*/
-                /*tmp_dest[0], tmp_dest[1], tmp_dest[2],tmp_dest[3],tmp_dest[4],tmp_dest[5],*/
-                /*tmp_bssid[0], tmp_bssid[1], tmp_bssid[2],tmp_bssid[3],tmp_bssid[4],tmp_bssid[5], len);*/
+        // APPLOG("SRC %02x:%02x:%02x:%02x:%02x:%02x DST %02x:%02x:%02x:%02x:%02x:%02x BSSID %02x:%02x:%02x:%02x:%02x:%02x len %3d",
+        //         tmp_src[0], tmp_src[1], tmp_src[2],tmp_src[3],tmp_src[4],tmp_src[5],
+        //         tmp_dest[0], tmp_dest[1], tmp_dest[2],tmp_dest[3],tmp_dest[4],tmp_dest[5],
+        //         tmp_bssid[0], tmp_bssid[1], tmp_bssid[2],tmp_bssid[3],tmp_bssid[4],tmp_bssid[5], len);
         ret = airhug_feed_data(tmp_src, tmp_dest, tmp_bssid, len);
         if(ret == 1) {
             gin_airconfig_channel_locked = 1;
