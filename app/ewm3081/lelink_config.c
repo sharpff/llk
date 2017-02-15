@@ -3,6 +3,7 @@
 #include "wifi_monitor.h"
 #include "t11_debug.h"
 #include "airconfig.h"
+#include "airhug.h"
 
 //是否已经锁定通道了
 static bool is_channel_locked = false;
@@ -11,7 +12,7 @@ static bool is_channel_locked = false;
 static int idx = 0;
 
 //切换过程中，当前的channel
-static int channel = 1; //1~13
+static int ginChannel = 1; //1~13
 
 //乐视api中关心的，只需要传入即可
 static int channel_locked[MAX_CHANNEL_CARE] = {0};
@@ -28,6 +29,7 @@ static mico_timer_t* channel_change_timer = NULL;
 static mico_timer_t* channel_timeout_timer = NULL;
 static void change_channel(void* arg);
 static void channel_timeout(void* arg);
+extern void stop_lelink_config();
 
 //lelink配置是否正在进行中（即使配置成功了，也可以处于配置过程中）
 static bool is_airconfig_thread_running = false;
@@ -101,16 +103,54 @@ static void monitor_cb(uint8_t *data , int len){
     memcpy(item.mac_dst,da,6);
     memcpy(item.mac_bssid,bssid,6);
     //debug("monitor_cb [%d] !!!!", is_channel_locked);
+#if 1
+    const uint8_t *tmp_dest;
+    const uint8_t *tmp_src;
+    const uint8_t *tmp_bssid;
+    int ret = 0;
+    tmp_dest = (uint8_t*)item.mac_dst;
+    tmp_bssid = (uint8_t*)item.mac_bssid;
+    tmp_src  = (uint8_t*)item.mac_src; 
+    // APPLOG("SRC %02x:%02x:%02x:%02x:%02x:%02x DST %02x:%02x:%02x:%02x:%02x:%02x BSSID %02x:%02x:%02x:%02x:%02x:%02x len %3d",
+    //         tmp_src[0], tmp_src[1], tmp_src[2],tmp_src[3],tmp_src[4],tmp_src[5],
+    //         tmp_dest[0], tmp_dest[1], tmp_dest[2],tmp_dest[3],tmp_dest[4],tmp_dest[5],
+    //         tmp_bssid[0], tmp_bssid[1], tmp_bssid[2],tmp_bssid[3],tmp_bssid[4],tmp_bssid[5], len);
+    ret = airhug_feed_data(tmp_src, tmp_dest, tmp_bssid, len);
+    if(ret == 1) {
+        is_channel_locked = true;
+        mico_stop_timer(channel_change_timer);
+        mico_start_timer(channel_timeout_timer);
+        return;
+    } else if(ret == 2) {
+        hugmsg_t msg;
+        airhug_get(&msg);
+        get_info_success = true;
+        mico_stop_timer(channel_timeout_timer);
+        mico_wlan_stop_monitor();
+
+        memset(&account, 0, sizeof(account));
+
+        /*SSID*/
+        memcpy(account.ssid, msg.ssid, 
+            strlen(msg.ssid) > sizeof(account.ssid) ? sizeof(account.ssid) : strlen(msg.ssid));
+
+        /*password*/
+        memcpy(account.psk, msg.passwd, 
+            strlen(msg.passwd) > sizeof(account.psk) ? sizeof(account.psk) : strlen(msg.passwd));
+
+        return;
+    }
+#else
     if(!is_channel_locked) {
         //准备锁定信道
-        int ret = airconfig_do_sync(&item,channel,channel_locked,&base);
+        int ret = airconfig_do_sync(&item,ginChannel,channel_locked,&base);
         if(AIRCONFIG_NW_STATE_CHANNEL_LOCKED == ret){
             is_channel_locked = true;
             mico_stop_timer(channel_change_timer);
             memcpy(phone_mac,sa,6);
-            channel = channel_locked[0];
+            ginChannel = channel_locked[0];
             mico_wlan_set_channel(channel_locked[0]);
-            debug("channel base[%d][%d] [%d] lock success!!!!", base, channel_locked[0], channel);
+            debug("ginChannel base[%d][%d] [%d] lock success!!!!", base, channel_locked[0], ginChannel);
             mico_start_timer(channel_timeout_timer);
         }
     } else {
@@ -128,6 +168,7 @@ static void monitor_cb(uint8_t *data , int len){
             return;
         }
     }
+#endif
 }
 
 /**
@@ -137,7 +178,7 @@ static void reinit(){
     
     is_channel_locked = false;
     idx =0;
-    channel = 1;
+    ginChannel = 1;
 //    memset(channel_locked,0,MAX_CHANNEL_CARE*sizeof(int));
     for(int i=0;i<MAX_CHANNEL_CARE;i++){
         channel_locked[i] = 0;
@@ -163,8 +204,8 @@ static void reinit(){
     if(channel_change_timer==NULL){
         channel_change_timer = halMalloc(sizeof(mico_timer_t));
         channel_timeout_timer = halMalloc(sizeof(mico_timer_t));
-        mico_init_timer(channel_change_timer,30, change_channel, NULL);
-        mico_init_timer(channel_timeout_timer,30*1000, channel_timeout, NULL);
+        mico_init_timer(channel_change_timer,200, change_channel, NULL);
+        mico_init_timer(channel_timeout_timer,12*1000, channel_timeout, NULL);
     }
 }
 
@@ -175,9 +216,10 @@ static void change_channel(void* arg){
     if(!get_info_success){
         if(!is_channel_locked){
             //在所有的信道之间跳转
-            mico_wlan_set_channel(channel++);
-            if(channel==14){
-                channel = 1;
+            // debug("current channel[%d]", ginChannel);
+            mico_wlan_set_channel(ginChannel);
+            if(ginChannel++ == 14){
+                ginChannel = 1;
             }
         }
         //再次初始化定时器
