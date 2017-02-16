@@ -338,12 +338,14 @@ const char *getScriptVer() {
 }
 
 int getVer(char fwVer[64], int size) {
+    char n9Ver[16] = {0};
     if (64 > size || !fwVer) {
         return -1;
     }
     memset(fwVer, 0, size);
     sprintf(fwVer, "%d-%s-%s", PF_VAL, getSWVer(), getScriptVer());
-    // LELOG("Build Time: " __DATE__ " " __TIME__ "");
+    connsys_util_get_n9_fw_ver(n9Ver);
+    LELOG("n9: %s", n9Ver);
     return 0;
 }
 
