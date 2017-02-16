@@ -154,6 +154,9 @@ void lelinkPltCtrlProcess(void) {
 		    } else {
 		    	APPLOG("sn: data error");
 		    }
+            memset(fwVer, 0 , 64);
+            connsys_util_get_n9_fw_ver(fwVer);
+            APPLOG("n9: %s", fwVer);
 		    APPLOG("-----------------------------\r\n");
         }
         break;
