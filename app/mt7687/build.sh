@@ -1,4 +1,5 @@
 # ./build.sh MYXPATH=/home/lf/dev/mtk/slimV3.3.1/tools/gcc/gcc-arm-none-eabi/bin/ MYXPREFIX=arm-none-eabi- && cp ~/dev/mtk/slimV3.3.1/out/mt7687_hdk/le_demo/mt7687_le_demo.bin ~/dev/mtk/slimV3.3.1/tools/PC_tool_Win/FOTA/_Load/mt7687/ && cp ../../tool/product/dingding/cust.bin ~/dev/mtk/slimV3.3.1/out/mt7687_hdk/le_demo/
+# ./build.sh MYXPATH=$MTSDK7687/tools/gcc/gcc-arm-none-eabi/bin/ MYXPREFIX=arm-none-eabi-
 RM="rm -f"
 COPY="cp -prf"
 MKDIR="mkdir -p"

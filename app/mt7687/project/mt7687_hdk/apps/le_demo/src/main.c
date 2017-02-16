@@ -105,7 +105,6 @@ int airconfig_stop() {
     wifi_smart_connection_stop();
     //wifi_smart_connection_deinit();
     airconfig_reset();
-    airhug_reset();
     return 0;
 }
 

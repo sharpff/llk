@@ -80,12 +80,13 @@ int lelink_reset(void) {
 	gin_airconfig_channel_locked = 0;
 	ak_status = AK_RCV_PRE;
 	airconfig_reset();
-    airhug_reset();
+    /*airhug_reset();*/
 	return 0;
 }
 
-#if 0
+#if 1
 #include "airhug.h"
+#include "io.h"
 int lelink_recv(char *p, int len) {
     int ret = 0;
 	wlan_frame_t* frame = (wlan_frame_t*)p;
@@ -107,24 +108,39 @@ int lelink_recv(char *p, int len) {
             gin_airconfig_channel_locked = 1;
             return AIRCONFIG_NW_STATE_CHANNEL_LOCKED;
         } else if(ret == 2) {
-            hugmsg_t msg;
-            airhug_get(&msg);
             airconfig_stop();
-            gin_airconfig_sniffer_got = 1;
-
-            /*SSID*/
-            saved_smtcn_info.ssid_len = os_strlen(msg.ssid);
-            if(saved_smtcn_info.ssid_len > WIFI_MAX_LENGTH_OF_SSID)
-                saved_smtcn_info.ssid_len = WIFI_MAX_LENGTH_OF_SSID;
-            os_memcpy(saved_smtcn_info.ssid, msg.ssid, saved_smtcn_info.ssid_len);
-
-            /*password*/
-            saved_smtcn_info.pwd_len = os_strlen(msg.passwd);
-            if(saved_smtcn_info.pwd_len > WIFI_LENGTH_PASSPHRASE)
-                saved_smtcn_info.pwd_len = WIFI_LENGTH_PASSPHRASE;
-            os_memcpy(saved_smtcn_info.pwd, msg.passwd, saved_smtcn_info.pwd_len);
-
-            return AIRCONFIG_NW_STATE_COMPLETED;
+            APPLOG("airhug_get_ext ...");
+            if(!airhug_get_ext(saved_smtcn_info.ssid, WIFI_MAX_LENGTH_OF_SSID, saved_smtcn_info.pwd, WIFI_LENGTH_PASSPHRASE)) {
+                gin_airconfig_sniffer_got = 1;
+                /*SSID*/
+                saved_smtcn_info.ssid_len = os_strlen(saved_smtcn_info.ssid);
+                /*password*/
+                saved_smtcn_info.pwd_len = os_strlen(saved_smtcn_info.pwd);
+                APPLOG("AIRHUG GET: '%s' '%s'", saved_smtcn_info.ssid, saved_smtcn_info.pwd);
+                {
+                    int ret = 0;
+                    PrivateCfg cfg;
+                    lelinkStorageReadPrivateCfg(&cfg);
+                    APPLOG("read last ssid[%s], psk[%s], configStatus[%d]", 
+                            cfg.data.nwCfg.config.ssid,
+                            cfg.data.nwCfg.config.psk, 
+                            cfg.data.nwCfg.configStatus);
+                    strcpy(cfg.data.nwCfg.config.ssid, saved_smtcn_info.ssid);
+                    cfg.data.nwCfg.config.ssid_len = saved_smtcn_info.ssid_len;
+                    cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
+                    strcpy(cfg.data.nwCfg.config.psk, saved_smtcn_info.pwd);
+                    cfg.data.nwCfg.config.psk_len = saved_smtcn_info.pwd_len;
+                    cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
+                    cfg.data.nwCfg.configStatus = 1;
+                    ret = lelinkStorageWritePrivateCfg(&cfg);
+                    APPLOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
+                }
+                return AIRCONFIG_NW_STATE_COMPLETED;
+            } else {
+                gin_airconfig_channel_locked = 0;
+                APPLOG("airhug_get_ext() error!!!");
+            }
+            airhug_reset();
         }
     }
 	return AIRCONFIG_NW_STATE_NONE;

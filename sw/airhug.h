@@ -13,10 +13,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-typedef struct {
-    uint8_t ssid[32];
-    uint8_t passwd[32];
-} hugmsg_t;
+#define AIRHUG_VERSION      (0x01)
+#define AIRHUG_MAX_LEN      (255)
 
 /*
  * 功能: 开始一次新的配置，清空上次保存的记录数据
@@ -45,20 +43,38 @@ void airhug_reset(void);
  *      -1 : 出错
  *
  */
-int airhug_feed_data(uint8_t *src, uint8_t *dst, uint8_t *bssid, uint32_t datalen);
+int airhug_feed_data(const uint8_t *src, const uint8_t *dst, const uint8_t *bssid, uint32_t datalen);
+
+/*
+ * 功能: 得到数据
+ *
+ * 参数: 
+ *       buf : 返回数据缓冲区
+ *      size : data 空间大小(目前最大支持255)
+ *
+ * 返回值:
+ *      -1 : 出错
+ *    其它 : 得到数据长度
+ *
+ */
+int airhug_get(uint8_t *buf, uint16_t size);
+
 
 /*
  * 功能: 得到配置信息
  *
  * 参数: 
- *      msg : 返回配置信息
+ *         ssid : ssid数据缓冲区
+ *      ssidlen : ssid 空间大小
+ *       passwd : passwd数据缓冲区
+ *    passwdlen : passwd 空间大小
  *
  * 返回值:
- *       0 : 得到
+ *       0 : 成功得到数据(字符串)
  *      -1 : 出错
  *
  */
-int airhug_get(hugmsg_t *msg);
+int airhug_get_ext(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen);
 
 #endif    // #ifndef _AIRHUG_H_
 

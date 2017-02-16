@@ -91,7 +91,7 @@ public class MainActivity extends Activity {
 					mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
 					mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_Lelink");
 					// mJsonCmd.put(LeCmd.K.APSSID, "tplink");
-					mJsonCmd.put(LeCmd.K.PASSWD, "987654321");
+					mJsonCmd.put(LeCmd.K.PASSWD, "12345678");
 					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_AIRHUG);
 //					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
 					// mJsonCmd.put(LeCmd.K.AESKEY, "4d90c52bea5259b95b53d33c63a706e2");
