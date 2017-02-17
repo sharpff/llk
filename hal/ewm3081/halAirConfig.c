@@ -45,6 +45,7 @@ int halDoConfig(void *ptr, int ptrLen) {
 int halDoConfiguring(void *ptr, int ptrLen) {
     
     bool ret= is_lelink_config_done();
+    debug("halDoConfiguring ret[%d]", ret);
     
     if(ret){
         debug("lelink config done");

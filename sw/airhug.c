@@ -11,6 +11,7 @@
 #include <string.h>
 #include "rc4Wrapper.h"
 #include "airhug.h"
+#include "header.h"
 
 #define AIRHUG_VERSION      (0x1)
 #define AIRHUG_MAX_LEN      (255)
@@ -82,10 +83,10 @@ int airhug_feed_data(const uint8_t *src, const uint8_t *dst, const uint8_t *bssi
     switch(s_hug.state)
     {
         case HUG_STATE_WAIT:
-            printf("SRC "); printmac(src);
-            printf(" DST "); printmac(dst);
-            printf(" BSSID "); printmac(bssid);
-            printf(" Len %3d\n", datalen);
+            LELOG("SRC "); printmac(src);
+            LELOG(" DST "); printmac(dst);
+            LELOG(" BSSID "); printmac(bssid);
+            LELOG(" Len %3d", datalen);
             if(dst[3] != SYN_DATA1 || dst[4] != SYN_DATA2) {
                 break;
             }
@@ -109,8 +110,8 @@ int airhug_feed_data(const uint8_t *src, const uint8_t *dst, const uint8_t *bssi
                     s_hug.len = s_hug.devs[i].dst[5];
                     s_hug.state = HUG_STATE_LOCK;
                     s_hug.base = s_hug.devs[i].datalen;
-                    printf("Lock "); printmac(src);
-                    printf("\nTotal %u bytes, base = %u, crc = 0x%02x\n", s_hug.len, s_hug.base, s_hug.crc);
+                    LELOG("Lock "); printmac(src);
+                    LELOG("Total %u bytes, base = %u, crc = 0x%02x", s_hug.len, s_hug.base, s_hug.crc);
 #if LOG_FILE 
                     fprintf(fp, "\nTotal %u bytes, base = %u, crc = 0x%02x\n", s_hug.len, s_hug.base, s_hug.crc);
 #endif
@@ -129,26 +130,28 @@ int airhug_feed_data(const uint8_t *src, const uint8_t *dst, const uint8_t *bssi
             break;
         case HUG_STATE_LOCK:
 #if 0
-            printf("SRC "); printmac(src);
-            printf(" DST "); printmac(dst);
-            printf(" BSSID "); printmac(bssid);
-            printf(" Len %3d\n", datalen);
+            LELOG("SRC "); printmac(src);
+            LELOG(" DST "); printmac(dst);
+            LELOG(" BSSID "); printmac(bssid);
+            LELOG(" Len %3d", datalen);
 #endif
             i = datalen - s_hug.base;
             if(i < 0 || (((dst[4] + dst[5]) & 0x7f) != dst[3]) || i >= s_hug.len) {
                 break;
             }
-            printf("idx %3d  %02x %02x %02x %u\n", i, dst[3], dst[4], dst[5], datalen);
 #if LOG_FILE 
-            fprintf(fp, "idx %3d  %02x %02x %02x %u\n", i, dst[3], dst[4], dst[5], datalen);
+            fprintf(fp, "idx %3d  %02x %02x %02x %u", i, dst[3], dst[4], dst[5], datalen);
 #endif
             s_hug.data[i + 0] = dst[4];
             s_hug.data[i + 1] = dst[5];
+            LELOG("idx %3d  %02x %02x %02x %u", i, dst[3], dst[4], dst[5], datalen);
+            // LELOG("idx %3d  %02x %02x %02x %u, crc[%02x | %02x] s_hug.len[%d]", i, dst[3], dst[4], dst[5], datalen, 
+            //     calcrc(s_hug.data, s_hug.len), s_hug.crc, s_hug.len);
             if(calcrc(s_hug.data, s_hug.len) == s_hug.crc) {
                 s_hug.state = HUG_STATE_GET;
-                printf("Get!!! len = %u\n", s_hug.len);
+                LELOG("Get!!! len = %u", s_hug.len);
 #if LOG_FILE 
-                fprintf(fp, "Get!!! len = %u\n", s_hug.len);
+                fprintf(fp, "Get!!! len = %u", s_hug.len);
 #endif
             }
             break;
@@ -163,15 +166,19 @@ int airhug_feed_data(const uint8_t *src, const uint8_t *dst, const uint8_t *bssi
 static int airhug_get_raw(uint8_t *buf, uint16_t size)
 {
     if(!buf) {
+        LELOG("airhug_get_raw buf is NULL");
         return -1;
     }
     if(s_hug.state != HUG_STATE_GET) {
+        LELOG("airhug_get_raw s_hug.state[%d]", s_hug.state);
         return -1;
     }
     if(s_hug.len > size) {
+        LELOG("airhug_get_raw s_hug.len[%d] size[%d]", s_hug.len, size);
         return -1;
     }
     memcpy(buf, s_hug.data, s_hug.len);
+    LELOG("airhug_get_raw s_hug.len[%d]", s_hug.len);
     return s_hug.len;
 }
 
@@ -191,26 +198,49 @@ int airhug_get(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen)
 	static const char *key = "09n899uh39nhh9q34kk";
 
     if((ret = airhug_get_raw(data, sizeof(data))) <= 0) {
+        LELOGE("airhug_get airhug_get_raw [%d]", ret);
         return -1;
     }
     len = ret;
+    // LELOGE("<======== len[%d]", len);
+    // {
+    //     int kk = 0;
+    //     for (kk = 0; kk < len; kk++) {
+    //         if (0 == (kk)%2) {
+    //             LEPRINTF("\n");
+    //         }
+    //         LEPRINTF("%02x ", data[kk]);
+    //     }
+    //     LEPRINTF("\n");
+    // }
     // rc4
     rc4_init(s, (uint8_t *)key, strlen(key));
     rc4_crypt(s, data, len);
+    // LEPRINTF("=============\n");
+    // {
+    //     int kk = 0;
+    //     for (kk = 0; kk < len; kk++) {
+    //         if (0 == (kk)%2) {
+    //             LEPRINTF("\n");
+    //         }
+    //         LEPRINTF("%02x ", data[kk]);
+    //     }
+    //     LEPRINTF("\n");
+    // }
     // version
     if(data[0] != AIRHUG_VERSION) {
-        printf("airhug version error, %02x\n", data[0]);
+        LELOGE("airhug version error, %02x", data[0]);
         return -1;
     }
     // len
     if(len < 4 || ssidlen + passwdlen - 2 < len - 4) {
-        printf("airhug len error, %02x\n", len);
+        LELOGE("airhug len error, %02x", len);
         return -1;
     }
     // ssid
     len1 = data[1];
     if(len1 < 1 || len1 > ssidlen - 1) {
-        printf("airhug ssid len error, %u %u\n", len1, ssidlen);
+        LELOGE("airhug ssid len error, %u %u", len1, ssidlen);
         return -1;
     }
     strncpy(ssid, (char *)&data[2], len1);
@@ -218,18 +248,18 @@ int airhug_get(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen)
     // passwd 
     len2 = data[3 + len1];
     if(len2 < 1 || len2 > passwdlen - 1) {
-        printf("airhug passwd len error, %u %u\n", len2, passwdlen);
+        LELOGE("airhug passwd len error, %u %u", len2, passwdlen);
         return -1;
     }
     strncpy(passwd, (char *)&data[3 + len1 + 1], len2);
     ssid[len1] = passwd[len2] = '\0';
-    printf("airhug Get: ssid'%s', passwd'%s'\n", ssid, passwd);
+    LELOG("airhug Get: ssid'%s', passwd'%s'", ssid, passwd);
     return 0;
 }
 
 static void printmac(const uint8_t *mac)
 {
-    printf("%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2],mac[3],mac[4],mac[5]);
+    LELOG("%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2],mac[3],mac[4],mac[5]);
 }
 
 static uint8_t calcrc(uint8_t *ptr, uint32_t len)

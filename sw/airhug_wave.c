@@ -20,6 +20,7 @@
 #include <arpa/inet.h>
 #include "rc4Wrapper.h"
 #include "airhug_wave.h"
+#include "header.h"
 
 #define AIRHUG_VERSION      (0x01)
 #define AIRHUG_MAX_LEN      (255)
@@ -55,8 +56,8 @@ static inline int airhug_send(int fd, uint8_t data[4])
     addr.sin_port = htons(10703);
     addr.sin_addr.s_addr = htonl(0xe8 << 24 | data[0] << 16 | data[1] << 8 | data[2]);
 
-#if 1
-    printf("%02x %02x %02x %02x\n", data[0], data[1], data[2], data[3]);
+#if 0
+    LELOG("%02x %02x %02x %02x\n", data[0], data[1], data[2], data[3]);
 #endif
     return !(sendto(fd, pdata, data[3], 0, (struct sockaddr*)&(addr), sizeof(addr)) == data[3]);
 }
@@ -75,11 +76,11 @@ static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(ui
     sync0[2] = len;
     sync1[2] = calcrc(data, len);
     if((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        printf("socket failed!\n");
+        LELOGE("socket failed!\n");
         goto out;
     }
     if (setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0) {
-        printf("setsockopt failed!\n");
+        LELOGE("setsockopt failed!\n");
         goto out;
     }
 #ifdef BIND_DEV
@@ -87,7 +88,7 @@ static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(ui
     struct ifreq ifr; 
     strncpy(ifr.ifr_name, BIND_DEV, IFNAMSIZ);
     if(setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifr, sizeof(ifr)) < 0) {
-        printf("setsockopt SO_BINDTODEVICE failed, %s\n", strerror(errno));
+        LELOGE("setsockopt SO_BINDTODEVICE failed, %s\n", strerror(errno));
         goto out;
     }
 #endif
@@ -104,6 +105,7 @@ static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(ui
             one[1] = data[i++];
             one[2] = data[i++];
             one[0] = (one[1] + one[2]) & 0x7f;
+            // LELOG("idx %02d %02x %02x %02x %d", i - 2, one[0], one[1], one[2], SYN_BASE + i - 2);
             if(airhug_send(sockfd, one)) {
                 goto out;
             }
@@ -136,7 +138,7 @@ int airhug_wave(const char *ssid, const char *passwd, void (*delayms)(uint16_t m
     if(!ssid || !passwd) {
         return -1;
     }
-    printf("airConfig airhug_wave : ssid '%s', passwd '%s'\n", ssid, passwd);
+    // LELOG("airConfig airhug_wave : ssid '%s', passwd '%s'\n", ssid, passwd);
     // version
     data[len++] = AIRHUG_VERSION;
     if(len + strlen(ssid) > AIRHUG_MAX_LEN) {
@@ -158,9 +160,31 @@ int airhug_wave(const char *ssid, const char *passwd, void (*delayms)(uint16_t m
     data[len++] = strlen(passwd);
     strcpy((char *)&data[len], passwd);
     len += strlen(passwd);
+    // {
+    //     int kk = 0;
+    //     for (kk = 0; kk < len; kk++) {
+    //         if (0 == (kk)%2) {
+    //             LEPRINTF("\n");
+    //         }
+    //         LEPRINTF("%02x ", data[kk]);
+    //     }
+    //     LEPRINTF("\n");
+    // }
     // rc4
     rc4_init(s, (uint8_t *)key, strlen(key));
     rc4_crypt(s, data, len);
+    // LEPRINTF("=============\n");
+    // {
+    //     int kk = 0;
+    //     for (kk = 0; kk < len; kk++) {
+    //         if (0 == (kk)%2) {
+    //             LEPRINTF("\n");
+    //         }
+    //         LEPRINTF("%02x ", data[kk]);
+    //     }
+    //     LEPRINTF("\n");
+    // }
+    // LELOG("=========> len [%d]", len);
     return airhug_wave_raw(data, len, delayms);
 }
 

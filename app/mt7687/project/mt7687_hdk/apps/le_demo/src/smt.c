@@ -21,7 +21,7 @@
 #include "wlan.h"
 #include "airconfig.h"
 
-#define AIRCONFIG_CHANNEL_TIMEOUT (20*1000/portTICK_PERIOD_MS)
+#define AIRCONFIG_CHANNEL_TIMEOUT (8*1000/portTICK_PERIOD_MS)
 
 #ifndef ETH_ALEN
 #define ETH_ALEN        6

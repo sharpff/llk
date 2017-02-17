@@ -4,6 +4,7 @@
 #include "t11_debug.h"
 #include "airconfig.h"
 #include "airhug.h"
+#include "io.h"
 
 //是否已经锁定通道了
 static bool is_channel_locked = false;
@@ -103,7 +104,7 @@ static void monitor_cb(uint8_t *data , int len){
     memcpy(item.mac_dst,da,6);
     memcpy(item.mac_bssid,bssid,6);
     //debug("monitor_cb [%d] !!!!", is_channel_locked);
-#if 0
+#if 1
     const uint8_t *tmp_dest;
     const uint8_t *tmp_src;
     const uint8_t *tmp_bssid;
@@ -122,21 +123,38 @@ static void monitor_cb(uint8_t *data , int len){
         mico_start_timer(channel_timeout_timer);
         return;
     } else if(ret == 2) {
-        hugmsg_t msg;
-        airhug_get(&msg);
-        get_info_success = true;
-        mico_stop_timer(channel_timeout_timer);
-        mico_wlan_stop_monitor();
-
+        int a = 0;
+        APPLOG("airhug_get ...");
         memset(&account, 0, sizeof(account));
-
-        /*SSID*/
-        memcpy(account.ssid, msg.ssid, 
-            strlen(msg.ssid) > sizeof(account.ssid) ? sizeof(account.ssid) : strlen(msg.ssid));
-
-        /*password*/
-        memcpy(account.psk, msg.passwd, 
-            strlen(msg.passwd) > sizeof(account.psk) ? sizeof(account.psk) : strlen(msg.passwd));
+        a = airhug_get(account.ssid, sizeof(account.ssid) - 1, account.psk, sizeof(account.psk) - 1);
+        airhug_reset();
+        if (!a) {
+            APPLOG("airhug_get [%d]: '%s' '%s'", a, account.ssid, account.psk);
+            get_info_success = true;
+            mico_stop_timer(channel_timeout_timer);
+            {
+                int ret = 0;
+                PrivateCfg cfg;
+                lelinkStorageReadPrivateCfg(&cfg);
+                APPLOG("read last ssid[%s], psk[%s], configStatus[%d]", 
+                    cfg.data.nwCfg.config.ssid,
+                    cfg.data.nwCfg.config.psk, 
+                    cfg.data.nwCfg.configStatus);
+                strcpy(cfg.data.nwCfg.config.ssid, account.ssid);
+                cfg.data.nwCfg.config.ssid_len = strlen(account.ssid);
+                cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
+                strcpy(cfg.data.nwCfg.config.psk, account.psk);
+                cfg.data.nwCfg.config.psk_len = strlen(account.psk);
+                cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
+                cfg.data.nwCfg.configStatus = 1;
+                ret = lelinkStorageWritePrivateCfg(&cfg);
+                APPLOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
+                mico_wlan_stop_monitor();
+            }
+        } else {
+            is_channel_locked = false;
+            APPLOG("airhug_get() error!!!");
+        }
 
         return;
     }
@@ -205,7 +223,7 @@ static void reinit(){
         channel_change_timer = halMalloc(sizeof(mico_timer_t));
         channel_timeout_timer = halMalloc(sizeof(mico_timer_t));
         mico_init_timer(channel_change_timer,200, change_channel, NULL);
-        mico_init_timer(channel_timeout_timer,12*1000, channel_timeout, NULL);
+        mico_init_timer(channel_timeout_timer,8*1000, channel_timeout, NULL);
     }
 }
 
