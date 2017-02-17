@@ -109,8 +109,8 @@ int lelink_recv(char *p, int len) {
             return AIRCONFIG_NW_STATE_CHANNEL_LOCKED;
         } else if(ret == 2) {
             airconfig_stop();
-            APPLOG("airhug_get_ext ...");
-            if(!airhug_get_ext(saved_smtcn_info.ssid, WIFI_MAX_LENGTH_OF_SSID, saved_smtcn_info.pwd, WIFI_LENGTH_PASSPHRASE)) {
+            APPLOG("airhug_get ...");
+            if(!airhug_get(saved_smtcn_info.ssid, WIFI_MAX_LENGTH_OF_SSID, saved_smtcn_info.pwd, WIFI_LENGTH_PASSPHRASE)) {
                 gin_airconfig_sniffer_got = 1;
                 /*SSID*/
                 saved_smtcn_info.ssid_len = os_strlen(saved_smtcn_info.ssid);
@@ -138,7 +138,7 @@ int lelink_recv(char *p, int len) {
                 return AIRCONFIG_NW_STATE_COMPLETED;
             } else {
                 gin_airconfig_channel_locked = 0;
-                APPLOG("airhug_get_ext() error!!!");
+                APPLOG("airhug_get() error!!!");
             }
             airhug_reset();
         }

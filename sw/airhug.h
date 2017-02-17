@@ -13,8 +13,9 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define AIRHUG_VERSION      (0x01)
-#define AIRHUG_MAX_LEN      (255)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * 功能: 开始一次新的配置，清空上次保存的记录数据
@@ -46,21 +47,6 @@ void airhug_reset(void);
 int airhug_feed_data(const uint8_t *src, const uint8_t *dst, const uint8_t *bssid, uint32_t datalen);
 
 /*
- * 功能: 得到数据
- *
- * 参数: 
- *       buf : 返回数据缓冲区
- *      size : data 空间大小(目前最大支持255)
- *
- * 返回值:
- *      -1 : 出错
- *    其它 : 得到数据长度
- *
- */
-int airhug_get(uint8_t *buf, uint16_t size);
-
-
-/*
  * 功能: 得到配置信息
  *
  * 参数: 
@@ -74,7 +60,11 @@ int airhug_get(uint8_t *buf, uint16_t size);
  *      -1 : 出错
  *
  */
-int airhug_get_ext(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen);
+int airhug_get(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif    // #ifndef _AIRHUG_H_
 

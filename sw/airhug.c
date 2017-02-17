@@ -12,6 +12,9 @@
 #include "rc4Wrapper.h"
 #include "airhug.h"
 
+#define AIRHUG_VERSION      (0x1)
+#define AIRHUG_MAX_LEN      (255)
+
 #define SYN_DATA1   (0x46)
 #define SYN_DATA2   (0x5a)
 #define SYN_OFFSET  (0x08)
@@ -43,6 +46,20 @@ static struct {
 
 static void printmac(const uint8_t *mac);
 static uint8_t calcrc(uint8_t *ptr, uint32_t len);
+
+/*
+ * 功能: 得到数据
+ *
+ * 参数: 
+ *       buf : 返回数据缓冲区
+ *      size : data 空间大小(目前最大支持255)
+ *
+ * 返回值:
+ *      -1 : 出错
+ *    其它 : 得到数据长度
+ *
+ */
+static int airhug_get_raw(uint8_t *buf, uint16_t size);
 
 void airhug_reset(void)
 {
@@ -143,7 +160,7 @@ int airhug_feed_data(const uint8_t *src, const uint8_t *dst, const uint8_t *bssi
     return s_hug.state;
 }
 
-int airhug_get(uint8_t *buf, uint16_t size)
+static int airhug_get_raw(uint8_t *buf, uint16_t size)
 {
     if(!buf) {
         return -1;
@@ -159,13 +176,13 @@ int airhug_get(uint8_t *buf, uint16_t size)
 }
 
 /*
- *   -----------------------------------------------------
- *  |   ver  |  len1  |     ssid     |  len2  |   passwd  |
- *   -----------------------------------------------------
- *  | 1bytes | 1bytes |  len1 bytes  | 1bytes | len2 bytes|
- *   -----------------------------------------------------
+ *   -------------------------------------------------------------
+ *  |   ver  |  len1  |     ssid    | random |  len2  |   passwd  |
+ *   -------------------------------------------------------------
+ *  | 1 byte | 1 byte |  len1 bytes | 1 byte | 1 byte | len2 bytes|
+ *   -------------------------------------------------------------
  */
-int airhug_get_ext(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen)
+int airhug_get(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen)
 {
     int ret;
     uint16_t len = 0;
@@ -173,7 +190,7 @@ int airhug_get_ext(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdle
     uint8_t data[AIRHUG_MAX_LEN];
 	static const char *key = "09n899uh39nhh9q34kk";
 
-    if((ret = airhug_get(data, sizeof(data))) <= 0) {
+    if((ret = airhug_get_raw(data, sizeof(data))) <= 0) {
         return -1;
     }
     len = ret;
@@ -186,7 +203,7 @@ int airhug_get_ext(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdle
         return -1;
     }
     // len
-    if(len < 3 || ssidlen + passwdlen - 2 < len - 3) {
+    if(len < 4 || ssidlen + passwdlen - 2 < len - 4) {
         printf("airhug len error, %02x\n", len);
         return -1;
     }
@@ -197,13 +214,14 @@ int airhug_get_ext(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdle
         return -1;
     }
     strncpy(ssid, (char *)&data[2], len1);
+    // random
     // passwd 
-    len2 = data[2 + len1];
+    len2 = data[3 + len1];
     if(len2 < 1 || len2 > passwdlen - 1) {
         printf("airhug passwd len error, %u %u\n", len2, passwdlen);
         return -1;
     }
-    strncpy(passwd, (char *)&data[2 + len1 + 1], len2);
+    strncpy(passwd, (char *)&data[3 + len1 + 1], len2);
     ssid[len1] = passwd[len2] = '\0';
     printf("airhug Get: ssid'%s', passwd'%s'\n", ssid, passwd);
     return 0;

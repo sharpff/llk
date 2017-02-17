@@ -21,12 +21,30 @@
 #include "rc4Wrapper.h"
 #include "airhug_wave.h"
 
+#define AIRHUG_VERSION      (0x01)
+#define AIRHUG_MAX_LEN      (255)
+
 #define SYN_DATA1   (0x46)
 #define SYN_DATA2   (0x5a)
 #define SYN_BASE    (0x20)
 #define SYN_OFFSET  (0x08)
 
 static uint8_t calcrc(const uint8_t *ptr, uint32_t len);
+
+/*
+ * 功能: 发送数据
+ *
+ * 参数: 
+ *      data - data buf 
+ *      len - data len
+ *      delayms - 延时毫秒回调
+ *
+ * 返回值:
+ *      0 - 成功发送一次数据
+ *     -1 - 发送出错
+ *
+ */
+static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(uint16_t ms));
 
 static inline int airhug_send(int fd, uint8_t data[4]) 
 {
@@ -43,7 +61,7 @@ static inline int airhug_send(int fd, uint8_t data[4])
     return !(sendto(fd, pdata, data[3], 0, (struct sockaddr*)&(addr), sizeof(addr)) == data[3]);
 }
 
-int airhug_wave(const uint8_t *data, uint16_t len, void (*delayms)(uint16_t ms))
+static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(uint16_t ms))
 {
     uint32_t i;
     int ret = -1, j, sockfd;
@@ -101,17 +119,18 @@ out:
 }
 
 /*
- *   -----------------------------------------------------
- *  |   ver  |  len1  |     ssid     |  len2  |   passwd  |
- *   -----------------------------------------------------
- *  | 1bytes | 1bytes |  len1 bytes  | 1bytes | len2 bytes|
- *   -----------------------------------------------------
+ *   -------------------------------------------------------------
+ *  |   ver  |  len1  |     ssid    | random |  len2  |   passwd  |
+ *   -------------------------------------------------------------
+ *  | 1 byte | 1 byte |  len1 bytes | 1 byte | 1 byte | len2 bytes|
+ *   -------------------------------------------------------------
  */
-int airhug_wave_ext(const char *ssid, const char *passwd, void (*delayms)(uint16_t ms))
+int airhug_wave(const char *ssid, const char *passwd, void (*delayms)(uint16_t ms))
 {
     uint8_t s[256];
     uint16_t len = 0;
     uint8_t data[AIRHUG_MAX_LEN];
+    static uint8_t random = 0;
 	static const char *key = "09n899uh39nhh9q34kk";
 
     if(!ssid || !passwd) {
@@ -130,6 +149,11 @@ int airhug_wave_ext(const char *ssid, const char *passwd, void (*delayms)(uint16
     if(len + strlen(passwd) > AIRHUG_MAX_LEN) {
         return -1;
     }
+    // random
+    if(!random) {
+        random = (halRand() & 0xff);
+    }
+    data[len++] = random;
     // passwd
     data[len++] = strlen(passwd);
     strcpy((char *)&data[len], passwd);
@@ -137,7 +161,7 @@ int airhug_wave_ext(const char *ssid, const char *passwd, void (*delayms)(uint16
     // rc4
     rc4_init(s, (uint8_t *)key, strlen(key));
     rc4_crypt(s, data, len);
-    return airhug_wave(data, len, delayms);
+    return airhug_wave_raw(data, len, delayms);
 }
 
 static uint8_t calcrc(const uint8_t *ptr, uint32_t len)
