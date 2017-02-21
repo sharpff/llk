@@ -7,11 +7,10 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include "rc4Wrapper.h"
+// #include <stdio.h>
+// #include <string.h>
 #include "airhug.h"
-#include "header.h"
+#include "rc4Wrapper.h"
 
 #define AIRHUG_VERSION      (0x1)
 #define AIRHUG_MAX_LEN      (255)

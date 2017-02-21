@@ -10,8 +10,9 @@
 #ifndef _AIRHUG_H_
 #define _AIRHUG_H_
 
-#include <stdio.h>
-#include <stdint.h>
+// #include <stdio.h>
+// #include <stdint.h>
+#include "leconfig.h"
 
 #ifdef __cplusplus
 extern "C" {

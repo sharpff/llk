@@ -10,7 +10,7 @@
 #ifndef _RC4WRAPPER_H_
 #define _RC4WRAPPER_H_
 
-#include <stdint.h>
+#include "leconfig.h"
 
 void rc4_init(uint8_t s[256], uint8_t *key, uint32_t len);
 

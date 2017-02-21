@@ -7,7 +7,7 @@
  *
  */
 
-#include <stdio.h>
+// #include <stdio.h>
 #include "rc4Wrapper.h"
 
 /*初始化函数*/
