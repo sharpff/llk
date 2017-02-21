@@ -84,7 +84,7 @@ int lelink_reset(void) {
 	return 0;
 }
 
-#if 1
+#if 0
 #include "airhug.h"
 #include "io.h"
 int lelink_recv(char *p, int len) {

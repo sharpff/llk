@@ -429,7 +429,7 @@ int getTerminalStatus(char *status, int len) {
 
     tmpLen = strlen(status);
 
-    sprintf(status + tmpLen, ",\"cloud\":%d", isCloudOnlined());
+    sprintf(status + tmpLen, ",\"cloud\":%d", isCloudAuthed());
     tmpLen = strlen(status);
 
     strcpy(status + tmpLen, ",\"uuid\":\""); tmpLen = strlen(status);
