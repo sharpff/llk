@@ -302,3 +302,7 @@ int halGetHostByName(const char *name, char ip[4][32], int len) {
     return 0;
 }
 
+int halGetHostByNameNB(const char *name, char ip[4][32], int len) { 
+    return halGetHostByName(name, ip, len);
+}
+
