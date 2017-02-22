@@ -38,14 +38,13 @@ static uint8_t calcrc(const uint8_t *ptr, uint32_t len);
  * 参数: 
  *      data - data buf 
  *      len - data len
- *      delayms - 延时毫秒回调
  *
  * 返回值:
  *      0 - 成功发送一次数据
  *     -1 - 发送出错
  *
  */
-static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(uint16_t ms));
+static int airhug_wave_raw(const uint8_t *data, uint16_t len);
 
 static inline int airhug_send(int fd, uint8_t data[4]) 
 {
@@ -62,7 +61,7 @@ static inline int airhug_send(int fd, uint8_t data[4])
     return !(sendto(fd, pdata, data[3], 0, (struct sockaddr*)&(addr), sizeof(addr)) == data[3]);
 }
 
-static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(uint16_t ms))
+static int airhug_wave_raw(const uint8_t *data, uint16_t len)
 {
     uint32_t i;
     int ret = -1, j, sockfd;
@@ -70,7 +69,7 @@ static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(ui
     uint8_t sync0[4] = {SYN_DATA1, SYN_DATA2, 0, SYN_BASE};
     uint8_t sync1[4] = {SYN_DATA1, SYN_DATA2, 0, SYN_BASE + SYN_OFFSET};
 
-    if(!data || len <= 0 || !delayms) {
+    if(!data || len <= 0) {
         goto out;
     }
     sync0[2] = len;
@@ -99,7 +98,7 @@ static int airhug_wave_raw(const uint8_t *data, uint16_t len, void (*delayms)(ui
         if(airhug_send(sockfd, sync1)) {
             goto out;
         }
-        delayms(10);
+        halDelayms(10);
         for(j = 0; j < 2; j++) {
             one[3] = SYN_BASE + i;
             one[1] = data[i++];
@@ -127,7 +126,7 @@ out:
  *  | 1 byte | 1 byte |  len1 bytes | 1 byte | 1 byte | len2 bytes|
  *   -------------------------------------------------------------
  */
-int airhug_wave(const char *ssid, const char *passwd, void (*delayms)(uint16_t ms))
+int airhug_wave(const char *ssid, const char *passwd)
 {
     uint8_t s[256];
     uint16_t len = 0;
@@ -185,7 +184,7 @@ int airhug_wave(const char *ssid, const char *passwd, void (*delayms)(uint16_t m
     //     LEPRINTF("\n");
     // }
     // LELOG("=========> len [%d]", len);
-    return airhug_wave_raw(data, len, delayms);
+    return airhug_wave_raw(data, len);
 }
 
 static uint8_t calcrc(const uint8_t *ptr, uint32_t len)
