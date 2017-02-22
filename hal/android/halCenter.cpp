@@ -93,11 +93,6 @@ int initTask(char *json)
 	return ret;
 }
 
-static void sleepms(uint16_t ms)
-{
-    usleep(ms * 1000);
-}
-
 int airConfig(void *ptr, char *json)
 {
     int ret = -1;
@@ -139,7 +134,7 @@ int airConfig(void *ptr, char *json)
         ret = softApDoConfig(ssid, passwd, delay, aesKey);
     } else if(4 == type) {
         APPLOGW("airConfig airhug_wave : ssid '%s', passwd '%s'", ssid, passwd);
-        ret = airhug_wave((char *)ssid, (char *)passwd, sleepms);
+        ret = airhug_wave((char *)ssid, (char *)passwd);
     } 
     return ret;
 }

@@ -83,6 +83,9 @@ int halDoApConnecting(void *ptr, int ptrLen) {
  *
  * 返回值:
  *      0 - 成功启动, 其它表示失败
+ *      
+ * 注意: IP: 192.168.10.1; 网络: 192.168.10.0/24;
+ * 
  */
 int halSoftApStart(const char *ssid, char *wpa2_passphrase, uint8_t *aesKey, int aesKeyLen) {
     return 0;

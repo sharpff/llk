@@ -22,14 +22,13 @@ extern "C" {
  * 参数: 
  *      ssid   - ssid 字符串
  *      passwd - passwd 字符串
- *      delayms - 延时毫秒回调
  *
  * 返回值:
  *      0 - 成功发送一次数据
  *     -1 - 发送出错
  *
  */
-int airhug_wave(const char *ssid, const char *passwd, void (*delayms)(uint16_t ms));
+int airhug_wave(const char *ssid, const char *passwd);
 
 #ifdef __cplusplus
 }

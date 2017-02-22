@@ -250,7 +250,7 @@ void thread_input_check(void *arg) {
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0, 
 
-// #define DO_AIR_CONFIG    
+ #define DO_AIR_CONFIG    
 // #define ENABLE_WIFI_SOFT_AP 1
 
 // #define TIMEOUT_BEGIN_SEC(ss, go1st) {\
@@ -362,11 +362,6 @@ int main(int argc, char *argv[]) {
 }
 
 #else
-static void sleepms(uint16_t ms)
-{
-    usleep(ms * 1000);
-}
-
 int main(int argc, char** argv) {
     char configInfo[256] = {0};
     int delay = 10, type = 1;
@@ -436,7 +431,7 @@ int main(int argc, char** argv) {
         }
 
     #else
-        ret = airhug_wave((char *)ssid, (char *)passwd, sleepms);
+        ret = airhug_wave((char *)ssid, (char *)passwd);
     #endif
     }
 #endif
