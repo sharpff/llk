@@ -2221,25 +2221,24 @@ int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSe
 }
 
 int sengineRemoveRules(const char *name) {
-    int whereToPut = -1, found = 0;
-    PrivateCfg* privCfg = NULL;
+    int whereToPut = -1, found = 0, ret = 0;
+    PrivateCfg cfg;
     LELOG("sengineRemoveRules -s ");
     if (NULL == name) {
         LELOGE("sengineRemoveRules name NULL");
         return -1;
     }
-    // ret = lelinkStorageReadPrivateCfg(&privCfg);
-    // if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
-    //     LELOGE("sengineRemoveRules lelinkStorageWriteScriptCfg2 csum FAILED");
-    //     return -2;
-    // }
-    getPrivateConfigure(&privCfg);
+    ret = lelinkStorageReadPrivateCfg(&cfg);
+    if (0 > ret) {
+        LELOGE("sengineRemoveRules lelinkStorageWriteScriptCfg2 csum FAILED");
+        return -2;
+    }
 
-    found = findPosForIAName(privCfg, name, strlen(name), &whereToPut);
+    found = findPosForIAName(&cfg, name, strlen(name), &whereToPut);
     if (found) {
-        privCfg->data.iaCfg.arrIA[whereToPut] = 0;
-        privCfg->data.iaCfg.num--;
-        lelinkStorageWritePrivateCfg(privCfg);
+        cfg.data.iaCfg.arrIA[whereToPut] = 0;
+        cfg.data.iaCfg.num--;
+        lelinkStorageWritePrivateCfg(&cfg);
         return found;
     }    
 

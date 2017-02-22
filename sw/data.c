@@ -97,9 +97,13 @@ int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
 
 int setLock(int locked, int uid) {
     int ret = 0;
-    ginPrivateCfg.data.devCfg.locked = locked;
-    ginPrivateCfg.data.devCfg.uid = uid;
-    ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+    PrivateCfg privCfg;
+    if (0 > lelinkStorageReadPrivateCfg(&privCfg)) {
+        return 0;
+    }
+    privCfg.data.devCfg.locked = locked;
+    privCfg.data.devCfg.uid = uid;
+    ret = lelinkStorageWritePrivateCfg(&privCfg);
     return 0 <= ret ? 1 : 0;
 }
 
@@ -116,12 +120,16 @@ int getDevFlag(DEV_FLAG_t flagWiFi) {
 }
 
 int setDevFlag(DEV_FLAG_t flagWiFi, int isSet) {
-    if(isSet) {
-        ginPrivateCfg.data.devCfg.flagWiFi &= ~flagWiFi;
-    } else {
-        ginPrivateCfg.data.devCfg.flagWiFi |= flagWiFi;
+    PrivateCfg privCfg;
+    if (0 > lelinkStorageReadPrivateCfg(&privCfg)) {
+        return -8;
     }
-    return lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+    if(isSet) {
+        privCfg.data.devCfg.flagWiFi &= ~flagWiFi;
+    } else {
+        privCfg.data.devCfg.flagWiFi |= flagWiFi;
+    }
+    return lelinkStorageWritePrivateCfg(&privCfg);
 }
 
 void setTerminalUTC(uint64_t *utc) {
