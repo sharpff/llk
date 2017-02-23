@@ -119,6 +119,30 @@ void printForFac(void) {
         mac[4], 
         mac[5]);
 }
+#include "hal.h"
+#include "system_mt7687.h"
+void wdt_feed_watchdog_example()
+{
+    hal_wdt_config_t wdt_init;
+    wdt_init.mode = HAL_WDT_MODE_RESET;
+    wdt_init.seconds = 30;
+    hal_wdt_status_t my_ret;
+
+    log_hal_info("WDT test begins...\n");
+    my_ret = hal_wdt_init(&wdt_init);
+    if (HAL_WDT_STATUS_OK != my_ret) {
+        log_hal_info("WDT initialization error.\r\n");
+    }
+    my_ret = hal_wdt_enable(HAL_WDT_ENABLE_MAGIC);
+    if (HAL_WDT_STATUS_OK != my_ret) {
+        log_hal_info("WDT enable error.\r\n");
+    }
+
+    hal_gpt_delay_ms(1000);
+
+    hal_wdt_feed(HAL_WDT_FEED_MAGIC);
+
+}
 
 static void mtk_thread_lelink_proc(void *args) {
     int ret; 

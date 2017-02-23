@@ -41,7 +41,9 @@ int halDoConfig(void *ptr, int ptrLen) {
 }
 
 int halStopConfig(void) {
-    return airconfig_stop();
+    int ret = airconfig_stop();
+    hal_sys_reboot(HAL_SYS_REBOOT_MAGIC, WHOLE_SYSTEM_REBOOT_COMMAND);
+    return ret;
 }
 
 int halDoConfiguring(void *ptr, int ptrLen) {
