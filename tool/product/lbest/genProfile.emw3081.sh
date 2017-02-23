@@ -19,7 +19,7 @@ $MAIN_PATH/lelinkTool.py \
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --wmode sap \
+    --wmode mon \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \
