@@ -271,7 +271,7 @@ extern unsigned long halLogTimeStamp(void);
 
 // #define LELINK_OTA_VERIFICATION
 
-// #define MONITOR_CONFIG4
+#define MONITOR_CONFIG4
 
 #ifdef __cplusplus
 }

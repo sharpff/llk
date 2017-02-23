@@ -478,7 +478,7 @@ int getTerminalStatus(char *status, int len) {
 //     strcpy(ginIACache.cache[1].beingReservedUUID[0], "12345");
 //     strcpy(ginIACache.cache[1].beingReservedUUID[1], "43216");
 // }
-    LELOG("getTerminalStatus ginIACache.cfg.num [%d] <==========", ginIACache.cfg.num);
+    // LELOG("getTerminalStatus ginIACache.cfg.num [%d] <==========", ginIACache.cfg.num);
     tmpLen += sprintf(status + tmpLen, ",\"uuids\":%s", "{");
     for (i = 0; i < MAX_IA; i++) {
         if (0 >= ginIACache.cfg.arrIA[i]) {
