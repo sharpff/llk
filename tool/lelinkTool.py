@@ -49,7 +49,7 @@ class Param(object):
                       help="Generate private info")
         parser.add_option("--wmode", type="string",
                       action="store", dest="wmode", default=self.wmode,
-                      help="wifi password")
+                      help="wifi configure default way, mon or sap")
         parser.add_option("--keepud",
                       action="store_true", dest="keepud", default=self.keepud,
                       help="keep user data in reset manually")
