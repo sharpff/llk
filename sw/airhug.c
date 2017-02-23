@@ -229,18 +229,18 @@ int airhug_get(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen)
     // version
     if(data[0] != AIRHUG_VERSION) {
         LELOGE("airhug version error, %02x", data[0]);
-        return -1;
+        return -2;
     }
     // len
     if(len < 4 || ssidlen + passwdlen - 2 < len - 4) {
         LELOGE("airhug len error, %02x", len);
-        return -1;
+        return -3;
     }
     // ssid
     len1 = data[1];
     if(len1 < 1 || len1 > ssidlen - 1) {
         LELOGE("airhug ssid len error, %u %u", len1, ssidlen);
-        return -1;
+        return -4;
     }
     strncpy(ssid, (char *)&data[2], len1);
     // random
@@ -248,7 +248,7 @@ int airhug_get(char *ssid, uint16_t ssidlen, char *passwd, uint16_t passwdlen)
     len2 = data[3 + len1];
     if(len2 < 1 || len2 > passwdlen - 1) {
         LELOGE("airhug passwd len error, %u %u", len2, passwdlen);
-        return -1;
+        return -5;
     }
     strncpy(passwd, (char *)&data[3 + len1 + 1], len2);
     ssid[len1] = passwd[len2] = '\0';

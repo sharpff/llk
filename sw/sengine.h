@@ -137,8 +137,8 @@ typedef struct {
 }IA_CACHE_INT;
 
 typedef struct {
-    IACfg cfg;
-    IA_CACHE_INT cache[MAX_IA];
+    IACfg cfg; // sync with flash
+    IA_CACHE_INT cache[MAX_IA]; // just used for cache(not flash)
     // char buf[1024*10];
 }IA_CACHE;
 

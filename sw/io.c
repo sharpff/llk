@@ -373,6 +373,7 @@ int lelinkStorageWritePrivateCfg(const PrivateCfg *privateCfg) {
 
     if (0 == ret) {
         memcpy(&ginPrivateCfg, privateCfg, sizeof(PrivateCfg));
+        memcpy(&(ginIACache.cfg), &(privateCfg->data.iaCfg), sizeof(IACfg));
     }
 
     return ret;
@@ -388,6 +389,7 @@ int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
 
     if (0 == ret) {
         memcpy(&ginPrivateCfg, privateCfg, sizeof(PrivateCfg));
+        memcpy(&(ginIACache.cfg), &(privateCfg->data.iaCfg), sizeof(IACfg));
     }
     return ret;
 }

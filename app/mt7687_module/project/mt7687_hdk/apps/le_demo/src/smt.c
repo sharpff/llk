@@ -108,10 +108,8 @@ int lelink_recv(char *p, int len) {
             gin_airconfig_channel_locked = 1;
             return AIRCONFIG_NW_STATE_CHANNEL_LOCKED;
         } else if(ret == 2) {
-            airconfig_stop();
             APPLOG("airhug_get ...");
             if(!airhug_get(saved_smtcn_info.ssid, WIFI_MAX_LENGTH_OF_SSID, saved_smtcn_info.pwd, WIFI_LENGTH_PASSPHRASE)) {
-                gin_airconfig_sniffer_got = 1;
                 /*SSID*/
                 saved_smtcn_info.ssid_len = os_strlen(saved_smtcn_info.ssid);
                 /*password*/
@@ -135,6 +133,7 @@ int lelink_recv(char *p, int len) {
                     ret = lelinkStorageWritePrivateCfg(&cfg);
                     APPLOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
                 }
+                gin_airconfig_sniffer_got = 1;
                 return AIRCONFIG_NW_STATE_COMPLETED;
             } else {
                 gin_airconfig_channel_locked = 0;
@@ -246,6 +245,7 @@ static int lelink_input(char* phdr, int len) {
 	        if(ret == AIRCONFIG_NW_STATE_COMPLETED) {
 			    printf("<INFO>Airkiss Finished</INFO>\n");
 	            ak_status = AK_FIN;
+	            airconfig_stop();
 			    lelink_get_info();
 		    }
 	        break;

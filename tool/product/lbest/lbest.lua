@@ -46,7 +46,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.1'
+	local str = '1.1.1'
 	return string.len(str), str
 end
 
@@ -58,18 +58,13 @@ end
 function s1GetCvtType()
 
     local str = [[
-    {
-    "whatCvtType":1,
-    "uart":[
-    	{
-    		"id":1, 
-    		"baud":"9600-8N1"
-    	}
-    	]
-	}
+    {"whatCvtType":1,
+     "common":[{"num":2,"id":"2-3","mux":"7-7"}],
+     "uart":[{"id":0, "baud":"9600-8N1"}]
+    }
     ]]
-
-	return string.len(str), str, delay
+    local delay = 5
+    return string.len(str), str, delay
 end
 
 --[[ MUST
