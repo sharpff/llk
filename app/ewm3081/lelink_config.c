@@ -104,7 +104,7 @@ static void monitor_cb(uint8_t *data , int len){
     memcpy(item.mac_dst,da,6);
     memcpy(item.mac_bssid,bssid,6);
     //debug("monitor_cb [%d] !!!!", is_channel_locked);
-#if 0
+#ifdef MONITOR_CONFIG4
     const uint8_t *tmp_dest;
     const uint8_t *tmp_src;
     const uint8_t *tmp_bssid;

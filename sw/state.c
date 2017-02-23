@@ -270,14 +270,14 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
 
 static int reloadLatestPassport(void) {
     int ret = 0;
-    memset(&ginPrivateCfg, 0, sizeof(ginPrivateCfg));
-    if (0 == lelinkStorageReadPrivateCfg(&ginPrivateCfg)) {
-        LELOG("reloadLatestPassport status [%d]", ginPrivateCfg.data.nwCfg.configStatus);
-        if (ginPrivateCfg.csum == crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
-            if (0 < ginPrivateCfg.data.nwCfg.config.ssid_len) {
-                LELOG("reloadLatestPassport got old passport [%s:%s]", ginPrivateCfg.data.nwCfg.config.ssid, ginPrivateCfg.data.nwCfg.config.psk);
-                ginPrivateCfg.data.nwCfg.configStatus = 1;
-                lelinkStorageWritePrivateCfg(&ginPrivateCfg); 
+    PrivateCfg cfg;
+    if (0 == lelinkStorageReadPrivateCfg(&cfg)) {
+        LELOG("reloadLatestPassport status [%d]", cfg.data.nwCfg.configStatus);
+        if (cfg.csum == crc8((uint8_t *)&(cfg.data), sizeof(cfg.data))) {
+            if (0 < cfg.data.nwCfg.config.ssid_len) {
+                LELOG("reloadLatestPassport got old passport [%s:%s]", cfg.data.nwCfg.config.ssid, cfg.data.nwCfg.config.psk);
+                cfg.data.nwCfg.configStatus = 1;
+                lelinkStorageWritePrivateCfg(&cfg); 
                 ret = 1;                   
             }
         }
@@ -287,30 +287,31 @@ static int reloadLatestPassport(void) {
 
 static int stateProcStart(StateContext *cntx) {
     int ret = 0;
+    PrivateCfg cfg;
 
     LELOG("stateProcStart -s");
-    if (0 == lelinkStorageReadPrivateCfg(&ginPrivateCfg)) {
-        LELOG("lelinkStorageReadPrivateCfg configStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus);
-        if (ginPrivateCfg.csum == crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
-            if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
-                ret = ginPrivateCfg.data.nwCfg.configStatus;
-                LELOG("stateProcStart ssid[%s] psk[%s]", ginPrivateCfg.data.nwCfg.config.ssid, ginPrivateCfg.data.nwCfg.config.psk);
+    if (0 == lelinkStorageReadPrivateCfg(&cfg)) {
+        LELOG("lelinkStorageReadPrivateCfg configStatus[%d]", cfg.data.nwCfg.configStatus);
+        if (cfg.csum == crc8((uint8_t *)&(cfg.data), sizeof(cfg.data))) {
+            if (0 < cfg.data.nwCfg.configStatus) {
+                ret = cfg.data.nwCfg.configStatus;
+                LELOG("stateProcStart ssid[%s] psk[%s]", cfg.data.nwCfg.config.ssid, cfg.data.nwCfg.config.psk);
                 ginConfigStatus = 1;
             } 
         }
     }
     LELOG("stateProcStart ********** flagWiFi[%02x] initCfgWiFiMode[%02x], initCfgIfUnBind[%02x]", 
-        ginPrivateCfg.data.devCfg.flagWiFi, 
-        ginPrivateCfg.data.devCfg.initCfgWiFiMode,
-        ginPrivateCfg.data.devCfg.initCfgIfUnBind); 
+        cfg.data.devCfg.flagWiFi, 
+        cfg.data.devCfg.initCfgWiFiMode,
+        cfg.data.devCfg.initCfgIfUnBind); 
     if (0 == ret) {
         if(getDevFlag(DEV_FLAG_RESET)) {
             // TODO: wait for mt7687 flash ready?
             halDelayms(500);
             setDevFlag(DEV_FLAG_RESET, 0);
-            wifiConfigByMonitor = ginPrivateCfg.data.devCfg.initCfgWiFiMode ? 1 : 0;
+            wifiConfigByMonitor = cfg.data.devCfg.initCfgWiFiMode ? 1 : 0;
         } else {
-            wifiConfigByMonitor = !(ginPrivateCfg.data.devCfg.initCfgWiFiMode) ? 1 : 0;
+            wifiConfigByMonitor = !(cfg.data.devCfg.initCfgWiFiMode) ? 1 : 0;
         }
         wifiConfigTimeout = wifiConfigByMonitor ? WIFI_CFG_BY_MONITOR_TIME : WIFI_CFG_BY_SOFTAP_TIME;
         if(wifiConfigByMonitor) {
@@ -368,25 +369,27 @@ static int stateProcConfiguring(StateContext *cntx) {
 
 static int stateProcSnifferGot(StateContext *cntx) {
     int ret = 0;
+    PrivateCfg cfg;
 
     if (0 == ginConfigStatus) {
 		wifiConfigByMonitor ?  halStopConfig() : softApStop(1);
 		LELOG("stateProcSnifferGot right");
     }
-    // ginPrivateCfg.data.nwCfg.configStatus = 0;
-    lelinkStorageReadPrivateCfg(&ginPrivateCfg);
-    if (ginPrivateCfg.csum != crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
-        ginPrivateCfg.data.nwCfg.configStatus = 0;
+    // cfg.data.nwCfg.configStatus = 0;
+    ret = lelinkStorageReadPrivateCfg(&cfg);
+    if (0 > ret) {
+        cfg.data.nwCfg.configStatus = 0;
+        lelinkStorageWritePrivateCfg(&cfg);
     }
 
-    if (0 < ginPrivateCfg.data.nwCfg.configStatus) {
-        setSSID((const char *)&(ginPrivateCfg.data.nwCfg.config.ssid), ginPrivateCfg.data.nwCfg.config.ssid_len);
-        ret = halDoApConnect(&ginPrivateCfg, sizeof(PrivateCfg));
+    if (0 < cfg.data.nwCfg.configStatus) {
+        setSSID((const char *)&(cfg.data.nwCfg.config.ssid), cfg.data.nwCfg.config.ssid_len);
+        ret = halDoApConnect(&cfg, sizeof(PrivateCfg));
     } else {
         ret = halDoApConnect(NULL, 0);
     }
     ginConfigStatus = 1;
-    LELOG("stateProcSnifferGot ret[%d] ginConfigStatus[%d][%d]", ret, ginConfigStatus, ginPrivateCfg.data.nwCfg.configStatus);
+    LELOG("stateProcSnifferGot ret[%d] ginConfigStatus[%d][%d]", ret, ginConfigStatus, cfg.data.nwCfg.configStatus);
     return ret;
 }
 
@@ -412,6 +415,7 @@ static int stateProcApConnected(StateContext *cntx) {
     int sta = -1;
     int count = 3;
     NodeData node = {0};
+    PrivateCfg cfg;
 
     // LELOG("stateProcApConnected");
 
@@ -421,13 +425,13 @@ static int stateProcApConnected(StateContext *cntx) {
     sta = 0;
 
     // only for backup
-    // LELOG("***** start stateProcApConnected ginPrivateCfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus, ginConfigStatus);
-    lelinkStorageReadPrivateCfg(&ginPrivateCfg);
-    if (ginPrivateCfg.csum != crc8((uint8_t *)&(ginPrivateCfg.data), sizeof(ginPrivateCfg.data))) {
-        ginPrivateCfg.data.nwCfg.configStatus = 2;
+    // LELOG("***** start stateProcApConnected cfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", cfg.data.nwCfg.configStatus, ginConfigStatus);
+    lelinkStorageReadPrivateCfg(&cfg);
+    if (cfg.csum != crc8((uint8_t *)&(cfg.data), sizeof(cfg.data))) {
+        cfg.data.nwCfg.configStatus = 2;
     }
-    // LELOG("***** end stateProcApConnected ginPrivateCfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", ginPrivateCfg.data.nwCfg.configStatus, ginConfigStatus);
-    if (2 != ginPrivateCfg.data.nwCfg.configStatus && (1 == ginConfigStatus)) {
+    // LELOG("***** end stateProcApConnected cfg.data.nwCfg.configStatus[%d], ginConfigStatus[%d]", cfg.data.nwCfg.configStatus, ginConfigStatus);
+    if (2 != cfg.data.nwCfg.configStatus && (1 == ginConfigStatus)) {
         char br[32] = {0};
         int ret = 0;
         ret = halGetBroadCastAddr(br, sizeof(br));
@@ -444,8 +448,8 @@ static int stateProcApConnected(StateContext *cntx) {
             lelinkNwPostCmd(ginCtxR2R, &node);
         }
 
-        ginPrivateCfg.data.nwCfg.configStatus = 2;
-        lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+        cfg.data.nwCfg.configStatus = 2;
+        lelinkStorageWritePrivateCfg(&cfg);
     }
     
     if (ginCtxR2R) {
@@ -578,28 +582,29 @@ static int stateProcCloudOnline(StateContext *cntx) {
 int resetConfigData(int bussinessOnly) {
 
     int ret = 0;
-    ret = lelinkStorageReadPrivateCfg(&ginPrivateCfg);
+    PrivateCfg cfg;
+    ret = lelinkStorageReadPrivateCfg(&cfg);
     if (0 <= ret) {
         if (!bussinessOnly) {
         // WiFi config info
-            ginPrivateCfg.data.nwCfg.configStatus = 0;
+            cfg.data.nwCfg.configStatus = 0;
             ginConfigStatus = 0;            
         }
 
         // user info
-        if (bussinessOnly || ginPrivateCfg.data.devCfg.initCfgIfUnBind) {
-            ginPrivateCfg.data.devCfg.locked = 0;
-            ginPrivateCfg.data.iaCfg.num = 0;
-            memset(ginPrivateCfg.data.iaCfg.arrIA, 0, sizeof(ginPrivateCfg.data.iaCfg.arrIA));
+        if (bussinessOnly || cfg.data.devCfg.initCfgIfUnBind) {
+            cfg.data.devCfg.locked = 0;
+            cfg.data.iaCfg.num = 0;
+            memset(cfg.data.iaCfg.arrIA, 0, sizeof(cfg.data.iaCfg.arrIA));
         }
-        ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+        ret = lelinkStorageWritePrivateCfg(&cfg);
     }
     if (0 > ret) {
         LELOGE("resetConfigData [%d]", ret);
         return ret;
     }
 
-    if (bussinessOnly || ginPrivateCfg.data.devCfg.initCfgIfUnBind) {
+    if (bussinessOnly || cfg.data.devCfg.initCfgIfUnBind) {
         if (0 > salResetConfigData()) {
             LELOGE("salResetConfigData [%d]", ret);
             return ret;

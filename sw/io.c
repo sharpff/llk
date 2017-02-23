@@ -57,6 +57,7 @@ pwmManager_t ginPWMManager;
 static userHandler_t ginUserHandler;
 
 static uint8_t ginFirstRunningFlag = 1;
+extern PrivateCfg ginPrivateCfg;
 
 static IOHDL ginIOHdl[] = {
     {IO_TYPE_UART, 0x0},
@@ -319,13 +320,14 @@ int lelinkStorageWriteScriptCfg2(const void *scriptCfg) {
     }
 
     ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    if (0 > ret) {
         LELOGW("lelinkStorageWriteScriptCfg2 csum FAILED");
         return -2;
     }
 
 
     found = findPosForIAName(&privCfg, strSelfRuleName, lenSelfRuleName, &whereToPut);
+    LELOG("findPosForIAName fromName[%s][%d]", strSelfRuleName, lenSelfRuleName);
 
     if (!found && 0 > whereToPut) {
         LELOGW("lelinkStorageWriteScriptCfg2 IA(s) are FULL");
@@ -369,6 +371,10 @@ int lelinkStorageWritePrivateCfg(const PrivateCfg *privateCfg) {
 
     ret = storageWrite(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg), 0);
 
+    if (0 == ret) {
+        memcpy(&ginPrivateCfg, privateCfg, sizeof(PrivateCfg));
+    }
+
     return ret;
 }
 
@@ -378,6 +384,10 @@ int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     if (privateCfg->csum != crc8((const uint8_t *)&(privateCfg->data), sizeof(privateCfg->data))) {
         LELOGW("lelinkStorageReadPrivateCfg csum FAILED");
         ret = -4;
+    }
+
+    if (0 == ret) {
+        memcpy(&ginPrivateCfg, privateCfg, sizeof(PrivateCfg));
     }
     return ret;
 }

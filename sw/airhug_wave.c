@@ -64,7 +64,7 @@ static inline int airhug_send(int fd, uint8_t data[4])
 static int airhug_wave_raw(const uint8_t *data, uint16_t len)
 {
     uint32_t i;
-    int ret = -1, j, sockfd;
+    int ret = -10, j, sockfd;
     uint8_t one[4], ttl = 1;
     uint8_t sync0[4] = {SYN_DATA1, SYN_DATA2, 0, SYN_BASE};
     uint8_t sync1[4] = {SYN_DATA1, SYN_DATA2, 0, SYN_BASE + SYN_OFFSET};
@@ -133,22 +133,29 @@ int airhug_wave(const char *ssid, const char *passwd)
     uint8_t data[AIRHUG_MAX_LEN];
     static uint8_t random = 0;
 	static const char *key = "09n899uh39nhh9q34kk";
+    static uint32_t ts = 0;
+
+    if (5 > (halGetTimeStamp() - ts)) {
+        return -1;
+    }
+    ts = halGetTimeStamp();
+    LELOG("ts [%d]", ts);
 
     if(!ssid || !passwd) {
-        return -1;
+        return -2;
     }
     // LELOG("airConfig airhug_wave : ssid '%s', passwd '%s'\n", ssid, passwd);
     // version
     data[len++] = AIRHUG_VERSION;
     if(len + strlen(ssid) > AIRHUG_MAX_LEN) {
-        return -1;
+        return -3;
     }
     // ssid
     data[len++] = strlen(ssid);
     strcpy((char *)&data[len], ssid);
     len += strlen(ssid);
     if(len + strlen(passwd) > AIRHUG_MAX_LEN) {
-        return -1;
+        return -4;
     }
     // random
     if(!random) {
@@ -184,7 +191,13 @@ int airhug_wave(const char *ssid, const char *passwd)
     //     LEPRINTF("\n");
     // }
     // LELOG("=========> len [%d]", len);
-    return airhug_wave_raw(data, len);
+    while ((halGetTimeStamp() - ts) < 10) {
+        if (0 > airhug_wave_raw(data, len)) {
+            break;
+        }
+    }
+    ts = halGetTimeStamp();
+    return 0;
 }
 
 static uint8_t calcrc(const uint8_t *ptr, uint32_t len)

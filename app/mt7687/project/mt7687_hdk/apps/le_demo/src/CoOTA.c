@@ -435,7 +435,7 @@ void haalCoOTASetFlag(uint32_t flag) {
     APPLOG("haalCoOTASetFlag len[%d]", flag);
 
     ret = lelinkStorageReadPrivateCfg(&priCfg);
-    if (0 > ret || priCfg.csum != crc8((uint8_t *)&(priCfg.data), sizeof(priCfg.data))) {
+    if (0 > ret) {
         APPLOGE("haalCoOTASetFlag ret[%d] or csum Failed", ret);
         return;
     }
@@ -457,7 +457,7 @@ int CoOTAGetFlag(int *updateSize) {
         return 0;
     }
     ret = lelinkStorageReadPrivateCfg(&priCfg);
-    if (0 > ret || priCfg.csum != crc8((uint8_t *)&(priCfg.data), sizeof(priCfg.data))) {
+    if (0 > ret) {
         APPLOGW("CoOTAGetFlag ret[%d] or csum Failed", ret);
         return 0;
     }
