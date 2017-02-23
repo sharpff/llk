@@ -1,6 +1,13 @@
+#include <errno.h>
+#include <pthread.h>
 #include "leconfig.h"
 #include "halHeader.h"
-#include <errno.h>
+
+typedef struct {
+    int state; // 0 - 未开启获得, 1 - 建立获取线程, 2 - 成功获取
+    char name[64]; // MAX_REMOTE
+    char ip[4][32];
+} hostState_t;
 
 int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
 
@@ -288,10 +295,10 @@ int halGetHostByName(const char *name, char ip[4][32], int len) {
         return -3; /* 如果调用gethostbyname发生错误，返回1 */  
     }   
     /* 将主机的规范名打出来 */  
-    APPLOG("official hostname:%s\n",hptr->h_name);
+    APPLOG("official hostname:%s",hptr->h_name);
     /* 主机可能有多个别名，将所有别名分别打出来 */  
     for (pptr = hptr->h_aliases; *pptr != NULL; pptr++)   
-        APPLOG(" alias:%s\n",*pptr);
+        APPLOG(" alias:%s",*pptr);
     /* 根据地址类型，将地址打出来 */  
     switch(hptr->h_addrtype) {
         case AF_INET:   
@@ -300,16 +307,51 @@ int halGetHostByName(const char *name, char ip[4][32], int len) {
         /* 将刚才得到的所有地址都打出来。其中调用了inet_ntop()函数 */  
         for (i = 0; *pptr != NULL && i < 4; pptr++, i++) {
             inet_ntop(hptr->h_addrtype, *pptr, ip[i], sizeof(ip[i]));
-            APPLOG(" address:%s\n", ip[i]);
+            APPLOG(" address:%s", ip[i]);
         }
         break;
         default:   
             APPLOG("unknown address type\n");
         break;
-    }   
+    }
     return 0;
 }
 
-int halGetHostByNameNB(const char *name, char ip[4][32], int len) { 
-    return halGetHostByName(name, ip, len);
+static void* hostnameTask(void *data)
+{
+    hostState_t *p = (hostState_t *)data;
+
+    while(halGetHostByName(p->name, p->ip, sizeof(p->ip))) {
+        halDelayms(3 * 1000);
+    }
+    p->state = 2;
+
+    return NULL;
 }
+
+int halGetHostByNameNB(const char *name, char ip[4][32], int len) 
+{ 
+    int ret;
+    pthread_t id = 0;
+    pthread_attr_t attributes;
+    static hostState_t state = {0};
+
+    if(state.state == 1) {
+        return -1;
+    }
+    if(state.state == 2) {
+        memcpy(ip, state.ip, sizeof(state.ip));
+        return 0;
+    }
+    state.state = 1;
+    pthread_attr_init(&attributes);
+    pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_DETACHED);
+    strncpy(state.name, name, sizeof(state.name));
+    if((ret = pthread_create(&id, &attributes, hostnameTask, &state))) {
+        state.state = 0;
+        APPLOGE("pthread_create '%s', failed with %d\n",  hostnameTask, ret);
+        return -1;
+    }
+    return -2;
+}
+
