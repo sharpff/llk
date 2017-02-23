@@ -477,7 +477,7 @@ static int stateProcApConnected(StateContext *cntx) {
                 }
                 #endif
             } else { // ip
-                LELOGE("DNS Failed");
+                LELOGW("Waitting dns ...");
                 memset(COMM_CTX(ginCtxR2R)->remoteIP, 0, MAX_IPLEN);
                 strcpy(COMM_CTX(ginCtxR2R)->remoteIP, authCfg.data.remote);
                 COMM_CTX(ginCtxR2R)->remotePort = authCfg.data.port;

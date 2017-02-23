@@ -1732,11 +1732,10 @@ int sengineSetAction(const char *json, int jsonLen) {
                             }
                         }
                         i = i+len+2;
-                        if(i < ret)
-                        {
-                            uint8_t bin[MAX_BUF] = {0};
+                        if(i < ret) {
+                            // uint8_t bin[MAX_BUF] = {0};
                             halDelayms(100);
-                            ioRead(ioHdl[j].ioType, ioHdl[j].hdl, bin, sizeof(bin));
+                            // ioRead(ioHdl[j].ioType, ioHdl[j].hdl, bin, sizeof(bin));
                         }
                         break;
                      }
