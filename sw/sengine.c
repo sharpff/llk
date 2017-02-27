@@ -995,7 +995,7 @@ static IO lf_s2IsValid_input(lua_State *L, const uint8_t *input, int inputLen) {
 static int lf_s2IsValid(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     *((int *)output) = lua_tointeger(L, -1);
-    LEPRINTF("[SENGINE] s2IsValid: [%d]", *((int *)output));
+    APPLOG("[SENGINE] s2IsValid: [%d]", *((int *)output));
     return sizeof(int);
 }
 
@@ -1215,7 +1215,7 @@ void setIfExist(const char *func_name, int exist) {
 }
 
 int sengineInit(void) {
-    int ret = 0, i = 0;
+    int ret = 0;
 #ifndef STATIC_MEMORY_FOR_SCRIPT
     ginScriptCfg = (ScriptCfg *)halCalloc(1, sizeof(ScriptCfg));
     ginScriptCfg2 = (ScriptCfg2 *)halCalloc(1, sizeof(ScriptCfg2));
@@ -2157,6 +2157,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
         LELOGW("senginePollingRules getTerminalStatusS2 [%d]", tmpLocalJsonLen);
         return -3;
     }
+    // LELOG("getTerminalStatusS2 [%d][%s]", tmpLocalJsonLen, tmpLocalJson);
 
     // for every single rule
     // ginIACache.cfg.num = privCfg->data.iaCfg.num;
@@ -2167,13 +2168,13 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
             memset(ginScriptCfg2, 0, sizeof(ScriptCfg2));
             ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, i);
             if (0 > ret) {
-                LELOGW("senginePollingRules FAILED arrIA idx[%d]", i);
+                LELOGW("senginePollingRules FAILED arrIA idx[%d] ret[%d]", i, ret);
                 continue;
             }
 
             // set the rule's name to cache
             ret = sengineCall((const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_GET_SELFNAME,
-                NULL, 0, (uint8_t *)&strSelfRuleName, sizeof(strSelfRuleName));
+                NULL, 0, (uint8_t *)strSelfRuleName, sizeof(strSelfRuleName));
             if (0 > ret) {
                 LELOGW("senginePollingRules sengineCall("S2_GET_SELFNAME") [%d]", ret);
                 continue;
