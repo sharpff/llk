@@ -391,11 +391,11 @@ int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     int ret = 0;
     ret = storageRead(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg), 0);
 
-{
-    privateCfg->data.iaCfg.num = 1;
-    privateCfg->data.iaCfg.arrIA[0] = 1;
-    strcpy(privateCfg->data.iaCfg.arrIAName[0], "2017022419442900003");
-}
+// {
+//     privateCfg->data.iaCfg.num = 1;
+//     privateCfg->data.iaCfg.arrIA[0] = 1;
+//     strcpy(privateCfg->data.iaCfg.arrIAName[0], "2017022419442900003");
+// }
     if (0 == ret) {
         memcpy(&ginPrivateCfg, privateCfg, sizeof(PrivateCfg));
         memcpy(&(ginIACache.cfg), &(privateCfg->data.iaCfg), sizeof(IACfg));
