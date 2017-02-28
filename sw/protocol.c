@@ -2106,7 +2106,6 @@ static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdIn
 static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
     int ret = 0, force = 0;
     int type = 0;
-    int force = 0;
     char url[MAX_BUF] = {0};
     // uint8_t sig[RSA_LEN] = {0};
     CmdHeaderInfo* tmpCmdInfo = (CmdHeaderInfo *)cmdInfo;

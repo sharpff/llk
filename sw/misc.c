@@ -601,36 +601,6 @@ int getJsonOTAType(const char *json, int jsonLen, char *url, int urlLen) {
     return type;
 }
 
-int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size) {
-    jobj_t jobj;
-    int ret = -1;
-    jsontok_t jsonToken[NUM_TOKENS];
-
-    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
-    if(WM_SUCCESS != ret) {
-        return -1;
-    }
-    if(WM_SUCCESS != json_get_val_str(&jobj, (char *)key, info, size)) {
-        return -2;
-    }
-    return 0;
-}
-
-int getIntValByKey(const char *json, int jsonLen, const char *key, int *val) {
-    jobj_t jobj;
-    int ret = -1;
-    jsontok_t jsonToken[NUM_TOKENS];
-
-    ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)json, jsonLen);
-    if(WM_SUCCESS != ret) {
-        return -1;
-    }
-    if(WM_SUCCESS != json_get_val_int(&jobj, (char *)key, val)) {
-        return -2;
-    }
-    return 0;
-}
-
 CloudMsgKey cloudMsgGetKey(const char *json, int jsonLen, char *val, int valLen, int *retLen) {
     int ret = 0, key = 0;
     // char strBaud[96] = {0};

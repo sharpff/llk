@@ -53,7 +53,7 @@ static uint16_t ginRemotePort;
 static uint32_t ginBaseSecs;
 static uint8_t ginSSID[MAX_STR_LEN];
 extern PrivateCfg ginPrivateCfg;
-extern int8_t ginScriptUpdate;
+
 
 // static uint8_t dynamicKeyAES[AES_LEN] = {0};
 int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
@@ -332,7 +332,7 @@ const char *getSWVer() {
 const char *getScriptVer() {
     int ret;
     static char verFWScript[16] = {0};
-    if (verFWScript[0] && !ginScriptUpdate)
+    if (verFWScript[0])
         return verFWScript;
     ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VER,
         NULL, 0, (uint8_t *)verFWScript, sizeof(verFWScript));
@@ -341,7 +341,7 @@ const char *getScriptVer() {
         LELOGW("senginePollingSlave sengineCall "S1_GET_VER" [%d]", ret);
         return "NA";
     }
-    ginScriptUpdate = 0;
+
     return verFWScript;
 }
 

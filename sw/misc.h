@@ -24,7 +24,6 @@ extern "C"
 #define JSON_NAME_UUID "uuid"
 #define JSON_NAME_URL "url"
 #define JSON_NAME_TYPE "type"
-#define JSON_NAME_FORCE "force"
 #define JSON_NAME_GPIO_CONF         "gpio"
 #define JSON_NAME_GPIO_ID           "id"
 #define JSON_NAME_GPIO_DIR          "dir"
@@ -120,8 +119,6 @@ int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager
 int getUUIDFromJson(const char *json, int jsonLen, char *uuid, int uuidLen);
 int getJsonOTAType(const char *json, int jsonLen, char *url, int urlLen);
 int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int objLen);
-int getIntValByKey(const char *json, int jsonLen, const char *key, int *val);
-int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size);
 
 int localActionHandler(const char *data, int len);
 int cloudMsgHandler(const char *data, int len);
