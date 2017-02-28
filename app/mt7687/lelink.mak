@@ -2,7 +2,7 @@
 # For lelink lib
 #
 
-SYS_MACROS := MT7687 PF_VAL=6
+SYS_MACROS := MT7687 PF_VAL=6 STATIC_MEMORY_FOR_SCRIPT
 # [TOBESET] means u have to set the vars, E.g. ./build.sh MYXPATH=/home/lf/dev/mtk/slimV3.3.1/tools/gcc/gcc-arm-none-eabi/bin/ MYXPREFIX=arm-none-eabi-
 MYXPATH := [TOBESET]
 MYXPREFIX := [TOBESET]

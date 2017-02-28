@@ -116,7 +116,7 @@ int doUnpack(void *ctx,
                 }
             }
 
-            {
+            if(0) {
                 uint8_t tmpStr[42] = {0};
                 bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
                 LELOG("unpack encType [%d]: [%s]", commonHeader->encType, tmpStr);
@@ -138,7 +138,7 @@ int doUnpack(void *ctx,
 
             // check for invalid unpack
             if (LELINK_CMD_CTRL_REQ == cmdHeader->cmdId) {
-                if (isCloudAuthed()) {
+                if (isCloudOnlined()) {
                     if (ENC_TYPE_STRATEGY_11 == commonHeader->encType) {
                         LELOGW("INVALID unpack ENC_TYPE_STRATEGY_11, lock [%d] ", getLock());
                         return LELINK_ERR_LOGIC_ERR1;
@@ -213,7 +213,7 @@ int doUnpack(void *ctx,
             }
 
             memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
-            {
+            if(0) {
                 uint8_t tmpStr[42] = {0};
                 bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
                 LELOG("AESKEY: [%s]", tmpStr);
@@ -245,7 +245,7 @@ int doUnpack(void *ctx,
     cmdInfo->cmdId = cmdHeader->cmdId;
     cmdInfo->seqId = cmdHeader->seqId;
     cmdInfo->randID = cmdHeader->randID;
-    cmdInfo->passThru = cmdHeader->passThru;
+    cmdInfo->noAck = cmdHeader->noAck;
     cmdInfo->reserved = cmdHeader->reserved;
     cmdInfo->reserved1 = cmdHeader->reserved1;
     cmdInfo->reserved2 = cmdHeader->reserved2;
@@ -259,7 +259,7 @@ int doUnpack(void *ctx,
     memcpy(protocolBuf, (uint8_t *)payloadHeader + sizeof(PayloadHeader), payloadHeader->len);
 
 
-    {
+    if(0) {
     char tmpUUID[MAX_UUID + 1] = {0};      
     memcpy(tmpUUID, cmdInfo->uuid, MAX_UUID);  
     LELOG("nwUnpack[%d] status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] ", 
@@ -270,8 +270,8 @@ int doUnpack(void *ctx,
         cmdInfo->seqId, 
         cmdInfo->randID); 
     
-    LELOG("passThru[%d] reserved[%d] UUID[%s] ", 
-        cmdInfo->passThru, 
+    LELOG("noAck[%d] reserved[%d] UUID[%s] ", 
+        cmdInfo->noAck, 
         cmdInfo->reserved, 
         tmpUUID);
     }
@@ -318,7 +318,7 @@ int doPack(void *ctx,
     uint32_t rawSize2 = 0;
     static uint8_t beingEncBuf[UDP_MTU] = {0};
 
-    {
+    if(0) {
     char tmpUUID[MAX_UUID + 1] = {0};      
     memcpy(tmpUUID, cmdInfo->uuid, MAX_UUID);  
     LELOG("doPack[%d] status[%d] cmdId[%u] subCmdId[%u] seqId[%u] randID[%u] ", 
@@ -329,8 +329,8 @@ int doPack(void *ctx,
         cmdInfo->seqId, 
         cmdInfo->randID); 
     
-    LELOG("passThru[%d] reserved[%d] UUID[%s] ", 
-        cmdInfo->passThru, 
+    LELOG("noAck[%d] reserved[%d] UUID[%s] ", 
+        cmdInfo->noAck, 
         cmdInfo->reserved, 
         tmpUUID);
     }
@@ -355,7 +355,7 @@ int doPack(void *ctx,
             cmdHeader->cmdId = cmdInfo->cmdId; 
             cmdHeader->seqId = cmdInfo->seqId > 0 ? cmdInfo->seqId : genSeqId(); 
             cmdHeader->randID = genRand();
-            cmdHeader->passThru = cmdInfo->passThru; 
+            cmdHeader->noAck = cmdInfo->noAck; 
             cmdHeader->reserved = cmdInfo->reserved; 
             getTerminalUUID(cmdHeader->uuid, MAX_UUID);
 
@@ -416,7 +416,7 @@ int doPack(void *ctx,
             PACK_GEN_COMMON_HEADER(commonHeader, encType, cmdHeader, rawSize1, encSize1);
             ret = sizeof(CommonHeader) + encSize1;
             
-            {
+            if(0) {
                 uint8_t tmpStr[42] = {0};
                 bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
                 LELOG("pack encType [%d]: [%s]", commonHeader->encType, tmpStr);
@@ -506,7 +506,7 @@ int doPack(void *ctx,
             } else { // for LocalReq
                 memcpy(key, (void *)cmdInfo->token, AES_LEN); 
             }
-            {
+            if(0) {
                 uint8_t tmpStr[42] = {0};
                 bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
                 LELOG("AESKEY: [%s]", tmpStr);

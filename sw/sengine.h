@@ -41,7 +41,7 @@ extern "C"
 #define MAX_IA_BUF 64
 #define MAX_RSV_NUM 4 /* max reserved num for a single IA */ 
 
-#define SDEV_MAX_STATUS MAX_BUF/2
+#define SDEV_MAX_STATUS 384
 
 /*
  * 这些enum值通过FW脚本中的s1GetValidKind进行处理并返回
@@ -55,6 +55,17 @@ enum {
     WHATKIND_SUB_DEV_JOIN,
     WHATKIND_SUB_DEV_LEAVE,
     WHATKIND_SUB_DEV_INFO,
+};
+
+/*
+ * 这些enum值通过FW脚本中的s1GetValidKind进行处理并返回
+ * 标示当前在脚本中分析出来的数据类型
+ */
+enum {
+    PRI2STD_LEN_NONE = 0x00000000,
+    PRI2STD_LEN_INTERNAL = 0x40000000,
+    PRI2STD_LEN_BOTH = 0x20000000,
+    PRI2STD_LEN_MAX = 0x0000FFFF
 };
 
 typedef enum {
@@ -115,27 +126,19 @@ typedef struct {
 typedef struct {
     CACHE_NODE_NBASE;
     char sdevStatus[SDEV_MAX_STATUS]; // as json object "sDevStatus"
-    /* 
-     * isSDevInfoDone identify the mask of these info
-     * 0x01. endpoint list(active response)
-     * 0x02. cluster done(simple descriptor response)
-     * 0x04. man done(node descriptor response)
-     * 0x08. timeout 
-     */
-    uint8_t occupied;
-    uint8_t isSDevInfoDone;
+    uint8_t reserved1[4];
 }SDevNode;
 
 typedef struct {
     int beingReservedNum;
     char ruleName[MAX_RULE_NAME];
-    char beingReservedStatus[MAX_RSV_NUM][MAX_BUF];
-    uint8_t beingReservedUUID[MAX_RSV_NUM][MAX_UUID];
+    char beingReservedStatus[MAX_RSV_NUM][1024];
+    uint8_t beingReservedUUID[MAX_RSV_NUM][2*MAX_UUID];
 }IA_CACHE_INT;
 
 typedef struct {
-    IACfg cfg;
-    IA_CACHE_INT cache[MAX_IA];
+    IACfg cfg; // sync with flash
+    IA_CACHE_INT cache[MAX_IA]; // just used for cache(not flash)
     // char buf[1024*10];
 }IA_CACHE;
 
@@ -146,8 +149,8 @@ extern ScriptCfg2 *ginScriptCfg2;
 int sengineInit(void);
 int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen);
 int sengineHasDevs(void);
-int sengineGetStatus(char *json, int jsonLen);
-int sengineSetStatus(char *json, int jsonLen);
+int sengineGetStatusVal(char *json, int jsonLen);
+int sengineSetAction(const char *json, int jsonLen);
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen);
 int sengineQuerySlave(QuerieType_t type);
 int senginePollingSlave(void);

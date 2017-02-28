@@ -9,11 +9,14 @@
 #include "state.h"
 #include "misc.h"
 #include "version.h" // Auto generate by SVN
+#include "utility.h"
 #ifndef SW_VERSION
 #define SW_VERSION "0.9.9"
 #endif
 
 int getCtrlData(const char *json, int jsonLen, const char *key, char *obj, int objLen);
+extern SDevNode *sdevArray();
+extern PCACHE sdevCache();
 
 /* built-in global rsa pubkey */
 const uint8_t ginPubkeyGlobalDer[] =
@@ -92,10 +95,15 @@ int sha12key(uint8_t *input, uint32_t inputLen, uint8_t output[MD5_LEN]) {
 //     return 0;
 // }
 
-int setLock(int locked) {
+int setLock(int locked, int uid) {
     int ret = 0;
-    ginPrivateCfg.data.devCfg.locked = locked;
-    ret = lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+    PrivateCfg privCfg;
+    if (0 > lelinkStorageReadPrivateCfg(&privCfg)) {
+        return 0;
+    }
+    privCfg.data.devCfg.locked = locked;
+    privCfg.data.devCfg.uid = uid;
+    ret = lelinkStorageWritePrivateCfg(&privCfg);
     return 0 <= ret ? 1 : 0;
 }
 
@@ -103,17 +111,25 @@ int getLock() {
     return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.locked;
 }
 
-int getDevFlag(DEV_FLAG_t flag) {
-    return !(ginPrivateCfg.data.devCfg.flag & flag);
+int getUID() {
+    return 1 != ginPrivateCfg.data.devCfg.locked ? 0 : ginPrivateCfg.data.devCfg.uid;
 }
 
-int setDevFlag(DEV_FLAG_t flag, int isSet) {
-    if(isSet) {
-        ginPrivateCfg.data.devCfg.flag &= ~flag;
-    } else {
-        ginPrivateCfg.data.devCfg.flag |= flag;
+int getDevFlag(DEV_FLAG_t flagWiFi) {
+    return !(ginPrivateCfg.data.devCfg.flagWiFi & flagWiFi);
+}
+
+int setDevFlag(DEV_FLAG_t flagWiFi, int isSet) {
+    PrivateCfg privCfg;
+    if (0 > lelinkStorageReadPrivateCfg(&privCfg)) {
+        return -8;
     }
-    return lelinkStorageWritePrivateCfg(&ginPrivateCfg);
+    if(isSet) {
+        privCfg.data.devCfg.flagWiFi &= ~flagWiFi;
+    } else {
+        privCfg.data.devCfg.flagWiFi |= flagWiFi;
+    }
+    return lelinkStorageWritePrivateCfg(&privCfg);
 }
 
 void setTerminalUTC(uint64_t *utc) {
@@ -306,7 +322,7 @@ void getOriRemoteServer(char *ip, int len, uint16_t *port) {
 }
 
 uint16_t getProtocolVer() {
-    return 0x0001;
+    return 0x0002;
 }
 
 const char *getSWVer() {
@@ -335,7 +351,6 @@ int getVer(char fwVer[64], int size) {
     }
     memset(fwVer, 0, size);
     sprintf(fwVer, "%d-%s-%s", PF_VAL, getSWVer(), getScriptVer());
-    LELOG("Build Time: " __DATE__ " " __TIME__ "");
     return 0;
 }
 
@@ -355,21 +370,61 @@ int getSSID(char *ssid, int ssidLen) {
     return strlen((const char *)ginSSID);
 }
 
-void setTerminalStatus(const char *status, int len) {
+
+static int isRetryPackage(const void *cmdInfo) {
+    static uint8_t latestUUID[MAX_UUID];
+    static uint16_t latestSeqId;
+    int ret = 0;
+    const CmdHeaderInfo *p = (const CmdHeaderInfo *)cmdInfo;
+    // LELOGW("isRetryPackage [%d] [%s]", latestSeqId, p->uuid);
+    // if ((LELINK_CMD_DISCOVER_REQ == p->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == p->subCmdId) ||
+    //     (LELINK_CMD_CTRL_REQ == p->cmdId) ||
+    //     (LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ == p->cmdId)) {
+        if (latestSeqId == p->seqId && !memcmp(latestUUID, p->uuid, MAX_UUID)) {
+              // LELOGW("isRetryPackage 1 ==================================");
+                ret = 1;
+        } else {
+            // LELOGW("isRetryPackage 2 ==================================");
+            memcpy(latestUUID, p->uuid, MAX_UUID);
+            latestSeqId = p->seqId;
+        }
+    // }
+    return ret;
+}
+
+void setTerminalAction(const void *cmdInfo, const char *status, int len) {
     char val[MAX_BUF] = {0};
-    //int ret = getJsonObject(status, len, JSON_NAME_CTRL, val, sizeof(val));
-    int ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val));
-    LELOGW("setTerminalStatus [%d][%s]", ret, val);
-    if (0 >= ret) {
-        cloudMsgHandler(status, len);
-        return;
+    int ret = 0, ret1;
+    
+    if (!isRetryPackage(cmdInfo)) {
+    // cloud logical(push)
+        if (0 >= (ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val)))) {
+            LELOG("setTerminalAction--cloud [%d][%s]", len, status);
+            cloudMsgHandler(status, len);
+        } else {
+            len = ret;
+        // slave logical
+            ret = sengineSetAction((char *)val, len);
+
+        // local logical
+            ret1 = localActionHandler(val, len);
+            LELOG("setTerminalAction[%s]-- slave[%d] local[%d]", val, ret, ret1);
+        }
     }
-    sengineSetStatus((char *)val, ret);
+
+}
+
+int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData) {
+    LELOG("ud[%s] mac[%s] isSDevInfoDone[%02x]", currNode->ud, currNode->mac, currNode->isSDevInfoDone);
+    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        (*(int *)uData)++;
+    }
+    return 0;
 }
 
 int getTerminalStatus(char *status, int len) {
     IA_CACHE_INT *cacheInt;
-    int i, j, cnt, tmpLen = 0;
+    int i, j, tmpLen = 0, abc = 0;
 
     //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
 
@@ -378,7 +433,7 @@ int getTerminalStatus(char *status, int len) {
     strcpy(status, "{\"status\":");
     tmpLen = strlen(status);
 
-    sengineGetStatus(status + tmpLen, len - strlen(status));
+    sengineGetStatusVal(status + tmpLen, len - strlen(status));
 
     tmpLen = strlen(status);
 
@@ -400,15 +455,43 @@ int getTerminalStatus(char *status, int len) {
     sprintf(status + tmpLen, "\",\"lock\":%d", getLock());
     tmpLen = strlen(status);
 
-    tmpLen += sprintf(status + tmpLen, ",\"uuids\":%s", "[");
-    for (cnt = 0, i = 0; i < ginIACache.cfg.num; i++) {
-        cacheInt = &(ginIACache.cache[i]);
-        for(j = 0; j < cacheInt->beingReservedNum; j++) {
-            tmpLen += sprintf(status + tmpLen, "%s\"%s\"", (cnt > 0 ? ",":""), cacheInt->beingReservedUUID[j]);
-            cnt++;
-        }
+    sprintf(status + tmpLen, ",\"uid\":%d", getUID());
+    tmpLen = strlen(status);
+
+    if (sengineHasDevs()) {
+        uint8_t tmpStr[12] = {0};
+        int validSize = 0;
+        qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForNumCB, &validSize);
+        bytes2hexStr((uint8_t *)&(sdevCache()->sDevVer), sizeof(sdevCache()->sDevVer), tmpStr, sizeof(tmpStr));
+        sprintf(status + tmpLen, ",\""JSON_NAME_SDEV_NUM"\":%d,\""JSON_NAME_SDEV_VER"\":\"%s\"", validSize, tmpStr);
+        tmpLen = strlen(status);
     }
-    tmpLen += sprintf(status + tmpLen, "%s", "]");
+
+// {
+//     ginIACache.cfg.num = 2;
+//     ginIACache.cache[0].beingReservedNum = 2;
+//     strcpy(ginIACache.cache[0].ruleName, "aaa");
+//     strcpy(ginIACache.cache[0].beingReservedUUID[0], "1234");
+//     strcpy(ginIACache.cache[0].beingReservedUUID[1], "4321");
+//     ginIACache.cache[1].beingReservedNum = 2;
+//     strcpy(ginIACache.cache[1].ruleName, "bbb");
+//     strcpy(ginIACache.cache[1].beingReservedUUID[0], "12345");
+//     strcpy(ginIACache.cache[1].beingReservedUUID[1], "43216");
+// }
+    // LELOG("getTerminalStatus ginIACache.cfg.num [%d] <==========", ginIACache.cfg.num);
+    tmpLen += sprintf(status + tmpLen, ",\"uuids\":%s", "{");
+    for (i = 0; i < MAX_IA; i++) {
+        if (0 >= ginIACache.cfg.arrIA[i]) {
+            continue;
+        }
+        cacheInt = &(ginIACache.cache[i]);
+        tmpLen += sprintf(status + tmpLen, "%s\"%s\":[", (0 != abc ? ",":""), cacheInt->ruleName); abc = 1;
+        for(j = 0; j < cacheInt->beingReservedNum; j++) {
+            tmpLen += sprintf(status + tmpLen, "%s\"%s\"", (j > 0 ? ",":""), cacheInt->beingReservedUUID[j]);
+        }
+        tmpLen += sprintf(status + tmpLen, "%s", "]");
+    }
+    tmpLen += sprintf(status + tmpLen, "%s", "}");
 
     // status[tmpLen] = '"'; 
     // tmpLen += 1;
@@ -416,8 +499,37 @@ int getTerminalStatus(char *status, int len) {
     tmpLen += 1;
     //
 
-    // LELOG("getTerminalStatus [%d][%s] -e", tmpLen, status);
+    LELOG("getTerminalStatus [%d][%s] -e", tmpLen, status);
     return tmpLen;
+}
+
+int getSDevStatus(int index, char *sdevStatus, int len) {
+    SDevNode *arr = sdevArray();
+    PCACHE cache = sdevCache(); 
+    int tmpLen = 0;
+    if (arr && cache) {
+
+        uint8_t uuid[MAX_UUID+1] = {0};
+        getTerminalUUID(uuid, MAX_UUID);
+        sprintf(sdevStatus, "{\"%s\":\"%s-%s\"", JSON_NAME_UUID, uuid, arr[index].mac);
+
+        // append uid 
+        sprintf(&sdevStatus[strlen(sdevStatus)], ",\"uid\":%d", getUID());
+
+        // append man start
+        sprintf(&sdevStatus[strlen(sdevStatus)], ",\"%s\":%s", JSON_NAME_SDEV, strlen(arr[index].sdevInfo) > 0 ? arr[index].sdevInfo : "{}"); 
+        sprintf(&sdevStatus[strlen(sdevStatus) - 1], ",\"%s\":\"%s\"}", JSON_NAME_SDEV_MAN, arr[index].sdevMan);
+        // append ip
+        tmpLen = strlen(sdevStatus);
+        strcpy(sdevStatus + tmpLen, ",\"ip\":\""); tmpLen = strlen(sdevStatus);
+        halGetSelfAddr(sdevStatus + tmpLen, len - tmpLen, NULL); tmpLen = strlen(sdevStatus);
+        // append sdevStatus
+        sprintf(&sdevStatus[strlen(sdevStatus)], "\",\"%s\":%s,\"%s\":\"%s\"}", JSON_NAME_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}", JSON_NAME_SDEV_MAC, arr[index].mac);
+        LELOG("getSDevStatus[%s]", sdevStatus);
+    } else {
+        return 0;
+    }
+    return strlen(sdevStatus);
 }
 
 int getTerminalStatusS2(char *statusS2, int len) {

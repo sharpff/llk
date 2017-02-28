@@ -6,7 +6,7 @@
 
 MAIN_PATH="../.."
 $MAIN_PATH/lelinkTool.py \
-    -a 10.75.147.185 \
+    -a iot.test.leinlife.com \
     -p 9003 \
     -u 10000100201001310023 \
     -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC/JNNhXICy5Nmq2OsPUet7jtu8ZbH0vDCG2qT/Jd3mz2+xGMu/jpjT9C2y8j73k+GiW4gPbCzjU/uKXb5gr6ax2k4KLvFRhptW/PqWVLYAz/5063jlgwJt7M5hem6qfLEq57+YRfENUBuH1Etv++2DpUy1uzr1TJCES0ubAhKp8QIDAQAB \
@@ -20,7 +20,7 @@ $MAIN_PATH/lelinkTool.py \
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
     --ssid ff \
-    --passwd fengfeng2qiqi \
+    --passwd 12345678 \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \
@@ -28,5 +28,13 @@ $MAIN_PATH/lelinkTool.py \
     ./0x1c3000.bin 0x5000 \
     ./0x1c8000.bin 0x1000 \
     -o ./cust.bin
+
+$MAIN_PATH/lelinkTool.py \
+    $MAIN_PATH/boardEMW3081/emw3081_ram_1.p.bin  0xB000 \
+    $MAIN_PATH/boardEMW3081/emw3081_bootloader.bin 0x8000 \
+    $MAIN_PATH/boardEMW3081/mico_app.bin 0xba800 \
+    $MAIN_PATH/boardEMW3081/emw3081_ate.bin 0x112800 \
+    ./cust.bin 0x20000 \
+    -o ./lelink_3081_full.bin
 
 

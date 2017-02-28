@@ -42,7 +42,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.1.2'
+	local str = '1.1.3'
 	return string.len(str), str
 end
 
@@ -67,15 +67,31 @@ end
 --         return PINMUX_FUNCTION_0;
 --     }
 -- }
+-- mt7687
+-- {"whatCvtType":35,
+--  "common":[{"num":5,"id":"36-37-34-33-0","mux":"7-7-8-8-3"}],
+--  "uart":[{"id":0, "baud":"9600-8N1"}],  
+--  "gpio":[{"id":34,"dir":1,"mode":0,"state":0,"type":1},
+--          {"id":33,"dir":1,"mode":1,"state":1,"type":0}],
+--  "eint":[{"id":0,"gid":0,"type":1,"mode":1,"trigger":4,"state":0,"debounce":5,"timeout":400}]
+-- }
+-- mt7687_module
+-- {"whatCvtType":35,
+--  "common":[{"num":5,"id":"36-37-34-33-39","mux":"7-7-8-8-3"}],
+--  "uart":[{"id":0, "baud":"9600-8N1"}],  
+--  "gpio":[{"id":34,"dir":1,"mode":0,"state":0,"type":1},
+--          {"id":33,"dir":1,"mode":1,"state":1,"type":0}],
+--  "eint":[{"id":22,"gid":39,"type":1,"mode":1,"trigger":4,"state":1,"debounce":5,"timeout":400}]
+-- }
 function s1GetCvtType()
     -- combained uart(0x1) & gpio(0x2) & pwm(0x10)
     local str = [[
-    {"whatCvtType":3,
-     "common":[{"num":6,"id":"36-37-33-34-27-39","mux":"7-7-8-8-8-8"}],
-     "uart":[{"id":1, "baud":"9600-8N1"}],  
-     "gpio":[{"id":39,"dir":0,"mode":1,"state":1,"type":1,"longTime":12,"shortTime":3},
-             {"id":34,"dir":1,"mode":0,"state":0,"type":1,"longTime":8,"shortTime":1},
-             {"id":33,"dir":1,"mode":1,"state":1,"type":0}]
+    {"whatCvtType":35,
+     "common":[{"num":5,"id":"36-37-34-33-39","mux":"7-7-8-8-3"}],
+     "uart":[{"id":0, "baud":"9600-8N1"}],  
+     "gpio":[{"id":34,"dir":1,"mode":0,"state":0,"type":1},
+             {"id":33,"dir":1,"mode":1,"state":1,"type":0}],
+     "eint":[{"id":22,"gid":39,"type":1,"mode":1,"trigger":4,"state":1,"debounce":5,"timeout":400}]
     }
     ]]
 	local delay = 5

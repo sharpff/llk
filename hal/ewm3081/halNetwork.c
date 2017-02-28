@@ -1,9 +1,10 @@
+#include "leconfig.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "halHeader.h"
 #include "mico.h"
 #include "MicoSocket.h"
+#include "t11_debug.h"
 
 #define  MAXINTERFACES  5
 
@@ -35,14 +36,14 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
     struct sockaddr_in local_addr;
     *sock = socket(AF_INET, SOCK_DGRM, IPPROTO_UDP);
     if(*sock < 0) {
-        debug("create udp socket failed,ret = %d", *sock);
+        APPLOGE("create udp socket failed,ret = %d", *sock);
         return -1;
     }
     
     uint16_t port = (uint16_t) selfPort;
     
     if(port<=0){
-        debug("port = %d",port_num);
+        APPLOGE("port = %d",port_num);
         port = port_num++;
     }
     
@@ -53,18 +54,18 @@ int halNwNew(int selfPort, int block, int *sock, int *broadcastEnable) {
         local_addr.s_port = port;
         
         if ((ret = bind(*sock, (struct sockaddr *) &local_addr, sizeof(local_addr))) != 0) {
-            debug("udp bind [%d] error，ret = %d", port, ret);
+            APPLOGE("udp bind [%d] error，ret = %d", port, ret);
             close(*sock);
             return -1;
         }
         
-        debug("udp[%d] bind success, ret = %d,sock = %d", port, ret, *sock);
+        APPLOGE("udp[%d] bind success, ret = %d,sock = %d", port, ret, *sock);
     }
     
     int is_block = !block;  //mico中0代表block，1代表non-blocking
     //    setsockopt(*sock, SOL_SOCKET, SO_BLOCKMODE, &is_block, sizeof(block));
     //    setsockopt(*sock, SOL_SOCKET, SO_BROADCAST, (char *) broadcastEnable,sizeof(int));
-    debug("socket create success, sock = %d, selfPort = %d, block = %d", *sock, selfPort, block);
+    APPLOG("socket create success, sock = %d, selfPort = %d, block = %d", *sock, selfPort, block);
     return 0;
 }
 
@@ -84,7 +85,7 @@ int halNwUDPSendto(int sock, const char *ip, int port, const uint8_t *buf, int l
     to_addr.s_port = port;
     to_addr.s_ip = inet_addr(ip);
     ret = sendto(sock, buf, len, 0, (struct sockaddr *) &to_addr, sizeof(to_addr));
-    debug("send data done, sock = %d, ip = %s, port = %d, buf = %p, len = %d", sock, ip, port, buf, len);
+    // APPLOG("send1 data done, sock = %d, ip = %s, port = %d, buf = %p, len = %d", sock, ip, port, buf, len);
     //t11_print_mem(buf, len);
     return ret;
 }
@@ -113,10 +114,10 @@ int halNwUDPRecvfrom(int sock, uint8_t *buf, int len, char *ip, int sizeIP, uint
         uint8_t *s_ip = (uint8_t*)(&(server_addr.s_ip));
         sprintf(ip,"%d.%d.%d.%d", s_ip[3], s_ip[2], s_ip[1], s_ip[0]);
         *port = server_addr.s_port;
-        debug("receive data done, sockfd = %d, len = %d, ret = %d, ip = %s, port = %d, sock_addr:",sock, len,ret, ip, *port);
+        APPLOG("receive data done, sockfd = %d, len = %d, ret = %d, ip = %s, port = %d, sock_addr:",sock, len,ret, ip, *port);
         
     } else {
-        //        debug("网络数据接收完成，sockfd = %d，len = %d， ret = %d, 用时 %d ms", sock, len, ret,mico_get_time()-time_start);
+        //        APPLOGE("网络数据接收完成，sockfd = %d，len = %d， ret = %d, 用时 %d ms", sock, len, ret,mico_get_time()-time_start);
     }
     if(ret == 0) {
         ret = -1;
@@ -135,7 +136,7 @@ int halGetMac(uint8_t *mac, int len) {
     
     
     wlan_get_mac_address(mac);
-    debug("get mac address:");
+    APPLOG("get mac address:");
     t11_print_mem(mac, len);
     return 0;
 }
@@ -143,7 +144,7 @@ int halGetMac(uint8_t *mac, int len) {
 int halGetBroadCastAddr(char *broadcastAddr, int len) {
     
     strncpy(broadcastAddr, t11_network_info.broadcastip, len);
-    debug("broadcast address:%s", broadcastAddr);
+    APPLOG("broadcast address:%s", broadcastAddr);
     return strlen(broadcastAddr);
 }
 
@@ -156,11 +157,15 @@ int halGetHostByName(const char *name, char ip[4][32], int len) {
         return -1;
     }
     err = gethostbyname(name, (uint8_t *)ipstr, 16);
-    debug("server address: %d %s",err, ipstr);
+    APPLOG("%s server address: %d %s", name, err, ipstr);
     if(err == 0) {
         strcpy(ip[0], ipstr);
         return 0;
     } else {
         return -2;
     }
+}
+
+int halGetHostByNameNB(const char *name, char ip[4][32], int len) { 
+    return halGetHostByName(name, ip, len);
 }

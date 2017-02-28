@@ -1,4 +1,5 @@
 # ./build.sh MYXPATH=/home/lf/dev/mtk/slimV3.3.1/tools/gcc/gcc-arm-none-eabi/bin/ MYXPREFIX=arm-none-eabi- && cp ~/dev/mtk/slimV3.3.1/out/mt7687_hdk/le_demo/mt7687_le_demo.bin ~/dev/mtk/slimV3.3.1/tools/PC_tool_Win/FOTA/_Load/mt7687/ && cp ../../tool/product/dingding/cust.bin ~/dev/mtk/slimV3.3.1/out/mt7687_hdk/le_demo/
+# ./build.sh MYXPATH=$MTSDK7687/tools/gcc/gcc-arm-none-eabi/bin/ MYXPREFIX=arm-none-eabi-
 RM="rm -f"
 COPY="cp -prf"
 MKDIR="mkdir -p"
@@ -86,12 +87,16 @@ if [ "$1" != "clean" ]; then
         $COPY ./project/mt7687_hdk/apps/le_demo/src/*.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
         cp ./project/mt7687_hdk/apps/le_demo/src/main.c $MTSDK7687/project/mt7687_hdk/apps/le_demo/src
         cp ./driver/board/mt76x7_hdk/lib/libbsp.a $MTSDK7687/driver/board/mt76x7_hdk/lib
+        cp ./driver/board/mt76x7_hdk/lib/libhal.a $MTSDK7687/driver/board/mt76x7_hdk/lib
+        cp ./driver/chip/mt7687/wifi_n9/WIFI_RAM_CODE_MT76X7_in_flash.bin $MTSDK7687/driver/chip/mt7687/wifi_n9
+        $COPY ./driver/board/mt76x7_hdk/bootloader/src/mt7687/hw_uart.c $MTSDK7687/driver/board/mt76x7_hdk/bootloader/src/mt7687
         $COPY ./project/mt7687_hdk/template/download/flash_download.ini $MTSDK7687/project/mt7687_hdk/template/download
         $COPY ./project/mt7687_hdk/apps/le_demo/inc/*.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc
         $COPY ./project/mt7687_hdk/apps/le_demo/inc/flash_map.h $MTSDK7687/project/mt7687_hdk/apps/bootloader/inc
         $COPY ./project/mt7687_hdk/apps/le_demo/GCC/feature.mk $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
         $COPY ./project/mt7687_hdk/apps/le_demo/GCC/Makefile $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
         $COPY ./project/mt7687_hdk/apps/le_demo/GCC/mt7687_flash.ld $MTSDK7687/project/mt7687_hdk/apps/le_demo/GCC
+        $COPY ./project/mt7687_hdk/apps/bootloader/GCC/feature.mk $MTSDK7687/project/mt7687_hdk/apps/bootloader/GCC
         $COPY ./middleware/MTK/smtcn/src/*.c $MTSDK7687/middleware/MTK/smtcn/src
         $COPY ./middleware/MTK/smtcn/inc/*.h $MTSDK7687/middleware/MTK/smtcn/inc
         $COPY ./middleware/third_party/httpclient/src/*.c   $MTSDK7687/middleware/third_party/httpclient/src/
@@ -101,6 +106,7 @@ if [ "$1" != "clean" ]; then
 	$COPY ../../lib/Debug-$PF/*.a $MTSDK7687/middleware/third_party/cloud/lelink/lib/
 	rm $MTSDK7687/out/mt7687_hdk/le_demo/*.bin
 	$COPY $MAIN_PATH/sw/airconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
+	$COPY $MAIN_PATH/sw/airhug.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	$COPY $MAIN_PATH/sw/io.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	$COPY $MAIN_PATH/sw/leconfig.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw
 	$COPY $MAIN_PATH/sw/ota.h $MTSDK7687/project/mt7687_hdk/apps/le_demo/inc/sw

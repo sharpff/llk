@@ -44,11 +44,8 @@ int qEnCache(PCACHE C, void *val) {
         return 0;
     else {
         if (!tmp->flag) {
-            if (0 == C->flagAuto) {
+            if (0 == ++(C->flagAuto)) {
                 C->flagAuto = 1;
-            }
-            else {
-                C->flagAuto++;
             }
             tmp->flag = C->flagAuto;
         }
@@ -68,6 +65,21 @@ int qEnCache(PCACHE C, void *val) {
     }
     LELOGE("qEnCache [%d/%d]\r\n", C->currsize, C->maxsize);
     return 0;
+}
+
+int qDeCache(PCACHE C, int idx) {
+    if (0 > idx || C->maxsize <= idx) {
+        return - 1;
+    }
+
+    if (0 != ((NodeHead*)&(((uint8_t*)(C->pBase))[idx*C->singleSize]))->flag) {
+        MUTEX_LOCK;
+        memset(&(((uint8_t*)(C->pBase))[idx*C->singleSize]), 0, C->singleSize);
+        C->currsize--;
+        MUTEX_UNLOCK;
+    }
+
+    return idx;
 }
 
 int qForEachfromCache(PCACHE C, int (*currNodeCB)(void *curr, void *uData), void *uData)

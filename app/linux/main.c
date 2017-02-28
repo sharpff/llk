@@ -46,6 +46,8 @@ redo:
             int ret = 0;
             node.cmdId = LELINK_CMD_DISCOVER_REQ; 
             node.subCmdId = LELINK_SUBCMD_DISCOVER_REQ;
+            // node.rspVal = 1;
+            // node.noAck = 1;
 
             ret = halGetBroadCastAddr(br, sizeof(br));
             if (0 >= ret) {
@@ -63,6 +65,8 @@ redo:
             strncpy(node.ndIP, ginCtrlIP, MAX_IPLEN); // TODO: caution 
             // strncpy(node.ndIP, "192.168.3.100", MAX_IPLEN); // TODO: caution
             node.ndPort = LOCAL_TEST_PORT;
+            // node.rspVal = 1;
+            // node.noAck = 1;
             // APPLOG("2 cmdId[%d], subCmdId[%d]\r\n", node.cmdId, node.subCmdId);
             APPLOGE("1 cmdId[%d]", node.cmdId);
             if (!node.uuid[0]) {
@@ -129,7 +133,8 @@ redo:
         // node.ndPort = TEST_PORT;
         node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ;
-
+        // node.rspVal = 1;
+        // node.noAck = 1;
         // set peer uuid
         memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
 
@@ -143,7 +148,7 @@ redo:
     case '9': {
         node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ; 
-
+        node.timeoutRef = 8;
         // set peer uuid (for 1st, for cloud)
         memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
 
@@ -245,14 +250,40 @@ void thread_input_check(void *arg) {
 
 #define PORT_ONLY_FOR_VM 0 // (NW_SELF_PORT + 100) // the port for r2r should be 0, 
 
-// #define DO_AIR_CONFIG    
+// #define DO_AIR_CONFIG      
 // #define ENABLE_WIFI_SOFT_AP 1
+
+// #define TIMEOUT_BEGIN_SEC(ss, go1st) {\
+//     static uint32_t tsStart;\
+//     static uint32_t tsEnd;\
+//     static uint8_t tmpGo1st = go1st; \
+//     if (!tsStart) { \
+//         tsStart = tsEnd = halGetTimeStamp(); \
+//     } \
+//     tsEnd = halGetTimeStamp(); \
+//     APPLOG("TIMEOUT_BEGIN_SEC ss[%d] start[%d] end[%d]", ss, tsStart, tsEnd); \
+//     if (tmpGo1st || ss <= (tsEnd - tsStart)) { \
+//         tsStart = tsEnd; tmpGo1st = 0;
+
+// #define TIMEOUT_ELSE } else {
+
+// #define TIMEOUT_END }}
 
 #ifndef DO_AIR_CONFIG
 int main(int argc, char *argv[]) {
     pthread_t id;
     int i, ret = 0;
     AuthData authData;
+
+
+    // do {
+    //     TIMEOUT_BEGIN_SEC(3, 0)
+    //         APPLOG("IF");
+    //     TIMEOUT_ELSE
+    //         APPLOG("ELSE");
+    //     TIMEOUT_END
+    //     halDelayms(500);
+    // } while (1);
 
     // {
     //     // char buf[1024] = {0};
@@ -317,7 +348,7 @@ int main(int argc, char *argv[]) {
     }
 
     while (1) {
-        lelinkPollingState(100, ctxR2R, ctxQ2A);
+        lelinkPollingState(1, ctxR2R, ctxQ2A);
         
         // lelinkDoPollingQ2A(ctxQ2A);
         // lelinkDoPollingR2R(ctxR2R);
@@ -331,7 +362,6 @@ int main(int argc, char *argv[]) {
 }
 
 #else
-
 int main(int argc, char** argv) {
     char configInfo[256] = {0};
     int delay = 10, type = 1;
@@ -386,6 +416,7 @@ int main(int argc, char** argv) {
     }
 #else
     while (1) {
+    #if 0
         sprintf(configInfo, configFmt, ssid, passwd, "912EC803B2CE49E4A541068D495AB570", type, delay);
         APPLOG("start => %s", configInfo);
         APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
@@ -399,6 +430,17 @@ int main(int argc, char** argv) {
             APPLOG("starting with [%s:%s][%d] type[%d]...", ssid, passwd, delay, type);
         }
 
+    #else
+        ret = airhug_wave((char *)ssid, (char *)passwd);
+        if (0 > ret) {
+            if (-1 == ret) {
+                APPLOG("waiting ...");
+                delayMS(1000);
+            } else {
+                APPLOGE("failed[%d]", ret);
+            }
+        }
+    #endif
     }
 #endif
 	return (EXIT_SUCCESS);

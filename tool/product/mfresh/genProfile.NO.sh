@@ -27,4 +27,12 @@ $MAIN_PATH/lelinkTool.py \
     ./0x1c8000.bin 0x1000 \
     -o ./cust.bin
 
+$MAIN_PATH/lelinkTool.py \
+    $MAIN_PATH/boardEMW3081/emw3081_ram_1.p.bin  0xB000 \
+    $MAIN_PATH/boardEMW3081/emw3081_bootloader.bin 0x8000 \
+    $MAIN_PATH/boardEMW3081/mico_app.bin 0xba800 \
+    $MAIN_PATH/boardEMW3081/emw3081_ate.bin 0x112800 \
+    ./cust.bin 0x20000 \
+    -o ./lelink_3081_full.bin
+
 

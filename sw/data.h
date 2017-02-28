@@ -28,7 +28,7 @@ void getOriRemoteServer(char *ip, int len, uint16_t *port);
 
 uint16_t getProtocolVer();
 int getVer(char *fwVer, int size);
-void setTerminalStatus(const char *status, int len);
+void setTerminalAction(const void *cmdInfo, const char *status, int len);
 int getTerminalStatus(char *status, int len);
 void cacheSetTerminalStatus(const char *status, int len);
 int cacheGetTerminalStatus(char *status, int len);
@@ -38,10 +38,11 @@ int getTerminalStatusS2(char *statusS2, int len);
 int cacheIsChanged(const char *status, int len);
 void setSSID(const char *ssid, int ssidLen);
 
-int setLock(int locked);
+int setLock(int locked, int uid);
 int getLock();
 int getDevFlag(DEV_FLAG_t flag);
 int setDevFlag(DEV_FLAG_t flag, int isSet);
+const char *getScriptVer();
 
 // test only
 #define PUBLIC_KEY_PEM \

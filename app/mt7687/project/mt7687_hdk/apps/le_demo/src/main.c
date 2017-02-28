@@ -20,12 +20,14 @@
 #include "bsp_gpio_ept_config.h"
 #include "network_init.h"
 #include "cli_def.h"
+#include "CoOTA.h"
 
 int gin_airconfig_channel_cared[MAX_CHANNEL_CARE];
 static TimerHandle_t lelink_airconfig_timer = NULL;
 extern void smtcn_evt_handler(wifi_smart_connection_event_t event, void *data);
 extern void aes_task_init();
-extern int getVer(char fwVer[64], int size);
+extern void lelinkPltCtrlProcess(void);
+
 int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
 int airconfig_stop();
 
@@ -33,6 +35,29 @@ int8_t gin_airconfig_ap_connected;
 int8_t gin_airconfig_sniffer_got;
 
 #define AIRCONFIG_TIMEOUT (60*60*1000/portTICK_PERIOD_MS)
+
+int salResetConfigData(void) {
+    leLedReset();
+    return 0;
+}
+
+int aalUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
+    return leLedRead(buf, len);
+}
+
+int aalUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
+    return leLedWrite(buf, len);
+}
+
+void aalSetLedStatus(RLED_STATE_t st) {
+    if (st == RLED_STATE_WIFI) {
+        leLedBlueSlowBlink(); // TODO: discuss (modified)
+    } else if (st == RLED_STATE_CONNECTING) {
+        leLedBlueFastBlink();
+    } else if (st == RLED_STATE_RUNNING) {
+        leLedSetDefault();
+    }
+}
 
 static void lelink_airconfig_timeout_timer_callback( TimerHandle_t tmr ) {
     if (tmr) {
@@ -77,6 +102,8 @@ int airconfig_start(void *ptr, uint8_t *prov_key, int prov_key_len) {
 }
 
 int airconfig_stop() {
+    wifi_smart_connection_stop();
+    //wifi_smart_connection_deinit();
     airconfig_reset();
     return 0;
 }
@@ -92,15 +119,41 @@ void printForFac(void) {
         mac[4], 
         mac[5]);
 }
+#include "hal.h"
+#include "system_mt7687.h"
+void wdt_feed_watchdog_example()
+{
+    hal_wdt_config_t wdt_init;
+    wdt_init.mode = HAL_WDT_MODE_RESET;
+    wdt_init.seconds = 30;
+    hal_wdt_status_t my_ret;
+
+    log_hal_info("WDT test begins...\n");
+    my_ret = hal_wdt_init(&wdt_init);
+    if (HAL_WDT_STATUS_OK != my_ret) {
+        log_hal_info("WDT initialization error.\r\n");
+    }
+    my_ret = hal_wdt_enable(HAL_WDT_ENABLE_MAGIC);
+    if (HAL_WDT_STATUS_OK != my_ret) {
+        log_hal_info("WDT enable error.\r\n");
+    }
+
+    hal_gpt_delay_ms(1000);
+
+    hal_wdt_feed(HAL_WDT_FEED_MAGIC);
+
+}
 
 static void mtk_thread_lelink_proc(void *args) {
     int ret; 
     void *ctxR2R;
     void *ctxQ2A;
-
+    leLedInit();
     printForFac();
+    CoOTAReset(0);
+    haalCoOTAProcessing();
     printf("Build Time: " __DATE__ " " __TIME__ "\r\n");
-    ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
+    ret = lelinkStorageInit(CM4_FLASH_LELINK_CUST_ADDR, FLASH_LELINK_CUST_SIZE - GW_FLASH_CONF_SIZE, 0x1000);//CM4 buff slim:128KB + fota buff slim:128KB;->totalSize:0x40000
     if (0 > ret) {
         APPLOGE("lelinkStorageInit ret[%d]\r\n", ret);
         vTaskDelete(NULL);
@@ -118,6 +171,7 @@ static void mtk_thread_lelink_proc(void *args) {
     ctxQ2A = (void *)lelinkNwNew(NULL, 0, NW_SELF_PORT, NULL);
 
     while (1) {
+        lelinkPltCtrlProcess();
         lelinkPollingState(100, ctxR2R, ctxQ2A);
     }
 
@@ -130,7 +184,7 @@ static int platform_launch_lelink_start(void) {
 
     if (pdPASS != xTaskCreate(mtk_thread_lelink_proc,
 							  "thread_lelink_proc",
-							  1024*5,  //16K stack size;
+							  1024*6,  //16K stack size;
 							  NULL,
 							  1,
 							  NULL)) {
@@ -140,37 +194,6 @@ static int platform_launch_lelink_start(void) {
 #ifdef HW_AES
     aes_task_init();
 #endif
-    return 0;
-}
-
-uint8_t le_ota(uint8_t len, char *param[]) {
-    int type = 2;
-    char url[64] = "http://115.182.63.167/zhiwei/mt7687_le_demo.bin";
-    if (len < 1) {
-        APPLOGE("need url address\n");
-        return 0;
-    }
-    type = atoi(param[0]);
-    if (len == 2) {
-        strncpy(url, param[1], sizeof(url));
-        APPLOG("url address %s\n",param[1]);
-    }
-   
-    leOTA(type, url, NULL, 0);
-    return 0;
-}
-
-uint8_t le_reboot(uint8_t len, char *param[]) {
-    halReboot();
-    return 0;
-}
-
-uint8_t le_version(uint8_t len, char *param[]) {
-    char fwVer[64] = {0};
-    getVer(fwVer, sizeof(fwVer));
-    APPLOG("======== version ========\n");
-    APPLOG("firmware: %s\r\n", fwVer);
-    APPLOG("======== version ========\n");
     return 0;
 }
 
@@ -248,3 +271,4 @@ int main() {
     for more details. */
     for ( ;; );
 }
+

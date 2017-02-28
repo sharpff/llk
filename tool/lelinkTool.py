@@ -14,9 +14,12 @@ class Param(object):
         self.uuid = ""
         self.base64_pk = ""
         self.base64_sig = ""
-        self.fws = ""
+        self.script = ""
+        self.script2 = ""
         self.genpriv = False
         self.gensdev = False
+        self.wmode = ""
+        self.keepud = False
         self.ssid = ""
         self.passwd = ""
         self.of = "out.bin"
@@ -37,14 +40,23 @@ class Param(object):
                       action="store", dest="base64_sig", default=self.base64_sig,
                       help="signature, base64")
         parser.add_option("-t", "--script", type="string",
-                      action="store", dest="fws", default=self.fws,
+                      action="store", dest="script", default=self.script,
                       help="firware script file path")
+        parser.add_option("-i", "--script2", type="string",
+                      action="store", dest="script2", default=self.script2,
+                      help="ia script file path")
         parser.add_option("--genpriv",
                       action="store_true", dest="genpriv", default=self.genpriv,
                       help="Generate private info")
         parser.add_option("--gensdev",
                       action="store_true", dest="gensdev", default=self.gensdev,
                       help="Generate private info")
+        parser.add_option("--wmode", type="string",
+                      action="store", dest="wmode", default=self.wmode,
+                      help="wifi configure default way, mon or sap")
+        parser.add_option("--keepud",
+                      action="store_true", dest="keepud", default=self.keepud,
+                      help="keep user data in reset manually")
         parser.add_option("--ssid", type="string",
                       action="store", dest="ssid", default=self.ssid,
                       help="wifi ssid")
@@ -61,9 +73,12 @@ class Param(object):
         self.uuid = options.uuid
         self.base64_pk = options.base64_pk
         self.base64_sig = options.base64_sig
-        self.fws = options.fws;
+        self.script = options.script;
+        self.script2 = options.script2;
         self.genpriv = options.genpriv;
         self.gensdev = options.gensdev;
+        self.wmode = options.wmode;
+        self.keepud = options.keepud;
         self.ssid = options.ssid;
         self.passwd = options.passwd;
         self.of = options.of;
@@ -174,6 +189,23 @@ class ScriptCfg(object):
         self.content += struct.pack("<B", strCrc(self.content))
         self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
 
+class ScriptCfg2(object):
+    def __init__(self):
+        self.PACK_PAD = '\xFF'
+        self.PACK_SIZE = (1024 * 20)
+        self.MAX_SIZE = (1024 * 13)
+        self.script2 = ""
+        self.content = ""
+    def set(self, script):
+        self.script2 = script
+    def pack(self):
+        self.content = ""
+        self.content += struct.pack("<I", len(self.script2))
+        self.content += struct.pack("<%ds" % len(self.script2), self.script2)
+        self.content += packPad(self.PACK_PAD, self.MAX_SIZE - len(self.script2))
+        self.content += struct.pack("<B", strCrc(self.content))
+        self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
+
 class PrivateInfo(object):
     def __init__(self):
        self.PACK_PAD = '\xFF'
@@ -182,6 +214,8 @@ class PrivateInfo(object):
        self.passwd = ''
        self.config = 0
        self.content = ''
+       self.unbind = 1
+       self.wmode = ''
        self.DEV_CFG_SIZE = 39
        self.NET_CFG_SIZE = 100
        self.IA_CFG_SIZE = 276
@@ -191,35 +225,54 @@ class PrivateInfo(object):
         self.passwd = passwd
         if len(self.ssid) > 0:
             self.config = 1
+    def keepUD(self):
+        self.unbind = 0
+    def setWiFiMode(self, wmode):
+        self.wmode = wmode
 
     def pack(self):
-       self.content = ''
-       self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE)
-       self.content += struct.pack("<I", self.config)
- 
-       self.content += struct.pack("<%ds" % (len(self.ssid) + 1), self.ssid)
-       self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.ssid) - 1)
-       self.content += struct.pack("<%ds" % (len(self.passwd) + 1), self.passwd)
-       self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.passwd) - 1)
+        self.content = ''
 
-       # pad for     
+        self.content += packPad(self.PACK_PAD, self.DEV_CFG_SIZE-2)
+        # wmode
+        print("DevCfg self.wmode: %s" % self.wmode)
+        if self.wmode == 'mon':
+          self.content += packPad('\x01', 1)
+        elif self.wmode == 'sap':
+          self.content += packPad('\x00', 1)
+        else:
+          self.content += packPad('\xFF', 1)
+        # unbind
+        print("DevCfg self.unbind: %d" % self.unbind)
+        if self.unbind != 0:
+          self.content += packPad('\x01', 1)
+        else:
+          self.content += packPad('\x00', 1)
+
+        self.content += struct.pack("<I", self.config)
+        self.content += struct.pack("<%ds" % (len(self.ssid) + 1), self.ssid)
+        self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.ssid) - 1)
+        self.content += struct.pack("<%ds" % (len(self.passwd) + 1), self.passwd)
+        self.content += packPad(self.PACK_PAD, self.MAX_STR_LEN - len(self.passwd) - 1)
+
+        # pad for     
         # uint32_t ipaddr;
         # uint32_t mask;
         # uint32_t gateway;
         # uint32_t dns1;
         # uint32_t dns2;
-       self.content += packPad(self.PACK_PAD, 4*5);
-       self.content += struct.pack("<B", len(self.ssid))
-       self.content += struct.pack("<B", len(self.passwd))
+        self.content += packPad(self.PACK_PAD, 4*5);
+        self.content += struct.pack("<B", len(self.ssid))
+        self.content += struct.pack("<B", len(self.passwd))
 
-       self.content += packPad(self.PACK_PAD, (self.DEV_CFG_SIZE + self.NET_CFG_SIZE + self.IA_CFG_SIZE - len(self.content)))
-       self.content += struct.pack("<B", strCrc(self.content))
-       self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
+        self.content += packPad(self.PACK_PAD, (self.DEV_CFG_SIZE + self.NET_CFG_SIZE + self.IA_CFG_SIZE - len(self.content)))
+        self.content += struct.pack("<B", strCrc(self.content))
+        self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
 
 class SDevInfo(object):
     def __init__(self):
        self.TOTAL_PAD = '\xFF'
-       self.TOTAL_SIZE = (1024*8) # 6K(384 * 16) to 8K
+       self.TOTAL_SIZE = (1024*12) # 9344 bytes to 12K
 
     def pack(self):
        self.content = ''
@@ -245,9 +298,9 @@ if __name__ == '__main__':
         print "AuthCfg: %d, " % len(authcfg.content),
         print("Total: %d" % len(content))
     # firware script
-    if len(param.fws) > 0:
-        canReadFile(param.fws)
-        f = open(param.fws, "rb")
+    if len(param.script) > 0:
+        canReadFile(param.script)
+        f = open(param.script, "rb")
         s = ScriptCfg()
         s.set(f.read())
         s.pack()
@@ -255,10 +308,25 @@ if __name__ == '__main__':
         content += s.content
         print("firware script: %d, " % len(s.content)),
         print("Total: %d" % len(content))
+    # ia script
+    if len(param.script2) > 0:
+        canReadFile(param.script2)
+        f = open(param.script2, "rb")
+        s = ScriptCfg2()
+        s.set(f.read())
+        s.pack()
+        f.close()
+        content += s.content
+        print("ia script: %d, " % len(s.content)),
+        print("Total: %d" % len(content))
     # private info
     if param.genpriv:
         pricfg = PrivateInfo()
         pricfg.set(param.ssid, param.passwd)
+        if param.keepud:
+            pricfg.keepUD()
+        if param.wmode:
+            pricfg.setWiFiMode(param.wmode)
         pricfg.pack()
         content += pricfg.content
         print "PrivateInfo: %d, " % len(pricfg.content),

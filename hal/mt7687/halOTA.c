@@ -174,7 +174,7 @@ int halUpdateFirmware(OTAInfo_t *info) {
     }
 
 	if (fota_init(&fota_flash_default_config) != FOTA_STATUS_OK) {
-		APPLOGE("[FOTA CLI] fota init fail. \n");
+		APPLOGE("[FOTA CLI] fota init fail. ");
 		return -2;
 	}
 
@@ -222,22 +222,27 @@ int halUpdateFirmware(OTAInfo_t *info) {
     	return -6;
     }
 
-	if ( 0 == ret) {
-		fota_trigger_update();
-		fota_ret_t err;
-		err = fota_trigger_update();
-		if (0 == err ) {
-			hal_sys_reboot(HAL_SYS_REBOOT_MAGIC, WHOLE_SYSTEM_REBOOT_COMMAND);
-			 APPLOGE("Reboot device!");
-			return 0;
-		} else {
-			 APPLOGE("Trigger FOTA error!");
-			return -7;
-		}
-		return 0;
-	} else {
-		return -8;
-	}
+    if (info->isSDev) {
+        haalCoOTASetFlag(info->imgLen);
+        haalCoOTAProcessing();
+    } else {
+        if (0 == ret) {
+            fota_trigger_update();
+            fota_ret_t err;
+            err = fota_trigger_update();
+            if (0 == err ) {
+                hal_sys_reboot(HAL_SYS_REBOOT_MAGIC, WHOLE_SYSTEM_REBOOT_COMMAND);
+                APPLOG("Reboot device!");
+                ret = 0;
+            } else {
+                APPLOGE("Trigger FOTA error!");
+                ret = -7;
+            }
+        } else {
+            ret = -8;
+        }
+    }
+    return ret;
 }
 
 uint32_t halUpdate(OTAInfo_t *info, uint8_t *buf, uint32_t bufLen) {

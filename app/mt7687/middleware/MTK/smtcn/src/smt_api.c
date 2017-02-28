@@ -63,7 +63,7 @@ unsigned char channel_times[14] = {0};
 #endif
 
 #define SMTCN_RX_QUEUE_SIZE        4
-#define USE_SMTCN_STATIC_BUF
+// #define USE_SMTCN_STATIC_BUF
 
 #ifdef USE_SMTCN_STATIC_BUF
 #define SMTCN_STATIC_BUF_COUNT     (SMTCN_RX_QUEUE_SIZE + 1)
@@ -675,7 +675,6 @@ int32_t smtcn_rx_handler(uint8_t *payload, uint32_t len)
         //printf("can't add a job to smart connect queue\n");
     }
 #endif
-
     return 1;
 }
 

@@ -26,8 +26,7 @@ $MAIN_PATH/lelinkTool.py \
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid ff \
-    --passwd fengfeng2qiqi \
+    --wmode mon \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \
@@ -41,11 +40,11 @@ $MAIN_PATH/lelinkTool.py \
     -o ./cust.bin
 
 $MAIN_PATH/lelinkTool.py \
-    $MAIN_PATH/boardMW300/boot2.bin 0x4000 \
-    $MAIN_PATH/boardMW300/layout.bin 0x2000 \
-    $MAIN_PATH/boardMW300/psm.bin 0x4000 \
-    $MAIN_PATH/le_demo.bin 0x154000 \
-    $MAIN_PATH/boardMW300/300_WIFI.bin 0x64000 \
+    $MAIN_PATH/boardMW300_3.3.30/boot2.bin 0x4000 \
+    $MAIN_PATH/boardMW300_3.3.30/layout.bin 0x2000 \
+    $MAIN_PATH/boardMW300_3.3.30/psm.bin 0x4000 \
+    $WMSDK33/bin/mw300_defconfig/board/le_demo.bin 0x154000 \
+    $MAIN_PATH/boardMW300_3.3.30/300_WIFI.bin 0x64000 \
     ./cust.bin 0x3E000 \
     -o ./image.bin
 

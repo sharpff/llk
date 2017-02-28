@@ -13,6 +13,13 @@ extern "C"
 #include "halHeader.h"
 #endif /* __LE_SDK__ */
 
+
+#if defined(PF_VAL) && (PF_VAL == 7) // for EMW3081(iar compiler)
+#define LELINK_WEAK __weak
+#else 
+#define LELINK_WEAK __attribute__((weak))
+#endif
+
 #if defined(WIN32) || defined(EMW3081)
 #define LELINK_ALIGNED
 #define LELINK_PACK
@@ -47,34 +54,29 @@ extern "C"
 #define REMOTE_BAK_PORT 5546
 
 typedef struct {
-    uint8_t id;          // support 1, 2, 3 
-    //int8_t num;         // gpio num
-    uint16_t dir:1;     // 0 - input; 1 - output
-    uint16_t mode:3;    // 0 - default; 1 - pullup; 2 - pulldown; 3 - nopull; 4 - tristate
-    uint16_t state:3;   // 0 - low; 1 - high; 2 - blink
-    uint16_t type:3;    // 0 - stdio; 1 - reset
-    uint16_t gpiostate:1;   // only : 0 - low; 1 - high
-    uint16_t freestate:1;   // only output reset: 0 - low; 1 - high
-    uint8_t blink;          // only output. ticks, blink frequency
-    uint8_t oldState; 
-    // for input/output type reset
-    uint8_t longTime;
-    uint8_t shortTime;
-    // for output type reset
-    // TODO: only for internal
-    uint8_t keepLowTimes;   // ticks, gpiostat keep low times
-    uint8_t keepHighTimes;  // ticks, gpiostat keep high times
+    uint8_t id;
+    uint8_t dir;
+    uint8_t mode;
+    uint8_t type; // 0-normal gpio; 1-reset for lelink
+    uint8_t state;
+    uint8_t oldState;
+    /*
+     * gpiostate will be filled in lelink while lelink to contorl(write) gpio. 
+     * this val should be checked in halGPIOWrite.
+     * 1/0 is normal gpio state, just do write(1/0). 
+     * 2-quick blink and 3-slow blink should be implemented if nesassary.
+     * "longTime":xxx and "shortTime":yyy in sw script has been abolished.
+     */
+    uint8_t gpiostate;
     void* handler;
     uint32_t reserved1;
     uint32_t reserved2;
 } gpioHandler_t;
 
 typedef struct {
-    uint8_t id;            // support 1, 2, 3, 4
+    uint8_t id;
     uint8_t type;
-    uint8_t blink;
-    uint8_t longTime;
-    uint8_t shortTime;
+    uint8_t mode;
     uint8_t clock;
     uint32_t state;
     uint32_t oldState;
@@ -97,6 +99,31 @@ typedef struct {
     uint32_t reserved1;
     uint32_t reserved2;
 } uartHandler_t;
+
+typedef struct {
+    uint8_t id;
+    uint8_t gid;
+    uint8_t mode;
+    uint8_t trigger;
+    uint8_t type;
+    uint8_t state;
+    uint8_t oldState;
+    uint8_t longPress;
+    uint32_t debounce;
+    uint32_t timeout;
+    uint32_t count;
+    uint32_t timeStamp;
+    uint32_t longPressStart;
+    uint32_t longPressEnd;
+    void* handler;
+    uint32_t reserved1;
+    uint32_t reserved2;
+} eintHandler_t;
+
+typedef struct {
+    uint32_t reserved1;
+    uint32_t reserved2;
+} userHandler_t;
 
 #define COMMON_MAX_ID     (10)
 
@@ -128,6 +155,10 @@ int halPWMClose(pwmHandler_t* handler);
 void halPWMWrite(pwmHandler_t* handler, uint32_t percent);
 void halPWMRead(pwmHandler_t* handler, uint32_t *percent);
 void halPWMSetFrequency(pwmHandler_t* handler);
+
+int halEINTClose(eintHandler_t *handler);
+int halEINTOpen(eintHandler_t *handler);
+int halEINTRead(eintHandler_t* handler, int *val);
 
 void halCommonInit(commonManager_t* dev);
 
@@ -200,12 +231,12 @@ int halGetHostByName(const char *name, char ip[4][32], int len);
 uint16_t halRand();
 
 int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey);
-
+extern unsigned long halLogTimeStamp(void);
 
 #define applog(_mod_name_, _fmt_, ...) \
     { \
         const char * p = (const char *)strrchr(__FILE__, '/'); \
-        printOut("[%s] "_fmt_" @%s:%d\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : __FILE__, __LINE__); \
+        printOut("[%u][%s] "_fmt_" @%s:%d\r\n", halLogTimeStamp(), _mod_name_, ##__VA_ARGS__, p ? (p + 1) : __FILE__, __LINE__); \
     }
 
 #define APPLOG(...) \
@@ -220,6 +251,15 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, c
 #define APPPRINTF(...) \
     printOut(__VA_ARGS__)
 
+#define APPASSERT(x) \
+    { \
+        if (!(x))  { \
+            const char * p = (const char *)strrchr(__FILE__, '/'); \
+            while (1) { \
+            printOut("********LEAPP[ASSERT] in file:%s line:%d\r\n", p ? (p + 1) : __FILE__, __LINE__); } \
+        } \
+    }
+
 #define halMalloc(size)        halMallocEx(size, __FILE__, __LINE__)
 #define halCalloc(n, size)     halCallocEx(n, size, __FILE__, __LINE__)
 #define halRealloc(ptr, size)  halReallocEx(ptr, size, __FILE__, __LINE__)
@@ -229,7 +269,9 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, c
     uint16_t flag; \
     uint16_t nodeReserved;
 
-#define LELINK_OTA_VERIFICATION
+// #define LELINK_OTA_VERIFICATION
+
+#define MONITOR_CONFIG4
 
 #ifdef __cplusplus
 }

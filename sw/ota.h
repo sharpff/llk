@@ -16,6 +16,8 @@ typedef enum {
     OTA_TYPE_IA_SCRIPT, // 5
     OTA_TYPE_AUTH, // 6
     OTA_TYPE_PRIVATE, // 7
+    OTA_TYPE_SDEVINFO, // 8
+    OTA_TYPE_SDEVFW, // 9
     OTA_TYPE_MAX
 } OTAType_t;
 
@@ -23,6 +25,8 @@ typedef struct _updateInfo {
     void *session;
     unsigned int imgLen;
     unsigned int nowLen;
+    uint8_t isSDev;
+    uint8_t reserved[3];
 } OTAInfo_t;
 
 // hal

@@ -131,6 +131,18 @@ void* halPWMInit(int clock) {
     return (void *)0xffffffff;
 }
 
+int halEINTClose(eintHandler_t *handler) {
+    return 0;
+}
+
+int halEINTOpen(eintHandler_t *handler) {
+    return 0;
+}
+
+int halEINTRead(eintHandler_t* handler, int *val) {
+    return 0;
+}
+
 void halCommonInit(commonManager_t* dev) {
     return;
 }
@@ -200,8 +212,8 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
     sprintf(fileName, "./0x%x.bin", startAddr);
     fd = open(fileName, O_RDONLY);
     if (0 >= fd) {
-        // printf("errno [%d]", errno);
-        // APPLOG("READ FAILED [%d]", errno);
+        printf("errno [%s][%d]", fileName, errno);
+        APPLOG("READ FAILED [%d]", errno);
         return fd;
     }
     lseek(fd, offsetToBegin, SEEK_SET);

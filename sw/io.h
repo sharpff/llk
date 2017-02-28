@@ -22,6 +22,8 @@ typedef enum {
     IO_TYPE_PIPE = 0x4,
     IO_TYPE_SOCKET = 0x8,
     IO_TYPE_PWM = 0x10,
+    IO_TYPE_EINT = 0x20,
+    IO_TYPE_USER = 0x8000,
 }IO_TYPE;
 
 #ifdef LELINK_PACK
@@ -51,9 +53,13 @@ typedef enum {
 
 /* Read/Write info */
 typedef struct {
-    uint8_t flag; // DEV_FLAG_t
+    uint8_t flagWiFi; // DEV_FLAG_t
     uint8_t locked;
-    uint8_t reserved[37];
+    uint32_t sdevFWSize;
+    int32_t uid;
+    uint8_t reserved[27];
+    uint8_t initCfgWiFiMode; // in what WiFi config mode after reset manually (SoftAp as default, 0xFF/0x01 monitor; 0x00 softAP)
+    uint8_t initCfgIfUnBind; // UnBind if user reset manually (UnBind as default)
 }LELINK_ALIGNED DevCfg;
 
 typedef struct
@@ -71,7 +77,7 @@ typedef struct
 
 typedef struct
 {
-    DevCfg  devCfg;
+    DevCfg devCfg;
     NwCfg nwCfg;
     IACfg iaCfg;
 }LELINK_ALIGNED PrivateData;
@@ -86,7 +92,7 @@ typedef struct
 /*
  * -------this size should be sync with lelinkTool.py START------
  */
-#define SDEV_MAX_INFO 320
+#define SDEV_MAX_INFO 512
 #define SDEV_MAX_MAC 24
 #define SDEV_MAX_EPT 8
 #define SDEV_MAX_CUST 8
@@ -103,14 +109,22 @@ typedef struct
 
 
 
+/* 
+ * isSDevInfoDone identify the mask of these info
+ * 0x01. endpoint list(active response)
+ * 0x02. cluster done(simple descriptor response)
+ * 0x04. man done(node descriptor response)
+ * 0x08. it means sdev is valid 
+ */
 #define CACHE_NODE_NBASE \
     CACHE_NODE_HEADER; \
     char sdevInfo[SDEV_MAX_INFO]; \
     char mac[SDEV_MAX_MAC]; \
-    uint8_t idx[SDEV_MAX_MAC]; \
+    uint8_t ud[SDEV_MAX_MAC]; \
     uint8_t sdevEpt[SDEV_MAX_EPT]; \
     uint8_t sdevMan[SDEV_MAX_CUST]; \
-    uint8_t reserved[4];
+    uint8_t isSDevInfoDone; \
+    uint8_t reserved[3];
 
 typedef struct {
     CACHE_NODE_NBASE;
@@ -198,7 +212,7 @@ int ioGetHdlCounts();
 int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen);
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen);
 void ioDeinit(int ioType, void *hdl);
-
+void resetDevice(void);
 typedef enum {
     GPIO_DIR_INPUT = 0,
     GPIO_DIR_OUTPUT,
@@ -248,6 +262,13 @@ typedef struct {
     uint32_t num;
     pwmHandler_t table[PWM_MAX_ID + 1];
 } pwmManager_t;
+
+#define EINT_MAX_ID     (4)
+
+typedef struct {
+    uint32_t num;
+    eintHandler_t table[EINT_MAX_ID + 1];
+} eintManager_t;
 
 typedef enum {
     RLED_STATE_IGNORE = -1, // 忽略, 设置的时候返回当前状态

@@ -1,12 +1,22 @@
 #include "halHeader.h"
 #include <errno.h>
+#include "timers.h"
 #include "debug.h"
 #include "hal_uart.h"
 #include "hal_gpio.h"
 #include "hal_flash.h"
 #include "hal_pwm.h"
+#include "hal_eint.h"
 #include "wifi_api.h"
 #include "io.h"
+
+#define LED_BLINK_TIMEOUT (500/portTICK_PERIOD_MS)
+
+static TimerHandle_t halPWMTimerHandler = NULL;
+extern pwmManager_t ginPWMManager;
+
+static TimerHandle_t halGPIOTimerHandler = NULL;
+extern gpioManager_t ginGpioManager;
 
 static volatile uint32_t receive_notice = 0;
 static volatile uint32_t send_notice = 0;
@@ -120,7 +130,7 @@ void *halUartOpen(uartHandler_t* handler) {
     uart_config.parity = handler->parity;
     status = hal_uart_init(handler->id, &uart_config);
 	if(status != HAL_UART_STATUS_OK) {
-        APPLOG("open uart[%d] failed", handler->id);
+        APPLOG("open uart[%d] failed[%d]", handler->id, status);
         return NULL;
     }	
 
@@ -177,15 +187,15 @@ int halUartRead(uartHandler_t* handler, uint8_t *buf, uint32_t len) {
     if(size > 0)
     {
         uint32_t i;
-        APPLOG("halUartRead [%d]",size);
+        APPPRINTF("halUartRead [%d]: ",size);
         for(i=0;i<size;i++)
         {
-            APPLOG("0x%02x ", buf[i]);
+            APPPRINTF("%02x ", buf[i]);
         }
-        APPLOG("halUartRead data end");
+        APPPRINTF("\r\n");
     }
 #endif
-    return size;
+    return size > 128 ? 128 : size;
 }
 
 int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
@@ -203,7 +213,38 @@ int halUartWrite(uartHandler_t* handler, const uint8_t *buf, uint32_t len) {
         }
         send_notice = 0;
    }
+
+#if 0
+    if(size > 0)
+    {
+        uint32_t i;
+        APPPRINTF("halUartWrite [%d]: ", size);
+        for(i=0;i<size;i++)
+        {
+            APPPRINTF("%02x ", buf[i]);
+        }
+        APPPRINTF("\r\n");
+    }
+#endif
    return size;
+}
+
+static void setGPIOMode(int gpioID, int mode) {
+    switch(mode) {
+        case GPIO_MODE_DEFAULT:
+        break;
+        case GPIO_MODE_PULLUP:
+            hal_gpio_pull_up(gpioID);
+        break;
+        case GPIO_MODE_PULLDOWN:
+            hal_gpio_pull_down(gpioID);
+        break;
+        case GPIO_MODE_NOPULL:
+            hal_gpio_disable_pull(gpioID);
+        break;
+        default:
+        break;
+    }
 }
 
 void *halGPIOInit(void) {
@@ -234,48 +275,125 @@ int halGPIOOpen(gpioHandler_t* handler) {
         default:
             return -1;
     }
-
-    switch(handler->mode) {
-    	case GPIO_MODE_DEFAULT:
-    	    break;
-        case GPIO_MODE_PULLUP:
-            hal_gpio_pull_up(handler->id);
-            break;
-        case GPIO_MODE_PULLDOWN:
-            hal_gpio_pull_down(handler->id);
-            break;
-        case GPIO_MODE_NOPULL:
-            hal_gpio_disable_pull(handler->id);
-            break;
-        default:
-            break;
-    }
+    setGPIOMode(handler->id, handler->mode);
     return handler->id;
 }
 
 int halGPIORead(gpioHandler_t* handler, int *val) {
-	hal_gpio_data_t gpio_data;
-    if (GPIO_DIR_INPUT == handler->dir) {
-        hal_gpio_get_input(handler->id, &gpio_data);
-    } else if (GPIO_DIR_OUTPUT == handler->dir) {
-        hal_gpio_get_output(handler->id, &gpio_data);
+    if (handler->gpiostate > 1) {
+        *val = handler->gpiostate;
+    } else {
+        hal_gpio_data_t gpio_data;
+        if (GPIO_DIR_INPUT == handler->dir) {
+            hal_gpio_get_input(handler->id, &gpio_data);
+        } else if (GPIO_DIR_OUTPUT == handler->dir) {
+            hal_gpio_get_output(handler->id, &gpio_data);
+        }
+        *val = (int)gpio_data;
     }
-    *val = (int)gpio_data;
     // APPLOG("halGPIORead dir[%d] id [%d] v[%d]", handler->dir, handler->id, *val);
     return 0;
 }
 
+static void halGPIOBlinkTimerCallback( TimerHandle_t tmr ) {
+    gpioHandler_t *table = NULL;
+    int i;
+    for(i = 0, table = ginGpioManager.table; i < ginGpioManager.num; i++, table++) {
+        if (table->gpiostate == 2) {
+            if (table->reserved2%4) {
+               hal_gpio_set_output(table->id, table->state);
+            } else if (table->reserved2%2 == 0) {
+                hal_gpio_set_output(table->id, !table->state);
+            }
+            table->reserved2++;
+        } else if (table->gpiostate == 3) {
+            if (table->reserved2%12 == 0) {
+               hal_gpio_set_output(table->id, table->state);
+            } else if (table->reserved2%6 == 0) {
+                hal_gpio_set_output(table->id, !table->state);
+            }
+            table->reserved2++;
+        }
+    }
+    if (halGPIOTimerHandler != NULL) {
+        xTimerStart(halGPIOTimerHandler, 0);
+    }
+}
+
 int halGPIOWrite(gpioHandler_t* handler, const int val) {
     // APPLOG("halGPIOWrite dir[%d] id [%d] v[%d]", handler->dir, handler->id, val);
-    hal_gpio_set_output(handler->id, (hal_gpio_data_t)val);
+    handler->gpiostate = val;
+    if (val < 2) {
+        hal_gpio_set_output(handler->id, (hal_gpio_data_t)val);
+    } else {
+        if (halGPIOTimerHandler == NULL) {
+            halGPIOTimerHandler = xTimerCreate( "gpio_blink_timer",
+                                           LED_BLINK_TIMEOUT,
+                                           pdFALSE,
+                                           NULL,
+                                           halGPIOBlinkTimerCallback);
+            if (halGPIOTimerHandler != NULL) {
+                xTimerStart(halGPIOTimerHandler, 0);
+            }
+        }
+    }
     return 0;
 }
 
+static void halPWMBlinkTimerCallback( TimerHandle_t tmr ) {
+    pwmHandler_t *table = NULL;
+    int i,j;
+    //APPLOG("halPWMBlinkTimerCallback");
+    for(i = 0, table = ginPWMManager.table; i < ginPWMManager.num; i++, table++) {
+        if (table->percent == 0x8001) {
+            if (table->reserved2%4) {
+               hal_pwm_set_duty_cycle(table->id, table->duty);
+            } else if (table->reserved2%2 == 0) {
+                hal_pwm_set_duty_cycle(table->id, 0);
+            }
+            table->reserved2++;
+        } else if (table->percent == 0x8002) {
+            if (table->reserved2%12 == 0) {
+               hal_pwm_set_duty_cycle(table->id, table->duty);
+            } else if (table->reserved2%6 == 0) {
+                hal_pwm_set_duty_cycle(table->id, 0);
+            }
+            table->reserved2++;
+        } else if (table->percent == 0x8003) {
+            if (table->reserved2%6 == 0) {
+               for (j = 0; table->percent && j < table->duty ; j+=2) {
+                    hal_pwm_set_duty_cycle(table->id, j);
+                    halDelayms(5);
+                }
+                for (j = table->duty; table->percent && j > 0; j-=2) {
+                    hal_pwm_set_duty_cycle(table->id, j);
+                    halDelayms(5);
+                }
+            }
+            table->reserved2++;
+        }
+    }
+    if (halPWMTimerHandler != NULL) {
+        xTimerStart(halPWMTimerHandler, 0);
+    }
+}
+
 void halPWMWrite(pwmHandler_t *handler, uint32_t percent) {
-    uint32_t duty_cycle = 0;
-    handler->percent = percent;
-    duty_cycle = (handler->reserved1 * percent) / handler->duty;
-    hal_pwm_set_duty_cycle(handler->id, duty_cycle);
+    //APPLOG("halPWMBlinkTimerCallback percent[0x%x]", percent);
+    if (percent < 0x8000) {
+        uint32_t duty_cycle = 0;
+        handler->reserved2 = 0;
+        handler->percent = percent;
+        duty_cycle = (handler->reserved1 * percent) / handler->duty;
+        hal_pwm_set_duty_cycle(handler->id, duty_cycle);
+    } else{
+        handler->percent = percent;
+        if (percent == 0x8001 || percent == 0x8002) {
+            handler->reserved2++;
+            hal_pwm_set_duty_cycle(handler->id, handler->duty);
+        }
+        handler->percent = percent;
+    }
 }
 
 void halPWMRead(pwmHandler_t *handler, uint32_t *percent) {
@@ -298,7 +416,93 @@ int halPWMOpen(pwmHandler_t *handler) {
 
 void* halPWMInit(int clock) {
     hal_pwm_init(clock);
+    if (halPWMTimerHandler == NULL) {
+        halPWMTimerHandler = xTimerCreate( "pwm_blink_timer",
+                                       LED_BLINK_TIMEOUT,
+                                       pdFALSE,
+                                       NULL,
+                                       halPWMBlinkTimerCallback);
+        if (halPWMTimerHandler != NULL) {
+            xTimerStart(halPWMTimerHandler, 0);
+        }
+    }
     return 0xABCFFFFF;
+}
+
+static void halEINTIrqHandler(void *data) {
+    eintHandler_t *handler = (eintHandler_t *)data;
+    // APPLOG("halEINTIrqHandler id[%d] type[%d] count[%d]", handler->id, handler->type, handler->count);
+    if(handler) {
+        if(handler->type > 0) {
+            hal_gpio_data_t gpio_data;
+            hal_gpio_get_input(handler->gid, &gpio_data);
+            //APPLOG("halEINTIrqHandler state[%d] [%d]", gpio_data, handler->state);
+            if (gpio_data == handler->state) {
+                handler->count++;
+                if(handler->timeout && handler->count == 1) {
+                    handler->timeStamp = xTaskGetTickCount();
+                }
+                if (handler->longPressStart) {
+                    if(xTaskGetTickCount() - handler->longPressStart > 2*1000/portTICK_PERIOD_MS) {
+                        handler->longPress = 1;
+                        handler->count = 0;
+                        handler->timeStamp = 0;
+                    }
+                    handler->longPressStart = 0;
+                }
+            } else {
+                //APPLOG("halEINTIrqHandler longPressStart");
+                handler->longPressStart = xTaskGetTickCount();
+            }
+        } else {
+            handler->count++;
+            if(handler->timeout && handler->count == 1) {
+                handler->timeStamp = xTaskGetTickCount();
+            }
+        }
+    }
+}
+
+int halEINTRead(eintHandler_t* handler, int *val) {
+    uint32_t curr;
+    *val = 0;
+    if(handler->type && handler->longPress) {
+        handler->longPress = 0;
+        *val = 0xFF;
+        return 0;
+    }
+    if(handler->timeout) {
+        if(handler->timeStamp > 0) {
+            curr = xTaskGetTickCount();
+            if(((curr - handler->timeStamp)/portTICK_PERIOD_MS) > handler->timeout) {
+                *val = handler->count;
+                handler->count = 0;
+                handler->timeStamp = 0;
+            }
+        }
+    } else {
+        *val = handler->count;
+        handler->count = 0;
+    }
+    return 0;
+}
+
+int halEINTClose(eintHandler_t *handler) {
+    return 0;
+}
+
+int halEINTOpen(eintHandler_t *handler) {
+    hal_eint_config_t eint_config;
+    hal_gpio_init(handler->gid);
+    hal_gpio_set_direction(handler->gid, HAL_GPIO_DIRECTION_INPUT);
+    setGPIOMode(handler->gid, handler->mode);
+    eint_config.trigger_mode = handler->trigger;
+    eint_config.debounce_time = handler->debounce;
+    hal_eint_init(handler->id, &eint_config);
+    APPLOG("halEINTOpen id[%d] gid[%d] mode[%d] debounce[%d] timeout[%d]",
+        handler->id, handler->gid, handler->mode, handler->debounce, handler->timeout);
+    hal_eint_register_callback(handler->id, halEINTIrqHandler, handler);
+    return handler->id;
 }
 
 //Flash;
@@ -494,7 +698,9 @@ int halGetMac(uint8_t *mac, int len) {
     
     if(status >= 0) {
         // APPLOG("[Lelink]: wifi_config_get_mac_address(): (%02x:%02x:%02x:%02x:%02x:%02x),status = %d ",
-        //            mac[0], mac[1], mac[2],mac[3], mac[4], mac[5],status);
+                   // mac[0], mac[1], mac[2],mac[3], mac[4], mac[5],status);
+        // mac[5] = 0x01;
+        // wifi_profile_set_mac_address(WIFI_PORT_STA, mac);
         return 0;
     }
     else {

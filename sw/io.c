@@ -44,26 +44,28 @@
 
 extern void *halFlashOpen(void);
 extern int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSelfRuleName, int *whereToPut);
-extern int resetConfigData(void);
 static FlashRegion ginRegion[E_FLASH_TYPE_MAX];
 static uint32_t ginStartAddr;
 static uint32_t ginTotalSize;
 static uint32_t ginMinSize;
-static gpioManager_t ginGpioManager;
-static pwmManager_t ginPWMManager;
+
 static commonManager_t ginCommonManager;
 static uartHandler_t uartHandler;
+static eintManager_t ginEINTManager;
+gpioManager_t ginGpioManager;
+pwmManager_t ginPWMManager;
+static userHandler_t ginUserHandler;
 
-static void gpioCheckInput(gpioHandler_t *ptr);
-static void gpioCheckState(gpioHandler_t *ptr);
-static void pwmCheckState(pwmHandler_t *ptr);
-static void gpioInitState(gpioManager_t *mgr);
+static uint8_t ginFirstRunningFlag = 1;
+extern PrivateCfg ginPrivateCfg;
 
 static IOHDL ginIOHdl[] = {
     {IO_TYPE_UART, 0x0},
     {IO_TYPE_GPIO, 0x0},
     {IO_TYPE_PIPE, 0x0},
     {IO_TYPE_PWM, 0x0},
+    {IO_TYPE_EINT, 0x0},
+    {IO_TYPE_USER, 0x0},
 };
 
 /*
@@ -119,13 +121,12 @@ int getRegion(E_FLASH_TYPE type, FlashRegion *region) {
 
 int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) {
     int i = 0;
-    uint32_t tmpTotal = 0, singleSize = 0, tmpSize = 0;
+    uint32_t tmpTotal = 0, tmpSize = 0;
     // uint32_t tmpStartAddr = startAddr;
-    LELOG("lelinkStorageInit -s\r\n");
+    LELOG("lelinkStorageInit [%d] -s\r\n", sizeof(SDevInfoCfg));
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
         tmpTotal += getSize((E_FLASH_TYPE)i, minSize);
     }
-
     if (tmpTotal > totalSize) {
         return -1;
     }
@@ -135,20 +136,19 @@ int lelinkStorageInit(uint32_t startAddr, uint32_t totalSize, uint32_t minSize) 
     ginMinSize = minSize;
 
     for (i = 0; i < E_FLASH_TYPE_MAX; i++) {
-        ginRegion[i].type = i;
-        singleSize = getSize(i, minSize);
+        // ginRegion[i].type = i;
         ginRegion[i].type = (E_FLASH_TYPE)i;
         ginRegion[i].size = getSize((E_FLASH_TYPE)i, minSize);
-        LELOG("[%d] [%d]", i, ginRegion[i].size);
         ginRegion[i].addr = ginStartAddr + tmpSize;
-        ginRegion[i].size = singleSize;
+        LELOG("[%d] [%d]", i, ginRegion[i].size);
         if (E_FLASH_TYPE_SCRIPT2 == i) {
-            tmpTotal = singleSize*MAX_IA;
+            tmpTotal = ginRegion[i].size*MAX_IA;
         } else {
-            tmpTotal = singleSize;
+            tmpTotal = ginRegion[i].size;
         }
         tmpSize += tmpTotal;
-        LELOG("idx[%d] addr[0x%x] size[0x%x*%d=0x%x] type[%d]", i, ginRegion[i].addr, ginRegion[i].size, ginRegion[i].size ? tmpTotal/ginRegion[i].size : 0, tmpTotal, ginRegion[i].type);
+        LELOG("idx[%d] addr[0x%x] size[0x%x*%d=0x%x] type[%d] all[%d]", i, ginRegion[i].addr, ginRegion[i].size, 
+            (ginRegion[i].size ? tmpTotal/ginRegion[i].size : 0), tmpTotal, ginRegion[i].type, tmpSize);
     }
 
     return 0;
@@ -205,17 +205,25 @@ static int storageRead(E_FLASH_TYPE type, void *data, int size, int idx) {
 
     ret = getRegion(type, &fr);
     if (0 > ret) {
+        LELOGE("storageRead 1");
         return -1;
     }
 
     hdl = (void *)halFlashOpen();
     if (NULL == hdl) {
+        LELOGE("storageRead 2");
         return -2;
     }
 
     ret = halFlashRead(hdl, data, size, fr.addr + (idx*fr.size), 0);
     if (0 > ret) {
+        LELOGE("storageRead 3");
         return -3;
+    }
+
+    if (*((uint8_t *)data + (size - 1)) != crc8(data, size - 1)) {
+        LELOGE("storageRead crc8 ------------------");
+        return -4;
     }
 
     // LELOG("flashReadPrivateCfg [0x%x] [0x%x][0x%x]", hdl, STORAGE_SIZE_PRIVATE_CFG, fr.addr);
@@ -300,7 +308,7 @@ int lelinkStorageReadScriptCfg(void *scriptCfg, int flashType, int idx){
         ret = storageRead(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg2), idx);
     } else {
         LELOGW("lelinkStorageReadScriptCfg not supported flashType[%d]", flashType);
-        return -1;
+        return -10;
     }
 
     return ret;
@@ -320,13 +328,14 @@ int lelinkStorageWriteScriptCfg2(const void *scriptCfg) {
     }
 
     ret = lelinkStorageReadPrivateCfg(&privCfg);
-    if (0 > ret || privCfg.csum != crc8((const uint8_t *)&(privCfg.data), sizeof(privCfg.data))) {
+    if (0 > ret) {
         LELOGW("lelinkStorageWriteScriptCfg2 csum FAILED");
         return -2;
     }
 
 
     found = findPosForIAName(&privCfg, strSelfRuleName, lenSelfRuleName, &whereToPut);
+    LELOG("findPosForIAName fromName[%s][%d]", strSelfRuleName, lenSelfRuleName);
 
     if (!found && 0 > whereToPut) {
         LELOGW("lelinkStorageWriteScriptCfg2 IA(s) are FULL");
@@ -352,7 +361,7 @@ int lelinkStorageWriteScriptCfg2(const void *scriptCfg) {
     if (0 > ret) {
         // a new ia item
         if (!found && 0 <= whereToPut) {
-            privCfg.data.iaCfg.arrIA[whereToPut] = -1;
+            privCfg.data.iaCfg.arrIA[whereToPut] = 0;
             privCfg.data.iaCfg.num--;
             lelinkStorageWritePrivateCfg(&privCfg);
         }
@@ -370,14 +379,27 @@ int lelinkStorageWritePrivateCfg(const PrivateCfg *privateCfg) {
 
     ret = storageWrite(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg), 0);
 
+    if (0 == ret) {
+        memcpy(&ginPrivateCfg, privateCfg, sizeof(PrivateCfg));
+        memcpy(&(ginIACache.cfg), &(privateCfg->data.iaCfg), sizeof(IACfg));
+    }
+
     return ret;
 }
 
 int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     int ret = 0;
-
     ret = storageRead(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg), 0);
 
+// {
+//     privateCfg->data.iaCfg.num = 1;
+//     privateCfg->data.iaCfg.arrIA[0] = 1;
+//     strcpy(privateCfg->data.iaCfg.arrIAName[0], "2017022419442900003");
+// }
+    if (0 == ret) {
+        memcpy(&ginPrivateCfg, privateCfg, sizeof(PrivateCfg));
+        memcpy(&(ginIACache.cfg), &(privateCfg->data.iaCfg), sizeof(IACfg));
+    }
     return ret;
 }
 
@@ -528,6 +550,98 @@ int processStdMessage() {
     return 0;
 }
 
+static void setPWMLedBlink(RLED_STATE_t st) {
+    pwmHandler_t *q = ginPWMManager.table;
+    int i;
+    if (st == RLED_STATE_WIFI) {
+        for(i = 0; i < ginPWMManager.num ; i++, q++) {
+            if (q->type == PWM_TYPE_OUTPUT_RESET) {
+                halPWMWrite(q, 0x8002);
+            }
+        }
+        ginFirstRunningFlag = 1;
+    } else if (st == RLED_STATE_CONNECTING) {
+        for(i = 0; i < ginPWMManager.num ; i++, q++) {
+            if (q->type == PWM_TYPE_OUTPUT_RESET) {
+                halPWMWrite(q, 0x8001);
+            }
+        }
+    } else if (st == RLED_STATE_RUNNING) {
+        for(i = 0; i < ginPWMManager.num ; i++, q++) {
+            if (q->type == PWM_TYPE_OUTPUT_RESET) {
+                halPWMWrite(q, 0);
+            }
+        }
+    }
+}
+
+static void setGPIOLedBlink(RLED_STATE_t st) {
+    gpioHandler_t *q = ginGpioManager.table;
+    int i;
+    APPLOG("setGPIOLedBlink ginGpioManager.num[%d] st[%d]", ginGpioManager.num, st);
+    if (st == RLED_STATE_WIFI) {
+        for(i = 0; i < ginGpioManager.num ; i++, q++) {
+            if (q->type == GPIO_TYPE_OUTPUT_RESET) {
+                halGPIOWrite(q, 3);
+            }
+        }
+    } else if (st == RLED_STATE_CONNECTING) {
+        for(i = 0; i < ginGpioManager.num ; i++, q++) {
+            APPLOG("setGPIOLedBlink i[%d] type[%d]", i, q->type);
+            if (q->type == GPIO_TYPE_OUTPUT_RESET) {
+                halGPIOWrite(q, 2);
+            }
+        }
+    } else if (st == RLED_STATE_RUNNING) {
+        for(i = 0; i < ginGpioManager.num ; i++, q++) {
+            if (q->type == GPIO_TYPE_OUTPUT_RESET) {
+                halGPIOWrite(q, q->state);
+            }
+        }
+    }
+}
+
+static RLED_STATE_t s_resetLevel = RLED_STATE_FREE;
+RLED_STATE_t setResetLed(RLED_STATE_t st)
+{
+    LELOG("setResetLed state [%d]",st);
+    if (st >= RLED_STATE_FREE && st < RLED_STATE_RUNNING) {
+        s_resetLevel = st;
+        ginFirstRunningFlag = 1;
+        setPWMLedBlink(st);
+        setGPIOLedBlink(st);
+        aalSetLedStatus(st);
+    } else if(st == RLED_STATE_RUNNING) {
+        s_resetLevel = st;
+        if (ginFirstRunningFlag) {
+            setPWMLedBlink(st);
+            setGPIOLedBlink(st);
+            aalSetLedStatus(st);
+            ginFirstRunningFlag = 0;
+        }
+    }
+    return s_resetLevel;
+}
+
+void resetDevice(void) {
+    if (0 <= resetConfigData(0)) {
+        setDevFlag(DEV_FLAG_RESET, 1);
+        halReboot();
+    }
+}
+
+static void gpioInitState(gpioManager_t *mgr)
+{
+    int i;
+    gpioHandler_t *table = mgr->table;
+
+    for(i = 0; i < mgr->num; i++, table++) {
+        LELOG("IO id = %d, dir = %d, mode = %d, state = %d, type = %d",
+                table->id, table->dir, table->mode, table->state, table->type);
+        halGPIOWrite(table, !!table->state);
+    }
+}
+
 static void gpioSetDefault(gpioManager_t *mgr)
 {
     int i;
@@ -545,13 +659,6 @@ static void gpioSetDefault(gpioManager_t *mgr)
         table[i].state = GPIO_STATE_LOW;
         table[i].oldState = 0;
         table[i].type = 0;
-        table[i].gpiostate = 0;
-        table[i].freestate = GPIO_STATE_LOW;
-        table[i].blink = 0;
-        table[i].longTime = 5;
-        table[i].shortTime = 0;
-        table[i].keepLowTimes = 0;
-        table[i].keepHighTimes = 0;
         table[i].handler = NULL;
         table[i].reserved1 = 0;
         table[i].reserved2 = 0;
@@ -559,25 +666,12 @@ static void gpioSetDefault(gpioManager_t *mgr)
 }
 
 static void pwmSetDefault(pwmManager_t *mgr) {
-    int i;
     pwmHandler_t *table;
-
     if(!mgr && !mgr->table) {
         return;
     }
     table = mgr->table;
     memset(table, 0, sizeof(*table) * PWM_MAX_ID);
-    for( i = 0; i < PWM_MAX_ID; i++ ) {
-        table[i].id = 0;
-        table[i].type = 0;
-        table[i].state = 0;
-        table[i].oldState = 0;
-        table[i].longTime = 0;
-        table[i].shortTime = 0;
-        table[i].handler = NULL;
-        table[i].reserved1 = 0;
-        table[i].reserved2 = 0;
-    }
 }
 
 void *ioInit(int ioType, const char *json, int jsonLen) {
@@ -657,22 +751,28 @@ void *ioInit(int ioType, const char *json, int jsonLen) {
             ioHdl = &ginPWMManager;
             return ioHdl;
         }break;
+        case IO_TYPE_EINT: {
+            int i;
+            eintHandler_t *table;
+            ret = getEINTInfo(json, jsonLen, ginEINTManager.table, EINT_MAX_ID);
+            if (0 >= ret) {
+                LELOGW("ioInit ginEINTManager ret[%d]", ret);
+                return NULL;
+            }
+            ginEINTManager.num = ret;
+            for(i = 0, table = ginEINTManager.table; i < ginEINTManager.num; i++, table++) {
+                halEINTOpen(table);
+            }
+            ioHdl = &ginEINTManager;
+            return ioHdl;
+        }break;
+        case IO_TYPE_USER: {
+            ioHdl = &ginUserHandler;
+            return ioHdl;
+        }break;
     }
     // halUartInit()
     return NULL;
-}
-
-static void gpioInitState(gpioManager_t *mgr)
-{
-    int i;
-    gpioHandler_t *table = mgr->table;
-
-    for(i = 0; i < mgr->num; i++, table++) {
-        LELOG("IO id = %d, dir = %d, mode = %d, state = %d, type = %d, blink = %d", 
-                table->id, table->dir, table->mode, table->state, table->type, table->blink);
-        table->freestate = table->state;
-        halGPIOWrite(table, !!table->state);
-    }
 }
 
 void **ioGetHdl(int *ioType) {
@@ -729,6 +829,18 @@ void **ioGetHdl(int *ioType) {
             }
             return &ioHdl;
         }break;
+        case IO_TYPE_EINT: {
+            if (NULL == ioHdl) {
+                ioHdl = ioInit(whatCvtType, json, ret);
+            }
+            return &ioHdl;
+        }break;
+        case IO_TYPE_USER: {
+            if (NULL == ioHdl) {
+                ioHdl = ioInit(whatCvtType, json, ret);
+            }
+            return &ioHdl;
+        }break;
     }
     // halUartInit()
     return NULL;    
@@ -752,13 +864,14 @@ IOHDL *ioGetHdlExt() {
     char json[MAX_BUF] = {0};
     int ret = 0;
     // int x = 0;
-    static uint8_t whatCvtType = 0x00;
+    static int whatCvtType = 0x00;
     if (0x00 == whatCvtType) {
         ret = sengineGetTerminalProfileCvtType(json, sizeof(json));
         if (0 >= ret) {
             LELOG("ioGetHdl sengineGetTerminalProfileCvtType ret[%d]", ret);
             return NULL;
         }
+        // LELOG("getWhatCvtType json[%s]", json);
         whatCvtType = getWhatCvtType(json, ret);
         if (0 >= whatCvtType) {
             // LELOGW("ioGetHdl getWhatCvtType[%d] NO VALID TYPE !!!!!!!!! ", whatCvtType);
@@ -780,6 +893,8 @@ IOHDL *ioGetHdlExt() {
     IO_INIT_ITEM(IO_TYPE_GPIO, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_PIPE, whatCvtType, json, ret);
     IO_INIT_ITEM(IO_TYPE_PWM, whatCvtType, json, ret);
+    IO_INIT_ITEM(IO_TYPE_EINT, whatCvtType, json, ret);
+    IO_INIT_ITEM(IO_TYPE_USER, whatCvtType, json, ret);
     IO_INIT_END;
 
     // {
@@ -843,11 +958,16 @@ int ioWrite(int ioType, void *hdl, const uint8_t *data, int dataLen) {
             }
             return ret;
         }break;
+        case IO_TYPE_USER: {
+            return aalUserWrite(hdl, data, dataLen);
+        }break;
     }
     return 0;
 }
 
 int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
+    int ret = 0;
+    //LELOG("ioRead type[%d] [0x%02x]", ioType, hdl);
     switch (ioType) {
         case IO_TYPE_UART: {
             return halUartRead(hdl, data, dataLen);
@@ -858,22 +978,18 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
             gpioHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num; i++, q++) {
                 halGPIORead(q, &val);
-                if(val == q->state) {
-                    q->keepHighTimes = 0;
-                } else if(q->type == GPIO_TYPE_INPUT_RESET && 
-                    (q->dir == GPIO_DIR_INPUT) && (q->oldState == val)) {
-                    gpioCheckInput(q);
+                if(0xFF == val && q->type == GPIO_TYPE_INPUT_RESET) {
+                    resetDevice();
+                    return 0;
                 }
+                data[k++] = q->id;
+                data[k++] = val;
                 if(q->oldState != val && q->oldState != q->state) {
-                    data[k++] = q->id;
-                    data[k++] = val;
+                    ret = mgr->num*(1 + 1); // id + val
                 }
                 q->oldState = val;
-                if(q->type == GPIO_TYPE_OUTPUT_RESET && (q->dir == GPIO_DIR_OUTPUT)) {
-                    gpioCheckState(q);
-                }
             }
-            return k;
+            return ret;
         } break;
         case IO_TYPE_PIPE: {
             return halPipeRead(hdl, data, dataLen);
@@ -882,123 +998,62 @@ int ioRead(int ioType, void *hdl, uint8_t *data, int dataLen) {
 
         }break;
         case IO_TYPE_PWM: {
-            int i, k=0, val;
+            int i, k=0, val = 0;
             pwmManager_t *mgr = ((pwmManager_t *)hdl);
             pwmHandler_t *q = mgr->table;
             for(i = 0; i < mgr->num ; i++, q++) {
                 halPWMRead(q, (uint32_t*)&val);
                 //LELOG("ioWrite ioRead [%d][%d][%d]", q->id, val, q->oldState);
-                //if(q->oldState != val) {
-                    data[k++] = q->id;
-                    data[k++] = ((val >> 8) & 0xFF);
-                    data[k++] = (val & 0xFF);
-                //    q->oldState = val;
-                //}
-                if(q->type == PWM_TYPE_OUTPUT_RESET) {
-                    pwmCheckState(q);
+                data[k++] = q->id;
+                data[k++] = ((val >> 8) & 0xFF);
+                data[k++] = (val & 0xFF);
+                if(q->oldState != val) {
+                    ret = mgr->num*(1 + 2); // id + percent
+                    q->oldState = val;
                 }
             }
             //LELOG("ioRead [%d][%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x]", k, data[0], data[1], data[2], 
             //    data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-            return k;
+            return ret;
+        }break;
+        case IO_TYPE_EINT: {
+            int i, k=0, val = 0;
+            eintManager_t *mgr = ((eintManager_t *)hdl);
+            eintHandler_t *q = mgr->table;
+            for(i = 0; i < mgr->num ; i++, q++) {
+                halEINTRead(q, &val);
+                // LELOG("ioRead IO_TYPE_EINT id[%d] val[%d] old[%d]", q->id, val, q->oldState);
+                if(0xFF == val && q->type == GPIO_TYPE_INPUT_RESET) {
+                    resetDevice();
+                    return 0;
+                }
+                data[k++] = q->id;
+                data[k++] = val;
+                if(val > 0) {
+                    ret = mgr->num*2;
+                    q->oldState = val;
+                } else {
+                    if(q->oldState) {
+                        q->oldState = 0;
+                        ret = mgr->num*2;
+                    }
+                }
+            }
+            // if (ret > 0) {
+            //     LEPRINTF("===> count[%d]\r\n", ret);
+            //     for (i = 0; i < ret; ++i) {
+            //         LEPRINTF("[0x%02x] \r\n", data[i]);
+            //     }
+            //     LEPRINTF("<=== \r\n");
+            // }
+            return ret;
+        }break;
+        case IO_TYPE_USER: {
+            //LELOG("aalUserRead [%d][%d]", data[0], dataLen);
+            return aalUserRead(hdl, data, dataLen);
         }break;
     }    
     return 0;
-}
-
-static RLED_STATE_t s_resetLevel = RLED_STATE_FREE;
-RLED_STATE_t setResetLed(RLED_STATE_t st)
-{
-    LELOG("setResetLed state [%d]",st);
-    if(st >= RLED_STATE_FREE && st <= RLED_STATE_RUNNING) {
-        s_resetLevel = st;
-    }
-    return s_resetLevel;
-}
-
-static void gpioCheckInput(gpioHandler_t *ptr) {
-    ptr->keepHighTimes++;
-    LELOG("gpioCheckInput [%d] [%d]",ptr->keepHighTimes, ptr->longTime);
-    if(ptr->keepHighTimes >= ptr->longTime) {
-        int ret = resetConfigData();
-        LELOG("resetConfigData [%d]", ret);
-        if (0 <= ret) {
-            setDevFlag(DEV_FLAG_RESET, 1);
-            halReboot();
-        }
-    }
-}
-
-static void pwmCheckState(pwmHandler_t *ptr) {
-    static uint32_t count = 0;
-    uint32_t val = 0;
-    if(ptr->type == PWM_TYPE_OUTPUT_RESET) {
-        halPWMRead(ptr, &val);
-        //LELOG("pwmCheckState duty [%d] [%d] [%d]",ptr->duty, count,ptr->state);
-        if(s_resetLevel > RLED_STATE_FREE) {
-            count++;
-            if(s_resetLevel == RLED_STATE_WIFI) {
-                if(count >= ptr->shortTime) {
-                    if(val)
-                        halPWMWrite(ptr, 0);
-                    else
-                        halPWMWrite(ptr, ptr->duty);
-                    count = 0;
-                }    
-            } else if(s_resetLevel == RLED_STATE_CONNECTING) {
-                if(count >= ptr->longTime) {
-                    if(val)
-                        halPWMWrite(ptr, 0);
-                    else
-                        halPWMWrite(ptr, ptr->duty);
-                }   
-            } else if(s_resetLevel == RLED_STATE_RUNNING) {
-                if (count >= ptr->longTime) {
-                    halPWMWrite(ptr, ptr->state);
-                    count = 0;
-                }
-            } else {
-                count = 0;
-                LELOG("pwmCheckState error\n");
-            }
-        } else {
-            halPWMWrite(ptr, ptr->state ? 0 : ptr->duty);
-            count = 0;
-        }
-    }
-}
-
-static void gpioCheckState(gpioHandler_t *ptr) {
-    static uint32_t count = 0;
-    int val = 0;
-    halGPIORead(ptr, &val);
-    if(s_resetLevel > RLED_STATE_FREE) {
-        count++;
-        if(s_resetLevel == RLED_STATE_WIFI) {
-            if(count >= ptr->shortTime) {
-                halGPIOWrite(ptr, !val);
-                count = 0;
-            }
-        } else if(s_resetLevel == RLED_STATE_CONNECTING) {
-            if(count >= ptr->longTime) {
-                halGPIOWrite(ptr, !val);
-                count = 0;
-            }
-        } else if(s_resetLevel == RLED_STATE_RUNNING) {
-            if (val != ptr->state) {
-                halGPIOWrite(ptr, ptr->state);
-            }
-        } else {
-            count = 0;
-            LELOG("gpioCheckState error\n");
-        }
-    } else {
-        // LELOG("gpioCheckState val[%d] state[%d]", val, ptr->state);
-        if (val == !!ptr->state) {
-            halGPIOWrite(ptr, !ptr->state);
-        }
-        count = 0;
-    }
 }
 
 void ioDeinit(int ioType, void *hdl) {
@@ -1041,168 +1096,4 @@ void ioDeinit(int ioType, void *hdl) {
         }break;
     }    
     // return 0;
-}
-
-void test_PWM(void) {
-    int i,j;
-    pwmManager_t *mgr = &ginPWMManager;
-    pwmHandler_t *q = NULL;
-    
-    q = mgr->table;
-    for(j = 0; j< mgr->num; j++,q++) {
-        if(q->id == 18)
-        {
-            halPWMWrite(q, 1024);
-            LELOG("ioWrite pwm id [%d]", q->id);
-            halDelayms(1000);
-            break;
-        }
-    }
-retry:
-    q = mgr->table;
-    for(j = 0; j< mgr->num; j++,q++) {
-        if(q->id != 18)
-        {
-            LELOG("ioWrite pwm id [%d]", q->id);
-            for(i = 0; i < 1024 ; i+=2) {
-                halPWMWrite(q, i);
-                halDelayms(10);
-            }
-        }
-        halDelayms(1000);
-    }
-    q = mgr->table;
-    for(j = 0; j< mgr->num; j++,q++) {
-        if(q->id != 18)
-        {
-            LELOG("ioWrite pwm id [%d]", q->id);
-            for(i = 1024; i > 0 ; i-=2) {
-                halPWMWrite(q, i);
-                halDelayms(10);
-            }
-        }
-        halDelayms(1000);
-    }
-    goto retry;
-}
-
-uint8_t le_ledon(uint8_t len, char *param[]) {
-    int j;
-    pwmManager_t *mgr = &ginPWMManager;
-    pwmHandler_t *q = NULL;
-    
-    q = mgr->table;
-    for(j = 0; j< mgr->num; j++,q++) {
-        if(q->id == 18)
-        {
-            halPWMWrite(q, 1024);
-            LELOG("ioWrite pwm id [%d]", q->id);
-            break;
-        }
-    }
-    return 0;
-}
-    
-uint8_t le_ledoff(uint8_t len, char *param[]) {
-    int j;
-    pwmManager_t *mgr = &ginPWMManager;
-    pwmHandler_t *q = NULL;
-    
-    q = mgr->table;
-    for(j = 0; j< mgr->num; j++,q++) {
-        if(q->id == 18)
-        {
-            halPWMWrite(q, 0);
-            LELOG("ioWrite pwm id [%d]", q->id);
-            break;
-        }
-    }
-    return 0;
-}
-
-uint8_t le_ledset(uint8_t len, char *param[]) {
-    int type = 1;
-    int duty = 2;
-    int j;
-    pwmManager_t *mgr = &ginPWMManager;
-    pwmHandler_t *q = NULL;
-    if (len < 2) {
-        APPLOGE("error, format is [le ledset 1 1024]\n");
-        return 0;
-    }
-    type = atoi(param[0]);
-    duty = atoi(param[1]);
-    if(type == 1) {
-        q = mgr->table;
-        for(j = 0; j< mgr->num; j++,q++) {
-            if(q->id == 33) {
-                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
-                halPWMWrite(q, duty);
-            } else {
-                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
-                halPWMWrite(q, 0);
-            }
-        }
-    } else if (type == 2) {
-        q = mgr->table;
-        for(j = 0; j< mgr->num; j++,q++) {
-            if(q->id == 34)
-            {
-                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
-                halPWMWrite(q, duty);
-            } else {
-                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
-                halPWMWrite(q, 0);
-            }
-        }
-    } else if (type == 3) {
-        q = mgr->table;
-        for(j = 0; j< mgr->num; j++,q++) {
-            if(q->id == 35)
-            {
-                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
-                halPWMWrite(q, duty);
-            } else {
-                LELOG("ioWrite pwm id [%d] duty[%d]", q->id, duty);
-                halPWMWrite(q, 0);
-            }
-        }
-    } else {
-        test_PWM();
-    }
-    return 0;
-}
-
-uint8_t le_ledsetRGB(uint8_t len, char *param[]) {
-    int R, G, B;
-    int j;
-    pwmManager_t *mgr = &ginPWMManager;
-    pwmHandler_t *q = mgr->table;
-    if (len < 3) {
-        APPLOGE("error, format is [le ledsetRGB 1024 1024 1024]\n");
-        return 0;
-    }
-
-    R = atoi(param[0]);
-    G = atoi(param[1]);
-    B = atoi(param[2]);
-
-    for(j = 0; j< mgr->num; j++,q++) {
-        if(q->id == 33) { // green
-            halPWMWrite(q, G);
-        } else if(q->id == 34) {// blue
-            halPWMWrite(q, B);
-        } else if(q->id == 35) {// red
-            halPWMWrite(q, R);
-        } else if(q->id == 18) {// switch
-            halPWMWrite(q, 1024);
-        }
-    }
-    return 0;
-}
-
-uint8_t le_permitjoin(uint8_t len, char *param[]) {
-    uint8_t cmd[15] = {0x01, 0x02, 0x10, 0x49, 0x02, 0x10, 0x02, 0x14, 0x7E, 0xFF, 0xFC, 0x30, 0x02, 0x10, 0x03};
-    halUartWrite(&uartHandler, cmd, 15);
-    return 0;
 }

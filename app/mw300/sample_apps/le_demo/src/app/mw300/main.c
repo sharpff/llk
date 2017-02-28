@@ -329,18 +329,18 @@ static void thread_airconfig_proc(os_thread_arg_t thandle)
 
 
         if (do_care) {
-            wmprintf("[Prov] sniffer Channel# [%d] \r\n", channel);
+            APPLOG("[Prov] sniffer Channel# [%d]", channel);
             gin_airconfig_current_channel = channel;
             ret = wlan_sniffer_start(0x07, 0x00, channel, native_sniffer_airconfig_processing);
             //ret = wlan_sniffer_start(0x07, 0x00, channel, ezconn_recv);
             if (ret != WM_SUCCESS)
-                wmprintf("Error: wlan_sniffer_start failed.");
+                APPLOG("Error: wlan_sniffer_start failed.");
             //wmprintf("os_semaphore_get s [%d]\r\n", ret);
             os_semaphore_get(&sem_airconfig, OS_WAIT_FOREVER);
             //wmprintf("os_semaphore_get e [%d]\r\n", ret);
             if (gin_airconfig_channel_locked) {
                 os_thread_sleep(AIRCONFIG_CHANNEL_TIMEOUT);
-                wmprintf("AIRCONFIG_CHANNEL_TIMEOUT for channel[%d] [%d] \r\n", gin_airconfig_channel_cared[i], channel);
+                APPLOG("AIRCONFIG_CHANNEL_TIMEOUT for channel[%d] [%d]", gin_airconfig_channel_cared[i], channel);
                 gin_airconfig_channel_cared[i] = 0;
                 if (0 == gin_airconfig_sniffer_got) {
                     // state go back to sniffer
@@ -677,10 +677,11 @@ end:
 void le_reboot(int argc, char **argv) {
     app_reboot(REASON_USER_REBOOT);
 }
-
+extern void cmd_httpc_post(int argc, char *argv[]);
 static struct cli_command le_utils[] = { 
     {"lo", "letv ota", le_ota},
-    {"reboot", "letv reboot", le_reboot}
+    {"reboot", "letv reboot", le_reboot}/*,
+    {"httpc-post", NULL, cmd_httpc_post}*/
 };
 
 int le_utils_cli_init(void)                                                                                                                                            

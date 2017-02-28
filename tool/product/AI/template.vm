@@ -19,18 +19,19 @@ end
     INTERNAL
 ]]
 function getOldStatus(uuid)
-    local l, n = s2GetSelfName()
-    local tblOldStatus = s2apiGetLatestStatus(l, n)
+	local l, n = s2GetSelfName()
+	local tblOldStatus = s2apiGetLatestStatus(l, n)
 
-    if tblOldStatus then 
-        for _, jsonOldStatus in pairs(tblOldStatus) do
-            if nil ~= string.find(jsonOldStatus, uuid) then
-                local tbl = cjson.decode(jsonOldStatus)
-                return tbl["status"]
-            end
-        end
-    end
-    return nil
+	if tblOldStatus then 
+		for _, jsonOldStatus in pairs(tblOldStatus) do
+			uuid = string.gsub(uuid, "-", ".")
+			if nil ~= string.find(jsonOldStatus, uuid) then
+				local tbl = cjson.decode(jsonOldStatus)
+				return tbl["status"]
+			end
+		end
+	end
+	return nil
 end
 
 --[[
@@ -54,13 +55,28 @@ function cmpValInOldStatus(uuid, val, token)
 end
 
 --[[
-	EXPORT
+	INTERNAL
 ]]
 function getBeingReservedInfo()
 	-- CUSTOMIZATION START
 	local tblInfo = {${UUIDS}}
 	-- CUSTOMIZATION END
 	return tblInfo
+end
+
+--[[
+	INTERNAL
+]]
+function findReservedList(rmtUUID) 
+	-- print('findReservedList '..rmtUUID..'\r\n')
+	tblList = getBeingReservedInfo()
+    for _, a in pairs(tblList) do
+		-- print('findReservedList cmp '..rmtUUID..'<=>'..a..'\r\n')
+        if rmtUUID == a then
+        	return 1
+        end
+    end
+    return nil
 end
 
 --[[
@@ -135,8 +151,12 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 		return ok
 	end
 
+	local rmtUID = tblRmt["uid"]
+	if nil == rmtUID or rmtUID ~= ${UID} then
+		return ok
+	end
+
 	-- CUSTOMIZATION START
-	toStoreStatus = 1
 
 	local tblOldStatus = {}
 	local tblConditions = {}
@@ -147,16 +167,21 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
 		return ok
 	end
 
+	if findReservedList(rmtUUID) then
+		toStoreStatus = 1
+	end
+
 	-- CONDITION(s) START
 	tblConditions[retIdx] = 0
 	tblConditionsOld[retIdx] = 0
-	if ${REF_VAL} ${OPERATOR} tblNewStatus["${STATUS_KEY}"] and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") then
+	if tblNewStatus["${STATUS_KEY}"] ${OPERATOR} ${REF_VAL} and 0 ~= cmpValInOldStatus('${UUID}', tblNewStatus["${STATUS_KEY}"], "${STATUS_KEY}") and 
+		rmtUUID == '${UUID}' then
 		tblConditions[retIdx] = 1
 		print('ok 1\r\n')
 	end
     local tblOldStatus = getOldStatus('${UUID}')
     if tblOldStatus then
-		if ${REF_VAL} ${OPERATOR} tblOldStatus["${STATUS_KEY}"] then
+		if tblOldStatus["${STATUS_KEY}"] ${OPERATOR} ${REF_VAL} then
 			tblConditionsOld[retIdx] = 1
 			print('okOld 1\r\n')
 		end

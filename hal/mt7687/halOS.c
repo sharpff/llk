@@ -11,6 +11,11 @@
 
 SemaphoreHandle_t g_m_mutex = NULL;
 
+// static volatile int ginFlag = 0;
+// int testGetFreeHeap(int flag) {
+//     ginFlag = flag;
+//     return xPortGetFreeHeapSize();
+// }
 extern void vPortFree(void* pv);
 extern void* pvPortMalloc(size_t xWanteSize);
 extern void *pvPortRealloc( void *pv, size_t size );  
@@ -78,7 +83,9 @@ unsigned int halGetUTC(void) {
 
 void *halMallocEx(size_t size, const char *filename, uint32_t line) {
     void *ptr = pvPortMalloc(size);
-    //APPLOG("malloc:[%d][0x%x][%d][%s]", size, ptr, line, filename);
+    // if (ginFlag) {
+    //     APPLOG("malloc:[%d][0x%x][%d][%s]", size, ptr, line, filename);
+    // }
     if(ptr==NULL) {
         APPLOG("halMallocEx:%d, %d",  size, xPortGetFreeHeapSize());
     }
@@ -87,7 +94,9 @@ void *halMallocEx(size_t size, const char *filename, uint32_t line) {
 
 void *halCallocEx(size_t n, size_t size, const char *filename, uint32_t line) {
     void *ptr = pvPortMalloc(n*size);
-    //APPLOG("calloc:[%d][%d][0x%x][%d][%s]", n*size,xPortGetFreeHeapSize(), ptr, line, filename);
+    // if (ginFlag) {
+    //     APPLOG("calloc:[%d][%d][0x%x][%d][%s]", n*size, xPortGetFreeHeapSize(), ptr, line, filename);
+    // } 
     if(ptr==NULL) {
         APPLOG("halCallocEx:%d, %d",  n*size, xPortGetFreeHeapSize());
     }
@@ -99,7 +108,9 @@ void *halCallocEx(size_t n, size_t size, const char *filename, uint32_t line) {
 
 void *halReallocEx(void *ptr, size_t size, const char *filename, uint32_t line) {
     void *ptr1 = pvPortRealloc(ptr, size);
-    //APPLOG("realloc:[%d][0x%x][%d][%s]", size, ptr1, line, filename);
+    // if (ginFlag && size >= 10) {
+    //     APPLOG("realloc:[%d][0x%x][%d][%s] elapsed[%d]", size, ptr1, line, filename, xPortGetFreeHeapSize());
+    // }
     //APPLOG("realloc:[%d][0x%x]", size, ptr1);
     if (ptr1==NULL) {
         APPLOG("halReallocEx:%d, %d\n",  size,xPortGetFreeHeapSize());
@@ -165,3 +176,8 @@ uint32_t halGetCurrentTaskId(void) {
     return (uint32_t)xTaskGetCurrentTaskHandle();
 }
 
+unsigned long halLogTimeStamp(void) {
+    struct os_time t = {0};
+    os_get_time(&t);
+    return (unsigned long)((t.sec*1000)+t.usec);
+}

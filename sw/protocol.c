@@ -24,7 +24,10 @@
 // ./Debug/linux 10000100051000710010C80E77ABCD80 192.168.3.152 \{\"ctrl\":\{\"pwr\":1,\"mode\":2,\"temp\":27,\"speed\":1\}\} \{\"ctrl\":\{\"pwr\":1,\"mode\":2\,\"temp\":27,\"speed\":2\}\}
 // ./Debug/linux 10000100111000810008C80E77ABCDFF 192.168.3.129 \{\"ctrl\":\{\"abc\":1\}\} \{\"ctrl\":\{\"abc\":2\}\}
 // ./Debug/linux 10000100131000910011C80E77ABCD90 192.168.3.110 \{\"ctrl\":\{\"sDevJoin\":1\}\} \{\"ctrl\":\{\"sDevJoin\":1\}\}
-
+// ./Debug/linux 10000100131000010011000C43768722 192.168.3.110 "{\"ctrl\":{\"pwm\":[{\"id\":33,\"val\":1024},{\"id\":34,\"val\":1024},{\"id\":35,\"val\":1024},{\"id\":18,\"val\":1024}]}}" "{\"ctrl\":{\"pwm\":[{\"id\":33,\"val\":1024},{\"id\":34,\"val\":1024},{\"id\":35,\"val\":1024},{\"id\":18,\"val\":1024}]}}"
+// ./Debug/linux 10000100131000010011000C43768722 192.168.3.110 "{\"key\":2,\"val\":{\"name\":\"2016120219244600018\"}}" "{\"key\":2,\"val\":{\"name\":\"2016120219244600018\"}}"
+// ./Debug/linux 10000100131000010011B01BD2F00023 192.168.3.110 "{\"ctrl\":{\"light\":0,\"mode\":2,\"timeout\":0,\"brightness\":1024,\"red\":1024,\"green\":1024,\"blue\":1024,\"service\":0,\"wifimode\":0}}" "{\"ctrl\":{\"light\":0,\"mode\":0,\"timeout\":0,\"brightness\":1024,\"red\":1024,\"green\":1024,\"blue\":1024,\"service\":0,\"wifimode\":0}}"
+// ./Debug/linux 10000100131000010011B01BD2F00023 192.168.3.110 "{\"key\":2,\"val\":{\"name\":\"2017022215151600006\",\"act\":0}}" "{\"key\":2,\"val\":{\"name\":\"2017022215151600006\",\"act\":0}}"
 // {
 //     uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x40}; // dooya
 //     // uint8_t mac[6] = {0xC8, 0x0E, 0x77, 0xAB, 0xCD, 0x50}; // honyar
@@ -92,6 +95,7 @@ extern void otaSetLatestType(int type);
 
 extern PCACHE sdevCache();
 extern SDevNode *sdevArray();
+extern int forEachNodeSDevByMacCB(SDevNode *currNode, void *uData);
 
 typedef int (*CBLocalReq)(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int len);
 typedef void (*CBRemoteRsp)(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
@@ -132,6 +136,9 @@ static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, cons
 static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 
+static int cbCloudOnlineLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbCloudOnlineRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+
 static int cbCloudAuthLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 
@@ -158,8 +165,8 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
 static void cbCloudReportRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudReportOTAQueryLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
-// static int cbCloudReportOTADoLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
-// static void cbCloudReportOTADoRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudSDevRecordChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbCloudSDevRecordChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
 static void cbCloudMsgCtrlC2RDoOTARemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
@@ -233,6 +240,11 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_GET_TARGET_RSP, LELINK_SUBCMD_CLOUD_GET_TARGET_RSP, cbCloudGetTargetRemoteRsp, NULL },
     { LELINK_CMD_CLOUD_AUTH_REQ, LELINK_SUBCMD_CLOUD_AUTH_REQ, cbCloudAuthLocalReq, NULL },
     { LELINK_CMD_CLOUD_AUTH_RSP, LELINK_SUBCMD_CLOUD_AUTH_RSP, cbCloudAuthRemoteRsp, NULL },
+
+    // ONLINE
+    { LELINK_CMD_CLOUD_ONLINE_REQ, LELINK_SUBCMD_CLOUD_ONLINE_REQ, cbCloudOnlineLocalReq, NULL },
+    { LELINK_CMD_CLOUD_ONLINE_RSP, LELINK_SUBCMD_CLOUD_ONLINE_RSP, cbCloudOnlineRemoteRsp, NULL },
+
     { LELINK_CMD_CLOUD_HEARTBEAT_REQ, LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ, cbCloudHeartBeatLocalReq, NULL },
     { LELINK_CMD_CLOUD_HEARTBEAT_RSP, LELINK_SUBCMD_CLOUD_HEARTBEAT_RSP, cbCloudHeartBeatRemoteRsp, NULL },
     // STATUS CHAGNED req from node (REMOTE)
@@ -252,8 +264,9 @@ static CmdRecord tblCmdType[] = {
     // query ota
     { LELINK_CMD_CLOUD_REPORT_REQ, LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_REQ, cbCloudReportOTAQueryLocalReq, NULL },
     { LELINK_CMD_CLOUD_REPORT_RSP, LELINK_SUBCMD_CLOUD_REPORT_OTA_QUERY_RSP, cbCloudReportOTAQueryRemoteRsp, NULL },
-    // { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_REQ, cbCloudReportOTADoLocalReq, NULL },
-    // { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_REPORT_OTA_DO_RSP, cbCloudReportOTADoRemoteRsp, NULL },
+    // sub devs record changed
+    { LELINK_CMD_CLOUD_REPORT_REQ, LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_REQ, cbCloudSDevRecordChangedLocalReq, NULL },
+    { LELINK_CMD_CLOUD_REPORT_RSP, LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_RSP, cbCloudSDevRecordChangedRemoteRsp, NULL },
     // cloud push ota
     { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_OTA_REQ, NULL, cbCloudIndOTARemoteReq },
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_OTA_RSP, NULL, cbCloudIndOTALocalRsp},
@@ -693,20 +706,6 @@ failed:
     return ret;
 }
 
-int getSDevStatus(int index, char *sdevStatus, int len) {
-    SDevNode *arr = sdevArray();
-    PCACHE cache = sdevCache(); 
-    if (arr && cache) {
-        uint8_t uuid[MAX_UUID+1] = {0};
-        getTerminalUUID(uuid, MAX_UUID);
-        sprintf(sdevStatus, "{\"%s\":\"%s\",\"%s\":%s,\"%s\":%s}", JSON_NAME_UUID, uuid, JSON_NAME_SDEV, arr[index].sdevInfo, 
-            JSON_NAME_SDEV_STATUS, strlen(arr[index].sdevStatus) > 0 ? arr[index].sdevStatus : "{}");
-    } else {
-        return 0;
-    }
-    return strlen(sdevStatus);
-}
-
 void lelinkDeinit() {
     halDeLockInit();
     halDeAESInit();
@@ -727,10 +726,7 @@ int lelinkDoPollingQ2A(void *ctx) {
     qForEachfromCache(&(pCtx->cacheCmd), (int(*)(void*, void*))forEachNodeQ2ARspCB, NULL);
 
 	qCheckForClean(&(pCtx->cacheCmd), (int(*)(void*))isNeedDelCB);
-/*
-    if (pCtx->cacheCmd.currsize)
-        LELOG("lelinkDoPollingQ2A cache[%d/%d]", pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
-*/
+
     memset(ipTmp, 0, sizeof(ipTmp));
     memset(pCtx->nwBuf, 0, sizeof(pCtx->nwBuf));
     memset(pCtx->protocolBuf, 0, sizeof(pCtx->protocolBuf));
@@ -746,42 +742,9 @@ int lelinkDoPollingQ2A(void *ctx) {
     ret = getPackage(pCtx, ipTmp, &portTmp, &cmdInfo);
     if (0 > ret) {
         return -2;
-        // if (pCtx->ctx) {
-        //     ret = getPackage(pCtx->ctx, ipTmp, &portTmp, &cmdInfo);
-        //     if (0 > ret) {
-        //         return;
-        //     }
-        // } else {
-        //     return;
-        // }
     }
-    // ret = nwUDPRecvfrom(pCtx, pCtx->nwBuf, UDP_MTU, ipTmp, MAX_IPLEN, &portTmp);
-    // if (ret <= 0)
-    // {
-    //     //LELOG("lelinkDoPollingQ2A nwUDPRecvfrom [%d] QA cache[%d/%d]", ret, pCtx->cacheCmd.currsize, pCtx->cacheCmd.maxsize);
-    //     return;
-    // }
 
-    // if (0 > (ret = doUnpack(pCtx, pCtx->nwBuf, ret, pCtx->protocolBuf, sizeof(pCtx->protocolBuf), &cmdInfo)))
-    // {
-    //     LELOGW("lelinkDoPollingQ2A doUnpack [%d] [%s:%d]", ret, ipTmp, portTmp);
-    //     return;
-    // }
-
-
-    // TODO: drop/ignore the discovery from itself
-    // if (LELINK_CMD_DISCOVER_REQ == cmdInfo.cmdId) {
-    // if (isCommingFromItself(pCtx, ipTmp, portTmp)) {
-    //     return -3;
-    // }
     LELOG("lelinkDoPollingQ2A doUnpack [%d-%d]", cmdInfo.cmdId, cmdInfo.subCmdId);
-
-    /*
-    if (0 == (cmdId & 0x1))
-    {
-        LELOGW("lelinkDoPollingQ2A drop cmdId[%d] subCmdId[%d]", cmdId, subCmdId);
-        return;
-    }*/
 
     ret = doQ2AProcessing(pCtx, ret, &cmdInfo, ipTmp, portTmp);
 
@@ -890,7 +853,7 @@ static int doQ2ARemoteReq(void *ctx,
     if ((CBRemoteReq) remoteReqPtr->procQ2A) {
         localRspPtr = getCmdRecord(cmdInfo->cmdId + 1, cmdInfo->subCmdId + 1);
         repeat = ((CBRemoteReq) remoteReqPtr->procQ2A)(ctx, cmdInfo, protocolBuf, pbLen);
-        if (!localRspPtr || 0 > repeat) {
+        if (!localRspPtr || 0 > repeat || cmdInfo->noAck) {
             return -0xB;
         }
         ((CmdHeaderInfo *)cmdInfo)->cmdId++;
@@ -926,7 +889,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     
     node_p->pCtx = pCtx;
     node_p->needReq = 1;
-    node_p->needRsp = (LELINK_CMD_DISCOVER_REQ == node_p->cmdId) ? 0xFF : 1;
+    node_p->rspVal = !node_p->rspVal ? ((LELINK_CMD_DISCOVER_REQ == node_p->cmdId) || (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == node_p->subCmdId && LELINK_CMD_CTRL_REQ == node_p->cmdId) ? 0xFF : 1) : 0;
     node_p->randID = genRand();
     node_p->seqId = node_p->seqId ? node_p->seqId : genSeqId();
     if (!node_p->uuid[0])
@@ -940,11 +903,10 @@ int lelinkNwPostCmd(void *ctx, const void *node)
         LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == node_p->subCmdId) {
         node_p->timeoutRef = 1;
     }
-    if (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId && 
-        LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->subCmdId) {
+    if (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->subCmdId) {
         node_p->timeoutRef = 3;
     }
-    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef);
+    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d] seqId[%d] reserved[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef, node_p->seqId, node_p->reserved);
 
     // if (node_p->ndPort) {
     //     memcpy(node.ndIP, ipTmp, MAX_IPLEN);
@@ -957,7 +919,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     // node.subCmdId = cmdInfo.subCmdId;
     // node.seqId = cmdInfo.seqId;
     // node.randID = genRand();
-    // node.passThru = cmdInfo.passThru;
+    // node.noAck = cmdInfo.noAck;
     // node.reserved = cmdInfo.reserved;
     // node.reserved1 = cmdInfo.reserved1;
     // node.reserved2 = cmdInfo.reserved2;
@@ -968,7 +930,7 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     // node.timeStamp = halGetTimeStamp();
     // node.timeoutRef = 5;
     // node.needReq = 1;
-    // node.needRsp = 0;
+    // node.rspVal = 0;
     // memcpy(node.ndIP, ipTmp, MAX_IPLEN);
     // node.ndPort = portTmp;
 
@@ -1066,10 +1028,10 @@ static int findTokenByIP(CommonCtx *ctx, const char ip[MAX_IPLEN], uint8_t *toke
 static int forEachNodeR2RFindNode(NodeData *currNode, void *uData) {
     CmdHeaderInfo *cmdInfo = (CmdHeaderInfo *)uData;
     if (currNode->seqId == cmdInfo->seqId) {
-        if (0 < currNode->needRsp) {
-            currNode->needRsp--;
+        if (0 < currNode->rspVal) {
+            currNode->rspVal--;
+            return 1;
         }
-        return 1;
     }
     return 0;
 }
@@ -1080,11 +1042,7 @@ static int getPackage(void *pCtx, char ipTmp[MAX_IPLEN], uint16_t *port, CmdHead
     // memset(COMM_CTX(pCtx)->nwBuf, 0, sizeof(COMM_CTX(pCtx)->nwBuf));
     // memset(COMM_CTX(pCtx)->protocolBuf, 0, sizeof(COMM_CTX(pCtx)->protocolBuf));
     ret = nwUDPRecvfrom(pCtx, COMM_CTX(pCtx)->nwBuf, UDP_MTU, ipTmp, MAX_IPLEN, port);
-    if (0 >= ret)
-    {
-        // LELOG("lelinkDoPollingR2R nwUDPRecvfrom [%d] R2R queue[%d/%d] [%d-%d]", 
-        //     ret, COMM_CTX(pCtx)->cacheCmd.currsize, COMM_CTX(pCtx)->cacheCmd.maxsize,
-        //     currNode->cmdId, currNode->subCmdId);
+    if (0 >= ret) {
         return -4;
     }
 
@@ -1128,7 +1086,7 @@ static int forEachNodeR2RPostSendCB(NodeData *currNode, void *uData)
         if (0 >= len)
         {
             currNode->needReq = 0;
-            currNode->needRsp = 0;
+            currNode->rspVal = 0;
             return 0;
         }
 
@@ -1151,7 +1109,7 @@ static int forEachNodeR2RPostSendCB(NodeData *currNode, void *uData)
             return -2;
         }
 
-        //currNode->needRsp = 1;
+        //currNode->rspVal = 1;
         currNode->needReq = 0;
     }
 
@@ -1205,25 +1163,26 @@ static int isNeedDelCB(NodeData *currNode) {
     // timeout
     int ret = 0;
     if (currNode->timeoutRef && (halGetTimeStamp() - currNode->timeStamp) > currNode->timeoutRef) {
-        LELOG("isNeedDelCB timeoutRef[%d] cmd[%d][%d] left needRsp[%d] ", 
-            currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->needRsp);
+        LELOG("isNeedDelCB timeoutRef[%d] cmd[%d][%d] left rspVal[%d] ", 
+            currNode->timeoutRef, currNode->cmdId, currNode->subCmdId, currNode->rspVal);
 
         // for retry
-        if ((LELINK_CMD_DISCOVER_REQ == currNode->cmdId && LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) ||
+        if ((LELINK_CMD_CLOUD_HEARTBEAT_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_STATUS_CHANGED_REQ == currNode->subCmdId) ||
+            (LELINK_CMD_CTRL_REQ == currNode->cmdId && LELINK_SUBCMD_CTRL_CMD_REQ == currNode->subCmdId) ||
             (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == currNode->subCmdId)) {
             uint8_t bRspFlag = 0x01; // for unicast
             NodeData node = {0};
-            LELOG("**************** cmd[%d] subCmd[%d], needRsp[%d] reserved2[%d]", 
-                currNode->cmdId, currNode->subCmdId, currNode->needRsp, currNode->reserved2);
-            if (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) {
-                bRspFlag = 0xFF; // for multicast
-            }
+            LELOG("**************** cmd[%d] subCmd[%d], rspVal[%d] reserved2[%d]", 
+                currNode->cmdId, currNode->subCmdId, currNode->rspVal, currNode->reserved2);
+            // if (LELINK_SUBCMD_DISCOVER_STATUS_CHANGED_REQ == currNode->subCmdId) {
+            //     bRspFlag = 0xFF; // for multicast
+            // }
             if (!currNode->reserved2) {
                 currNode->reserved2 = RETRY_TIMES;
                 LELOG("RETRY start");
             }
             // no need to retry OR has got rsp already
-            if (RETRY_TIMES < currNode->reserved2 || bRspFlag > currNode->needRsp) {
+            if (RETRY_TIMES < currNode->reserved2 || bRspFlag > currNode->rspVal) {
                 LELOG("RETRY is finished");
             } else {
                 node.cmdId = currNode->cmdId;
@@ -1231,6 +1190,7 @@ static int isNeedDelCB(NodeData *currNode) {
                 node.seqId = currNode->seqId;
                 strcpy(node.ndIP, currNode->ndIP);
                 node.ndPort = currNode->ndPort;
+                node.reserved = currNode->reserved;
                 node.reserved2 = (0 == --currNode->reserved2) ? 0xFF : currNode->reserved2;
                 memcpy(node.uuid, currNode->uuid, MAX_UUID);
                 memcpy(node.token, currNode->token, AES_LEN);
@@ -1240,8 +1200,10 @@ static int isNeedDelCB(NodeData *currNode) {
         }
 
         switch (currNode->cmdId) {
+            case LELINK_CMD_CLOUD_ONLINE_REQ:
             case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
-                if (currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ) {
+                if ((currNode->subCmdId == LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ || LELINK_SUBCMD_CLOUD_ONLINE_REQ == currNode->subCmdId) &&
+                    !(currNode->reserved)) {
                     if (!flagHeartBeatMinus()) {
                         changeStateId(E_STATE_AP_CONNECTED);
                         flagHeartBeatReset();
@@ -1259,7 +1221,7 @@ static int isNeedDelCB(NodeData *currNode) {
     }
 
     // has been sent
-    if (!currNode->needRsp && !currNode->needReq) {
+    if (!currNode->rspVal && !currNode->needReq) {
         ret = 1;
     }
 
@@ -1298,7 +1260,7 @@ MULTI_LOCAL_RSP:
         node.timeStamp = halGetTimeStamp();
         node.timeoutRef = 30;
         node.needReq = 1;
-        node.needRsp = 0;
+        node.rspVal = 0;
         memcpy(node.ndIP, ip, MAX_IPLEN);
         node.ndPort = port;
         node.seqId = cmdInfo->seqId;
@@ -1307,12 +1269,21 @@ MULTI_LOCAL_RSP:
     }
     return ret;
 }
-static void postReboot(void *ctx) {
-    NodeData node = {0};
 
+void postReboot(void) {
+    NodeData node = {0};
     node.cmdId = LELINK_CMD_ASYNC_REBOOT_REQ;
     node.subCmdId = LELINK_SUBCMD_ASYNC_REBOOT_REQ;
-    lelinkNwPostCmd(ctx, &node);
+    lelinkNwPostCmdExt(&node);
+}
+
+void postSDevRecordChanged(int index, int kind) {
+    NodeData node = {0};
+    node.cmdId = LELINK_CMD_CLOUD_REPORT_REQ;
+    node.subCmdId = LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_REQ;
+    node.reserved = index + 1;
+    node.reserved1 = kind;
+    lelinkNwPostCmdExt(&node);
 }
 /* hello */
 static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
@@ -1327,7 +1298,7 @@ static int cbHelloLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dat
         helloReq[helloReqLen + 1] = 0;
     }
     LELOG("cbHelloLocalReq [%s] -s", helloReq);
-    // CommonCtx *pCtx = COMM_CTX(ctx);
+
     ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)helloReq, strlen(helloReq), dataOut, dataLen);
     LELOG("cbHelloLocalReq [%d] -e", ret);
     return ret;
@@ -1389,28 +1360,46 @@ static void cbDiscoverRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const u
     LELOG("cbDiscoverRemoteRsp -e");
 }
 
-static int ginSDevCountsInDiscovery;
+
+extern int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData);
+static int16_t ginSDevCountsInDiscovery;
+static int16_t ginSDevCurrFoundIndex;
+static int forEachNodeSDevIteratorCB(SDevNode *currNode, void *uData) {
+    int16_t *foundIndex = (int16_t *)uData;
+    int16_t index = (((uint8_t *)currNode - (uint8_t *)sdevCache()->pBase)/sdevCache()->singleSize);
+    LELOG("[SENGINE] forEachNodeSDevIteratorCB *foundIndex[%d] index[%d] isSDevInfoDone[%02x]", *foundIndex, index, currNode->isSDevInfoDone);
+    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        if (*foundIndex <= index) {
+            *foundIndex = index + 1;
+            return 1;
+        }
+    }
+    return 0;
+}
 static int cbDiscoverRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     int ret = 1;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbDiscoverRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
+    
     // it is not comming from simu
-    if (memcmp(cmdInfo->uuid, "d05bca44feb34aeca2dd", 20)) {
-        if (isCloudAuthed() && getLock()) {
-            return -1; // drop this req, it means no rsp
-        }
-    }
+    // if (memcmp(cmdInfo->uuid, "d05bca44feb34aeca2dd", 20)) {
+    //     if (isCloudOnlined() && getLock()) {
+    //         return -1; // drop this req, it means no rsp
+    //     }
+    // }
 
     LELOG("cbDiscoverRemoteReq [%d] -e", ret + ginSDevCountsInDiscovery);
     return ret + ginSDevCountsInDiscovery;
 }
 
 static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-    int ret = 0;
+    int ret = 0, validSize = 0, encType = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     char rspDiscover[MAX_BUF] = {0};
-    LELOG("cbDiscoverLocalRsp -s");
+    LELOG("cbDiscoverLocalRsp ======> ginSDevCountsInDiscovery[%d] -s", ginSDevCountsInDiscovery);
+
+
 
     // gen status
     if (0 == ginSDevCountsInDiscovery) {
@@ -1420,14 +1409,31 @@ static int cbDiscoverLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
         }
     }
     else {
-        ret = getSDevStatus(ginSDevCountsInDiscovery-1, rspDiscover, sizeof(rspDiscover));
+        // TO FIND the index for sdev(valid), and the index should > ginSDevCurrFoundIndex
+        int index = 0;
+        index = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevIteratorCB, &ginSDevCurrFoundIndex);
+        if (0 <= index) {
+            ret = getSDevStatus(index, rspDiscover, sizeof(rspDiscover));
+            LELOG("index[%d] ginSDevCurrFoundIndex[%d] ret[%d][%s]", index, ginSDevCurrFoundIndex, ret, rspDiscover);
+        } else {
+            ret = 0;
+        }
     }
 
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rspDiscover, ret, dataOut, dataLen);
-    LELOG("cbDiscoverLocalRsp ******ret[%d] [%d] -e", ret, ginSDevCountsInDiscovery);
+    encType = (LELINK_CMD_CTRL_RSP == cmdInfo->cmdId && LELINK_SUBCMD_CTRL_GET_STATUS_RSP == cmdInfo->subCmdId) ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+	ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspDiscover, ret, dataOut, dataLen);
+    LELOG("cbDiscoverLocalRsp <====== ret[%d] [%d] cmd[%d][%d] -e", ret, ginSDevCountsInDiscovery, cmdInfo->cmdId, cmdInfo->subCmdId);
 
+    // clear the flag
     if (0 == ginSDevCountsInDiscovery--) {
-        ginSDevCountsInDiscovery = sdevCache()->currsize;
+        // ginSDevCountsInDiscovery = 0;
+        ginSDevCurrFoundIndex = 0;
+        if (sengineHasDevs()) {
+            qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevForNumCB, &validSize);
+            ginSDevCountsInDiscovery = validSize;            
+        } else {
+            ginSDevCountsInDiscovery = 0;
+        }
     }
     return ret;
 }
@@ -1488,13 +1494,14 @@ static int cbDiscoverStatusChangedLocalRsp(void *ctx, const CmdHeaderInfo* cmdIn
 
 static int cbCtrlGetStatusLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
 
-    int ret = 0;
-    // char reqCtrlGetStatus[128];
+    int ret = 0, encType = -1;
+    char reqCtrlGetStatus[128];
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlGetStatusLocalReq -s");
 
-    // ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)reqCtrlGetStatus, sizeof(reqCtrlGetStatus));
-	ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)NULL, 0, dataOut, dataLen);
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)reqCtrlGetStatus, sizeof(reqCtrlGetStatus));
+    encType = cmdInfo->token[0] ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+	ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)reqCtrlGetStatus, ret, dataOut, dataLen);
     
     LELOG("cbCtrlGetStatusLocalReq [%d] -e", ret);
     return ret;
@@ -1537,7 +1544,7 @@ static int cbCtrlCmdRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uin
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCtrlCmdRemoteReq -s");
     LELOG("[%d][%s]", dataLen, dataIn);
-    setTerminalStatus((const char *)dataIn, dataLen);
+    setTerminalAction(cmdInfo, (const char *)dataIn, dataLen);
     LELOG("cbCtrlCmdRemoteReq [%d] -e", ret);
     // TODO: handle the remote ctrl
     // ret = std2pri((const char *)dataIn, dataLen, data, sizeof(data), &type, NULL);
@@ -1553,7 +1560,7 @@ static int cbCtrlCmdLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint
     char rspCtrlCmd[MAX_BUF] = {0};
     LELOG("cbCtrlCmdLocalRsp -s");
     ret = getTerminalStatus(rspCtrlCmd, sizeof(rspCtrlCmd));
-    encType = isCloudAuthed() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+    encType = isCloudOnlined() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
     ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)rspCtrlCmd, strlen(rspCtrlCmd), dataOut, dataLen);
     LELOG("cbCtrlCmdLocalRsp -e");
     senginePollingSlave();
@@ -1567,21 +1574,34 @@ static int cbCtrlGetStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, con
     // LELOG("[%d][%s]", dataLen, dataIn);
     // test only
     // resetConfigData();
-    
+    ret = cbDiscoverRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCtrlGetStatusRemoteReq -e");
     return ret;
 }
 static int cbCtrlGetStatusLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-    int ret = 0;
-    // CommonCtx *pCtx = COMM_CTX(ctx);
-    char status[MAX_BUF] = {0};
-    LELOG("cbCtrlGetStatusLocalRsp -s");
+    // int ret = 0, encType = -1;
+    // // CommonCtx *pCtx = COMM_CTX(ctx);
+    // char status[MAX_BUF] = {0};
+    // char strMac[32] = {0};
+    // LELOG("cbCtrlGetStatusLocalRsp [%s] cmd[%d][%d] -s", (char *)data, cmdInfo->cmdId, cmdInfo->subCmdId);
 
-    ret = getTerminalStatus(status, sizeof(status));
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
-    // ret = getTerminalStatus(binStatus, sizeof(binStatus));
-    LELOG("cbCtrlGetStatusLocalRsp -e");
-    return ret;
+    // if (!getStrValByKey((char *)data, len, JSON_NAME_SDEV_MAC, strMac, sizeof(strMac))) {
+    //     ret = qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevByMacCB, strMac);
+    //     if (0 <= ret) {
+    //         ret = getSDevStatus(ret, status, sizeof(status));
+    //     } else {
+    //         ret = 0;
+    //     }
+    // } else {
+    //     ret = getTerminalStatus(status, sizeof(status));
+    // }
+
+    // encType = isCloudOnlined() ? ENC_TYPE_STRATEGY_13 : ENC_TYPE_STRATEGY_11;
+    // ret = doPack(ctx, encType, cmdInfo, (const uint8_t *)status, ret > 0 ? ret : 0, dataOut, dataLen);
+    // // ret = getTerminalStatus(binStatus, sizeof(binStatus));
+    // LELOG("cbCtrlGetStatusLocalRsp status[%s] -e", status);
+    // return ret;
+    return cbDiscoverLocalRsp(ctx, cmdInfo, data, len, dataOut, dataLen);
 }
 
 static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
@@ -1599,9 +1619,9 @@ static int cbCloudGetTargetLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uin
     // cmdInfo.seqId = 0;
 
     lenSignature = getTerminalSignature(signature, RSA_LEN);
-    sprintf(signature + RSA_LEN, "{\"lock\":%d}", getLock());
-    LELOG("test sig len[%d], total len[%d] [%s]", lenSignature, lenSignature + strlen(signature + RSA_LEN), signature + RSA_LEN);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, signature, lenSignature + strlen(signature + RSA_LEN), dataOut, dataLen);
+    // sprintf(signature + RSA_LEN, "{\"lock\":%d}", getLock());
+    // LELOG("test sig len[%d], total len[%d] [%s]", lenSignature, lenSignature + strlen(signature + RSA_LEN), signature + RSA_LEN);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, signature, lenSignature /*+ strlen(signature + RSA_LEN)*/, dataOut, dataLen);
     
     if(ret <= 0) {
         changeStateId(E_STATE_AP_CONNECTED);
@@ -1647,6 +1667,59 @@ static void cbCloudGetTargetRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     LELOG("cbCloudGetTargetRemoteRsp -e");
 }
 
+static int cbCloudOnlineLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    char token[2*AES_LEN + 1] = {0};
+    char status[MAX_BUF] = {0};
+    int encLen = 0;
+    uint8_t pubkey[256] = {0};
+    uint8_t encToken[RSA_LEN] = {0};
+    int pubkeyLen = 0;
+    LELOG("cbCloudOnlineLocalReq -s");
+    
+    getTerminalTokenStr(token, sizeof(token));
+    pubkeyLen = getTerminalPublicKey(pubkey, sizeof(pubkey));
+    encLen = rsaEncrypt(pubkey, pubkeyLen, (const uint8_t *)token, strlen(token), encToken, sizeof(encToken));
+    LELOG("rsaEncrypt ret[%d] token[%s]", ret, token);
+    if (0 >= encLen) {
+        return -1;
+    }
+    memcpy(status, encToken, encLen);
+
+    // TODO: token should be encrypted by T-pubkey
+    if (!cmdInfo->reserved) {
+        ret = getTerminalStatus(status + encLen, sizeof(status) - encLen);
+    } else {
+        ret = getSDevStatus(cmdInfo->reserved-1, status + encLen, sizeof(status) - encLen);
+    }
+    ret += encLen;
+    // LELOG("No token [%d][%d] status[%s] reserved[%d]", ret, strlen(status + RSA_LEN), status + RSA_LEN, cmdInfo->reserved);
+    // status[ret] = '}';
+    // ret += 1;
+    // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    // LELOG("No token [%d] status[%s] reserved[%d]", ret, status + encLen, cmdInfo->reserved);
+
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_12, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
+    
+    LELOG("cbCloudOnlineLocalReq [%d] reserved[%d] -e", ret, cmdInfo->reserved);
+    return ret;
+}
+
+static void cbCloudOnlineRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    //int ret = 0;
+    // CommonCtx *pCtx = COMM_CTX(ctx);
+    LELOG("cbCloudOnlineRemoteRsp -s");
+    if (0 > cmdInfo->status) {
+        changeStateId(E_STATE_AP_CONNECTED);
+    } else {
+        changeStateId(E_STATE_CLOUD_ONLINE);
+    }
+    // LELOG("Now version: %s-%s", __DATE__, __TIME__);
+    // LELOG("[%d][%s]", dataLen, dataIn);
+    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    LELOG("cbCloudOnlineRemoteRsp -e");
+}
+
 
 static int cbCloudAuthLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
@@ -1690,26 +1763,31 @@ static void cbCloudAuthRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const 
     LELOG("cbCloudAuthRemoteRsp -e");
 }
 
+static int forEachNodeSDevLogCB(SDevNode *currNode, void *uData) {
+    char *sdevStatus = (char *)uData;
+    if (0x08 == (0x08 & currNode->isSDevInfoDone)) {
+        int16_t index = (((uint8_t *)currNode - (uint8_t *)sdevCache()->pBase)/sdevCache()->singleSize);
+        memset(sdevStatus, 0, MAX_BUF);
+        getSDevStatus(index, sdevStatus, MAX_BUF);
+        // LELOG("[SENGINE] forEachNodeSDevLogCB [%s]", sdevStatus);
+    }
+    return 0;
+}
+
 static int cbCloudHeartBeatLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
-    char token[2*AES_LEN + 1] = {0};
-
-    char status[MAX_BUF] = {0};
 
     LELOG("cbCloudHeartBeatLocalReq -s");
-
-    getTerminalTokenStr(token, sizeof(token));
-    if (!cmdInfo->reserved) {
-        ret = getTerminalStatus(status, sizeof(status));
-        ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
-    } else {
-        ret = getSDevStatus(cmdInfo->reserved-1, status, sizeof(status));
+    if (1) {
+        char buf[MAX_BUF] = {0};
+        getTerminalStatus(buf, sizeof(buf));
+        if (sengineHasDevs()) {
+            qForEachfromCache(sdevCache(), (int(*)(void*, void*))forEachNodeSDevLogCB, (void *)buf);
+        }
     }
-    LELOG("appended token [%d][%d] [%s]", ret, strlen(status), status);
-
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, NULL, 0, dataOut, dataLen);
     
-    LELOG("cbCloudHeartBeatLocalReq [%d] reserved[%d] -e", ret, cmdInfo->reserved);
+    LELOG("cbCloudHeartBeatLocalReq [%d] getProtocolVer[%d] -e", ret, getProtocolVer());
     return ret;
 }
 
@@ -1717,7 +1795,6 @@ static void cbCloudHeartBeatRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, c
     //int ret = 0;
     // CommonCtx *pCtx = COMM_CTX(ctx);
     LELOG("cbCloudHeartBeatRemoteRsp -s");
-    flagHeartBeatReset();
     // LELOG("Now version: %s-%s", __DATE__, __TIME__);
     // LELOG("[%d][%s]", dataLen, dataIn);
 	halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
@@ -1748,9 +1825,9 @@ static int cbCloudStatusChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo,
     //     getTerminalTokenStr(token, sizeof(token));
     //     sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
     // } 
-    LELOG("No need token [%s]", status);
+    // LELOG("No need token [%s]", status);
 
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
     
     LELOG("cbCloudStatusChangedLocalReq [%d] -e", ret);
     return ret;
@@ -1773,7 +1850,7 @@ static int cbCloudIAExeNotifyLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, u
         return -1;
     }
     snprintf(status, sizeof(status), "{\"name\": \"%s\"}", ginIACache.cache[cmdInfo->reserved].ruleName);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, strlen(status), dataOut, dataLen);
     LELOG("cbCloudIAExeNotifyLocalReq -e");
     return ret;
 }
@@ -1835,7 +1912,15 @@ static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, c
     LELOG("cbCloudMsgCtrlR2TRemoteReq -s");
     // LELOG("[%d][%s]", dataLen, dataIn);
     // setCurrentR2T
-    setTerminalStatus((const char *)dataIn, dataLen);
+    // test only
+    // {
+    //     extern int testGetFreeHeap();
+    //     extern const char *getScriptVer();
+    //     LELOG("=============================>() [%d]", testGetFreeHeap(1));
+    //     const char *ver = getScriptVer();
+    //     LELOG("<=============================() [%d][%s]", testGetFreeHeap(0), ver);
+    // }
+    setTerminalAction(cmdInfo, (const char *)dataIn, dataLen);
     ret = halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudMsgCtrlR2TRemoteReq [%d] -e", ret);
     return ret > 0 ? 1 : -1;
@@ -1868,7 +1953,7 @@ static int cbCloudReportLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_
 
     ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)query, sizeof(query));
     // sprintf(report, "{\"query\":\"%s\"}", query);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_14, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)query, strlen(query), dataOut, dataLen);
 
     LELOG("cbCloudReportLocalReq -e");
     return ret;
@@ -1926,6 +2011,51 @@ static void cbCloudReportOTAQueryRemoteRsp(void *ctx, const CmdHeaderInfo* cmdIn
     return;
 }
 
+static int cbCloudSDevRecordChangedLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    int preLen = 0;
+    // char token[2*AES_LEN + 1] = {0};
+
+    char status[MAX_BUF] = {0};
+
+    LELOG("cbCloudSDevRecordChangedLocalReq -s");
+    // TODO: token should be encrypted by T-pubkey
+    // getTerminalTokenStr(token, sizeof(token));
+    preLen = sprintf(status, "{\"%s\":%d,\"%s\":", JSON_NAME_SDEV_KIND, cmdInfo->reserved1, JSON_NAME_SDEV_PROPERTY);
+    // reset sdev
+    if (!cmdInfo->reserved) {
+        uint8_t tmpUUID[MAX_UUID] = {0};
+        char tmpStr[MAX_UUID + 1] = {0};
+        getTerminalUUID(tmpUUID, sizeof(tmpUUID));
+        memcpy(tmpStr, tmpUUID, MAX_UUID);
+        ret = sprintf(status + preLen, "{\"%s\":\"%s\"}", JSON_NAME_UUID, tmpStr);
+    } else { // del sdev
+        // check if the del pos has been re-occupied.
+        if (0x08 <= sdevArray()[cmdInfo->reserved-1].isSDevInfoDone) {
+            ret = getSDevStatus(cmdInfo->reserved-1, status + preLen, sizeof(status) - preLen);
+        } else {
+            // strcpy(status + preLen, "{}"); ret = 2;
+            LELOGE("sdev has been re-occupied!!!");
+            return -1;
+        }
+    }
+    // ret = sprintf(status + ret - 1, ",\"token\":\"%s\"}", token);
+    status[preLen + ret] = '}';
+    ret = preLen + ret + 1;
+    LELOG("appended token [%d][%s] reserved[%d] reserved1[%d]", ret, status, cmdInfo->reserved, cmdInfo->reserved1);
+
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_13, cmdInfo, (const uint8_t *)status, ret, dataOut, dataLen);
+    
+    LELOG("cbCloudSDevRecordChangedLocalReq [%d] reserved[%d] -e", ret, cmdInfo->reserved);
+    return ret;
+}
+
+static void cbCloudSDevRecordChangedRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    LELOG("cbCloudSDevRecordChangedRemoteRsp -s");
+    LELOG("cbCloudSDevRecordChangedRemoteRsp -e");
+    return;
+}
+
 static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
     int ret = 0;
     char rmtCtrl[MAX_BUF] = {0};
@@ -1974,7 +2104,7 @@ static int cbCloudMsgCtrlR2TDoOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdIn
 }
 
 static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
-    int ret = 0;
+    int ret = 0, force = 0;
     int type = 0;
     int force = 0;
     char url[MAX_BUF] = {0};
@@ -1991,9 +2121,11 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         return;
     } else {
         NodeData node = {0};
+        if (0 != getIntValByKey((char *)data + RSA_LEN, len - RSA_LEN, JSON_NAME_FORCE, &force)) {
+            force = 0;
+        }
         type = getJsonOTAType((char *)data + RSA_LEN, len - RSA_LEN, url, sizeof(url));
-        ret = getIntValByKey((char *)data + RSA_LEN, len - RSA_LEN, JSON_NAME_FORCE, &force);
-        LELOG("TOTOAL[%d] type[%d] force[%d] json[%d][%s] url[%s]", len, type, force, len - RSA_LEN, (char *)data + RSA_LEN, url);
+        LELOG("TOTOAL[%d][%d] type[%d] force[%d] json[%d][%s] url[%s]", len, data + RSA_LEN, type, force, len - RSA_LEN, (char *)data + RSA_LEN, url);
 
         {
             int i = 0; 
@@ -2008,6 +2140,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }
 
         switch (type) {
+            case OTA_TYPE_SDEVFW:
             case OTA_TYPE_FW: {
                 node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
                 node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
@@ -2022,6 +2155,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
             }break;
             case OTA_TYPE_AUTH:
             case OTA_TYPE_PRIVATE:
+            case OTA_TYPE_SDEVINFO:
             case OTA_TYPE_FW_SCRIPT:
             case OTA_TYPE_IA_SCRIPT: {
                 otaSetLatestSig(data);
@@ -2052,8 +2186,8 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }    
         // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
         if (LELINK_ERR_SUCCESS == tmpCmdInfo->status && 
-            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_FW == type || force == 1)) {
-            postReboot(ctx);
+            (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_SDEVINFO == type || OTA_TYPE_FW == type || force)) {
+            postReboot();
         }
     }
     LELOG("intDoOTA type[%d], status[%d]", type, tmpCmdInfo->status);
@@ -2188,7 +2322,7 @@ static int cbCloudIndStatusRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, co
     // char uuid[64] = {0};
     // char query[128] = {0};
     LELOG("cbCloudIndStatusRemoteReq -s");
-    // LELOG("[%d][%s]", len, data);
+    LELOG("[%d][%s]", len, data);
     senginePollingRules((char *)data, len);
     halCBRemoteReq(ctx, cmdInfo, data, len);
     LELOG("cbCloudIndStatusRemoteReq -e");

@@ -328,28 +328,39 @@ typedef unsigned int uint32_t;
     ot = halGetTimeStamp(); \
     }}
 
-
 #define lelog(_mod_name_, _fmt_, ...) \
     { \
         const char * p = (const char *)strrchr(__FILE__, '/'); \
-        printOut("[%s] "_fmt_" @%s:%d#%u\r\n", _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
+        printOut("[%u][%s] "_fmt_" @%s:%d#%u\r\n", halLogTimeStamp(), _mod_name_, ##__VA_ARGS__, p ? (p + 1) : "none", __LINE__, halGetTimeStamp()); \
     }
 
+#define DEBUG_VERBOSE
+#define DEBUG_WARNING
+#define DEBUG_ERR
+
+#ifdef DEBUG_VERBOSE
 #define LELOG(...) \
     lelog("LE", ##__VA_ARGS__)
-
-#define LELOGW(...) \
-    lelog("LE[W]", ##__VA_ARGS__)
-
-#define LELOGE(...) \
-    lelog("LE[E]", ##__VA_ARGS__)
-
 #define LEPRINTF(...) \
     printOut(__VA_ARGS__)
+#else
+#define LELOG(...)
+#define LEPRINTF(...)
+#endif
 
+#ifdef DEBUG_WARNING
+#define LELOGW(...) \
+    lelog("LE[W]", ##__VA_ARGS__)
+#else
+#define LELOGW(...)
+#endif
 
-
-
+#ifdef DEBUG_ERR
+#define LELOGE(...) \
+    lelog("LE[E]", ##__VA_ARGS__)
+#else
+#define LELOGE(...)
+#endif
 
 #ifdef __cplusplus
 }

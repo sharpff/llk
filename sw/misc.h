@@ -45,6 +45,15 @@ extern "C"
 #define JSON_NAME_PWM_BLINK         "blink"
 #define JSON_NAME_PWM_TIME_SHORT    "shortTime"
 #define JSON_NAME_PWM_TIME_LONG     "longTime"
+#define JSON_NAME_EINT_CONF         "eint"
+#define JSON_NAME_EINT_ID           "id"
+#define JSON_NAME_EINT_GID          "gid"
+#define JSON_NAME_EINT_TYPE         "type"
+#define JSON_NAME_EINT_MODE         "mode"
+#define JSON_NAME_EINT_TRIGGER      "trigger"
+#define JSON_NAME_EINT_STATE        "state"
+#define JSON_NAME_EINT_DEBOUNCE     "debounce"
+#define JSON_NAME_EINT_TIMEOUT      "timeout"
 
 #define JSON_NAME_COMMON_CONF       "common"
 #define JSON_NAME_COMMON_NUM        "num"
@@ -55,24 +64,35 @@ extern "C"
 #define JSON_NAME_VAL               "val"
 #define JSON_NAME_NAME              "name"
 #define JSON_NAME_LOCK              "lock"
+#define JSON_NAME_UID               "uid"
 #define JSON_NAME_CTRL              "ctrl"
 #define JSON_NAME_STATUS            "status"
+#define JSON_NAME_FORCE             "force"
 #define JSON_NAME_SDEV     			"sDev"
 #define JSON_NAME_SDEV_GET_LIST     "sDevGetList"
+#define JSON_NAME_SDEV_SDEVDES      "sDevDes"
 #define JSON_NAME_SDEV_GET_INFO     "sDevGetInfo"
 #define JSON_NAME_SDEV_QUERY_EPT    "sDevQryEpt"
 #define JSON_NAME_SDEV_QUERY_MAN    "sDevQryMan"
 #define JSON_NAME_SDEV_QUERY_INFO   "sDevQryEptInfo"
 #define JSON_NAME_SDEV_STATUS       "sDevStatus"
 #define JSON_NAME_SDEV_JOIN         "sDevJoin"
-#define JSON_NAME_SDEV_INDEX        "idx"
+#define JSON_NAME_SDEV_LEAVE        "sDevLeave"
+#define JSON_NAME_SDEV_NUM          "sDevNum"
+#define JSON_NAME_SDEV_VER          "sDevVer"
+#define JSON_NAME_SDEV_DEL          "sDevDel"
+#define JSON_NAME_SDEV_CLR          "sDevClr"
+#define JSON_NAME_SDEV_USER_DATA    "ud"
 #define JSON_NAME_SDEV_EPT          "ept"
 #define JSON_NAME_SDEV_MAN          "man"
 #define JSON_NAME_SDEV_PID          "pid"
 #define JSON_NAME_SDEV_DID          "did"
-#define JSON_NAME_SDEV_CLU          "clu"
+#define JSON_NAME_SDEV_CLU_IN       "cluI"
+#define JSON_NAME_SDEV_CLU_OUT      "cluO"
 #define JSON_NAME_SDEV_MAC		    "mac"
 #define JSON_NAME_SDEV_DES		    "des"
+#define JSON_NAME_SDEV_PROPERTY     "property"
+#define JSON_NAME_SDEV_KIND         "kind"
 #define JSON_NAME_LOG2MASTER        "log2M"
 
 typedef enum {
@@ -92,6 +112,7 @@ int getUartInfo(const char *json, int jsonLen, uartHandler_t* handler);
 int getGPIOInfo(const char *json, int jsonLen, gpioHandler_t *table, int n);
 int getPipeInfo(const char *json, int jsonLen, char *name, int size);
 int getPWMInfo(const char *json, int jsonLen, pwmHandler_t *table, int n);
+int getEINTInfo(const char *json, int jsonLen, eintHandler_t *table, int n);
 int getWhatCvtType(const char *json, int jsonLen);
 int getJsonUTC32(char *json, int jsonLen/*, const char *rmtJson, int rmtJsonLen*/);
 int getJsonUTC(char *json, int jsonLen);
@@ -102,8 +123,11 @@ int getJsonObject(const char *json, int jsonLen, const char *key, char *obj, int
 int getIntValByKey(const char *json, int jsonLen, const char *key, int *val);
 int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size);
 
+int localActionHandler(const char *data, int len);
 int cloudMsgHandler(const char *data, int len);
 int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJsonLen, char *result, int resultLen);
+int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size);
+int getIntValByKey(const char *json, int jsonLen, const char *key, int *val);
 int printOut(const char *fmt, ...);
 #ifdef __cplusplus
 }

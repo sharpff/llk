@@ -108,6 +108,54 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
     return strlen(ip);
 }
 
+static char ginIP[32];
+static int  ginIPdone = 0;
+static TaskHandle_t hostByName = NULL;
+
+static void hal_hostbyname_proc(void *args) {
+    struct hostent* hostinfo;
+    struct sockaddr_in tmp;
+    char* name = (char *)args;
+    os_memset(ginIP, 0, 32);
+    while (1) {
+        hostinfo = lwip_gethostbyname(name);
+        // APPLOG("halGetHostByName name[%s] hostinfo[%p]", name, hostinfo);
+        if (NULL != hostinfo) {
+            break;
+        }
+        halDelayms(100);
+    }
+    ginIPdone = 1;
+    os_memset(&tmp, 0, sizeof(struct sockaddr_in));
+    os_memcpy(&tmp.sin_addr.s_addr, hostinfo->h_addr, hostinfo->h_length);
+    strcpy(ginIP, (const char *)inet_ntoa(tmp.sin_addr));
+    APPLOG("halGetHostByName [%s]", ginIP);
+    vTaskDelete(NULL);
+}
+
+int halGetHostByNameNB(const char *name, char ip[4][32], int len) {
+    if (!isalpha((uint8_t)name[0])) {
+        return -1;
+    }
+    if (ginIPdone) {
+        strcpy(ip[0], ginIP);
+        return 0;
+    }
+    ginIPdone = 0;
+    if (hostByName == NULL) {
+        if (pdPASS != xTaskCreate(hal_hostbyname_proc,
+                              "hal_hostbyname_proc",
+                              1024,
+                              name,
+                              1,
+                              &hostByName)) {
+            LOG_E(common, "create host name task fail");
+            return -2;
+        }
+    }
+    return -3;
+}
+
 int halGetHostByName(const char *name, char ip[4][32], int len) { 
     struct hostent* hostinfo;
     struct sockaddr_in tmp;

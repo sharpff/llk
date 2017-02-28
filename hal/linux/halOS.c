@@ -1,7 +1,9 @@
 #include "halHeader.h"
 #include <stdlib.h>
 static pthread_mutex_t ginMutex = PTHREAD_MUTEX_INITIALIZER;
-
+// int testGetFreeHeap(int flag) {
+//     return 0;
+// }
 int halLockInit(void) {
 	return 0;
 }

@@ -21,13 +21,17 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 0.6
+ * @version 1.0
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
 	/*
+	 * 1.0, 添加airhug配置入网方式
+	 * 0.9, 添加日志，方便调试
+	 * 0.8, Zigbee的uuid去掉mac
+	 * 0.7, Zigbee设备状态BUG
 	 * 0.6, 解决启动了两个线程的BUG
 	 * 0.5,
 	 * 0.4, 优化wifi配置
@@ -35,7 +39,7 @@ public class LeLink {
 	 * 0.2, 添加Listener onPushMessage()
 	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "0.6"; // 与以上的注释一致
+	private static final String VERSION = "1.0"; // 与以上的注释一致
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
@@ -202,7 +206,15 @@ public class LeLink {
 	 * 必须传入参数: ssid, passwd, timeout.<br>
 	 * 
 	 * @param jsonStr
-	 *            String ssid, String passwd, String apSsid(only for LeCmd.V.AIR_CONFIG_TYPE_SOFTAP), int timeout(sec)
+	 *            String ssid, String passwd, String apSsid(only for type == LeCmd.V.AIR_CONFIG_TYPE_SOFTAP), int type, int timeout(sec)<br>
+	 *            <p>
+	 *            type(LeCmd.K.TYPE)有四种方式: <br>
+	 *            <ol>
+	 *            		<li>LeCmd.V.AIR_CONFIG_TYPE_MULTICAST (默认该方式) </li>
+	 *            		<li>LeCmd.V.AIR_CONFIG_TYPE_BROADCAST </li>
+	 *            		<li>LeCmd.V.AIR_CONFIG_TYPE_SOFTAP </li>
+	 *            		<li>LeCmd.V.AIR_CONFIG_TYPE_AIRHUG </li>
+	 *            </ol>
 	 * 
 	 * @return -1 - 错误; 0 - 成功; 1 - 超时
 	 */
@@ -284,35 +296,57 @@ public class LeLink {
 	 *            详细参考下述说明
 	 * @param dataStr
 	 *            详细参考下述说明<br>
-	 * <br>
-	 * 
-	 *            cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int),
-	 *            根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
-     *
-	 *            cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
-	 *            cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br>
-	 * <br>
-	 *            1, LeCmd.K.SUBCMD == LeCmd.Sub.GET_STATE_CMD, 得到设备状态或者上报设备状态<br>
-	 *              cmdStr:<br>
-	 *                  a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网得到设备状态<br>
-	 *              dataStr:<br>
-	 *                  a, LeCmd.K.UUID(String), 设备的UUID<br>
-	 *              return<br>
-	 *                  a, 出错返回null<br>
-	 *                  b, 设备列表的Json字符串<br>
-     *
-	 *            2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_REPORT_OTA_QUERY_REQ, OTA查询<br>
-	 *              cmdStr:<br>
-	 *                  不包括其它键值<br>
-	 *              dataStr:<br>
-	 *                  a, LeCmd.K.UUID(String), 设备的UUID<br>
-	 *                  b, LeCmd.K.VERSION(String), 设备的当前版本号<br>
-	 *                  c, LeCmd.K.TYPE(int), 查询的类型(OTA_TYPE_FIRMWARE-固件,
-	 *                     OTA_TYPE_FW_SCRIPT-固件脚本, OTA_TYPE_IA_SCRIPT-联动脚本)<br>
-	 *                  d, LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联动脚本)的时候需要填充该值<br>
-	 *              return<br>
-	 *                  a, 出错返回null<br>
-	 *                  b, 查询信息列表的Json字符串, 键值有LeCmd.K.URL(String)<br>
+	 * <p>
+	 * cmdStr Json 必须包含:
+	 * <ol>
+	 *  <li>LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同</li>
+	 *  <li>LeCmd.K.UUID(String), 设备的UUID</li>
+	 *  <li>LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒</li>
+	 * </ol>
+	 * <p>
+	 * <dl>
+	 *  <dd>1, LeCmd.K.SUBCMD == LeCmd.Sub.GET_STATE_CMD, 得到设备状态或者上报设备状态
+	 *   <ul>
+	 *    <li>cmdStr:
+	 *     <dl>
+	 *       <dd>LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网得到设备状态</dd>
+	 *     </dl>
+	 *    </li>
+	 *    <li>dataStr:
+	 *     <dl>
+	 *      <dd>LeCmd.K.UUID(String), 设备的UUID</dd>
+	 *     </dl>
+	 *    </li>
+	 *    <li>return
+	 *     <dl>
+	 *      <dd>出错返回null</dd>
+	 *      <dd>设备列表的Json字符串</dd>
+	 *     </dl>
+	 *    </li>
+	 *   </ul>
+	 *  </dd>
+	 *  <dd>2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_REPORT_OTA_QUERY_REQ, OTA查询
+	 *   <ul>
+	 *    <li>cmdStr:
+	 *     <dl>
+	 *      <dd>不包括其它键值</dd>
+	 *     </dl>
+	 *    </li>
+	 *    <li>dataStr:
+	 *     <dl>
+	 *      <dd>LeCmd.K.UUID(String), 设备的UUID</dd>
+	 *      <dd>LeCmd.K.VERSION(String), 设备的当前版本号</dd>
+	 *      <dd>LeCmd.K.TYPE(int), 查询的类型(OTA_TYPE_FIRMWARE-固件, OTA_TYPE_FW_SCRIPT-固件脚本, OTA_TYPE_IA_SCRIPT-联动脚本</dd>
+	 *      <dd>LeCmd.K.IAID(String), 如果LeCmd.K.TYPE的值是5(联动脚本)的时候需要填充该</dd>
+	 *     </dl>
+	 *    </li>
+	 *    <li>return
+	 *      <dd>出错返回nul</dd>
+	 *      <dd>键值有LeCmd.K.URL(String</dd>
+	 *    </li>
+	 *   </ul>
+	 *  </dd>
+	 * </dl>
 	 * 
 	 * @return 详细参考上述说明
 	 */
@@ -362,11 +396,12 @@ public class LeLink {
 					e.printStackTrace();
 				}
 			}
-			LOGI("Wait over!");
+			LOGI("Wait over! for '" + mWaitGetUuid + "'");
 			if (mFindDevs.size() <= 0) {
 				if(!isDiscover && mListener != null) {
 					mListener.onGetStateBack(subcmd, mWaitGetUuid, null);
 				}
+				LOGI("Wait timeout!!");
 				return null;
 			}
 			if (isDiscover) {
@@ -386,39 +421,65 @@ public class LeLink {
 	}
 
 	/**
-	 * 控制设备.<br>
+	 * 控制设备
 	 * 
 	 * @param cmdStr
 	 *            详细参考下述说明
 	 * @param dataStr
 	 *            详细参考下述说明<br>
-	 * <br>
-	 * 
-	 *            cmdStr 中必须要有键值 LeCmd.K.SUBCMD(int),
-	 *            根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同<br>
-     *
-	 *            cmdStr 中必须要有键值 LeCmd.K.UUID(String), 设备的UUID<br>
-	 *            cmdStr 中必须要有键值 LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒<br>
-	 * <br>
-	 * 
-	 *            1, LeCmd.K.SUBCMD == LeCmd.Sub.CTRL_DEV_CMD, 控制设备<br>
-	 *              cmdStr:<br>
-	 *                  a, LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备<br>
-	 *                  b, LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值<br>
-	 *              dataStr:<br>
-	 *                  a, 控制设备的Json字符串<br>
-	 *              return<br>
-	 *                  a, 出错返回null<br>
-	 *                  b, 设备列表的Json字符串<br>
-	 *                  
-	 *            2, LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_REQ, 要求设备进行OTA升级<br>
-	 *              cmdStr:<br>
-	 *                  a, LeCmd.K.TOKEN(String), 设备的token<br>
-	 *              dataStr:<br>
-	 *                  a, 填充由OTA查询得到的Json字符串<br>
-	 *              return<br>
-	 *                  a, 成功返回字符串"ok"<br>
-	 *                  b, 失败返回失败说明字符串<br>
+	 * <p>
+	 * cmdStr Json 必须包含:
+	 * <ol>
+	 *  <li>LeCmd.K.SUBCMD(int), 根据该值的不同，cmdStr/dataStr包含的内容不同, 返回值也不同</li>
+	 *  <li>LeCmd.K.UUID(String), 设备的UUID</li>
+	 *  <li>LeCmd.K.TIMEOUT(int), 设备超时时间, 单位秒</li>
+	 * </ol>
+	 * <p>
+	 * cmdStr Json 其它包含:
+	 * <dl>
+	 *  <dd>1, 控制设备(LeCmd.K.SUBCMD == LeCmd.Sub.CTRL_DEV_CMD)
+	 *  <br><br>
+	 *    <ul>
+	 *     <li> cmdStr:
+	 *      <dl>
+	 *       <dd>LeCmd.K.ADDR(String), 设置的地址，如果设置则为局域网控制设备</dd>
+	 *       <dd>LeCmd.K.TOKEN(String), 设备的token, 如果不是局域网控制，则必须传入该值</dd>
+	 *      </dl>
+	 *     <li> dataStr:
+	 *      <dl>
+	 *       <dd>控制设备的Json字符串</dd>
+	 *      </dl>
+	 *     </li>
+	 *     <li> return
+	 *      <dl>
+	 *       <dd>出错返回null</dd>
+	 *       <dd>设备列表的Json字符串</dd>
+	 *      </dl>
+	 *     </li>
+	 *    </ul>
+	 *  </dd>
+	 *  <br>
+	 * <dd>2, 要求设备进行OTA升级(LeCmd.K.SUBCMD == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_DO_OTA_REQ)
+	 *  <br><br>
+	 *    <ul>
+	 *     <li>cmdStr:
+	 *      <dl>
+	 *       <dd>LeCmd.K.TOKEN(String), 设备的token</dd>
+	 *      </dl>
+	 *     </li>
+	 *     <li>dataStr:
+	 *      <dl>
+	 *       <dd>填充由OTA查询得到的Json字符串</dd>
+	 *      </dl>
+	 *     </li>
+	 *     <li>return
+	 *      <dl>
+	 *       <dd>成功返回字符串"ok"</dd>
+	 *       <dd>失败返回失败说明字符串</dd>
+	 *      </dl>
+	 *    </ul>
+	 *  </dd>
+	 * </dl>
 	 *                  
 	 * @return 详细参考上述说明
 	 */
@@ -674,20 +735,20 @@ public class LeLink {
 						}
 					}
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
-					// LOGI("Data:\n" + dataStr);
+					LOGI("Get '" + uuid + "' Data:\n" + dataStr);
 					dataJson = new JSONObject(dataStr);
-					uuid = dataJson.getString(LeCmd.K.UUID);
+					String keyuuid = uuid = dataJson.getString(LeCmd.K.UUID);
 					JSONObject objSDev = dataJson.optJSONObject(LeCmd.K.SDEV);	
 					if (null != objSDev) {
-						uuid += objSDev.optString(LeCmd.K.ZMAC);
+						keyuuid += dataJson.optString(LeCmd.K.ZMAC);
 					}
-
 					dataJson.put(LeCmd.K.MSGSTATUS, status);
 					dataStr = dataJson.toString();
 					if (mWaitGetUuid != null) {
 						if (uuid.indexOf(mWaitGetUuid) >= 0) {
 							mFindDevs.clear();
-							mFindDevs.put(uuid, dataJson);
+							mFindDevs.put(keyuuid, dataJson);
+							LOGI("GetState '" + keyuuid + "' Data:\n" + dataStr);
 							synchronized (mGetLock) {
 								mGetLock.notifyAll();
 							}
@@ -703,7 +764,8 @@ public class LeLink {
 							}
 						}
 					} else {
-						mFindDevs.put(uuid, dataJson);
+						LOGI("Discover '" + keyuuid + "', Data:\n" + dataStr);
+						mFindDevs.put(keyuuid, dataJson);
 						if (mListener != null) {
 							mListener.onDiscoverBack(uuid, dataStr);
 						}

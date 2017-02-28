@@ -133,6 +133,10 @@ int halGetHostByName(const char *name, char ip[4][32], int len) {
     APPLOG("halGetHostByName [%s]", ip[0]);
     return 0;
 }
+
+int halGetHostByNameNB(const char *name, char ip[4][32], int len) { 
+    return halGetHostByName(name, ip, len);
+}
 // #include <fcntl.h>
 // #include <errno.h>
 // #include <sys/ioctl.h>

@@ -17,6 +17,7 @@
 #include "airconfig_ctrl.h"
 #include "protocol.h"
 #include "data.h"
+#include "airhug_wave.h"
 
 extern "C" {
     int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey);
@@ -131,7 +132,10 @@ int airConfig(void *ptr, char *json)
         }
     } else if (3 == type) {
         ret = softApDoConfig(ssid, passwd, delay, aesKey);
-    }
+    } else if(4 == type) {
+        APPLOGW("airConfig airhug_wave : ssid '%s', passwd '%s'", ssid, passwd);
+        ret = airhug_wave((char *)ssid, (char *)passwd);
+    } 
     return ret;
 }
 

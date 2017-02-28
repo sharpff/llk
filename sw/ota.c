@@ -70,6 +70,10 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
         case OTA_TYPE_FW:
             status = halUpdateFirmware(&info);
             break;
+        case OTA_TYPE_SDEVFW: {
+                info.isSDev = 1;
+                status = halUpdateFirmware(&info);
+            }break;
         case OTA_TYPE_FW_SCRIPT:
         case OTA_TYPE_IA_SCRIPT: {
             if (OTA_TYPE_FW_SCRIPT == type) {
@@ -118,6 +122,7 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
             }
             break;
         // test only -s
+        case OTA_TYPE_SDEVINFO:
         case OTA_TYPE_PRIVATE:
         case OTA_TYPE_AUTH: {
                 int flashSize = 0;
@@ -128,9 +133,12 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
                 if (OTA_TYPE_PRIVATE == type) {
                     flashSize = GET_PAGE_SIZE(sizeof(PrivateCfg), getFlashMinSize());
                     flashType = E_FLASH_TYPE_PRIVATE;
-                } else {
+                } else if (OTA_TYPE_AUTH == type) {
                     flashSize = GET_PAGE_SIZE(sizeof(AuthCfg), getFlashMinSize());
                     flashType = E_FLASH_TYPE_AUTH;
+                } else if (OTA_TYPE_SDEVINFO == type) {
+                    flashSize = GET_PAGE_SIZE(sizeof(SDevInfoCfg), getFlashMinSize());
+                    flashType = E_FLASH_TYPE_SDEV_INFO;  
                 }
                 tmpPtr = (void *)halCalloc(1, flashSize);
                 status = halUpdate((void *)&info, (uint8_t *)tmpPtr, flashSize);

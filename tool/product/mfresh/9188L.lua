@@ -42,7 +42,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.0.2'
+	local str = '2.0.2'
 	return string.len(str), str
 end
 
@@ -58,8 +58,8 @@ function s1GetCvtType()
     -- combained uart(0x1)
     local str = [[
     {"whatCvtType":1,
-     "common":[{"num":2,"id":"36-37","mux":"7-7"}],
-     "uart":[{"id":1, "baud":"115200-8N1"}]
+     "common":[{"num":2,"id":"2-3","mux":"7-7"}],
+     "uart":[{"id":0, "baud":"115200-8N1"}]
     }
     ]]
     local delay = 5
@@ -76,30 +76,17 @@ function s1GetQueries(queryType)
     local queryCountLen = ""
     local cvtType = s1apiGetCurrCvtType()
     if cvtType == 1 then
-	    if queryType == 1 then
+	    if queryType >= 3 or queryType == 1 then
 	        query = string.char(0x42,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x42)
+	    end
+	    if queryType == 2 then
+	         query = string.char(0x42,0x15,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x57)
 	    end
 	end
     if string.len(query) ~= 0 then
         queryCountLen = string.char(string.len(query), 0x00 )
     end
     return string.len( queryCountLen ), queryCountLen, string.len( query ), query
-end
-
---[[ MUST
-	WIFI 重置命令判别
-]]
-function s1GetValidKind(data)
-	local cvtType = s1apiGetCurrCvtType()
-	local dataTbl = nil
-	local tmp = stringToTable(data)
-	if 0x01 == cvtType then
-		dataTbl = stringToTable(data)
-		if 0x14 == dataTbl[2] then
-			return 1
-		end
-	end
-	return 2
 end
 
 --[[ MUST
@@ -121,57 +108,73 @@ end
 function s1CvtStd2Pri(json)
     local sum = 0
     local count = 0
-    local cmdtb = {0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xC0}
+    local offset = 0
     local ctrl = cjson.decode(json)
     local cvtType = s1apiGetCurrCvtType()
+    local lenStatus, currStatus = s1apiGetDevStatus()
+    local cmdtb = {0x01,0x19,0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xBB,0x01,0x19,0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xC0}
     -- cvtType = 1
     if cvtType == 1 then
         local pwr = ctrl["pwr"]
+        local speed = ctrl["speed"]
 		if pwr == 0 then
-			cmdtb[4] = 0x30
+			cmdtb[6] = 0x30
+		else
+			local tb = cjson.decode(currStatus)
+			local pwr_old = tb["pwr"]
+			if pwr_old == 0 and speed ~= nil and speed ~= 6 then
+				offset = 27
+			end
 		end
-		local speed = ctrl["speed"]
 		if speed ~= nil then
 			if speed == 1 then
-				cmdtb[3] = 0x05
-				cmdtb[6] = 0x50
+				cmdtb[5 + offset] = 0x05
+				cmdtb[8 + offset] = 0x50
 			elseif speed == 2 then
-				cmdtb[3] = 0x05
-				cmdtb[6] = 0x51
+				cmdtb[5 + offset] = 0x05
+				cmdtb[8 + offset] = 0x51
 			elseif speed == 3 then
-				cmdtb[3] = 0x05
-				cmdtb[6] = 0x52
+				cmdtb[5 + offset] = 0x05
+				cmdtb[8 + offset] = 0x52
 			elseif speed == 4 then
-				cmdtb[3] = 0x05
-				cmdtb[6] = 0x53
+				cmdtb[5 + offset] = 0x05
+				cmdtb[8 + offset] = 0x53
 			elseif speed == 5 then
-				cmdtb[3] = 0x05
-				cmdtb[6] = 0x54
+				cmdtb[5 + offset] = 0x05
+				cmdtb[8 + offset] = 0x54
 			elseif speed == 6 then
-				cmdtb[3] = 0x05
-				cmdtb[6] = 0x55
+				cmdtb[5 + offset] = 0x05
+				cmdtb[8 + offset] = 0x55
 			end
 	    end
 		local reset = ctrl["reset-time"]
 		if reset ~= nil then
-			cmdtb[3] = 0x0D
+			cmdtb[5 + offset] = 0x0D
 		end
 		local ospm2 = ctrl["outdoor_pm25"]
 		if ospm2 ~= nil then
 			for i=1, #cmdtb do
 				cmdtb[i] = cmdtb[i]
 			end
-			cmdtb[3] = 0x0E
-			cmdtb[15] = ospm2 & 0xff
-			cmdtb[16] = (ospm2 >> 8) & 0xff
+			cmdtb[5 + offset] = 0x0E
+			cmdtb[17 + offset] = ospm2 & 0xff
+			cmdtb[18 + offset] = (ospm2 >> 8) & 0xff
 		end
-		for i = 1, #cmdtb - 1 do
-			sum = sum + cmdtb[i]
-		end
-		cmdtb[25] = sum & 0xff
-		count = 25
+		if offset == 0 then
+			for i = 3, #cmdtb - 28 do
+				sum = sum + cmdtb[i]
+			end
+			cmdtb[27] = sum & 0xff
+			count = 27
+		else
+			for i = 30, #cmdtb - 1 do
+				sum = sum + cmdtb[i]
+			end
+			cmdtb[54] = sum & 0xff
+			count = 54
+	    end
 	end
-    LOGTBL(cmdtb)
+    -- LOGTBL(cmdtb)
     local cmd = tableToString(cmdtb)
     return count, cmd
 end
@@ -195,7 +198,12 @@ function s1CvtPri2Std(bin)
     end
     if cvtType == 1 then
         dataTbl = stringToTable(bin)
-		for i = 1, #dataTbl - 1 do
+		if #dataTbl > 27 then
+            if 0x14 == dataTbl[27] then
+				s1apiRebootDevice()
+			end
+        end
+		for i = 1, 24 do
 			sum = sum + dataTbl[i]
 		end
 	    sum = sum & 0xff
@@ -205,6 +213,9 @@ function s1CvtPri2Std(bin)
 			local humidity = dataTbl[20]
 			local mode = dataTbl[6] - 0x4F
 			local pm = dataTbl[16]
+			if 0x14 == dataTbl[2] then
+				s1apiRebootDevice()
+			end
 			pm = (pm << 8) | dataTbl[15]
 			if lastData == nil then
 				lastData = 0
