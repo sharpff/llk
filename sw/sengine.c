@@ -1209,7 +1209,9 @@ void setIfExist(const char *func_name, int exist) {
     int i = 0;
     for (i = 0; i < (sizeof(func_list) / sizeof(FUNC_LIST)-1); i++) {
         if (0 == strcmp(func_name, func_list[i].func_name)) {
-            func_list[i].exist = exist;
+            if (func_list[i].exist == 0) {
+                func_list[i].exist = exist;
+            }
         }
     }
 }
@@ -1338,7 +1340,9 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
                 strcmp(S1_OPT_DO_SPLIT, funcName))
                 LELOGE("[lua engine] lua error: %s => %s", err, funcName);
             lua_pop(L, 1);
-            setIfExist(funcName, -1);
+            if(strstr(err, "call") != NULL) {
+                setIfExist(funcName, -1);
+            }
             ret = -3;
         }
         else
