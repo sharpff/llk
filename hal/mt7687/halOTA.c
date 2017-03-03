@@ -16,6 +16,9 @@ static size_t httpFetchData(void *priv, void *buf, size_t max_len);
 #define FOTA_BUF_SIZE    (1024)
 #define FOTA_URL_BUF_LEN    (256)
 
+#ifdef MTK_SDK42
+extern fota_flash_t fota_flash_default_config;
+#else
 log_create_module(fota_dl_api, PRINT_LEVEL_INFO);
 
 static fota_partition_t s_flash_table[] = {
@@ -49,6 +52,7 @@ fota_flash_t fota_flash_default_config = {
     .table_entries  = FLASH_TABLE_ENTRIES,
     .block_size     = 4096
 };
+#endif
 
 httpclient_t g_fota_httpclient = {0};
 char get_url[FOTA_URL_BUF_LEN];

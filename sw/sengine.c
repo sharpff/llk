@@ -1223,12 +1223,17 @@ int sengineInit(void) {
     ginScriptCfg2 = (ScriptCfg2 *)halCalloc(1, sizeof(ScriptCfg2));
 #else
     #if defined(PF_VAL) && (PF_VAL == 6 || PF_VAL == 9) // for MT7687
+    #ifdef MTK_SDK42
+        static volatile ScriptCfg inScriptCfg;
+    #else
         static volatile ScriptCfg inScriptCfg __attribute__((section(".tcmBSS")));
+    #endif
         static volatile ScriptCfg2 inScriptCfg2 __attribute__((section(".tcmBSS")));
     #else
         static volatile ScriptCfg inScriptCfg;
         static volatile ScriptCfg2 inScriptCfg2;
     #endif
+
     ginScriptCfg = (ScriptCfg *)&inScriptCfg;
     ginScriptCfg2 = (ScriptCfg2 *)&inScriptCfg2;
 #endif
@@ -1340,7 +1345,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
                 strcmp(S1_OPT_DO_SPLIT, funcName))
                 LELOGE("[lua engine] lua error: %s => %s", err, funcName);
             lua_pop(L, 1);
-            if(strstr(err, "call") != NULL) {
+            if((char *)strstr(err, "call") != NULL) {
                 setIfExist(funcName, -1);
             }
             ret = -3;

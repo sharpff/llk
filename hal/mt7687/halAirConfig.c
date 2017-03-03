@@ -10,7 +10,9 @@
 #include "stdio.h"
 #include "stddef.h"
 #include "os.h"
+#ifndef MTK_SDK42
 #include "network_init.h"
+#endif
 
 //static int startApListen(void);
 extern int airconfig_start(void *pc, uint8_t *prov_key, int prov_key_len);
@@ -58,7 +60,9 @@ int wifi_station_start_to_connect(uint8_t *ssid, uint8_t *password) {
     wifi_config_set_security_mode(WIFI_PORT_STA, WIFI_AUTH_MODE_WPA_PSK_WPA2_PSK, WIFI_ENCRYPT_TYPE_TKIP_AES_MIX);
     wifi_config_set_wpa_psk_key(WIFI_PORT_STA, password, (uint8_t)os_strlen((char *)password));
     wifi_config_reload_setting();
+#ifndef MTK_SDK42
     network_dhcp_start(WIFI_MODE_STA_ONLY);
+#endif
     return 1;
 }
 
@@ -80,7 +84,9 @@ int wifi_repeater_start_to_connect(uint8_t *ssid, uint8_t *password, uint8_t cha
     wifi_config_set_bandwidth(WIFI_PORT_AP, WIFI_IOT_COMMAND_CONFIG_BANDWIDTH_2040MHZ);
     wifi_config_set_wireless_mode(WIFI_PORT_AP, WIFI_PHY_11BG_MIXED);
     wifi_config_reload_setting();
+#ifndef MTK_SDK42
     network_dhcp_start(WIFI_MODE_REPEATER);
+#endif
 	return 1;
 }
 
