@@ -94,6 +94,7 @@ ScriptCfg2 *ginScriptCfg2;
 static uint32_t ginDelayMS;
 static int ginCurrCvtType;
 static void loadSDevInfo(SDevNode *arr);
+static void sengineReloadInfo(void);
 
 PCACHE sdevCache() {
     static CACHE cache;
@@ -994,7 +995,7 @@ static IO lf_s2IsValid_input(lua_State *L, const uint8_t *input, int inputLen) {
 static int lf_s2IsValid(lua_State *L, uint8_t *output, int outputLen) {
     /* cmd */
     *((int *)output) = lua_tointeger(L, -1);
-    LEPRINTF("[SENGINE] s2IsValid: [%d]", *((int *)output));
+    APPLOG("[SENGINE] s2IsValid: [%d]", *((int *)output));
     return sizeof(int);
 }
 
@@ -1069,7 +1070,7 @@ static int lf_s2GetBeingReservedInfo(lua_State *L, uint8_t *output, int outputLe
                 memset(output + tmpLen + n, 0, 2*MAX_UUID - n);
                 n = 2*MAX_UUID;
             }
-            LEPRINTF("[SENGINE] s2GetBeingReservedInfo: [%d][%s]", n, output + tmpLen);
+            APPLOG("[SENGINE] s2GetBeingReservedInfo: [%d][%s]", n, output + tmpLen);
             tmpLen += n;
             // output[tmpLen] = 0;
             // tmpLen += 1;
@@ -1208,7 +1209,9 @@ void setIfExist(const char *func_name, int exist) {
     int i = 0;
     for (i = 0; i < (sizeof(func_list) / sizeof(FUNC_LIST)-1); i++) {
         if (0 == strcmp(func_name, func_list[i].func_name)) {
-            func_list[i].exist = exist;
+            if (func_list[i].exist == 0) {
+                func_list[i].exist = exist;
+            }
         }
     }
 }
@@ -1240,6 +1243,10 @@ int sengineInit(void) {
         LELOG("ginScriptCfg crc8 FAILED");
         return -2;
     }
+
+    // sync ia with flash
+    sengineReloadInfo();
+
     if (sengineHasDevs()) {
         if (!sdevArray()) {
             LELOGE("sdevArray is Failed");
@@ -1333,7 +1340,9 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
                 strcmp(S1_OPT_DO_SPLIT, funcName))
                 LELOGE("[lua engine] lua error: %s => %s", err, funcName);
             lua_pop(L, 1);
-            setIfExist(funcName, -1);
+            if(strstr(err, "call") != NULL) {
+                setIfExist(funcName, -1);
+            }
             ret = -3;
         }
         else
@@ -1732,11 +1741,10 @@ int sengineSetAction(const char *json, int jsonLen) {
                             }
                         }
                         i = i+len+2;
-                        if(i < ret)
-                        {
-                            uint8_t bin[MAX_BUF] = {0};
+                        if(i < ret) {
+                            // uint8_t bin[MAX_BUF] = {0};
                             halDelayms(100);
-                            ioRead(ioHdl[j].ioType, ioHdl[j].hdl, bin, sizeof(bin));
+                            // ioRead(ioHdl[j].ioType, ioHdl[j].hdl, bin, sizeof(bin));
                         }
                         break;
                      }
@@ -1975,14 +1983,14 @@ int sengineS2GetBeingReservedInfo(const ScriptCfg2 *scriptCfg2, uint8_t strBeing
     }
 
     count = MIN(*((int *)tmpBeingReserved), MAX_RSV_NUM);
-    LELOGW("sengineS2GetBeingReservedInfo count[%d]", count);
+    LELOG("sengineS2GetBeingReservedInfo count[%d]", count);
 
     // point to the list of being reserved uuidList
     tmp = (char *)tmpBeingReserved + sizeof(int);
     for (i = 0; i < count; i++) {
         memcpy(strBeingReserved[i], tmp, (2*MAX_UUID));
         tmp += (2*MAX_UUID);
-        LELOGW("strBeingReserved[%d][%s]", (2*MAX_UUID), strBeingReserved[i]);
+        LELOG("strBeingReserved[%d][%s]", (2*MAX_UUID), strBeingReserved[i]);
     }
 
     return count;
@@ -2153,6 +2161,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
         LELOGW("senginePollingRules getTerminalStatusS2 [%d]", tmpLocalJsonLen);
         return -3;
     }
+    // LELOG("getTerminalStatusS2 [%d][%s]", tmpLocalJsonLen, tmpLocalJson);
 
     // for every single rule
     // ginIACache.cfg.num = privCfg->data.iaCfg.num;
@@ -2163,17 +2172,13 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
             memset(ginScriptCfg2, 0, sizeof(ScriptCfg2));
             ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, i);
             if (0 > ret) {
-                LELOGW("senginePollingRules FAILED arrIA idx[%d]", i);
-                continue;
-            }
-            if (ginScriptCfg2->csum != crc8((uint8_t *)&(ginScriptCfg2->data), sizeof(ginScriptCfg2->data))) {
-                LELOGW("senginePollingRules FAILED crc8 idx[%d]", i);
+                LELOGW("senginePollingRules FAILED arrIA idx[%d] ret[%d]", i, ret);
                 continue;
             }
 
             // set the rule's name to cache
             ret = sengineCall((const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_GET_SELFNAME,
-                NULL, 0, (uint8_t *)&strSelfRuleName, sizeof(strSelfRuleName));
+                NULL, 0, (uint8_t *)strSelfRuleName, sizeof(strSelfRuleName));
             if (0 > ret) {
                 LELOGW("senginePollingRules sengineCall("S2_GET_SELFNAME") [%d]", ret);
                 continue;
@@ -2245,6 +2250,43 @@ int sengineRemoveRules(const char *name) {
 
     LELOG("sengineRemoveRules found[%d] whereToPut[%d] -e ", found, whereToPut);
     return 0;
+}
+
+static void sengineReloadInfo(void) {
+    int i = 0, ret = 0, count = 0;
+    char strSelfRuleName[MAX_RULE_NAME] = {0};
+    PrivateCfg privCfg;
+
+    ret = lelinkStorageReadPrivateCfg(&privCfg);
+    if (0 > ret || 0 >= privCfg.data.iaCfg.num || MAX_IA < privCfg.data.iaCfg.num) {
+        return;
+    }
+    for (i = 0; i < MAX_IA; i++) {
+        // set the rule's name to cache
+        if (0 < privCfg.data.iaCfg.arrIA[i]) {
+            IA_CACHE_INT *cacheInt = &(ginIACache.cache[i]);
+            memset(ginScriptCfg2, 0, sizeof(ScriptCfg2));
+            ret = lelinkStorageReadScriptCfg(ginScriptCfg2, E_FLASH_TYPE_SCRIPT2, i);
+            if (0 > ret) {
+                LELOGW("senginePollingRules FAILED arrIA idx[%d]", i);
+                continue;
+            }
+            ret = sengineCall((const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_GET_SELFNAME,
+                NULL, 0, (uint8_t *)strSelfRuleName, sizeof(strSelfRuleName));
+            if (0 > ret) {
+                LELOGW("senginePollingRules sengineCall("S2_GET_SELFNAME") [%d]", ret);
+                continue;
+            }
+            memcpy(cacheInt->ruleName, strSelfRuleName, MIN(ret, MAX_RULE_NAME));
+            cacheInt->ruleName[MIN(ret, MAX_RULE_NAME-1)] = 0;
+            count = sengineS2GetBeingReservedInfo(ginScriptCfg2, cacheInt->beingReservedUUID);
+            if (0 >= count) {
+                count = 0;
+            }
+            cacheInt->beingReservedNum = count;
+            LELOG("senginePollingRules ruleName[%s] beingReservedNum[%d]", cacheInt->ruleName, cacheInt->beingReservedNum);
+        }
+    }
 }
 
 int test_lf_call(char *luacode, int size) {

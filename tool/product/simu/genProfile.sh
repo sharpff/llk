@@ -26,6 +26,10 @@ $MAIN_PATH/lelinkTool.py \
     ./0x1c8000.bin 0x1000 \
     -o ./cust.bin
 
+# $MAIN_PATH/lelinkTool.py \
+#     -i $MAIN_PATH/product/simu/IA1.lua \
+#     -o ./0x1c9000.bin
+
     # 测试
     #-a 10.154.252.130 \
     #-p 5546 \

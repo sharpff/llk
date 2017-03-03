@@ -411,7 +411,7 @@ int getCommonInfo(const char *json, int jsonLen,  commonManager_t *commonManager
 static int getJsonByToken(const char *json, int jsonLen, const char *key, char *obj, int objLen, const char *tokenStart, const char *tokenEnd, int fromBack) {
     char *start, *end, *oldEnd;
     int len = 0, max = 5;
-    LELOG("getJsonByToken [%d][%s] key[%s] obj[%s] objLen[%d]", jsonLen, json, key, obj, objLen);
+    // LELOG("getJsonByToken [%d][%s] key[%s] obj[%s] objLen[%d]", jsonLen, json, key, obj, objLen);
     start = (char *)strstr(json, key);
     if (NULL == start) {
         return -1;

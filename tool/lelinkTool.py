@@ -14,7 +14,8 @@ class Param(object):
         self.uuid = ""
         self.base64_pk = ""
         self.base64_sig = ""
-        self.fws = ""
+        self.script = ""
+        self.script2 = ""
         self.genpriv = False
         self.gensdev = False
         self.wmode = ""
@@ -39,8 +40,11 @@ class Param(object):
                       action="store", dest="base64_sig", default=self.base64_sig,
                       help="signature, base64")
         parser.add_option("-t", "--script", type="string",
-                      action="store", dest="fws", default=self.fws,
+                      action="store", dest="script", default=self.script,
                       help="firware script file path")
+        parser.add_option("-i", "--script2", type="string",
+                      action="store", dest="script2", default=self.script2,
+                      help="ia script file path")
         parser.add_option("--genpriv",
                       action="store_true", dest="genpriv", default=self.genpriv,
                       help="Generate private info")
@@ -69,7 +73,8 @@ class Param(object):
         self.uuid = options.uuid
         self.base64_pk = options.base64_pk
         self.base64_sig = options.base64_sig
-        self.fws = options.fws;
+        self.script = options.script;
+        self.script2 = options.script2;
         self.genpriv = options.genpriv;
         self.gensdev = options.gensdev;
         self.wmode = options.wmode;
@@ -184,6 +189,23 @@ class ScriptCfg(object):
         self.content += struct.pack("<B", strCrc(self.content))
         self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
 
+class ScriptCfg2(object):
+    def __init__(self):
+        self.PACK_PAD = '\xFF'
+        self.PACK_SIZE = (1024 * 20)
+        self.MAX_SIZE = (1024 * 13)
+        self.script2 = ""
+        self.content = ""
+    def set(self, script):
+        self.script2 = script
+    def pack(self):
+        self.content = ""
+        self.content += struct.pack("<I", len(self.script2))
+        self.content += struct.pack("<%ds" % len(self.script2), self.script2)
+        self.content += packPad(self.PACK_PAD, self.MAX_SIZE - len(self.script2))
+        self.content += struct.pack("<B", strCrc(self.content))
+        self.content += packPad(self.PACK_PAD, (self.PACK_SIZE - len(self.content)));
+
 class PrivateInfo(object):
     def __init__(self):
        self.PACK_PAD = '\xFF'
@@ -276,15 +298,26 @@ if __name__ == '__main__':
         print "AuthCfg: %d, " % len(authcfg.content),
         print("Total: %d" % len(content))
     # firware script
-    if len(param.fws) > 0:
-        canReadFile(param.fws)
-        f = open(param.fws, "rb")
+    if len(param.script) > 0:
+        canReadFile(param.script)
+        f = open(param.script, "rb")
         s = ScriptCfg()
         s.set(f.read())
         s.pack()
         f.close()
         content += s.content
         print("firware script: %d, " % len(s.content)),
+        print("Total: %d" % len(content))
+    # ia script
+    if len(param.script2) > 0:
+        canReadFile(param.script2)
+        f = open(param.script2, "rb")
+        s = ScriptCfg2()
+        s.set(f.read())
+        s.pack()
+        f.close()
+        content += s.content
+        print("ia script: %d, " % len(s.content)),
         print("Total: %d" % len(content))
     # private info
     if param.genpriv:

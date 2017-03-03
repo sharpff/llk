@@ -292,13 +292,13 @@ static int stateProcStart(StateContext *cntx) {
     LELOG("stateProcStart -s");
     if (0 == lelinkStorageReadPrivateCfg(&cfg)) {
         LELOG("lelinkStorageReadPrivateCfg configStatus[%d]", cfg.data.nwCfg.configStatus);
-        if (cfg.csum == crc8((uint8_t *)&(cfg.data), sizeof(cfg.data))) {
+        // if (cfg.csum == crc8((uint8_t *)&(cfg.data), sizeof(cfg.data))) {
             if (0 < cfg.data.nwCfg.configStatus) {
                 ret = cfg.data.nwCfg.configStatus;
                 LELOG("stateProcStart ssid[%s] psk[%s]", cfg.data.nwCfg.config.ssid, cfg.data.nwCfg.config.psk);
                 ginConfigStatus = 1;
             } 
-        }
+        // }
     }
     LELOG("stateProcStart ********** flagWiFi[%02x] initCfgWiFiMode[%02x], initCfgIfUnBind[%02x]", 
         cfg.data.devCfg.flagWiFi, 
@@ -477,7 +477,7 @@ static int stateProcApConnected(StateContext *cntx) {
                 }
                 #endif
             } else { // ip
-                LELOGW("Waitting dns ...");
+                LELOGE("DNS waiting");
                 memset(COMM_CTX(ginCtxR2R)->remoteIP, 0, MAX_IPLEN);
                 strcpy(COMM_CTX(ginCtxR2R)->remoteIP, authCfg.data.remote);
                 COMM_CTX(ginCtxR2R)->remotePort = authCfg.data.port;

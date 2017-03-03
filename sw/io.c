@@ -205,17 +205,25 @@ static int storageRead(E_FLASH_TYPE type, void *data, int size, int idx) {
 
     ret = getRegion(type, &fr);
     if (0 > ret) {
+        LELOGE("storageRead 1");
         return -1;
     }
 
     hdl = (void *)halFlashOpen();
     if (NULL == hdl) {
+        LELOGE("storageRead 2");
         return -2;
     }
 
     ret = halFlashRead(hdl, data, size, fr.addr + (idx*fr.size), 0);
     if (0 > ret) {
+        LELOGE("storageRead 3");
         return -3;
+    }
+
+    if (*((uint8_t *)data + (size - 1)) != crc8(data, size - 1)) {
+        LELOGE("storageRead crc8 ------------------");
+        return -4;
     }
 
     // LELOG("flashReadPrivateCfg [0x%x] [0x%x][0x%x]", hdl, STORAGE_SIZE_PRIVATE_CFG, fr.addr);
@@ -300,7 +308,7 @@ int lelinkStorageReadScriptCfg(void *scriptCfg, int flashType, int idx){
         ret = storageRead(E_FLASH_TYPE_SCRIPT2, scriptCfg, sizeof(ScriptCfg2), idx);
     } else {
         LELOGW("lelinkStorageReadScriptCfg not supported flashType[%d]", flashType);
-        return -1;
+        return -10;
     }
 
     return ret;
@@ -382,11 +390,12 @@ int lelinkStorageWritePrivateCfg(const PrivateCfg *privateCfg) {
 int lelinkStorageReadPrivateCfg(PrivateCfg *privateCfg) {
     int ret = 0;
     ret = storageRead(E_FLASH_TYPE_PRIVATE, privateCfg, sizeof(PrivateCfg), 0);
-    if (privateCfg->csum != crc8((const uint8_t *)&(privateCfg->data), sizeof(privateCfg->data))) {
-        LELOGW("lelinkStorageReadPrivateCfg csum FAILED");
-        ret = -4;
-    }
 
+// {
+//     privateCfg->data.iaCfg.num = 1;
+//     privateCfg->data.iaCfg.arrIA[0] = 1;
+//     strcpy(privateCfg->data.iaCfg.arrIAName[0], "2017022419442900003");
+// }
     if (0 == ret) {
         memcpy(&ginPrivateCfg, privateCfg, sizeof(PrivateCfg));
         memcpy(&(ginIACache.cfg), &(privateCfg->data.iaCfg), sizeof(IACfg));
