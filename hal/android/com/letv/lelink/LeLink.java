@@ -12,6 +12,7 @@ public class LeLink {
 	private static final int MSG_TYPE_LOCALRESPOND = 2;
 	private static final int MSG_TYPE_REMOTEREQUEST = 3;
 	private static final int MSG_TYPE_REMOTERESPOND = 4;
+	private static final int MSG_TYPE_LELINKSTATE = 5;
 
 	/**
 	 * 

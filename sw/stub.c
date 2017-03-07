@@ -1,4 +1,5 @@
 #include "leconfig.h"
+#include "state.h"
 #include "io.h"
 
 LELINK_WEAK int aalUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) {
@@ -7,6 +8,9 @@ LELINK_WEAK int aalUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len) 
 
 LELINK_WEAK int aalUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len) {
     return 0;
+}
+
+LELINK_WEAK void halCBStateChanged(StateId from, StateId to) {
 }
 
 LELINK_WEAK void *halUartOpen(uartHandler_t* handler) {

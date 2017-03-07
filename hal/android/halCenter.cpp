@@ -43,14 +43,14 @@ int initTask(char *json)
 
     s = std::string(static_cast<char *>(json));
 	if (!reader.parse(s, value)) {
-		LELOGE("initTask parse error!\n");
+		APPLOGE("initTask parse error!\n");
 		return -1;
 	}
     s1 = value[FJK_AUTH].asString();
     script = value[FJK_SCRIPT].asString();
     s2 = value[FJK_MAC].asString();
     if(s1.length() <= 0 || s2.length() <= 0) {
-		LELOGE("initTask parameter error!\n");
+		APPLOGE("initTask parameter error!\n");
         return -1;
     }
     { // AuthCfg, 初始得到 public_key, signatrue, uuid. server_addr, server_port
@@ -75,11 +75,11 @@ int initTask(char *json)
         privateCfg->csum = crc8((uint8_t *)(&privateCfg->data), sizeof(privateCfg->data));
     }
     if((ret = lelinkStorageInit(0x1C2000, 0x3E000, 0x1000))) {
-        LELOGE("Failed to lelinkStorageInit\n");
+        APPLOGE("Failed to lelinkStorageInit\n");
         return -1;
     }
     if((ret = lelinkInit()) < 0) {
-        LELOGE("Failed to lelinkInit\n");
+        APPLOGE("Failed to lelinkInit\n");
         return ret;
     }
     getTerminalUUID(authCfg->data.uuid, MAX_UUID);
@@ -87,7 +87,7 @@ int initTask(char *json)
 	gNativeContext.ctxR2R = lelinkNwNew(authCfg->data.remote, authCfg->data.port, PORT_ONLY_FOR_VM, 0);
 	gNativeContext.ctxQ2A = lelinkNwNew(NULL, 0, NW_SELF_PORT, 0);
 	if ((ret = pthread_create(&id, NULL, netTaskFun, (void *) &gNativeContext))) {
-        LELOGE("Failed to pthread_create\n");
+        APPLOGE("Failed to pthread_create\n");
 		return ret;
 	}
 	return ret;
@@ -106,7 +106,7 @@ int airConfig(void *ptr, char *json)
 
 	s = std::string(static_cast<char *>(json));
 	if (!reader.parse(s, value)) {
-		LELOGE("airConfig parse error!\n");
+		APPLOGE("airConfig parse error!\n");
 		return -1;
 	}
 	type = value[FJK_TYPE].asInt();
@@ -133,7 +133,7 @@ int airConfig(void *ptr, char *json)
     } else if (3 == type) {
         ret = softApDoConfig(ssid, passwd, delay, aesKey);
     } else if(4 == type) {
-        APPLOGW("airConfig airhug_wave : ssid '%s', passwd '%s'", ssid, passwd);
+        //APPLOGW("airConfig airhug_wave : ssid '%s', passwd '%s'", ssid, passwd);
         ret = airhug_wave((char *)ssid, (char *)passwd);
     } 
     return ret;
@@ -148,7 +148,7 @@ int cmdSend(void *ptr, char *json)
 
 	s = std::string(static_cast<char *>(json));
 	if (!reader.parse(s, value)) {
-		LELOGE("cmdSend parse error!\n");
+		APPLOGE("cmdSend parse error!\n");
 		return -1;
 	}
 	node.timeoutRef = value[FJK_TIMEOUT].asInt();
@@ -243,7 +243,7 @@ void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data
     //     len -= RSA_LEN;
     // }
     if(len < 0) {
-        LELOGE("Error len(%d)", len);
+        APPLOGE("Error len(%d)", len);
         return;
     }
 	THREAD_ATTACH(gNativeContext.jvm, env);
@@ -283,6 +283,18 @@ int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, 
 	}
 	THREAD_DETACH(gNativeContext.jvm);
 	return ret;
+}
+
+void halCBStateChanged(StateId from, StateId to) 
+{
+	int ret = 0;
+	JNIEnv *env;
+    char data[] = {from, to};
+
+	THREAD_ATTACH(gNativeContext.jvm, env);
+	ret = env->CallIntMethod(gNativeContext.obj, gNativeContext.onMessage, 
+    com_letv_lelink_LeLink_MSG_TYPE_LELINKSTATE, NULL, c2bytes(env, (const char *) data, sizeof(data)));
+	THREAD_DETACH(gNativeContext.jvm);
 }
 
 // because of llex.c:224

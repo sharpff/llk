@@ -5,7 +5,6 @@
 #include <arpa/inet.h>
 #include "leconfig.h"
 #include "halHeader.h"
-#include <errno.h>
 
 typedef struct {
     int state; // 0 - 未开启获得, 1 - 建立获取线程, 2 - 成功获取

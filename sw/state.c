@@ -226,6 +226,9 @@ static int changeState(int direction, StateContext *cntx, int idx) {
         sengineSetAction(buf, strlen(buf));
         halDelayms(50);
     }
+    if (ginStateCntx.from != ginStateCntx.stateIdCurr) {
+        halCBStateChanged(ginStateCntx.from, ginStateCntx.stateIdCurr);
+    }
     return ret;
 }
 

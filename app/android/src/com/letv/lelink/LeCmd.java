@@ -140,4 +140,18 @@ public class LeCmd {
 		/** 广播地址 */
 		public static final String BROADCAST_ADDR = "255.255.255.255";
 	}
+
+	/** Json中的值 */
+    public class State {
+        public static final int NONE = -1;
+        public static final int START = 0;
+        //public static final int CONFIGURING = 1;
+        //public static final int SNIFFER_GOT = 2;
+        public static final int AP_CONNECTING = 3;
+        public static final int AP_CONNECTED = 4; // 4
+        public static final int CLOUD_LINKED = 5; // 5
+        public static final int CLOUD_AUTHED = 6; // 6
+        public static final int CLOUD_ONLINE = 7; // 7
+        public static final int MAX = 8;
+    }
 }

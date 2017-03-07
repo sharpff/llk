@@ -15,6 +15,8 @@ extern "C" {
 #define com_letv_lelink_LeLink_MSG_TYPE_REMOTEREQUEST 3L
 #undef com_letv_lelink_LeLink_MSG_TYPE_REMOTERESPOND
 #define com_letv_lelink_LeLink_MSG_TYPE_REMOTERESPOND 4L
+#undef com_letv_lelink_LeLink_MSG_TYPE_LELINKSTATE
+#define com_letv_lelink_LeLink_MSG_TYPE_LELINKSTATE 5L
 /*
  * Class:     com_letv_lelink_LeLink
  * Method:    getSDKInfo

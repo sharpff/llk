@@ -1,5 +1,8 @@
 package com.letv.lelinkdemo;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -7,6 +10,7 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -15,7 +19,6 @@ import com.letv.lelink.LeLink;
 
 public class MainActivity extends Activity {
 	private static final String TAG = "LeLinkDemo";
-	private LeLink mLeLink = null;
 	private String sdkUUID = null;
 	private JSONObject mJsonCmd = null;
 	private JSONObject mJsonData = null;
@@ -28,35 +31,66 @@ public class MainActivity extends Activity {
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
-	private static String mTestDevUUID = "10000100101000010007C80E77ABCD5A"; // 插排
+//	private static String mTestDevUUID = "10000100101000010007C80E77ABCD5A"; // 插排
 //	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
+	private static String mTestDevUUID = "10000100141001010012C89346E0046E"; // 晾霸
 //	private static String mTestTevToken = "A9B864558E3CC920DEEDD13A6B1DE4FF"; // auto set by uuid, depend on TEST_GET_STATE
 	private static String mTestTevToken = null; // auto set by uuid, depend on TEST_GET_STATE
-	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
+//	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
 //	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"action\":1}}"); // 窗帘
-	private static int mWifiConfigTimeout = (60 * 5);
+	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"light\":1}}"); // 晾霸
+	private static int mWifiConfigTimeout = (60 * 2);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;
 	
+	private String mMacStr = null;
+	private String mAuthStr = null;
 	private TextView mTextView = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		int rd = -1;
+		InputStream in = null;
+		byte buffer[] = new byte[1024 * 10];
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		mTextView = (TextView) findViewById(R.id.hello);
 		
+		// sdk info
 		Log.i(TAG, LeLink.getSdkInfo());
-		if (LeLink.setContext(getApplicationContext(), mLeLinkListener, "11:22:33:44:55:66")) {
-			Log.i(TAG, "\n\nSDKUUID: " + LeLink.getSdkUUID());
-			mLeLink = LeLink.getInstance();
-			Log.i(TAG, LeLink.getSdkInfo());
-			mTextView.append("\n\nInfo:\n " + LeLink.getSdkInfo());
-			mTestThread.start();
-		} else {
-			Log.e(TAG, "Failed to setContext");
-			mTextView.append("\nFailed to setContext");
+		mTextView.append("\n\nInfo:\n " + LeLink.getSdkInfo());
+		// Authentication
+		try {
+			in = getApplicationContext().getAssets().open("lelink/auth.cfg");
+		} catch (IOException e) {
+			e.printStackTrace();
+			mTextView.append("\n" + e.toString());
+			return;
 		}
+		if(in == null) {
+			Log.e(TAG, "Can't Open file: " + "lelink/auth.cfg");
+			mTextView.append("\nCan't Open file: " + "lelink/auth.cfg");
+			return;
+		}
+		try {
+			rd = in.read(buffer);
+		} catch (IOException e) {
+			e.printStackTrace();
+			e.printStackTrace();
+			mTextView.append("\n" + e.toString());
+			return;
+		}
+		mAuthStr = Base64.encodeToString(buffer, 0, rd, Base64.NO_WRAP);
+		if(mAuthStr == null) {
+			Log.e(TAG, "Auth error");
+			mTextView.append("\nAuth error");
+			return;
+		}
+		mMacStr = "11:22:33:44:55:66";
+//		LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener);
+//		mTextView.append("\n\nInfo:\n " + LeLink.getSdkInfo());
+		mTestThread.start();
 	}
 
 	private Thread mTestThread = new Thread(new Runnable() {
@@ -74,7 +108,7 @@ public class MainActivity extends Activity {
 			 */
 			Log.w(TAG, "Get SDK uuid ...");
 			mHandler.sendMessage(mHandler.obtainMessage(0, "Get SDK uuid ..."));
-			sdkUUID = LeLink.getSdkUUID();
+			sdkUUID = LeLink.getInstance(mAuthStr, mMacStr).getSdkUUID();
 			Log.i(TAG, "SDK UUID: " + sdkUUID);
 			mHandler.sendMessage(mHandler.obtainMessage(0, "SDK UUID: " + sdkUUID));
 			
@@ -85,13 +119,15 @@ public class MainActivity extends Activity {
 				 * 在timeout时间内，不断重复发送配置包。如果期间收到hello,则退出该函数。
 				 */
 				Log.e(TAG, "Wifi config test...");
-				mHandler.sendMessage(mHandler.obtainMessage(0, "Wifi config test..."));
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Wifi config test... " + System.currentTimeMillis()));
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.TIMEOUT, mWifiConfigTimeout);
-					mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_Lelink");
-					// mJsonCmd.put(LeCmd.K.APSSID, "tplink");
+//					mJsonCmd.put(LeCmd.K.SSID, "Xiaomi_Lelink");
+//					mJsonCmd.put(LeCmd.K.PASSWD, "12345678");
+					mJsonCmd.put(LeCmd.K.SSID, "LLGD");
 					mJsonCmd.put(LeCmd.K.PASSWD, "12345678");
+					// mJsonCmd.put(LeCmd.K.APSSID, "tplink");
 					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_AIRHUG);
 //					mJsonCmd.put(LeCmd.K.TYPE, LeCmd.V.AIR_CONFIG_TYPE_MULTICAST);
 					// mJsonCmd.put(LeCmd.K.AESKEY, "4d90c52bea5259b95b53d33c63a706e2");
@@ -101,9 +137,9 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				if (mLeLink.airConfig(mJsonCmd.toString()) == 0) {
+				if (LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).airConfig(mJsonCmd.toString()) == 0) {
 					Log.w(TAG, "airConfig ok!");
-					mHandler.sendMessage(mHandler.obtainMessage(0, "airConfig ok!"));
+					mHandler.sendMessage(mHandler.obtainMessage(0, "airConfig ok! " + System.currentTimeMillis()));
 				} else {
 					Log.e(TAG, "airConfig timeout");
 					mHandler.sendMessage(mHandler.obtainMessage(0, "airConfig timeout"));
@@ -111,19 +147,16 @@ public class MainActivity extends Activity {
 				}
 			}
 			
-			while (TEST_SDK_AUTH && true) {
-				Log.e(TAG, "Waitting auth...");
-				mHandler.sendMessage(mHandler.obtainMessage(0, "Waitting auth..."));
+			Log.e(TAG, "Waitting auth...");
+			while (TEST_SDK_AUTH && (LeLink.getInstance(mAuthStr, mMacStr).getState() < LeCmd.State.CLOUD_ONLINE)) {
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Waitting auth... " + System.currentTimeMillis()));
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
 				}
-				if (mLeLink.isCloud()) {
-					break;
-				}
 			}
-			
 			Log.i(TAG, LeLink.getSdkInfo());
+			mHandler.sendMessage(mHandler.obtainMessage(0, LeLink.getSdkInfo()));
 
 			if (TEST_DISCOVER_DEV) {
 				/*
@@ -133,10 +166,10 @@ public class MainActivity extends Activity {
 				 */
 				Log.e(TAG, "Device discover test...");
 				mHandler.sendMessage(mHandler.obtainMessage(0, "Device discover test..."));
-				retData = mLeLink.discover(mDiscoverTimeout);
+				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).discover(mDiscoverTimeout);
 				if (retData != null) {
-					Log.w(TAG, "find devices:\n" + retData);
-					mHandler.sendMessage(mHandler.obtainMessage(0, "find devices:\n" + retData));
+					Log.w(TAG, "Find devices:\n" + retData);
+					mHandler.sendMessage(mHandler.obtainMessage(0, "Find devices:\n" + retData));
 				} else {
 					Log.e(TAG, "Can't find device!");
 					mHandler.sendMessage(mHandler.obtainMessage(0, "Can't find device!"));
@@ -167,7 +200,7 @@ public class MainActivity extends Activity {
 				 * 如果是该设备需要远程控制，则必须先通过该函数广域网获得到token.
 				 */
 				Log.e(TAG, "Get device state test...");
-				mHandler.sendMessage(mHandler.obtainMessage(0, "Get device state test..."));
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Get device state test... " + System.currentTimeMillis()));
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.GET_STATE_CMD);
@@ -180,10 +213,10 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				retData = mLeLink.getState(mJsonCmd.toString(), mJsonData.toString());
+				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).getState(mJsonCmd.toString(), mJsonData.toString());
 				if (retData != null) {
-					Log.w(TAG, "get state:\n" + retData);
-					mHandler.sendMessage(mHandler.obtainMessage(0, "get state:\n" + retData));
+					Log.w(TAG, "Get state:\n" + retData);
+					mHandler.sendMessage(mHandler.obtainMessage(0, "Get state " + System.currentTimeMillis() + "\n" + retData));
 				} else {
 					Log.e(TAG, "Can't get state");
 					mHandler.sendMessage(mHandler.obtainMessage(0, "Can't get state"));
@@ -210,7 +243,7 @@ public class MainActivity extends Activity {
 				 */
 				dataStr = mTestCtrlCmd;
 				Log.e(TAG, "Control device test..." + dataStr);
-				mHandler.sendMessage(mHandler.obtainMessage(0, "Can't get state"));
+				mHandler.sendMessage(mHandler.obtainMessage(0, "Control device test... " + System.currentTimeMillis()));
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_DEV_CMD);
@@ -222,10 +255,11 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				retData = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
+				mHandler.sendMessage(mHandler.obtainMessage(0, mJsonCmd.toString()));
+				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).ctrl(mJsonCmd.toString(), dataStr);
 				if (retData != null) {
 					Log.w(TAG, "ctrl return:\n" + retData);
-					mHandler.sendMessage(mHandler.obtainMessage(0, "ctrl return:\n" + retData));
+					mHandler.sendMessage(mHandler.obtainMessage(0, "ctrl return: " + System.currentTimeMillis() + "\n" + retData));
 				} else {
 					Log.e(TAG, "Can't ctrl");
 					mHandler.sendMessage(mHandler.obtainMessage(0, "Can't ctrl"));
@@ -258,7 +292,7 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				retData = mLeLink.getState(mJsonCmd.toString(), mJsonData.toString());
+				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).getState(mJsonCmd.toString(), mJsonData.toString());
 				if (retData != null) {
 					Log.w(TAG, "OTA state:\n" + retData);
 					mHandler.sendMessage(mHandler.obtainMessage(0, "OTA state:\n" + retData));
@@ -285,7 +319,7 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				retData = mLeLink.ctrl(mJsonCmd.toString(), dataStr);
+				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).ctrl(mJsonCmd.toString(), dataStr);
 				Log.e(TAG, "Do OTA: " + retData);
 				mHandler.sendMessage(mHandler.obtainMessage(0, "Do OTA: " + retData));
 			}
@@ -296,13 +330,6 @@ public class MainActivity extends Activity {
 		@Override
 		public void onStateChange(String uuid, String dataStr) {
 			String str = String.format("onStateChange(%s):\n%s", uuid, dataStr);
-			Log.e(TAG, str);
-			mHandler.sendMessage(mHandler.obtainMessage(0, str));
-		}
-
-		@Override
-		public void onCloudStateChange(boolean isCloud) {
-			String str = String.format("onCloudStateChange: %s", isCloud);
 			Log.e(TAG, str);
 			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
@@ -338,6 +365,13 @@ public class MainActivity extends Activity {
 		@Override
 		public void onPushMessage(String dataStr) {
 			String str = String.format("onPushMessage:\n%s", dataStr);
+			Log.e(TAG, str);
+			mHandler.sendMessage(mHandler.obtainMessage(0, str));
+		}
+
+		@Override
+		public void onLelinkStateChange(int s1, int s2) {
+			String str = String.format("onStateChange:  %d -> %d", s1, s2);
 			Log.e(TAG, str);
 			mHandler.sendMessage(mHandler.obtainMessage(0, str));
 		}
