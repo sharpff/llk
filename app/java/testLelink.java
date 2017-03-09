@@ -37,7 +37,7 @@ public class testLelink {
 	private JSONObject mJsonCmd = null;
 	private JSONObject mJsonData = null;
 	
-	private static boolean TEST_WIFI_CONFIG = true;
+	private static boolean TEST_WIFI_CONFIG = false;
 	private static boolean TEST_SDK_AUTH = true;
 	private static boolean TEST_DISCOVER_DEV = true;
 	private static boolean TEST_GET_STATE =  true;
@@ -54,6 +54,8 @@ public class testLelink {
 	private static int mWifiConfigTimeout = (60 * 5);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;
+	private static String mMacStr = null;
+
 	public static void main(String argv[]) {
 
 		byte[] bytes = new byte[10*2048];
@@ -86,18 +88,12 @@ public class testLelink {
 				in.close();
 				scriptStr = new BASE64Encoder().encode(bufferScript);
 				authStr = new BASE64Encoder().encode(buffer);
+				mMacStr = "11:22:33:44:55:77";
 			} catch (IOException e) {
 				e.printStackTrace();
 				return;
 			}
-			if (LeLink.setContext(mLeLinkListener, scriptStr, authStr, "11:22:33:44:55:66")) {
-				System.out.printf(LeLink.getSdkInfo() + "\n");
-				// System.out.printf("111111" + LeLink.getSdkUUID());
-				mLeLink = LeLink.getInstance();
-				// mTestThread.start();
-			} else {
-				System.out.printf("222222");
-			}
+			mLeLink = LeLink.getInstance(authStr, mMacStr);
 			System.out.printf("end testLelink\n");
 		}
 		catch (Exception e) {
@@ -189,9 +185,9 @@ public class testLelink {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
 				}
-				if (mLeLink.isCloud()) {
-					break;
-				}
+				// if (mLeLink.isCloud()) {
+				// 	break;
+				// }
 			}
 			Log.i(TAG, "===========>run2\r\n");
 			
@@ -203,7 +199,7 @@ public class testLelink {
 			 * 进入该函数，首先发送一次发现包。然后等待timeout时间，最后返回大这timeout期间收到的发现回复的设备。
 			 */
 			Log.w(TAG, "Get SDK uuid");
-			sdkUUID = LeLink.getSdkUUID();
+			sdkUUID = mLeLink.getSdkUUID();
 			Log.i(TAG, "SDK UUID: " + sdkUUID);
 			
 
@@ -366,11 +362,11 @@ public class testLelink {
 			Log.e(TAG, str);
 		}
 
-		@Override
-		public void onCloudStateChange(boolean isCloud) {
-			String str = String.format("onCloudStateChange: %s", isCloud);
-			Log.e(TAG, str);
-		}
+		// @Override
+		// public void onCloudStateChange(boolean isCloud) {
+		// 	String str = String.format("onCloudStateChange: %s", isCloud);
+		// 	Log.e(TAG, str);
+		// }
 
 		@Override
 		public void onAirConfigBack(String uuid, String dataStr) {
@@ -400,6 +396,12 @@ public class testLelink {
 		public void onPushMessage(String dataStr) {
 			String str = String.format("onPushMessage:\n%s", dataStr);
 			Log.e(TAG, str);
+		}
+
+		@Override
+		public void onLelinkStateChange(int s1, int s2) {
+			String str = String.format("onLelinkStateChange:\n %d -> %d", s1, s2);
+			Log.e(TAG, str);	
 		}
 	};
 }

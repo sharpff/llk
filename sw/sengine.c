@@ -2119,7 +2119,7 @@ int sengineS2RuleHandler(const ScriptCfg2 *scriptCfg2,
     return 0;
 }
 
-
+extern void getPrivateConfigure(PrivateCfg** cfg);
 int senginePollingRules(const char *jsonRmt, int jsonLen) {
     int ret, i = 0, is = 0;
     // int64_t utc = 0;

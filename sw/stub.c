@@ -121,3 +121,7 @@ LELINK_WEAK int salResetConfigData(void) {
 LELINK_WEAK unsigned long halLogTimeStamp(void) {
       return 0;
 }
+
+LELINK_WEAK int halFeedDog(void) {
+    return 0;
+}

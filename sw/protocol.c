@@ -906,7 +906,8 @@ int lelinkNwPostCmd(void *ctx, const void *node)
     if (LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->cmdId && LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_REQ == node_p->subCmdId) {
         node_p->timeoutRef = 3;
     }
-    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d] seqId[%d] reserved[%d]", node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef, node_p->seqId, node_p->reserved);
+    LELOG("nwPostCmd cmdId[%d], subCmdId[%d], [%s:%d] timeoutRef[%d] seqId[%d] reserved[%d] rand[%d]", 
+        node_p->cmdId, node_p->subCmdId, node_p->ndIP, node_p->ndPort, node_p->timeoutRef, node_p->seqId, node_p->reserved, node_p->randID);
 
     // if (node_p->ndPort) {
     //     memcpy(node.ndIP, ipTmp, MAX_IPLEN);

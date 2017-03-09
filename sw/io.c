@@ -5,6 +5,7 @@
 #include "utility.h"
 #include "misc.h"
 #include "data.h"
+#include "state.h"
 
 #ifndef LOG_IO
 #ifdef LELOG
@@ -40,7 +41,9 @@
 
 // #define STORAGE_ADDR_TEST_CFG (ginStartAddr + STORAGE_SIZE_PRIVATE_CFG + STORAGE_ADDR_AUTH_CFG)
 // #define STORAGE_SIZE_TEST_CFG (GET_ERASE_SIZE(26)) // 0X1000
-
+LELINK_WEAK void aalSetLedStatus(RLED_STATE_t st);
+LELINK_WEAK int aalUserWrite(userHandler_t* handler, const uint8_t *buf, uint32_t len);
+LELINK_WEAK int aalUserRead(userHandler_t* handler, uint8_t *buf, uint32_t len);
 
 extern void *halFlashOpen(void);
 extern int findPosForIAName(PrivateCfg *privCfg, const char *strSelfRuleName, int lenSelfRuleName, int *whereToPut);
