@@ -46,7 +46,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.2.2'
+	local str = '1.2.3'
 	return string.len(str), str
 end
 
@@ -142,81 +142,52 @@ function s1GetValidKind(data)
 	return 0
 end
 
-         
-function s1OptMergeCurrStatus2Action(action, currStatus)
-	local tblAct = cjson.decode(action)
-	local tblSta = cjson.decode(currStatus)
-	local tblCtrlInfo = {}
-	local tblOut = {}
-	local jsonOut = ""
-
--- START
-	if tblAct["action"] then 
-		tblCtrlInfo["action"] = tblAct["action"]
-	else
-		tblCtrlInfo["action"] = tblSta["action"]
-	end
-	if tblAct["speaker"] then 
-		tblCtrlInfo["speaker"] = tblAct["speaker"]
-	else
-		tblCtrlInfo["speaker"] = tblSta["speaker"]
-	end
-	if tblAct["disinfect"] then 
-		tblCtrlInfo["disinfect"] = tblAct["disinfect"]
-        if tblAct["disinfect"] == 1 then 
-            tblCtrlInfo["DTS"] = tblAct["DTS"]
-        else
-            tblCtrlInfo["DTS"] = 0 
-        end
-	else
-		tblCtrlInfo["disinfect"] = tblSta["disinfect"]
-        tblCtrlInfo["DTS"] = tblSta["DTL"]
-	end
-	if tblAct["anion"] then 
-		tblCtrlInfo["anion"] = tblAct["anion"]
-	else
-		tblCtrlInfo["anion"] = tblSta["anion"]
-	end
-	if tblAct["bake"] then 
-		tblCtrlInfo["bake"] = tblAct["bake"]
-        if tblAct["bake"] == 1 then 
-            tblCtrlInfo["BTS"] = tblAct["BTS"]
-        else
-            tblCtrlInfo["BTS"] = 0
-        end
-	else
-		tblCtrlInfo["bake"] = tblSta["bake"]
-        tblCtrlInfo["BTS"] = tblSta["BTL"]
-	end
-	if tblAct["wind"] then 
-		tblCtrlInfo["wind"] = tblAct["wind"]
-        if tblAct["wind"] == 1 then 
-            tblCtrlInfo["WTS"] = tblAct["WTS"]
-        else
-            tblCtrlInfo["WTS"] = 0
-        end
-	else
-		tblCtrlInfo["wind"] = tblSta["wind"]
-        tblCtrlInfo["WTS"] = tblSta["WTL"]
-	end
-	if tblAct["light"] then 
-		tblCtrlInfo["light"] = tblAct["light"]
-	else
-		tblCtrlInfo["light"] = tblSta["light"]
-	end
--- END
-	tblOut = tblCtrlInfo
-	jsonOut = cjson.encode(tblOut)
-	print ("s1MergeCurrStatus2Action out is -- "..jsonOut..", tblOut "..#tblOut.."\r\n")
-	return string.len(jsonOut), jsonOut
-end
-
 -- 晾霸
 function s1CvtStd2Pri(json)
-	local ctrl = cjson.decode(json)
-	local cmdTbl = { 0xbb, 0xa3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44}
-	local dataStr = ""
     local sum = 0
+	local dataStr = ""
+	local cmdTbl = { 0xbb, 0xa3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44}
+	local ctrl = cjson.decode(json)
+    local stalen, stastr = s1apiGetDevStatus()
+
+	print ('STASTR: '..stastr..'\n')
+    local status = cjson.decode(stastr)
+	if not ctrl["action"] then 
+		ctrl["action"] = status["action"]
+	end
+	if not ctrl["speaker"] then 
+		ctrl["speaker"] = status["speaker"]
+	end
+	if not ctrl["anion"] then 
+		ctrl["anion"] = status["anion"]
+	end
+	if not ctrl["light"] then 
+		ctrl["light"] = status["light"]
+	end
+	if ctrl["disinfect"] then 
+        if ctrl["disinfect"] ~= 1 then
+            ctrl["DTS"] = 0 
+        end
+	else
+		ctrl["disinfect"] = status["disinfect"]
+        ctrl["DTS"] = status["DTL"]
+	end
+	if ctrl["bake"] then 
+        if ctrl["bake"] ~= 1 then 
+            ctrl["BTS"] = 0
+        end
+	else
+		ctrl["bake"] = status["bake"]
+        ctrl["BTS"] = status["BTL"]
+	end
+	if ctrl["wind"] then 
+        if ctrl["wind"] ~= 1 then 
+            ctrl["WTS"] = 0
+        end
+	else
+		ctrl["wind"] = status["wind"]
+        ctrl["WTS"] = status["WTL"]
+	end
 
     cmdTbl[4] = cmdTbl[4] | ((ctrl["action"] & 0x3 ) << 6)
     cmdTbl[4] = cmdTbl[4] | ((ctrl["speaker"] & 0x1 ) << 5)
