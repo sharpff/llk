@@ -93,7 +93,7 @@ public class testLelink {
 				e.printStackTrace();
 				return;
 			}
-			mLeLink = LeLink.getInstance(authStr, mMacStr);
+			mLeLink = LeLink.getInstance(scriptStr, authStr, mMacStr);
 			System.out.printf("end testLelink\n");
 		}
 		catch (Exception e) {

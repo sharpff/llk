@@ -94,10 +94,6 @@ void halDelayms(int ms) {
 }
 
 int halFeedDog(void) {
-    static int i = 10;
-    if (0 == i--) {
-        halDelayms(5*1000);
-    }
-    printf("halFeedDog [%d]\r\n", halGetTimeStamp());
+    // printf("halFeedDog [%d]\r\n", halGetTimeStamp());
     return 0;
 }

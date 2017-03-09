@@ -82,8 +82,8 @@ public class LeLink {
 	 * 
 	 * @return Lelink实例
 	 */
-	public static LeLink getInstance(String authStr, String macStr) {
-        return getInstance(authStr, macStr, null);
+	public static LeLink getInstance(String scriptStr, String authStr, String macStr) {
+        return getInstance(scriptStr, authStr, macStr, null);
 	}
 	
 	/**
@@ -104,7 +104,7 @@ public class LeLink {
 	 * 
 	 * @return Lelink实例
 	 */
-	public static LeLink getInstance(String authStr, String macStr, Listener listener) {
+	public static LeLink getInstance(String scriptStr, String authStr, String macStr, Listener listener) {
 		String infoJson = null;
 //		String macStr = "11:22:33:44:55:66";
 		JSONObject jsonObj = null;
@@ -120,7 +120,7 @@ public class LeLink {
 			}
 			jsonObj = new JSONObject();
 			try {
-				// jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
+				jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
 				jsonObj.put(LeCmd.K.AUTH, authStr);
 				jsonObj.put(LeCmd.K.MAC, macStr);
 			} catch (JSONException e1) {
