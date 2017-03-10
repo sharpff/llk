@@ -30,6 +30,12 @@ uint8_t ginChannel = 0;
 uint8_t ginSanDone = 0;
 static uint8_t ginFirstInFlag = 1;
 
+#ifdef MTK_SDK42
+#define hal_scan_timems   (2 * 1000)
+#define hal_scan_timeticks (hal_scan_timems/portTICK_PERIOD_MS)
+static TimerHandle_t hal_scan_timer = NULL;
+#endif
+
 int halDoConfig(void *ptr, int ptrLen) {
 	int ret = 0;
 
@@ -94,7 +100,7 @@ static int wifi_scan_event_handler(wifi_event_t event_id, unsigned char *payload
     if(event_id == WIFI_EVENT_IOT_SCAN_COMPLETE) {
         int i;
         //int count = 0;
-
+        taskENTER_CRITICAL();
         for(i=0;i<4;i++) {
             APPLOG("ssid %d, %s, %d", i, g_ap_list[i].ssid, g_ap_list[i].channel);
             if(strcmp((char*)ginSSID, (char*)g_ap_list[i].ssid) == 0) {
@@ -105,9 +111,30 @@ static int wifi_scan_event_handler(wifi_event_t event_id, unsigned char *payload
             }
         }
         os_memset(g_ap_list, 0, sizeof(g_ap_list));
+        taskEXIT_CRITICAL();
     }
     return 0;
 }
+
+#ifdef MTK_SDK42
+static void hal_scan_timeout(TimerHandle_t tmr)
+{
+    APPLOG("hal_scan_timeout");
+    wifi_connection_stop_scan();
+    if(ginSanDone) {
+        if (hal_scan_timer != NULL) {
+            xTimerStop(hal_scan_timer, 0);
+            hal_scan_timer = NULL;
+            wifi_connection_scan_deinit();
+            return;
+        }
+    }
+    wifi_connection_start_scan(NULL, 0, NULL, 0, 0);
+    if (hal_scan_timer != NULL) {
+        xTimerStart(hal_scan_timer, 0);
+    }
+}
+#endif
 
 void wifi_register_scan_event(ap_passport_t *args) {
     uint8_t *ssid = (uint8_t *)(args->ssid);
@@ -115,8 +142,16 @@ void wifi_register_scan_event(ap_passport_t *args) {
     strcpy((char*)ginPassword,(char *)(args->psk));
     wifi_config_set_opmode(WIFI_MODE_STA_ONLY);
     wifi_config_reload_setting();
-    //wifi_connection_scan_init(g_ap_list, 16);
-    //wifi_connection_start_scan(NULL, 0, NULL, 0, 2);
+#ifdef MTK_SDK42
+    wifi_connection_scan_init(g_ap_list, 4);
+    wifi_connection_start_scan(NULL, 0, NULL, 0, 0);
+    hal_scan_timer = xTimerCreate("hal_scan_timer",
+                              hal_scan_timeticks,
+                              pdFALSE,
+                              NULL,
+                              hal_scan_timeout);
+    xTimerStart(hal_scan_timer, 0);
+#endif
     wifi_connection_register_event_handler(WIFI_EVENT_IOT_SCAN_COMPLETE, (wifi_event_handler_t) wifi_scan_event_handler);
 }
 
@@ -141,6 +176,15 @@ int halDoApConnect(void *ptr, int ptrLen) {
         }
         if(ginSanDone) {
             ginSanDone = 0;
+#ifdef MTK_SDK42
+            wifi_connection_stop_scan();
+            wifi_connection_scan_deinit();
+            if (hal_scan_timer != NULL) {
+                xTimerStop(hal_scan_timer, 0);
+                hal_scan_timer = NULL;
+            }
+            vTaskDelay(500);
+#endif
             wifi_repeater_start_to_connect(ginSSID, ginPassword, ginChannel);
             ret = 1;
         }

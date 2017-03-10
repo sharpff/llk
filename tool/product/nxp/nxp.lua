@@ -165,7 +165,7 @@ function s1GetVer()
 	-- s1apiOptLogTable(s1apiOptString2Table(string.len(str), str))
 	-- local tblData3 = s1apiOptString2Table(string.len(str), str)
 	-- s1apiOptLogTable(tblData3)
-	local str = '1.0.4'
+	local str = '1.0.5'
 	return string.len(str), str
 end
 
@@ -553,12 +553,14 @@ function s1CvtStd2Pri(json)
 		elseif cvtType == 0x8000 then
 			local val
 			local lenStatus, currStatus = s1apiGetDevStatus()
-            cmdTbl[2] = 0
-            cmdTbl[3] = 0
 			if lenStatus > 2 then
 				local tb = cjson.decode(currStatus)
 				val = tb["light"]
 		        cmdTbl[1] = val & 0xFF
+		        val = tb["mode"]
+		        cmdTbl[2] = val & 0xFF
+		        val = tb["timeout"]
+		        cmdTbl[3] = val & 0xFF
 		        val = tb["brightness"]
 		        cmdTbl[4] = (val >> 8) & 0xFF
 		        cmdTbl[5] = val & 0xFF
@@ -577,6 +579,8 @@ function s1CvtStd2Pri(json)
 			val = ctrl["light"]
 			if val ~= nil then
                 cmdTbl[1] = val & 0xFF
+                cmdTbl[2] = 0
+                cmdTbl[3] = 0
             end
 	        val = ctrl["mode"]
 	        if val ~= nil then
