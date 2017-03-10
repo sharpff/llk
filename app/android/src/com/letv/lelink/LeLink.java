@@ -1,7 +1,5 @@
 package com.letv.lelink;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,8 +10,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.Context;
-import android.util.Base64;
 import android.util.Log;
 
 /**
@@ -21,13 +17,14 @@ import android.util.Log;
  * Lelink Android平台接入SDK接口<br>
  * Copyright © 2004-2016 乐视网（letv.com）All rights reserved.<br>
  * 
- * @version 1.0
+ * @version 2.1
  * 
  * @author feiguoyou@le.com
  */
 public class LeLink {
 
 	/*
+	 * 2.1, 接口更改
 	 * 1.0, 添加airhug配置入网方式
 	 * 0.9, 添加日志，方便调试
 	 * 0.8, Zigbee的uuid去掉mac
@@ -39,7 +36,7 @@ public class LeLink {
 	 * 0.2, 添加Listener onPushMessage()
 	 * 0.1, 添加Listener
 	 */
-	private static final String VERSION = "1.0"; // 与以上的注释一致
+	private static final String VERSION = "2.1"; // 与以上的注释一致
 	private static final String TAG = "LeLinkJar";
 	private static LeLink sLeLink = null;
 	private static boolean isAuthed = false;
@@ -50,13 +47,11 @@ public class LeLink {
 	private static final long CLOUD_HEART_RESPOND_TIMEOUT = 1000 * 60;
 
 	private int mSeqId = 0;
-	private ST_t mState = ST_t.AUTH1;
+	private int mState = LeCmd.State.NONE;
 	private boolean mIsGetDevHello = false;
 	private long mSendHeartTime = 0;
-	private long mGetCloudHeartRspTime = 0;
-	private static String mInitInfo = null;
+	private Listener mListener = null;
 	private static String mSdkInfo = null;
-	private static Listener mListener = null;
 	// for get & discover
 	private String mWaitGetUuid = null;
 	private Map<String, JSONObject> mFindDevs = new HashMap<String, JSONObject>(); // uuid
@@ -81,60 +76,57 @@ public class LeLink {
 	}
 
 	/**
-	 * 设置SDK需要的基本信息, 在调用{@link #getInstance()}后不能再更改.<br>
-	 * 只有正确的设置了该信息, 才能正确使用其它功能.<br>
+	 * 获得LeLink的实例接口.<br>
 	 * 
-	 * @param context
-	 *            Application context<br>
-	 *            要求认证文件存在: assets/lelink/auth.cfg<br>
+	 * @return Lelink实例
+	 */
+	public static LeLink getInstance(String authStr, String macStr) {
+        return getInstance(authStr, macStr, null);
+	}
+	
+	/**
+	 * 获得LeLink的实例接口.<br>
+     * 
+	 * 设置SDK需要的基本信息, 只有正确的设置了该信息, 才能正确使用其它功能.<br>
+	 * 
+	 * @param authStr
+	 *            Auth String<br>
+	 *            Lelink的认证信息，要求符合官方格式<br>
 	 *            
+	 * @param macStr
+	 * 			  本机的MAC地址<br>
+     * 			  
 	 * @param listener
 	 * 			  LeLink.Listener <br>
 	 * 			  SDK 状态通知监听器. <br>
 	 * 
-	 * @param macStr
-	 * 			  本机的MAC地址<br>
-	 * 
-	 * @return true - 设置正确; false - 设置失败 
+	 * @return Lelink实例
 	 */
-	public static boolean setContext(Context context, Listener listener, String macStr) {
-		String authStr;
+	public static LeLink getInstance(String authStr, String macStr, Listener listener) {
+		String infoJson = null;
 //		String macStr = "11:22:33:44:55:66";
 		JSONObject jsonObj = null;
 		
 		synchronized (TAG) {
 			if (sLeLink != null) {
-				return true;
-			}
-			if (context == null) {
-				LOGE("Context null");
-				return false;
+				sLeLink.setListener(listener);
+				return sLeLink;
 			}
 			if (macStr == null || !macStr.matches("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")) {
 				LOGE("Mac address error");
-				return false;
+				return null;
 			}
-			try {
-				byte buffer[] = new byte[1024 * 10];
-				InputStream in = context.getAssets().open("lelink/auth.cfg");
-				int rd = in.read(buffer);
-				authStr = Base64.encodeToString(buffer, 0, rd, Base64.NO_WRAP);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			}
-			mListener = listener;
 			jsonObj = new JSONObject();
 			try {
-				// jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
+				jsonObj.put(LeCmd.K.SCRIPT, scriptStr);
 				jsonObj.put(LeCmd.K.AUTH, authStr);
 				jsonObj.put(LeCmd.K.MAC, macStr);
 			} catch (JSONException e1) {
 				e1.printStackTrace();
-				return false;
+				return null;
 			}
-			mInitInfo = jsonObj.toString();
-			sLeLink = new LeLink(mInitInfo);
+			infoJson = jsonObj.toString();
+			sLeLink = new LeLink(infoJson, listener);
 			mSdkInfo = getSDKInfo();
 			LOGI(mSdkInfo);
 			try {
@@ -146,49 +138,46 @@ public class LeLink {
 			}
 			LOGI(mSdkInfo);
 		}
-		return isAuthed;
+        if(!isAuthed) {
+            sLeLink = null;
+        }
+		return sLeLink;
 	}
-
+	
 	/**
 	 * @hide
 	 */
-	public static Listener getListener()
+	public Listener getListener()
 	{
 		return mListener;
 	}
 	
 	/**
-	 * 获得LeLink的实例接口.<br>
-	 * 
-	 * @return Lelink实例
+	 * @hide
 	 */
-	public static LeLink getInstance() {
-		return sLeLink;
-	}
-
-	/**
-	 * SDK与云的连接状态.<br>
-	 * 只有成功连接云才可以进行信息上报和远程控制.<br>
-	 * 
-	 * @return true - SDK成功连接到云; false - 没有成功连接到云.
-	 */
-	public boolean isCloud() {
-		if (mState == ST_t.HEART && System.currentTimeMillis() - mGetCloudHeartRspTime > CLOUD_HEART_RESPOND_TIMEOUT) {
-			mState = ST_t.AUTH1;
-			if (mListener != null) {
-				mListener.onCloudStateChange(false);
-			}
+	public void setListener(Listener listener)
+	{
+		synchronized(this) {
+			mListener = listener;
 		}
-		return (mState == ST_t.HEART);
 	}
-
+	
+	/**
+	 * SDK状态获取.<br>
+	 * 
+	 * @return LeCmd.State.xxx
+	 */
+	public int getState() // 
+	{
+		return mState;
+	}
+	
 	/**
 	 * 得到SDK对应的UUID.<br>
-	 * 必须在成功执行setContext()后才可以用.<br>
 	 * 
 	 * @return String - SDK UUID
 	 */
-	public static String getSdkUUID() {
+	public String getSdkUUID() {
 		String uuid = null;
 		try {
 			JSONObject obj = new JSONObject(mSdkInfo);
@@ -230,7 +219,7 @@ public class LeLink {
 			return -1;
 		}
 		if (!isAuthed) {
-			LOGE("Error, please `setContext` first!!");
+			LOGE("Error, Authentication failed!!");
 			return -1;
 		}
 		mIsGetDevHello = false;
@@ -249,9 +238,9 @@ public class LeLink {
 			if (airConfigType == LeCmd.V.AIR_CONFIG_TYPE_SOFTAP) {
 				sendJson.getString(LeCmd.K.APSSID);
 			}
+			String logStr = String.format("AirConfig type = %d\n%s", airConfigType, sendJson.toString());
+			LOGI(logStr);
 			while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
-				String logStr = String.format("AirConfig type = %d tryTimes = %d\r\n", airConfigType, tryTimes);
-				LOGI(logStr);
 				sendJson.put(LeCmd.K.TYPE, airConfigType);
 				airConfig(mPtr, sendJson.toString());
 				tryTimes++;
@@ -398,8 +387,10 @@ public class LeLink {
 			}
 			LOGI("Wait over! for '" + mWaitGetUuid + "'");
 			if (mFindDevs.size() <= 0) {
-				if(!isDiscover && mListener != null) {
-					mListener.onGetStateBack(subcmd, mWaitGetUuid, null);
+				synchronized(this) {
+					if(!isDiscover && mListener != null) {
+						mListener.onGetStateBack(subcmd, mWaitGetUuid, null);
+					}
 				}
 				LOGI("Wait timeout!!");
 				return null;
@@ -519,8 +510,10 @@ public class LeLink {
 		}
 		if (mWaitCtrlBackData == null) {
 			LOGE("Control timeout");
-			if (mListener != null) {
-				mListener.onCtrlBack(subcmd, mWaitCtrlUuid, null);
+			synchronized(this) {
+				if (mListener != null) {
+					mListener.onCtrlBack(subcmd, mWaitCtrlUuid, null);
+				}
 			}
 		}
 		return mWaitCtrlBackData;
@@ -623,6 +616,16 @@ public class LeLink {
 		String addr, uuid, dataStr;
 		JSONObject cmdJson, sendCmdJson, dataJson;
 
+		if (MSG_TYPE_LELINKSTATE == type) {
+			mState = buf[1];
+			LOGI("State: " + buf[0] + " -> " + buf[1]);
+			synchronized(this) {
+				if(mListener != null) {
+					mListener.onLelinkStateChange(buf[0], buf[1]);
+				}
+			}
+			return ret;
+		}
 		try {
 			cmdJson = new JSONObject(jsonStr);
 			cmd = cmdJson.getInt(LeCmd.K.CMD);
@@ -654,8 +657,10 @@ public class LeLink {
 					|| (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_STATUS_REQ)) {
 				try {
 					dataStr = new String(buf, "UTF-8");
-					if (mListener != null) {
-						mListener.onStateChange(uuid, dataStr);
+					synchronized(this) {
+						if (mListener != null) {
+							mListener.onStateChange(uuid, dataStr);
+						}
 					}
 				} catch (UnsupportedEncodingException e) {
 					e.printStackTrace();
@@ -664,8 +669,10 @@ public class LeLink {
 			} else if (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_MSG_REQ) {
 				try {
 					dataStr = new String(buf, "UTF-8");
-					if (mListener != null) {
-						mListener.onPushMessage(dataStr);
+					synchronized(this) {
+						if (mListener != null) {
+							mListener.onPushMessage(dataStr);
+						}
 					}
 				} catch (UnsupportedEncodingException e) {
 					e.printStackTrace();
@@ -674,8 +681,10 @@ public class LeLink {
 			} else if (cmd == LeCmd.CLOUD_MSG_CTRL_R2T_REQ) {
 //				try {
 //					dataStr = new String(buf, "UTF-8");
+//					synchronized(this) {
 //					if (mListener != null) {
 //						mListener.onControl(subcmd, uuid, dataStr);
+//					}
 //					}
 //				} catch (UnsupportedEncodingException e) {
 //					e.printStackTrace();
@@ -694,14 +703,16 @@ public class LeLink {
 				LOGI("Get device hello");
 				send(sendCmdJson, null);
 				mIsGetDevHello = true;
-				if (mListener != null) {
-					try {
-						dataStr = new String(buf, "UTF-8");
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
-						return ret;
+				synchronized (this) {
+					if (mListener != null) {
+						try {
+							dataStr = new String(buf, "UTF-8");
+						} catch (UnsupportedEncodingException e) {
+							e.printStackTrace();
+							return ret;
+						}
+						mListener.onAirConfigBack(uuid, dataStr);
 					}
-					mListener.onAirConfigBack(uuid, dataStr);
 				}
 			}
 			break;
@@ -726,12 +737,14 @@ public class LeLink {
 					synchronized (mCtrlLock) {
 						mCtrlLock.notifyAll();
 					}
-					if (mListener != null) {
-						if ((cmd == LeCmd.CTRL_RSP && subcmd == LeCmd.Sub.CTRL_CMD_RSP)
-								|| (cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP && subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_RSP)) {
-							mListener.onCtrlBack(LeCmd.Sub.CTRL_DEV_CMD, uuid, dataStr);
-						} else {
-							mListener.onCtrlBack(subcmd, uuid, dataStr);
+					synchronized (this) {
+						if (mListener != null) {
+							if ((cmd == LeCmd.CTRL_RSP && subcmd == LeCmd.Sub.CTRL_CMD_RSP)
+									|| (cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP && subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_RSP)) {
+								mListener.onCtrlBack(LeCmd.Sub.CTRL_DEV_CMD, uuid, dataStr);
+							} else {
+								mListener.onCtrlBack(subcmd, uuid, dataStr);
+							}
 						}
 					}
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
@@ -755,38 +768,34 @@ public class LeLink {
 						} else { // getstate not
 							LOGW("getState respond, but uuid: " + uuid + ", need: " + mWaitGetUuid);
 						}
-						if (mListener != null) {
-							if ((cmd == LeCmd.DISCOVER_RSP && subcmd == LeCmd.Sub.DISCOVER_RSP)
-									|| (cmd == LeCmd.CLOUD_REPORT_RSP && subcmd == LeCmd.Sub.CLOUD_REPORT_RSP)) {
-								mListener.onGetStateBack(LeCmd.Sub.GET_STATE_CMD, uuid, dataStr);
-							} else {
-								mListener.onGetStateBack(subcmd, uuid, dataStr);
+						synchronized (this) {
+							if (mListener != null) {
+								if ((cmd == LeCmd.DISCOVER_RSP && subcmd == LeCmd.Sub.DISCOVER_RSP)
+										|| (cmd == LeCmd.CLOUD_REPORT_RSP && subcmd == LeCmd.Sub.CLOUD_REPORT_RSP)) {
+									mListener.onGetStateBack(LeCmd.Sub.GET_STATE_CMD, uuid, dataStr);
+								} else {
+									mListener.onGetStateBack(subcmd, uuid, dataStr);
+								}
 							}
 						}
 					} else {
 						LOGI("Discover '" + keyuuid + "', Data:\n" + dataStr);
 						mFindDevs.put(keyuuid, dataJson);
-						if (mListener != null) {
-							mListener.onDiscoverBack(uuid, dataStr);
+						synchronized (this) {
+							if (mListener != null) {
+								mListener.onDiscoverBack(uuid, dataStr);
+							}
 						}
 					}
 				} else if (cmd == LeCmd.CLOUD_GET_TARGET_RSP && subcmd == LeCmd.Sub.CLOUD_GET_TARGET_RSP) {
 					dataJson = new JSONObject(dataStr);
 					if (dataJson.has(LeCmd.K.REMOTE_ADDR)) {
-						mState = ST_t.AUTH2;
 					} else {
 						// waiting heart back;
 					}
 				} else if (cmd == LeCmd.CLOUD_AUTH_RSP && subcmd == LeCmd.Sub.CLOUD_AUTH_RSP) {
 					// waiting heart back;
 				} else if (cmd == LeCmd.CLOUD_HEARTBEAT_RSP && subcmd == LeCmd.Sub.CLOUD_HEARTBEAT_RSP) {
-					mGetCloudHeartRspTime = System.currentTimeMillis();
-					if (mState != ST_t.HEART) {
-						mState = ST_t.HEART;
-						if (mListener != null) {
-							mListener.onCloudStateChange(true);
-						}
-					}
 				}
 			} catch (UnsupportedEncodingException e1) {
 				LOGE("Json error");
@@ -810,12 +819,24 @@ public class LeLink {
 	public interface Listener {
 
 		/**
-		 * SDK云端接入状态变化.<br>
+		 * SDK状态变化.<br>
 		 * 
-		 * @param isCloud
-		 * 			表示是否成功连接上云服务器<br>
-		 */
-		void onCloudStateChange(boolean isCloud);
+		 * @param s1
+		 * 			之前状态 <br>
+         * 			
+		 * @param s2
+		 * 			当前状态 <br>
+		 * <br>
+		 * 状态有如下几种: <br>
+         *      LeCmd.State.NONE : 未启动 <br>
+         *      LeCmd.State.STAR : 正在启动 <br>
+         *      LeCmd.State.AP_CONNECTIN : 正在连接AP <br>
+         *      LeCmd.State.AP_CONNECTED : 已经连上AP <br>
+         *      LeCmd.State.CLOUD_LINKED : 开始联云 <br>
+         *      LeCmd.State.CLOUD_AUTHED : 云认证通过 <br>
+         *      LeCmd.State.CLOUD_ONLINE : 进入联网工作模式 <br>
+         */
+		void onLelinkStateChange(int s1, int s2);
 
 		/**
 		 * wifi配置时, 成功配置了设备.<br>
@@ -926,14 +947,11 @@ public class LeLink {
 		Log.println(priority, TAG, msg);
 	}
 
-	private enum ST_t {
-		AUTH1, AUTH2, HEART,
-	};
-
 	/*********************************************** for native ********************************************************/
 	private long mPtr = 0;
 
-	private LeLink(String info) {
+	private LeLink(String info, Listener listener) {
+		mListener = listener;
 		mPtr = init(info);
 		isAuthed = (mPtr != 0);
 		LOGE("init: " + (isAuthed ? "ok" : "error"));
@@ -943,6 +961,7 @@ public class LeLink {
 	private static final int MSG_TYPE_LOCALRESPOND = 2;
 	private static final int MSG_TYPE_REMOTEREQUEST = 3;
 	private static final int MSG_TYPE_REMOTERESPOND = 4;
+	private static final int MSG_TYPE_LELINKSTATE = 5;
 
 	/**
 	 * 

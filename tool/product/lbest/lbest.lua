@@ -46,7 +46,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.1.1'
+	local str = '1.2.3'
 	return string.len(str), str
 end
 
@@ -77,14 +77,27 @@ end
             4, 已经连接到AP，可以本地控制
             5, 已经正常连到云服务，可远程控制
 ]]
+
 --BB A3 02 00 00 00 00 00 00 00 A5 44             // 查询状态
+
+--V1.0
+--
 --A5 A5 5A 5A 98 C1 E8 03 00 00 00 00             // (复位命令)
 --A5 A5 5A 5A 99 C1 E9 03 00 00 00 00             // 复位成功后，WIFI模块返回
---网络状态命令：（可以根据实际情况调节改变）.  WIFI模块的状态改变时，会发送以下命令给控制器
 --A5 A5 5A 5A A0 C1 EC 03 04 00 00 00 00 00 00 00 //设备进入配置状态（LED快闪）
 --A5 A5 5A 5A A1 C1 EC 03 04 00 00 00 01 00 00 00 //设备进入连接AP状态（LED慢闪）
 --A5 A5 5A 5A A2 C1 EC 03 04 00 00 00 02 00 00 00 //已经连接到AP，可以本地控制（LED熄灭）
 --A5 A5 5A 5A A3 C1 EC 03 04 00 00 00 03 00 00 00 //已经正常连到云服务，可远程控制
+
+--V1.3
+--
+--BB A3 04 00 00 00 00 00 00 00 A7 44             // (复位命令)
+--BB A3 07 00 00 00 00 00 00 00 AA 44             // 复位成功后，WIFI模块返回
+--BB A3 07 00 00 00 00 00 00 00 AA 44             //设备进入配置状态（LED快闪)
+--BB A3 08 00 00 00 00 00 00 00 AB 44             //设备进入连接AP状态（LED慢闪）
+--BB A3 09 00 00 00 00 00 00 00 AC 44             //已经连接到AP，可以本地控制（LED熄灭）
+--BB A3 0A 00 00 00 00 00 00 00 AD 44             //已经正常连到云服务，可远程控制
+
 function s1GetQueries(queryType)
     --local query = string.char( 0xa5, 0xa5, 0x5a, 0x5a, 0xb1, 0xc0, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00 )
     --local queryCountLen = string.char( 0x0d, 0x00 )
@@ -94,13 +107,13 @@ function s1GetQueries(queryType)
     if queryType == 1 then
         query = string.char(0xbb, 0xa3, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xa5, 0x44)
     elseif queryType == 2 then
-        query = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0xa0, 0xc1, 0xec, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+        query = string.char(0xBB, 0xA3, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAA, 0x44)
     elseif queryType == 3 then
-        query = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0xa1, 0xc1, 0xec, 0x03, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00)
+        query = string.char(0xBB, 0xA3, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAB, 0x44)
     elseif queryType == 4 then
-        query = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0xa2, 0xc1, 0xec, 0x03, 0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00)
+        query = string.char(0xBB, 0xA3, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAC, 0x44)
     elseif queryType == 5 then
-        query = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0xa3, 0xc1, 0xec, 0x03, 0x04, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00)
+        query = string.char(0xBB, 0xA3, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAD, 0x44)
     end
     if string.len(query) ~= 0 then
         queryCountLen = string.char(string.len(query), 0x00 )
@@ -116,7 +129,7 @@ end
 	WIFI 重置命令判别
 ]]
 function s1GetValidKind(data)
-    local reset = string.char( 0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00)
+    local reset = string.char(0xBB, 0xA3, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA7, 0x44)
 
 	if nil ~= string.find(data, reset) then
 		return 1
@@ -129,81 +142,52 @@ function s1GetValidKind(data)
 	return 0
 end
 
-         
-function s1OptMergeCurrStatus2Action(action, currStatus)
-	local tblAct = cjson.decode(action)
-	local tblSta = cjson.decode(currStatus)
-	local tblCtrlInfo = {}
-	local tblOut = {}
-	local jsonOut = ""
-
--- START
-	if tblAct["action"] then 
-		tblCtrlInfo["action"] = tblAct["action"]
-	else
-		tblCtrlInfo["action"] = tblSta["action"]
-	end
-	if tblAct["speaker"] then 
-		tblCtrlInfo["speaker"] = tblAct["speaker"]
-	else
-		tblCtrlInfo["speaker"] = tblSta["speaker"]
-	end
-	if tblAct["disinfect"] then 
-		tblCtrlInfo["disinfect"] = tblAct["disinfect"]
-        if tblAct["disinfect"] == 1 then 
-            tblCtrlInfo["DTS"] = tblAct["DTS"]
-        else
-            tblCtrlInfo["DTS"] = 0 
-        end
-	else
-		tblCtrlInfo["disinfect"] = tblSta["disinfect"]
-        tblCtrlInfo["DTS"] = tblSta["DTL"]
-	end
-	if tblAct["anion"] then 
-		tblCtrlInfo["anion"] = tblAct["anion"]
-	else
-		tblCtrlInfo["anion"] = tblSta["anion"]
-	end
-	if tblAct["bake"] then 
-		tblCtrlInfo["bake"] = tblAct["bake"]
-        if tblAct["bake"] == 1 then 
-            tblCtrlInfo["BTS"] = tblAct["BTS"]
-        else
-            tblCtrlInfo["BTS"] = 0
-        end
-	else
-		tblCtrlInfo["bake"] = tblSta["bake"]
-        tblCtrlInfo["BTS"] = tblSta["BTL"]
-	end
-	if tblAct["wind"] then 
-		tblCtrlInfo["wind"] = tblAct["wind"]
-        if tblAct["wind"] == 1 then 
-            tblCtrlInfo["WTS"] = tblAct["WTS"]
-        else
-            tblCtrlInfo["WTS"] = 0
-        end
-	else
-		tblCtrlInfo["wind"] = tblSta["wind"]
-        tblCtrlInfo["WTS"] = tblSta["WTL"]
-	end
-	if tblAct["light"] then 
-		tblCtrlInfo["light"] = tblAct["light"]
-	else
-		tblCtrlInfo["light"] = tblSta["light"]
-	end
--- END
-	tblOut = tblCtrlInfo
-	jsonOut = cjson.encode(tblOut)
-	print ("s1MergeCurrStatus2Action out is -- "..jsonOut..", tblOut "..#tblOut.."\r\n")
-	return string.len(jsonOut), jsonOut
-end
-
 -- 晾霸
 function s1CvtStd2Pri(json)
-	local ctrl = cjson.decode(json)
-	local cmdTbl = { 0xbb, 0xa3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44}
-	local dataStr = ""
     local sum = 0
+	local dataStr = ""
+	local cmdTbl = { 0xbb, 0xa3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44}
+	local ctrl = cjson.decode(json)
+    local stalen, stastr = s1apiGetDevStatus()
+
+	print ('STASTR: '..stastr..'\n')
+    local status = cjson.decode(stastr)
+	if not ctrl["action"] then 
+		ctrl["action"] = status["action"]
+	end
+	if not ctrl["speaker"] then 
+		ctrl["speaker"] = status["speaker"]
+	end
+	if not ctrl["anion"] then 
+		ctrl["anion"] = status["anion"]
+	end
+	if not ctrl["light"] then 
+		ctrl["light"] = status["light"]
+	end
+	if ctrl["disinfect"] then 
+        if ctrl["disinfect"] ~= 1 then
+            ctrl["DTS"] = 0 
+        end
+	else
+		ctrl["disinfect"] = status["disinfect"]
+        ctrl["DTS"] = status["DTL"]
+	end
+	if ctrl["bake"] then 
+        if ctrl["bake"] ~= 1 then 
+            ctrl["BTS"] = 0
+        end
+	else
+		ctrl["bake"] = status["bake"]
+        ctrl["BTS"] = status["BTL"]
+	end
+	if ctrl["wind"] then 
+        if ctrl["wind"] ~= 1 then 
+            ctrl["WTS"] = 0
+        end
+	else
+		ctrl["wind"] = status["wind"]
+        ctrl["WTS"] = status["WTL"]
+	end
 
     cmdTbl[4] = cmdTbl[4] | ((ctrl["action"] & 0x3 ) << 6)
     cmdTbl[4] = cmdTbl[4] | ((ctrl["speaker"] & 0x1 ) << 5)

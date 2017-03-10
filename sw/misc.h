@@ -126,6 +126,7 @@ int genS2Json(const char *status, int statusLen, const char *rmtJson, int rmtJso
 int getStrValByKey(const char *json, int jsonLen, const char *key, char *info, int size);
 int getIntValByKey(const char *json, int jsonLen, const char *key, int *val);
 int printOut(const char *fmt, ...);
+int getJsonArray(const char *json, int jsonLen, const char *key, char *obj, int objLen);
 #ifdef __cplusplus
 }
 #endif

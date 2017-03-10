@@ -14,6 +14,7 @@ extern "C" {
 // #include <android/log.h>
 #include "leconfig.h"
 #include "io.h"
+#include "state.h"
 #include "protocol.h"
 #include "jnitls.h"
 #include "network.h"
@@ -66,6 +67,7 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
 void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len);
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *payloadBody, int len);
 int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, char *nw, int nwLenOut);
+void halCBStateChanged(StateId from, StateId to);
 #ifdef __cplusplus
 }
 #endif

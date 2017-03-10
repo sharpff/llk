@@ -92,3 +92,8 @@ uint16_t halRand() {
 void halDelayms(int ms) {
     usleep(ms*1000);
 }
+
+int halFeedDog(void) {
+    // printf("halFeedDog [%d]\r\n", halGetTimeStamp());
+    return 0;
+}

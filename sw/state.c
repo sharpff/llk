@@ -68,6 +68,8 @@
 // #define SEC2LETICK(x)               ((x) * 1000 / ginMSDelay)
 #define WIFI_CFG_BY_MONITOR_TIME    (60 * 3)
 #define WIFI_CFG_BY_SOFTAP_TIME     (60 * 3)
+#define HEATBEAT_FREQUENCY          (12)
+#define LELINK_FREQUENCY            (5)
 static uint8_t wifiConfigByMonitor = 0;
 // static uint32_t wifiConfigTime = 0;
 static uint32_t wifiConfigTimeout = 0;
@@ -116,6 +118,11 @@ static int stateProcCloudOnline(StateContext *cntx);
 
 static void uartClear();
 static int sdevGetValidChannel(void);
+LELINK_WEAK int halFeedDog(void);
+LELINK_WEAK void halCBStateChanged(StateId from, StateId to);
+LELINK_WEAK int halGetWifiChannel();
+LELINK_WEAK int salResetConfigData(void);
+int halGetHostByNameNB(const char *name, char ip[4][32], int len);
 
 // static void resetConfigData(void);
 // static int halDoConfig(void *ptr, int ptrLen) {
@@ -225,6 +232,22 @@ static int changeState(int direction, StateContext *cntx, int idx) {
         snprintf(buf, sizeof(buf), "{\"sDevChnl\":%d}", chnl);
         sengineSetAction(buf, strlen(buf));
         halDelayms(50);
+    }
+    if (ginStateCntx.from != ginStateCntx.stateIdCurr) {
+        halCBStateChanged(ginStateCntx.from, ginStateCntx.stateIdCurr);
+    }
+    { 
+        // lelink resume
+        static unsigned int lastTimeStamp;
+        if (0 == lastTimeStamp) {
+            lastTimeStamp = halGetTimeStamp();
+        }
+        if ((halGetTimeStamp() - lastTimeStamp) > LELINK_FREQUENCY) {
+            changeStateId(E_STATE_AP_CONNECTED);
+        }
+        lastTimeStamp = halGetTimeStamp();
+        // watch dog feeding
+        halFeedDog();
     }
     return ret;
 }
@@ -567,7 +590,7 @@ static int stateProcCloudOnline(StateContext *cntx) {
         return -1;
     }
 
-    TIMEOUT_BEGIN_SEC(12, 1)
+    TIMEOUT_BEGIN_SEC(HEATBEAT_FREQUENCY, 1)
         NodeData node = {0};
         node.cmdId = LELINK_CMD_CLOUD_HEARTBEAT_REQ;
         node.subCmdId = LELINK_SUBCMD_CLOUD_HEARTBEAT_REQ;

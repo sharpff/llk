@@ -43,6 +43,7 @@ int getLock();
 int getDevFlag(DEV_FLAG_t flag);
 int setDevFlag(DEV_FLAG_t flag, int isSet);
 const char *getScriptVer();
+int getSDevStatus(int index, char *sdevStatus, int len);
 
 // test only
 #define PUBLIC_KEY_PEM \

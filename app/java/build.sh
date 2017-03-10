@@ -49,6 +49,7 @@ if [ "$1" = "gdb" ]; then
 elif [ "$1" = "clean" ]; then
 	rm *.class
 	rm ./com/letv/lelink/*.class
+	rm ./org/json/*.class
 else
 	pushd ./jni > /dev/null 2>&1
 	make
@@ -56,7 +57,7 @@ else
 
 	cp ../../app/android/src/com/letv/lelink/LeCmd.java ./com/letv/lelink
 	cp ./jni/Debug/liblelink.so .
-	javac ./com/letv/lelink/*.java
-	javac *.java
+	javac -cp ./lib/fastjson-1.1.39.jar ./com/letv/lelink/*.java ./org/json/*.java *.java
+	# javac ./com/letv/lelink/*.java *.java
 fi
 
