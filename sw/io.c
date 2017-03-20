@@ -323,7 +323,7 @@ int lelinkStorageWriteScriptCfg2(const void *scriptCfg) {
     char strSelfRuleName[MAX_RULE_NAME] = {0};
     LELOG("lelinkStorageWriteScriptCfg2 -s ");
 
-    lenSelfRuleName = sengineCall((const char *)((ScriptCfg2 *)scriptCfg)->data.script, ((ScriptCfg2 *)scriptCfg)->data.size, S2_GET_SELFNAME,
+    lenSelfRuleName = sengineCall(2, (const char *)((ScriptCfg2 *)scriptCfg)->data.script, ((ScriptCfg2 *)scriptCfg)->data.size, S2_GET_SELFNAME,
         NULL, 0, (uint8_t *)&strSelfRuleName, sizeof(strSelfRuleName));
     if (0 > lenSelfRuleName) {
         LELOGW("lelinkStorageWriteScriptCfg2 sengineCall("S2_GET_SELFNAME") [%d]", lenSelfRuleName);

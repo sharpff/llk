@@ -147,7 +147,7 @@ extern ScriptCfg *ginScriptCfg;
 extern ScriptCfg2 *ginScriptCfg2;
 
 int sengineInit(void);
-int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen);
+int sengineCall(int sType, const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen);
 int sengineHasDevs(void);
 int sengineGetStatusVal(char *json, int jsonLen);
 int sengineSetAction(const char *json, int jsonLen);

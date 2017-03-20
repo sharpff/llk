@@ -137,6 +137,12 @@ typedef struct {
     commonConfig_t table[COMMON_MAX_ID + 1];
 } commonManager_t;
 
+typedef struct {
+    void *ud;
+    uint32_t sBasicSize;
+    uint8_t sType;
+} SContext;
+
 // halIO
 void *halUartOpen(uartHandler_t* handler);
 int halUartClose(uartHandler_t* handler);
@@ -232,6 +238,10 @@ uint16_t halRand();
 
 int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, const char *aesKey);
 extern unsigned long halLogTimeStamp(void);
+int halWatchDogInit(void);
+int halWatchDogFeed(void);
+size_t halGetSReservedHeap();
+
 
 #define applog(_mod_name_, _fmt_, ...) \
     { \

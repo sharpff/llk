@@ -334,7 +334,7 @@ const char *getScriptVer() {
     static char verFWScript[16] = {0};
     if (verFWScript[0])
         return verFWScript;
-    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VER,
+    ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VER,
         NULL, 0, (uint8_t *)verFWScript, sizeof(verFWScript));
     // LELOG("sengineCall ret size [%d], verFWScript [%s]", ret, verFWScript);
     if (0 >= ret) {

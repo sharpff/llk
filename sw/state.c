@@ -118,7 +118,7 @@ static int stateProcCloudOnline(StateContext *cntx);
 
 static void uartClear();
 static int sdevGetValidChannel(void);
-LELINK_WEAK int halFeedDog(void);
+LELINK_WEAK int halWatchDogFeed(void);
 LELINK_WEAK void halCBStateChanged(StateId from, StateId to);
 LELINK_WEAK int halGetWifiChannel();
 LELINK_WEAK int salResetConfigData(void);
@@ -247,7 +247,7 @@ static int changeState(int direction, StateContext *cntx, int idx) {
         }
         lastTimeStamp = halGetTimeStamp();
         // watch dog feeding
-        halFeedDog();
+        halWatchDogFeed();
     }
     return ret;
 }

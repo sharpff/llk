@@ -113,3 +113,7 @@ uint16_t halRand() {
 void halDelayms(int ms) {
     mico_thread_msleep(ms);
 }
+
+size_t halGetSReservedHeap() {
+    return 28*1024;
+}

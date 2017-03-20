@@ -308,7 +308,7 @@ ERROR_PARAM:
 		extern void testOnlySetIACache();
 
 		int s2apiSetCurrStatus(lua_State *L);
-		lua_State *L = luaL_newstate();
+		lua_State *L = luaL_newstate(NULL);
 		int param = 2;
 		int ret = 1;
 

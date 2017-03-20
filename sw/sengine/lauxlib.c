@@ -18,6 +18,7 @@
 #include "lua.h"
 
 #include "lauxlib.h"
+#include "lstate.h"
 
 
 /*
@@ -936,8 +937,31 @@ static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
     halFree(ptr);
     return NULL;
   }
-  else
+  else {
+    SContext *ctx = (SContext *)ud;
+    lua_State *L = (lua_State *)(ctx->ud);
+    if (L) {
+      global_State *g = G(L);
+      // LELOG("L is %x %x", L, g);
+      if (g) {
+        size_t used = gettotalbytes(g);
+        // for fw script(script1)
+        if (1 == ctx->sType) {
+          if (used > (halGetSReservedHeap() + ctx->sBasicSize)) {
+            LELOG("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 used[%d] basic[%d]", used, ctx->sBasicSize);
+            return NULL;
+          }
+        // for ia script(script2)
+        } else {
+          if (used > ctx->sBasicSize) {
+            LELOG("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb used[%d] basic[%d]", used, ctx->sBasicSize);
+            return NULL;
+          }
+        }
+      }
+    }
     return halRealloc(ptr, nsize);
+  }
 }
 
 
@@ -948,9 +972,13 @@ static int panic (lua_State *L) {
 }
 
 
-LUALIB_API lua_State *luaL_newstate (void) {
-  lua_State *L = lua_newstate(l_alloc, NULL);
-  if (L) lua_atpanic(L, &panic);
+LUALIB_API lua_State *luaL_newstate (void *ptr) {
+  lua_State *L = lua_newstate(l_alloc, ptr);
+  if (L) {
+    SContext *ctx = (SContext *)ptr;
+    ctx->ud = L;
+    lua_atpanic(L, &panic);
+  }
   return L;
 }
 

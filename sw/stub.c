@@ -122,6 +122,14 @@ LELINK_WEAK unsigned long halLogTimeStamp(void) {
       return 0;
 }
 
-LELINK_WEAK int halFeedDog(void) {
+LELINK_WEAK int halWatchDogInit(void) {
     return 0;
+}
+
+LELINK_WEAK int halWatchDogFeed(void) {
+    return 0;
+}
+
+LELINK_WEAK size_t halGetSReservedHeap() {
+    return 10*1024;
 }

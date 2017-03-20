@@ -1280,18 +1280,33 @@ int s1apiOptTable2String(lua_State *L);
 int s1apiOptLogTable(lua_State *L);
 int s1apiRebootDevice(lua_State *L);
 
-int sengineCall(const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen)
-{
-    int ret = 0;
-    lua_State *L = NULL;
-
-    if(isIfExist(funcName) < 0) {
-        LELOGE("[lua engine] sengineCall NO function => %s", funcName);
-        return -1;
+static SContext *getSContext(int sType) {
+    int i = 0;
+    static SContext ginContext[] = {
+        {NULL, MAX_SCRIPT_SIZE, 1},
+        {NULL, MAX_SCRIPT2_SIZE + 8, 2},
+    };
+    for (i = 0; i < sizeof(ginContext)/sizeof(SContext); i++) {
+        if (sType == ginContext[i].sType) {
+            return &ginContext[i];
+        }
     }
+    return NULL;
+}
 
-    L = luaL_newstate();
+static lua_State* sengineGet(int sType, const char *script, int scriptSize)
+{
+    static lua_State *L = NULL;
 
+    if (script == NULL || scriptSize <= 0) {
+        goto err_out;
+    }
+    if(L) {
+        return L;
+    }
+    if(!(L = luaL_newstate(getSContext(sType)))) {
+        goto err_out;
+    }
     // lua_register(L, "bitshift", bitshift);
     // lua_register(L, "bitshiftL", bitshiftL);
     // lua_register(L, "bitand", bitand);
@@ -1312,17 +1327,35 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     // lua_register(L, "csum", csum);
     
     // LELOG("[lua engine] START [%s]----------------", funcName);
-    if (script == NULL || scriptSize <= 0)
-        return -1;
-
     luaL_openlibs(L);
-    if (luaL_loadbuffer(L, script, scriptSize, "lelink") || lua_pcall(L, 0, 0, 0))
-    {
+    if (luaL_loadbuffer(L, script, scriptSize, "lelink") || lua_pcall(L, 0, 0, 0)) {
         lua_pop(L, 1);
-        ret = -1;
         LELOGE("[lua engine] lua code syntax error");
+        goto err_out;
     }
-    else
+    return L;
+err_out:
+    if(L) {
+        lua_close(L);
+        L = NULL;
+    }
+    return NULL;
+}
+
+int sengineCall(int sType, const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen)
+{
+    int ret = 0;
+    lua_State *L = NULL;
+
+    if(isIfExist(funcName) < 0) {
+        LELOGE("[lua engine] sengineCall NO function => %s", funcName);
+        return -1;
+    }
+    if(!(L = sengineGet(sType, script, scriptSize))) {
+        LELOGE("[lua engine] sengineGet error");
+        return -1;
+    }
+
     {
         IO io_ret = { 0, 0 };
         LF_IMPL lf_impl = { 0, 0 };
@@ -1364,7 +1397,6 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
 
     //wmprintf("[config]: config[0x%x] lua[0x%x] timer[0x%x] ", SYS_CONFIG_OFFSET, LUA_STORE_ADDRESS, JOYLINK_TIMER_MEM_ADDR);
 
-    lua_close(L);
     // LELOG("[lua engine] END -----------");
     return ret;
 }
@@ -1377,7 +1409,7 @@ int sengineHasDevs(void) {
         return hasDevs ? 1 : 0;
     }
 
-    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_HAS_SUBDEVS,
+    ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_HAS_SUBDEVS,
             NULL, 0, (uint8_t *)&hasDevs, sizeof(hasDevs));
     if (0 >= ret) {
         hasDevs = 0;
@@ -1702,7 +1734,7 @@ int sengineSetAction(const char *json, int jsonLen) {
             /*
              * jsonMerged includes 2 params before sengineCall. 1st is action, 2nd is current status
              */
-            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_MERGE_ST2ACT,
+            ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_MERGE_ST2ACT,
                 (uint8_t *)jsonMerged, ret, (uint8_t *)jsonMerged, sizeof(jsonMerged));
             if (0 < ret) {
                 jsonLen = ret;
@@ -1710,7 +1742,7 @@ int sengineSetAction(const char *json, int jsonLen) {
             }
         }
 
-        ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
+        ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_STD2PRI,
             (uint8_t *)jsonMerged, jsonLen, bin, sizeof(bin));
         if (ret <= 0) {
             LELOGW("sengineSetAction sengineCall("S1_STD2PRI") [%d]", ret);
@@ -1780,7 +1812,7 @@ void sengineSetStatusVal(const char *status, int len) {
 
 int sengineGetTerminalProfileCvtType(char *json, int jsonLen) {
     int ret = 0;
-    ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_CVTTYPE,
+    ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_CVTTYPE,
             NULL, 0, (uint8_t *)json, jsonLen);
     if (ret <= 0) {
         LELOG("sengineGetTerminalProfileCvtType sengineCall("S1_GET_CVTTYPE") [%d]", ret);
@@ -1796,7 +1828,7 @@ int sengineQuerySlave(QuerieType_t type)
     uint16_t currLen = 0, appendLen = 0;
 
     FOR_EACH_IO_HDL_START;
-        ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
+        ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_QUERIES,
                 (uint8_t *)&type, sizeof(type), (uint8_t *)&queries, sizeof(queries));
 
         if (ret <= 0) {
@@ -1857,7 +1889,7 @@ int senginePollingSlave(void) {
         }
         size = ret;
 
-        ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_DO_SPLIT,
+        ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_OPT_DO_SPLIT,
                 bin, size, (uint8_t *)&datas, sizeof(Datas));
         // LELOG("senginePollingSlave "S1_OPT_DO_SPLIT" ret[%d], datasCountsLen[%d], datasLen[%d] sizeof(Datas) is [%d], ioHdl[x].ioType[%d]", ret, datas.datasCountsLen/2, datas.datasLen, sizeof(Datas), ioHdl[x].ioType);
         // for (i = 0; i < datas.datasCountsLen; i += sizeof(uint16_t)) {
@@ -1883,7 +1915,7 @@ int senginePollingSlave(void) {
                 bytes2hexStr(&datas.arrDatas[j + appendLen], currLen, hexStr, sizeof(hexStr));
                 LELOG("ioRead type[0x%x] bin[%s]", ioHdl[x].ioType, hexStr);
             }
-            ret = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
+            ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
                     datas.arrDatas, currLen, (uint8_t *)&whatKind, sizeof(whatKind));
             // LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
             if (0 >= ret) {
@@ -1899,7 +1931,7 @@ int senginePollingSlave(void) {
                 case WHATKIND_MAIN_DEV_DATA: {
                         extern int lelinkNwPostCmdExt(const void *node);
                         int len = 0;
-                        len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
+                        len = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                                 &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
@@ -1923,7 +1955,7 @@ int senginePollingSlave(void) {
                             LELOGE("sdevArray is NULL");
                             break;
                         }
-                        len = sengineCall((const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
+                        len = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
                             datas.arrDatas, currLen, (uint8_t *)status, sizeof(status));
                         if (0 >= len) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
@@ -1980,7 +2012,7 @@ int sengineS2GetBeingReservedInfo(const ScriptCfg2 *scriptCfg2, uint8_t strBeing
         return -1;
     }
 
-    ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BERESERVED,
+    ret = sengineCall(2, (const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BERESERVED,
         NULL, 0, tmpBeingReserved, sizeof(tmpBeingReserved));
     if (0 > ret) {
         LELOGW("sengineS2GetBeingReservedInfo sengineCall("S2_GET_BERESERVED") [%d]", ret);
@@ -2022,7 +2054,7 @@ int sengineS2RuleHandler(const ScriptCfg2 *scriptCfg2,
      * 1.
      * check if it is a repeat rule
      */
-    ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_RULETYPE,
+    ret = sengineCall(2, (const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_RULETYPE,
         NULL, 0, (uint8_t *)buf, sizeof(buf));
     if (0 > ret) {
         LELOGW("sengineS2RuleHandler sengineCall("S2_GET_RULETYPE") [%d]", ret);
@@ -2079,7 +2111,7 @@ int sengineS2RuleHandler(const ScriptCfg2 *scriptCfg2,
             continue;
         }
 
-        ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_ISOK_EXT,
+        ret = sengineCall(2, (const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_ISOK_EXT,
             (uint8_t *)buf, tmpStrLen, (uint8_t *)&is, sizeof(is));
         if (0 > ret) {
             LELOGW("sengineS2RuleHandler sengineCall("S2_GET_ISOK_EXT") [%d]", ret);
@@ -2095,7 +2127,7 @@ int sengineS2RuleHandler(const ScriptCfg2 *scriptCfg2,
          * 4.
          * get the self ctrl cmd
          */
-        ret = sengineCall((const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BECMD,
+        ret = sengineCall(2, (const char *)scriptCfg2->data.script, scriptCfg2->data.size, S2_GET_BECMD,
             NULL, 0, (uint8_t *)&buf, sizeof(buf));
         if (0 > ret) {
             LELOGW("sengineS2RuleHandler sengineCall("S2_GET_BECMD") [%d]", ret);
@@ -2119,7 +2151,7 @@ int sengineS2RuleHandler(const ScriptCfg2 *scriptCfg2,
     return 0;
 }
 
-extern void getPrivateConfigure(PrivateCfg** cfg);
+
 int senginePollingRules(const char *jsonRmt, int jsonLen) {
     int ret, i = 0, is = 0;
     // int64_t utc = 0;
@@ -2182,7 +2214,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
             }
 
             // set the rule's name to cache
-            ret = sengineCall((const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_GET_SELFNAME,
+            ret = sengineCall(2, (const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_GET_SELFNAME,
                 NULL, 0, (uint8_t *)strSelfRuleName, sizeof(strSelfRuleName));
             if (0 > ret) {
                 LELOGW("senginePollingRules sengineCall("S2_GET_SELFNAME") [%d]", ret);
@@ -2192,7 +2224,7 @@ int senginePollingRules(const char *jsonRmt, int jsonLen) {
             ginIACache.cache[i].ruleName[MIN(ret, MAX_RULE_NAME-1)] = 0;
 
             // check if the rule is valid
-            ret = sengineCall((const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_IS_VALID,
+            ret = sengineCall(2, (const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_IS_VALID,
                 (uint8_t *)tmpLocalJson, tmpLocalJsonLen, (uint8_t *)&is, sizeof(is));
             if (0 > ret) {
                 LELOGW("senginePollingRules sengineCall("S2_IS_VALID") [%d]", ret);
@@ -2276,7 +2308,7 @@ static void sengineReloadInfo(void) {
                 LELOGW("senginePollingRules FAILED arrIA idx[%d]", i);
                 continue;
             }
-            ret = sengineCall((const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_GET_SELFNAME,
+            ret = sengineCall(2, (const char *)ginScriptCfg2->data.script, ginScriptCfg2->data.size, S2_GET_SELFNAME,
                 NULL, 0, (uint8_t *)strSelfRuleName, sizeof(strSelfRuleName));
             if (0 > ret) {
                 LELOGW("senginePollingRules sengineCall("S2_GET_SELFNAME") [%d]", ret);

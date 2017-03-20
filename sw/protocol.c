@@ -1910,7 +1910,7 @@ static void cbCloudMsgCtrlC2RRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, 
 static int cbCloudMsgCtrlR2TRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     // uint8_t data[MAX_BUF] = {0};
     int ret = 0;
-    LELOG("cbCloudMsgCtrlR2TRemoteReq -s");
+    LELOG("cbCloudMsgCtrlR2TRemoteReq rand[%d] -s", cmdInfo->randID);
     // LELOG("[%d][%s]", dataLen, dataIn);
     // setCurrentR2T
     // test only
