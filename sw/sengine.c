@@ -1348,7 +1348,7 @@ int sengineCall(int sType, const char *script, int scriptSize, const char *funcN
     lua_State *L = NULL;
 
     if(isIfExist(funcName) < 0) {
-        LELOGE("[lua engine] sengineCall NO function => %s", funcName);
+        // LELOGE("[lua engine] sengineCall NO function => %s", funcName);
         return -1;
     }
     if(!(L = sengineGet(sType, script, scriptSize))) {
@@ -1919,7 +1919,7 @@ int senginePollingSlave(void) {
                     datas.arrDatas, currLen, (uint8_t *)&whatKind, sizeof(whatKind));
             // LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
             if (0 >= ret) {
-                LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
+                // LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
                 // continue;
             }
             switch (whatKind) {

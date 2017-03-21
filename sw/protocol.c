@@ -702,6 +702,10 @@ int lelinkInit() {
 #endif
 
     ginInitOk = 1;
+    ret = halWatchDogInit();
+    if (0 > ret) {
+        ret = -101;
+    }
 failed:
     return ret;
 }
@@ -2380,7 +2384,9 @@ static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
     if (NULL == url || OTA_TYPE_NONE >= type) {
         LELOGE("cbAsyncOTALocalReq URL NOT FOUND");
     } else {
+        halWatchDogDeInit();
         ret = leOTA(type, url, sig, RSA_LEN);
+        halWatchDogInit();
         // clear the ota info
         otaInfoClean();
     }

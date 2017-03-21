@@ -126,6 +126,10 @@ LELINK_WEAK int halWatchDogInit(void) {
     return 0;
 }
 
+LELINK_WEAK int halWatchDogDeInit(void) {
+    return 0;
+}
+
 LELINK_WEAK int halWatchDogFeed(void) {
     return 0;
 }

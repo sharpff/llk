@@ -247,7 +247,9 @@ static int changeState(int direction, StateContext *cntx, int idx) {
         }
         lastTimeStamp = halGetTimeStamp();
         // watch dog feeding
+        TIMEOUT_BEGIN_SEC(3, 1)
         halWatchDogFeed();
+        TIMEOUT_END
     }
     return ret;
 }

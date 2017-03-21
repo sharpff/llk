@@ -8,6 +8,8 @@
 #include "stdio.h"
 #include "stddef.h"
 #include "os.h"
+#include "hal.h"
+#include "system_mt7687.h"
 
 SemaphoreHandle_t g_m_mutex = NULL;
 
@@ -180,4 +182,39 @@ unsigned long halLogTimeStamp(void) {
     struct os_time t = {0};
     os_get_time(&t);
     return (unsigned long)((t.sec*1000)+t.usec);
+}
+
+int halWatchDogInit(void) {
+    hal_wdt_config_t wdt_init;
+    wdt_init.mode = HAL_WDT_MODE_RESET;
+    wdt_init.seconds = 5;
+    hal_wdt_status_t my_ret;
+
+    APPLOG("WDT test begins.");
+    my_ret = hal_wdt_init(&wdt_init);
+    if (HAL_WDT_STATUS_OK != my_ret) {
+        APPLOG("WDT initialization error.");
+        return -1;
+    }
+    my_ret = hal_wdt_enable(HAL_WDT_ENABLE_MAGIC);
+    if (HAL_WDT_STATUS_OK != my_ret) {
+        APPLOG("WDT enable error.");
+        return -2;
+    }
+    return 0;
+}
+
+int halWatchDogFeed(void) {
+    hal_wdt_feed(HAL_WDT_FEED_MAGIC);
+    APPLOG("halWatchDogFeed [%d]", halGetTimeStamp());
+    return 0;
+}
+
+int halWatchDogDeInit(void) {
+    hal_wdt_deinit();
+    return 0;
+}
+
+LELINK_WEAK size_t halGetSReservedHeap() {
+    return 32*1024;
 }

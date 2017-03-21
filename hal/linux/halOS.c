@@ -93,11 +93,11 @@ void halDelayms(int ms) {
     usleep(ms*1000);
 }
 
-int halWatchDogInit(void) {
-    return 0;
-}
+// int halWatchDogInit(void) {
+//     return 0;
+// }
 
-int halWatchDogFeed(void) {
-    // printf("halWatchDogFeed [%d]\r\n", halGetTimeStamp());
-    return 0;
-}
+// int halWatchDogFeed(void) {
+//     // printf("halWatchDogFeed [%d]\r\n", halGetTimeStamp());
+//     return 0;
+// }
