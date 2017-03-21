@@ -187,7 +187,7 @@ unsigned long halLogTimeStamp(void) {
 int halWatchDogInit(void) {
     hal_wdt_config_t wdt_init;
     wdt_init.mode = HAL_WDT_MODE_RESET;
-    wdt_init.seconds = 5;
+    wdt_init.seconds = 10;
     hal_wdt_status_t my_ret;
 
     APPLOG("WDT test begins.");
