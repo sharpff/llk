@@ -1284,7 +1284,7 @@ static SContext *getSContext(int sType) {
     int i = 0;
     static SContext ginContext[] = {
         {NULL, MAX_SCRIPT_SIZE, 1},
-        {NULL, MAX_SCRIPT2_SIZE + 8, 2},
+        {NULL, MAX_SCRIPT2_SIZE + 16*1024, 2},
     };
     for (i = 0; i < sizeof(ginContext)/sizeof(SContext); i++) {
         if (sType == ginContext[i].sType) {
@@ -1296,15 +1296,28 @@ static SContext *getSContext(int sType) {
 
 static lua_State* sengineGet(int sType, const char *script, int scriptSize)
 {
-    static lua_State *L = NULL;
+    static lua_State *L1 = NULL;
+    static lua_State *L2 = NULL;
+    lua_State **L = NULL;
 
     if (script == NULL || scriptSize <= 0) {
+        LELOGE("[lua engine] param error");
         goto err_out;
     }
-    if(L) {
-        return L;
+    if (1 == sType) {
+        if(L1) {
+            return L1;
+        }
+        L = &L1;
+    } else {
+        if(L2) {
+            lua_close(L2);
+        }
+        L = &L2;
     }
-    if(!(L = luaL_newstate(getSContext(sType)))) {
+
+    if(!(*L = luaL_newstate(getSContext(sType)))) {
+        LELOGE("[lua engine] luaL_newstate");
         goto err_out;
     }
     // lua_register(L, "bitshift", bitshift);
@@ -1313,30 +1326,30 @@ static lua_State* sengineGet(int sType, const char *script, int scriptSize)
     // lua_register(L, "bitor", bitor);
     // lua_register(L, "bitxor", bitxor);
     // lua_register(L, "bitnor", bitnor);
-    lua_register(L, "s2apiSetCurrStatus", s2apiSetCurrStatus);
-    lua_register(L, "s2apiGetLatestStatus", s2apiGetLatestStatus);
-    lua_register(L, "s1apiGetCurrCvtType", s1apiGetCurrCvtType);
-    lua_register(L, "s1apiGetDevStatus", s1apiGetDevStatus);
-    lua_register(L, "s1apiSdevGetUserDataByMac", s1apiSdevGetUserDataByMac);
-    lua_register(L, "s1apiSDevGetMacByUserData", s1apiSDevGetMacByUserData);
-    lua_register(L, "s1apiOptString2Table", s1apiOptString2Table);
-    lua_register(L, "s1apiOptTable2String", s1apiOptTable2String);
-    lua_register(L, "s1apiOptLogTable", s1apiOptLogTable);
-    lua_register(L, "s1apiRebootDevice", s1apiRebootDevice);
+    lua_register(*L, "s2apiSetCurrStatus", s2apiSetCurrStatus);
+    lua_register(*L, "s2apiGetLatestStatus", s2apiGetLatestStatus);
+    lua_register(*L, "s1apiGetCurrCvtType", s1apiGetCurrCvtType);
+    lua_register(*L, "s1apiGetDevStatus", s1apiGetDevStatus);
+    lua_register(*L, "s1apiSdevGetUserDataByMac", s1apiSdevGetUserDataByMac);
+    lua_register(*L, "s1apiSDevGetMacByUserData", s1apiSDevGetMacByUserData);
+    lua_register(*L, "s1apiOptString2Table", s1apiOptString2Table);
+    lua_register(*L, "s1apiOptTable2String", s1apiOptTable2String);
+    lua_register(*L, "s1apiOptLogTable", s1apiOptLogTable);
+    lua_register(*L, "s1apiRebootDevice", s1apiRebootDevice);
 
     // lua_register(L, "csum", csum);
     
     // LELOG("[lua engine] START [%s]----------------", funcName);
-    luaL_openlibs(L);
-    if (luaL_loadbuffer(L, script, scriptSize, "lelink") || lua_pcall(L, 0, 0, 0)) {
-        lua_pop(L, 1);
+    luaL_openlibs(*L);
+    if (luaL_loadbuffer(*L, script, scriptSize, "lelink") || lua_pcall(*L, 0, 0, 0)) {
+        lua_pop(*L, 1);
         LELOGE("[lua engine] lua code syntax error");
         goto err_out;
     }
-    return L;
+    return *L;
 err_out:
     if(L) {
-        lua_close(L);
+        lua_close(*L);
         L = NULL;
     }
     return NULL;
@@ -1348,12 +1361,12 @@ int sengineCall(int sType, const char *script, int scriptSize, const char *funcN
     lua_State *L = NULL;
 
     if(isIfExist(funcName) < 0) {
-        // LELOGE("[lua engine] sengineCall NO function => %s", funcName);
+        LELOGE("[lua engine] sengineCall NO function => %s", funcName);
         return -1;
     }
     if(!(L = sengineGet(sType, script, scriptSize))) {
         LELOGE("[lua engine] sengineGet error");
-        return -1;
+        return -2;
     }
 
     {
@@ -1362,7 +1375,7 @@ int sengineCall(int sType, const char *script, int scriptSize, const char *funcN
         lf_impl = get_lf_impl(funcName, 0);
         if (NULL == lf_impl.lf_impl_input)
         {
-            return -2;
+            return -3;
         }
 
         lua_getglobal(L, funcName);
@@ -1381,7 +1394,7 @@ int sengineCall(int sType, const char *script, int scriptSize, const char *funcN
             if((char *)strstr(err, "call") != NULL) {
                 setIfExist(funcName, -1);
             }
-            ret = -3;
+            ret = -4;
         }
         else
         {
