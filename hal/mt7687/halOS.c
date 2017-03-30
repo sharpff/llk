@@ -216,5 +216,5 @@ int halWatchDogDeInit(void) {
 }
 
 LELINK_WEAK size_t halGetSReservedHeap() {
-    return 48*1024;
+    return 24*1024;
 }

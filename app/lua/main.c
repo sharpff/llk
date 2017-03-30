@@ -279,7 +279,7 @@ ERROR_PARAM:
 		memset(ginScriptCfg->data.script, 0, ginScriptCfg->data.size);
     	ret = read(fd, ginScriptCfg->data.script, ginScriptCfg->data.size);
 #ifndef TEST_ONLY
-		ret = sengineCall((const char *)ginScriptCfg->data.script,
+		ret = sengineCall(2, (const char *)ginScriptCfg->data.script,
 			ginScriptCfg->data.size,
 			func_name,
 			inputParam,

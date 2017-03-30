@@ -1284,7 +1284,7 @@ static SContext *getSContext(int sType) {
     int i = 0;
     static SContext ginContext[] = {
         {NULL, MAX_SCRIPT_SIZE, 1},
-        {NULL, MAX_SCRIPT2_SIZE + 16*1024, 2},
+        {NULL, MAX_SCRIPT2_SIZE + 16*1024, 2}, // no need to used presently (TODO)
     };
     for (i = 0; i < sizeof(ginContext)/sizeof(SContext); i++) {
         if (sType == ginContext[i].sType) {
