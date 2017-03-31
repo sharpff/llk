@@ -6,6 +6,7 @@
 #include "protocol.h"
 #include "io.h"
 #include "ota.h"
+#include "httpc.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
 char *ginCtrlUUID = NULL;
@@ -25,8 +26,12 @@ int testBigEndin() {
 
 /* ------------------------------- simulator ---------------------------------- */
 
+
+static int httpFetchCB(http_session_t handle, void *content, int len);
+
 void waitForInput(void *ctx) {
     char c;
+    int counts = 1;
     NodeData node = { 0 };
 redo:
 
@@ -225,11 +230,19 @@ redo:
         strncpy(node.ndIP, br, ret);
         node.ndPort = LOCAL_TEST_PORT;
         }break;
+    case 'p': {
+            int status = -1;
+            const char *url = "http://bus.dev.leinlife.com/letv_udp_terminal/rest/test";
+            const char *payloadIn = "abc";
+            char payloadOut[1024] = {0};
+            status = httpc_post(url, payloadIn, strlen(payloadIn), payloadOut, sizeof(payloadOut), NULL);
+            counts = 0;
+        }break;
     }
     
     // MUTEX_LOCK;
 
-    int counts = 1;
+
     // if (LELINK_CMD_DISCOVER_REQ == node.cmdId) {
     //     counts = 1;
     // }
@@ -237,6 +250,11 @@ redo:
         lelinkNwPostCmd(ctx, &node);
     // MUTEX_UNLOCK;
 
+}
+
+static int httpFetchCB(http_session_t handle, void *content, int len) {
+    APPLOG("httpFetchCB handle[%d] [%d][%s]", handle, len, (char *)content);
+    return 0;
 }
 
 void thread_input_check(void *arg) {

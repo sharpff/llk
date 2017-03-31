@@ -1181,6 +1181,73 @@ http_session_error:
 http_session_open_fail:
 	return status;
 }
+
+
+/* Establish HTTP connection and post data */
+void httpc_post(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, content_fetch_cb fetchCB) {
+	http_session_t handle;
+	http_resp_t *resp;
+	int rv, readBytes = 0;
+	APPLOG("Connecting to : %s \r\n", url);
+	APPLOG("Website: %s\r\n", url);
+	if (payloadIn) {
+		APPLOG("Data to post: %s\r\n", payloadIn);
+	}
+	rv = http_open_session(&handle, url, NULL);
+	if (rv != 0) {
+		APPLOGE("Open session failed: %s (%d)", url, rv);
+		return;
+	}
+	http_req_t req = {
+		.type = HTTP_POST,
+		.resource = url,
+		.version = HTTP_VER_1_1,
+		.content = payloadIn,
+		.content_len = payloadInLen,
+		.content_fetch_cb = fetchCB
+	};
+
+	rv = http_prepare_req(handle, &req,
+				  STANDARD_HDR_FLAGS |
+				  HDR_ADD_CONN_KEEP_ALIVE);
+	if (rv != 0) {
+		APPLOGE("Prepare request failed: %d", rv);
+		return;
+	}
+
+	rv = http_send_request(handle, &req);
+	if (rv != 0) {
+		APPLOGE("Send request failed: %d", rv);
+		return;
+	}
+	rv = http_get_response_hdr(handle, &resp);
+	APPLOG("%s : Status code: %d; chunked[%d] content_length[%d]\n [%s:%s] protocol[%s] [%s,%s]", url,
+	 (resp)->status_code,
+	 (resp)->chunked,
+	 (resp)->content_length,
+	 (resp)->content_type,
+	 (resp)->content_encoding,
+	 (resp)->protocol,
+	 (resp)->reason_phrase,
+	 (resp)->server
+	 );
+
+	while (1) {
+		rv = http_read_content(handle, payloadOut, payloadOutLen);
+		if (rv == 0 || rv < 0) {
+			break;
+		}
+		readBytes += rv;
+	}
+	APPLOG("rv[%d], content: %s", readBytes, payloadOut);
+	// http_close_session(handle);
+
+	if (rv != 0) {
+		APPLOGE("Get resp header failed: %d", rv);
+		return;
+	}
+}
+
 static void parse_keep_alive_header(const char *value, http_resp_t *resp)
 {
 	int ret;
@@ -1974,22 +2041,22 @@ int http_read_content(http_session_t handle, void *buf, uint32_t max_len)
 #ifdef DUMP_RECV_DATA
 	char *buff = buf;
 	int i;
-	wmprintf("\n\rHTTPC: ********** HTTPC data *************\n\r");
+	APPLOG("\n\rHTTPC: ********** HTTPC data *************\n\r");
 	if (size_read > 0) {
 		for (i = 0; i < size_read; i++) {
 			if (buff[i] == '\r')
 				continue;
 			if (buff[i] == '\n') {
-				wmprintf("\n\r");
+				APPLOG("\n\r");
 				continue;
 			}
-			wmprintf("%c", buff[i]);
+			APPLOG("%c", buff[i]);
 		}
-		wmprintf("\n\r");
+		APPLOG("\n\r");
 	} else {
-		wmprintf("Size: %d Not reading\n\r", size_read);
+		APPLOG("Size: %d Not reading\n\r", size_read);
 	}
-	wmprintf("HTTPC: ***********************************\n\r");
+	APPLOG("HTTPC: ***********************************\n\r");
 #endif /* DUMP_RECV_DATA */
 
 	return size_read;
