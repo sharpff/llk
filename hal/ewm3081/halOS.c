@@ -114,6 +114,28 @@ void halDelayms(int ms) {
     mico_thread_msleep(ms);
 }
 
+#include "MICOSystemMonitor.h"
+#define APP_WATCHDOG_TIMEOUT_SECONDS 30
+static mico_system_monitor_t ginMonitor;
+int halWatchDogInit(void) {
+    OSStatus err = kNoErr;
+    err = MICORegisterSystemMonitor (&ginMonitor, APP_WATCHDOG_TIMEOUT_SECONDS * 1000);
+    if (err != kNoErr) {
+        return -1;
+    }
+    return 0;
+}
+
+int halWatchDogFeed(void) {
+    MICOUpdateSystemMonitor (&ginMonitor, APP_WATCHDOG_TIMEOUT_SECONDS * 1000);
+    printf("halWatchDogFeed:) [%d]\n", halGetTimeStamp());
+    return 0;
+}
+
+int halWatchDogDeInit(void) {
+    return 0;
+}
+
 size_t halGetSReservedHeap() {
-    return 28*1024;
+    return 8*1024;
 }
