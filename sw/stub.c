@@ -137,3 +137,14 @@ LELINK_WEAK int halWatchDogFeed(void) {
 LELINK_WEAK size_t halGetSReservedHeap() {
     return 10*1024;
 }
+
+LELINK_WEAK int halUpdateFirmwareExt(void *info) {
+    // OTAInfo_t *ptr = (OTAInfo_t *)info;
+    return 0;
+}
+
+LELINK_WEAK const char *aalGetVerExt(void) {
+    // return "\"verK\":\"3-25.1\",\"verP\":\"3-25.1\",\"verF\":\"3-25.1\"";
+    return NULL;
+}
+

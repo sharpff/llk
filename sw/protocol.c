@@ -2478,7 +2478,7 @@ int lelinkVerify(uint32_t startAddr, uint32_t size) {
     halFlashClose(dev);
     
     bytes2hexStr(tmp, sizeof(tmp), tmpStr, sizeof(tmpStr));
-    LELOG("sha1: [%s]", tmpStr);
+    LELOG("[0x%x,%d] sha1: [%s]", startAddr, size, tmpStr);
     if (!otaGetLatestSig()) {
         LELOGE("lelinkVerify otaGetLatestSig failed");
         return -0XAC;

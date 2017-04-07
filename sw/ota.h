@@ -18,7 +18,7 @@ typedef enum {
     OTA_TYPE_PRIVATE, // 7
     OTA_TYPE_SDEVINFO, // 8
     OTA_TYPE_SDEVFW, // 9
-    OTA_TYPE_MAX
+    OTA_TYPE_OTHER = 30 // other OTA types for customer(app)
 } OTAType_t;
 
 typedef struct _updateInfo {
@@ -26,7 +26,8 @@ typedef struct _updateInfo {
     unsigned int imgLen;
     unsigned int nowLen;
     uint8_t isSDev;
-    uint8_t reserved[3];
+    uint8_t type;
+    uint8_t reserved[2];
 } OTAInfo_t;
 
 // hal

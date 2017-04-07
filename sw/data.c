@@ -425,6 +425,7 @@ int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData) {
 int getTerminalStatus(char *status, int len) {
     IA_CACHE_INT *cacheInt;
     int i, j, tmpLen = 0, abc = 0;
+    const char *verExt = (const char *)aalGetVerExt();
 
     //{"status":{"idx1":0,"idx2":0,"idx3":1,"idx4":1},"cloud":2,"uuid":"10000100101000010007F0B429000012","ip":"", "ver":""}
 
@@ -448,8 +449,14 @@ int getTerminalStatus(char *status, int len) {
 
     strcpy(status + tmpLen, "\",\"ver\":\""); tmpLen = strlen(status);
     getVer(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
+    status[tmpLen] = '\"';tmpLen += 1;
 
-    strcpy(status + tmpLen, "\",\"ssid\":\""); tmpLen = strlen(status);
+    if (verExt) {
+        sprintf(status + tmpLen, ",%s", verExt);
+        tmpLen = strlen(status);
+    }
+
+    strcpy(status + tmpLen, ",\"ssid\":\""); tmpLen = strlen(status);
     getSSID(status + tmpLen, len - tmpLen); tmpLen = strlen(status);
 
     sprintf(status + tmpLen, "\",\"lock\":%d", getLock());

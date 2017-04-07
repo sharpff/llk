@@ -57,10 +57,11 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
     int tmpTotalSize = 0;
 
     LELOG("update type = %d, url = %s", type, url);
-    if(type < 0 || type >= OTA_TYPE_MAX) {
+    if(type < 0) {
         LELOGW("Update type error, %d", type);
         goto skip_update;
     }
+    info.type = type;
     ret = halHttpOpen(&info, url);
     if(ret < 0) {
         LELOGW("Http open error");
@@ -177,6 +178,9 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
             }
             break;
         // test only -e
+        case OTA_TYPE_OTHER: {
+                status = halUpdateFirmwareExt(&info);
+            } break;
         default:
             status = -1;
             LELOGE("Update type(%d) error", type);

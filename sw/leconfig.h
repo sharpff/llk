@@ -241,7 +241,8 @@ extern unsigned long halLogTimeStamp(void);
 int halWatchDogInit(void);
 int halWatchDogFeed(void);
 size_t halGetSReservedHeap();
-
+int halUpdateFirmwareExt(void *info);
+const char *aalGetVerExt(void);
 
 #define applog(_mod_name_, _fmt_, ...) \
     { \
