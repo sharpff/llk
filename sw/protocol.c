@@ -12,6 +12,7 @@
 #include "misc.h"
 #include "rsaWrapper.h"
 #include "ota.h"
+#include "httpc.h"
 #define RETRY_HEARTBEAT 2
 
 // lftp letv:1q2w3e4r@115.182.63.167:21
@@ -2523,4 +2524,166 @@ static void flagHeartBeatReset(void) {
 static int flagHeartBeatMinus(void) {
     LELOG("**********flagHeartBeatMinus [%d]************", ginFlagHeartBeat);
     return ginFlagHeartBeat--;
+}
+
+static int httpc_post(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, content_fetch_cb fetchCB) {
+    http_session_t handle;
+    http_resp_t *resp;
+    int rv, readBytes = 0, ret = 0;
+    CmdHeaderInfo cmdInfo;
+    uint8_t iv[AES_LEN] = { 0 };
+    uint8_t key[AES_LEN] = { 0 };
+    uint8_t *dataEnc = NULL;
+    uint8_t *dataDec = NULL;
+    uint8_t *aesEnc = NULL;
+    uint8_t *aesDec = NULL;
+    int dataEncLen, dataDecLen, aesRawLen, aesEncLen, aesDecLen;
+
+    memset(&cmdInfo, 0 ,sizeof(cmdInfo));
+    APPLOG("Connecting to : %s \r\n", url);
+    APPLOG("Website: %s\r\n", url);
+
+    if (!isCloudOnlined()) {
+        APPLOGE("httpc_post failed !isCloudOnlined");
+        ret = -1;
+        goto HTTPC_FAILED;
+    }
+
+    if (payloadIn && payloadInLen > 0) {
+        APPLOG("Data to post: %s\r\n", payloadIn);
+
+        memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
+        memcpy(key, (void *)getTerminalToken(), AES_LEN);
+        aesEncLen = ENC_SIZE(AES_LEN, payloadInLen + 1);
+        aesEnc = halMalloc(aesEncLen);
+
+        ret = aes(iv, 
+            key, 
+            aesEnc,
+            &payloadInLen, /* in-len/out-enc size */
+            aesEnc,
+            1);
+        if (0 > ret) {
+            APPLOGE("httpc_post aes [%d]", ret);
+            ret = -2;
+            goto HTTPC_FAILED;
+        }
+
+        cmdInfo.cmdId =  LELINK_CMD_SERVICE_REQ;
+        cmdInfo.subCmdId = LELINK_SUBCMD_SERVICE_RSP;
+        cmdInfo.seqId = genSeqId();
+        cmdInfo.randID = genRand();
+        dataEncLen = sizeof(CommonHeader) + RSA_LEN*ENC_PIECES(RSA_RAW_LEN, sizeof(CmdHeader) + sizeof(PayloadHeader) + payloadInLen + 1);
+        dataEnc = halMalloc(dataEncLen);
+        doPack(NULL, ENC_TYPE_STRATEGY_12, &cmdInfo, (const uint8_t *)payloadIn, payloadInLen, dataEnc, dataEncLen);
+    }
+
+    rv = http_open_session(&handle, url, NULL);
+    if (rv != 0) {
+        APPLOGE("Open session failed: %s (%d)", url, rv);
+        ret = -3;
+        goto HTTPC_FAILED;
+    }
+
+    http_req_t req = {
+        .type = HTTP_POST,
+        .resource = url,
+        .version = HTTP_VER_1_1,
+        .content = dataEnc,
+        .content_len = dataEncLen,
+        .content_fetch_cb = fetchCB
+    };
+
+    rv = http_prepare_req(handle, &req,
+                  STANDARD_HDR_FLAGS |
+                  HDR_ADD_CONN_KEEP_ALIVE);
+    if (rv != 0) {
+        APPLOGE("Prepare request failed: %d", rv);
+        ret = -4;
+        goto HTTPC_FAILED;
+    }
+
+    rv = http_send_request(handle, &req);
+    if (rv != 0) {
+        APPLOGE("Send request failed: %d", rv);
+        ret = -5;
+        goto HTTPC_FAILED;
+    }
+
+    rv = http_get_response_hdr(handle, &resp);
+    APPLOG("%s : Status code: %d; chunked[%d] content_length[%d]\n [%s:%s] protocol[%s] [%s,%s]", url,
+     (resp)->status_code,
+     (resp)->chunked,
+     (resp)->content_length,
+     (resp)->content_type,
+     (resp)->content_encoding,
+     (resp)->protocol,
+     (resp)->reason_phrase,
+     (resp)->server
+     );
+
+    while (1) {
+        rv = http_read_content(handle, payloadOut, payloadOutLen);
+        if (rv == 0 || rv < 0) {
+            break;
+        }
+        readBytes += rv;
+    }
+    if (rv != 0) {
+        APPLOGE("Get resp header failed: %d", rv);
+        ret = -6;
+        goto HTTPC_FAILED;
+    }
+    APPLOG("TEST rv[%d], content: %s", readBytes, payloadOut);
+
+    // TODO: AES decrypting.
+    // total decrypt
+    memset(&cmdInfo, 0 ,sizeof(cmdInfo));
+    dataDecLen = readBytes;
+    dataDec = halMalloc(dataDecLen);
+    if (0 > (ret = doUnpack(NULL, payloadOut, readBytes, dataDec, dataDecLen, &cmdInfo, NULL))) {
+        LELOGW("doUnpack [%d] ", ret);
+        ret = -7;
+        goto HTTPC_FAILED;
+    }
+    aesDecLen = ret;
+
+    // paload decrypt
+    payloadOutLen = aesDecLen;
+    aesDec = halMalloc(aesDecLen);
+    ret = aes(iv, 
+        key, 
+        aesDec,
+        &payloadOutLen, /* in-len/out-enc size */
+        aesDecLen,
+        0);
+    if (0 > ret) {
+        LELOGW("LELINK_ERR_DEC1_ERR [%d] ", ret);
+        ret = -8;
+        goto HTTPC_FAILED;
+    }
+
+    APPLOG("rv[%d], content: %s", readBytes, payloadOut);
+    
+    http_close_session(&handle);
+
+
+HTTPC_FAILED:
+    if (aesEnc)
+        halFree(aesEnc);
+    if (dataEnc)
+        halFree(dataEnc);
+    if (aesDec)
+        halFree(aesDec);
+    if (dataDec)
+        halFree(dataDec);
+    if (-3 > ret) {
+        http_close_session(&handle);
+    }
+
+    return ret;
+}
+
+int httpCPost(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, ContentFetchCB fetchCB) {
+    return httpc_post(url, payloadIn, payloadInLen, payloadOut, payloadOutLen, (content_fetch_cb)fetchCB);
 }

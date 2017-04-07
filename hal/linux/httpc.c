@@ -931,6 +931,8 @@ static const char *sanitize_resource_name(session_t *s, const char *resource)
 		return resource;
 }
 
+#include "pack.h"
+#include "data.h"
 /*
   - Get partial content from upper layer.
   - Send out to peer over network.
@@ -938,6 +940,10 @@ static const char *sanitize_resource_name(session_t *s, const char *resource)
  */
 static int _http_retrieve_and_send_content(session_t *s, const http_req_t *req)
 {
+	uint8_t iv[AES_LEN] = { 0 };
+	uint8_t key[AES_LEN] = { 0 };
+	uint8_t encBuf[ENC_SIZE(AES_LEN, MAX_REQ_RESP_HDR_SIZE + 1)] = {0};
+	int encLen = 0, ret;
 	http_session_t http_session = (http_session_t) s;
 	void *buf = s->pbuf.buf;
 	const int maxlen = MAX_REQ_RESP_HDR_SIZE;
@@ -951,12 +957,32 @@ static int _http_retrieve_and_send_content(session_t *s, const http_req_t *req)
 			APPLOG("Content recv cb failed");
 			return to_send;
 		}
+{
+	APPLOG("SIZEOF[%d] to_send[%d] ===========>", sizeof(encBuf), to_send);
+	memset(encBuf, 0, sizeof(encBuf));
+	memcpy(encBuf, buf, to_send);
+	encLen = to_send;
+	memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
+	memcpy(key, (void *)getTerminalToken(), AES_LEN);
 
-		int sent = _http_raw_send(s, buf, to_send);
-		if (sent != to_send)
+
+	ret = aes(iv, 
+		key, 
+		encBuf,
+		&encLen, /* in-len/out-enc size */
+		sizeof(encBuf),
+		1);
+	if (0 > ret) {
+		APPLOGE("============== RET[%d]", ret);
+	}
+	// to_send = encLen;
+	APPLOG("SIZEOF[%d] to_send[%d] <============", sizeof(encBuf), to_send);
+}
+		int sent = _http_raw_send(s, buf, encLen);
+		if (sent != encLen)
 			return -WM_FAIL;
 
-		remaining -= sent;
+		remaining -= to_send;
 	}
 
 	return req->content_len;
@@ -1180,72 +1206,6 @@ http_session_error:
 	http_close_session(handle);
 http_session_open_fail:
 	return status;
-}
-
-
-/* Establish HTTP connection and post data */
-void httpc_post(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, content_fetch_cb fetchCB) {
-	http_session_t handle;
-	http_resp_t *resp;
-	int rv, readBytes = 0;
-	APPLOG("Connecting to : %s \r\n", url);
-	APPLOG("Website: %s\r\n", url);
-	if (payloadIn) {
-		APPLOG("Data to post: %s\r\n", payloadIn);
-	}
-	rv = http_open_session(&handle, url, NULL);
-	if (rv != 0) {
-		APPLOGE("Open session failed: %s (%d)", url, rv);
-		return;
-	}
-	http_req_t req = {
-		.type = HTTP_POST,
-		.resource = url,
-		.version = HTTP_VER_1_1,
-		.content = payloadIn,
-		.content_len = payloadInLen,
-		.content_fetch_cb = fetchCB
-	};
-
-	rv = http_prepare_req(handle, &req,
-				  STANDARD_HDR_FLAGS |
-				  HDR_ADD_CONN_KEEP_ALIVE);
-	if (rv != 0) {
-		APPLOGE("Prepare request failed: %d", rv);
-		return;
-	}
-
-	rv = http_send_request(handle, &req);
-	if (rv != 0) {
-		APPLOGE("Send request failed: %d", rv);
-		return;
-	}
-	rv = http_get_response_hdr(handle, &resp);
-	APPLOG("%s : Status code: %d; chunked[%d] content_length[%d]\n [%s:%s] protocol[%s] [%s,%s]", url,
-	 (resp)->status_code,
-	 (resp)->chunked,
-	 (resp)->content_length,
-	 (resp)->content_type,
-	 (resp)->content_encoding,
-	 (resp)->protocol,
-	 (resp)->reason_phrase,
-	 (resp)->server
-	 );
-
-	while (1) {
-		rv = http_read_content(handle, payloadOut, payloadOutLen);
-		if (rv == 0 || rv < 0) {
-			break;
-		}
-		readBytes += rv;
-	}
-	APPLOG("rv[%d], content: %s", readBytes, payloadOut);
-	// http_close_session(handle);
-
-	if (rv != 0) {
-		APPLOGE("Get resp header failed: %d", rv);
-		return;
-	}
 }
 
 static void parse_keep_alive_header(const char *value, http_resp_t *resp)

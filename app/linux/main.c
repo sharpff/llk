@@ -6,7 +6,6 @@
 #include "protocol.h"
 #include "io.h"
 #include "ota.h"
-#include "httpc.h"
 
 uint8_t ginBeCtrlToken[AES_LEN];
 char *ginCtrlUUID = NULL;
@@ -27,7 +26,7 @@ int testBigEndin() {
 /* ------------------------------- simulator ---------------------------------- */
 
 
-static int httpFetchCB(http_session_t handle, void *content, int len);
+static int httpFetchCB(int handle, void *content, int len);
 
 void waitForInput(void *ctx) {
     char c;
@@ -234,8 +233,10 @@ redo:
             int status = -1;
             const char *url = "http://bus.dev.leinlife.com/letv_udp_terminal/rest/test";
             const char *payloadIn = "abc";
-            char payloadOut[1024] = {0};
-            status = httpc_post(url, payloadIn, strlen(payloadIn), payloadOut, sizeof(payloadOut), NULL);
+            char payloadOut[MAX_BUF] = {0};
+            APPLOG("=======> handle start");
+            status = httpCPost(url, payloadIn, 3, payloadOut, sizeof(payloadOut), NULL);
+            APPLOG("<======= handle [%d] end", status);
             counts = 0;
         }break;
     }
@@ -252,9 +253,12 @@ redo:
 
 }
 
-static int httpFetchCB(http_session_t handle, void *content, int len) {
-    APPLOG("httpFetchCB handle[%d] [%d][%s]", handle, len, (char *)content);
-    return 0;
+static int httpFetchCB(int handle, void *content, int len) {
+    static int i = 0;
+    const char *p = "abc";
+    memcpy(content, p + i, 1);
+    APPLOG("httpFetchCB handle[%d] [%d]", handle, len);
+    return 1;
 }
 
 void thread_input_check(void *arg) {

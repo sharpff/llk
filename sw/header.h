@@ -57,7 +57,7 @@ typedef long long int64_t;
 
 
 #elif defined (__ATMEL__)
-#define PF_VAL 2
+// #define PF_VAL 2
 #pragma message("__ATMEL__")
 
 #elif defined (LINUX)
@@ -139,7 +139,7 @@ typedef unsigned int uint32_t;
 #endif
 
 #elif defined (WIN32)
-#define PF_VAL 5
+// #define PF_VAL 5
 #include <stdio.h>
 #include <string.h>
 #include <winsock.h>

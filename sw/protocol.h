@@ -103,7 +103,10 @@ typedef enum
     LELINK_CMD_CLOUD_IND_RSP,
 
     LELINK_CMD_CLOUD_ONLINE_REQ = 101,
-    LELINK_CMD_CLOUD_ONLINE_RSP
+    LELINK_CMD_CLOUD_ONLINE_RSP,
+
+    LELINK_CMD_SERVICE_REQ = 103,
+    LELINK_CMD_SERVICE_RSP
 
 }E_LELINK_CMD;
 
@@ -206,7 +209,10 @@ typedef enum
     LELINK_SUBCMD_ASYNC_REBOOT_RSP,
 
     LELINK_SUBCMD_CLOUD_ONLINE_REQ = 1,
-    LELINK_SUBCMD_CLOUD_ONLINE_RSP
+    LELINK_SUBCMD_CLOUD_ONLINE_RSP,
+
+    LELINK_SUBCMD_SERVICE_REQ = 1,
+    LELINK_SUBCMD_SERVICE_RSP
 }E_LELINK_SUBCMD;
     
 #define CMD_HEADER_INFO_1ST \
@@ -269,6 +275,10 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
 void halCBRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
 int halCBRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len);
 int halCBLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, char *nw, int nwLenOut);
+
+typedef int (*ContentFetchCB)(int handle, void *content, int len);
+int httpCPost(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, ContentFetchCB fetchCB);
+
 
 #ifdef __cplusplus
 }

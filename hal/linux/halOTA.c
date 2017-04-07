@@ -69,9 +69,88 @@ void halHttpClose(OTAInfo_t *info) {
 	}
 }
 
-
+#define FOTA_PARITION_TMP 0x1E0000
 int halUpdateFirmware(OTAInfo_t *info) {
-    return 0;
+    int32_t ret = 0;
+    char *buf = NULL;
+    int totalSize = 0;
+    void *hdl = NULL;
+
+    if(NULL == info || NULL == info->session) {
+        APPLOGE("halUpdateFirmware paremeter error!");
+        return -1;
+    }
+
+    // if (fota_init(&fota_flash_default_config) != FOTA_STATUS_OK) {
+    //     APPLOGE("[FOTA CLI] fota init fail. ");
+    //     return -2;
+    // }
+
+    buf = halMalloc(FOTA_BUF_SIZE);
+    if (NULL == buf) {
+        APPLOGE("buf malloc failed.");
+        return -3;
+    }
+    hdl = halFlashOpen();
+    do {
+        int nSize = 0;
+        nSize = httpFetchData(info, buf, FOTA_BUF_SIZE);
+        if (0 >= nSize) {
+            APPLOG("httpFetchData OVER [%d]", ret);
+            break;
+        }
+        // APPLOG("has read bytes [%d]", nSize);
+        // halFlashErase(hdl, FOTA_PARITION_TMP + totalSize, FOTA_PARITION_TMP);
+        ret = halFlashWrite(hdl, buf, nSize, FOTA_PARITION_TMP, totalSize);
+        if (0 >= ret) {
+            APPLOGE("fail to write flash, ret = %d", ret);
+            halFree(buf);
+            return -4;
+        }
+        totalSize += nSize;
+    } while (totalSize < info->imgLen);
+
+    if(totalSize != info->imgLen) {
+        APPLOGE("halUpdateFirmware data wrong, need %d bytes, but now %d bytes", info->imgLen, totalSize);
+        halFree(buf);
+        return -5;
+    }
+    APPLOG("Download result = %d", (int)ret);
+    halFree(buf);
+    buf = NULL;
+
+    #ifdef LELINK_OTA_VERIFICATION
+    ret = lelinkVerify(FOTA_PARITION_TMP, info->imgLen);
+    #else
+    ret = 0;
+    #endif
+
+    if (ret) {
+        APPLOGE("lelinkVerify error!");
+        return -6;
+    }
+
+    // if (info->isSDev) {
+    //     haalCoOTASetFlag(info->imgLen);
+    //     haalCoOTAProcessing();
+    // } else {
+    //     if (0 == ret) {
+    //         fota_trigger_update();
+    //         fota_ret_t err;
+    //         err = fota_trigger_update();
+    //         if (0 == err ) {
+    //             hal_sys_reboot(HAL_SYS_REBOOT_MAGIC, WHOLE_SYSTEM_REBOOT_COMMAND);
+    //             APPLOG("Reboot device!");
+    //             ret = 0;
+    //         } else {
+    //             APPLOGE("Trigger FOTA error!");
+    //             ret = -7;
+    //         }
+    //     } else {
+    //         ret = -8;
+    //     }
+    // }
+    return ret;
 }
 
 
