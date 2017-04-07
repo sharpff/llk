@@ -915,7 +915,7 @@ static const char *sanitize_resource_name(session_t *s, const char *resource)
 
 	/* Check if the resource string starts with a '/' */
 	if (resource[0] != default_resource[0]) {
-		APPLOG("Have to extract\n\r");
+		APPLOG("Have to extract");
 		/* The resource string is either a valid URL or just garbage */
 		r = http_parse_URL(resource, s->pbuf.buf, MAX_REQ_RESP_HDR_SIZE,
 				   &url);
@@ -2133,3 +2133,70 @@ SSL_CTX *http_get_tls_context_from_handle(http_session_t handle)
 		return s->httpc_cfg.ctx;
 }
 #endif /* CONFIG_ENABLE_HTTPC_SECURE */
+
+
+int httpCPostWrapper(const char *url, const uint8_t *input, int inputLen, uint8_t *output, int outputLen, void *fetchCB) {
+    http_session_t handle;
+    http_resp_t *resp;
+    int readBytes = 0;
+	int rv = 0;
+    http_req_t req = {
+        .type = HTTP_POST,
+        .resource = url,
+        .version = HTTP_VER_1_1,
+        .content = input,
+        .content_len = inputLen,
+        .content_fetch_cb = fetchCB
+    };
+
+	rv = http_open_session(&handle, url, NULL);
+    if (rv != 0) {
+        APPLOGE("Open session failed: %s (%d)", url, rv);
+        return -1;
+    }
+
+    rv = http_prepare_req(handle, &req,
+                  STANDARD_HDR_FLAGS |
+                  HDR_ADD_CONN_KEEP_ALIVE);
+    if (rv != 0) {
+        APPLOGE("Prepare request failed: %d", rv);
+	    http_close_session(&handle);
+        return -2;
+    }
+
+    rv = http_send_request(handle, &req);
+    if (rv != 0) {
+        APPLOGE("Send request failed: %d", rv);
+	    http_close_session(&handle);
+        return -3;
+    }
+
+    rv = http_get_response_hdr(handle, &resp);
+    // APPLOG("%s : Status code: %d; chunked[%d] content_length[%d]\n [%s:%s] protocol[%s] [%s,%s]", url,
+    //  (resp)->status_code,
+    //  (resp)->chunked,
+    //  (resp)->content_length,
+    //  (resp)->content_type,
+    //  (resp)->content_encoding,
+    //  (resp)->protocol,
+    //  (resp)->reason_phrase,
+    //  (resp)->server
+    //  );
+
+    while (1) {
+        rv = http_read_content(handle, output, outputLen);
+        if (rv == 0 || rv < 0) {
+            break;
+        }
+        readBytes += rv;
+    }
+    if (rv != 0) {
+        APPLOGE("Get resp header failed: %d", rv);
+	    http_close_session(&handle);
+        return -4;
+    }
+
+    http_close_session(&handle);
+
+    return readBytes;
+}
