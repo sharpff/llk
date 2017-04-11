@@ -12,6 +12,7 @@
 #include "misc.h"
 #include "rsaWrapper.h"
 #include "ota.h"
+#include "aesWrapper.h"
 #define RETRY_HEARTBEAT 2
 
 // lftp letv:1q2w3e4r@115.182.63.167:21
@@ -2525,7 +2526,8 @@ static int flagHeartBeatMinus(void) {
     return ginFlagHeartBeat--;
 }
 
-static int httpc_post(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, void *fetchCB) {
+int httpCPostWrapper(const char *url, const uint8_t *input, int inputLen, uint8_t *output, int outputLen, void *fetchCB);
+int httpCPost(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, ContentFetchCB fetchCB) {
     int readBytes = 0, ret = 0;
     CmdHeaderInfo cmdInfo;
     uint8_t iv[AES_LEN] = { 0 };
@@ -2541,7 +2543,7 @@ static int httpc_post(const char *url, const char *payloadIn, int payloadInLen, 
     APPLOG("Website: %s", url);
 
     if (!isCloudOnlined()) {
-        APPLOGE("httpc_post failed !isCloudOnlined");
+        APPLOGE("httpcCPostInner failed !isCloudOnlined");
         ret = -1;
         goto HTTPC_FAILED;
     }
@@ -2559,10 +2561,10 @@ static int httpc_post(const char *url, const char *payloadIn, int payloadInLen, 
             key, 
             aesEnc,
             &payloadInLen, /* in-len/out-enc size */
-            aesEnc,
+            aesEncLen,
             1);
         if (0 > ret) {
-            APPLOGE("httpc_post aes [%d]", ret);
+            APPLOGE("httpcCPostInner aes [%d]", ret);
             ret = -2;
             goto HTTPC_FAILED;
         }
@@ -2574,7 +2576,7 @@ static int httpc_post(const char *url, const char *payloadIn, int payloadInLen, 
         cmdInfo.randID = genRand();
         dataEncLen = sizeof(CommonHeader) + RSA_LEN*ENC_PIECES(RSA_RAW_LEN, sizeof(CmdHeader) + sizeof(PayloadHeader) + payloadInLen + 1);
         dataEnc = halMalloc(dataEncLen);
-        ret = doPack(NULL, ENC_TYPE_STRATEGY_12, &cmdInfo, (const uint8_t *)payloadIn, payloadInLen, dataEnc, dataEncLen);
+        ret = doPack(NULL, ENC_TYPE_STRATEGY_11, &cmdInfo, (const uint8_t *)payloadIn, payloadInLen, dataEnc, dataEncLen);
     }
 
     readBytes = httpCPostWrapper(url, dataEnc, ret, payloadOut, payloadOutLen, fetchCB);
@@ -2624,8 +2626,4 @@ HTTPC_FAILED:
         halFree(dataDec);
 
     return ret;
-}
-
-int httpCPost(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, ContentFetchCB fetchCB) {
-    return httpc_post(url, payloadIn, payloadInLen, payloadOut, payloadOutLen, (void *)fetchCB);
 }

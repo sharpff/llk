@@ -240,6 +240,7 @@ int softApDoConfig(const char *ssid, const char *passwd, unsigned int timeout, c
 extern unsigned long halLogTimeStamp(void);
 int halWatchDogInit(void);
 int halWatchDogFeed(void);
+int halWatchDogDeInit(void);
 size_t halGetSReservedHeap();
 int halUpdateFirmwareExt(void *info);
 const char *aalGetVerExt(void);

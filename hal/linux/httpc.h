@@ -992,4 +992,7 @@ int httpc_get(const char *url_str, http_session_t *handle,
  */
 SSL_CTX *http_get_tls_context_from_handle(http_session_t handle);
 #endif /* CONFIG_ENABLE_HTTPC_SECURE */
+
+int httpCPostWrapper(const char *url, const uint8_t *input, int inputLen, uint8_t *output, int outputLen, void *fetchCB);
+
 #endif /* _HTTPC_H_ */

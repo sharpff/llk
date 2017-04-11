@@ -45,16 +45,18 @@ public class testLelink {
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
-	private static String mTestDevUUID = "d05bca44feb34aeca2dd111111111111"; // test
+	private static String mTestDevUUID = "10000100201001310023C89346D6F9AA"; // test
 //	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
-	private static String mTestTevToken = "7407820EC324845DC59C7A2072EF3A15"; // auto set by uuid, depend on TEST_GET_STATE
+	private static String mTestTevToken = "2AF1BFC079FFE4D0ACF1820D0B393EE8"; // auto set by uuid, depend on TEST_GET_STATE
 	// private static String mTestTevToken = null; // auto set by uuid, depend on TEST_GET_STATE
 	// private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
-	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"pwr\":1}}"); // 窗帘
+	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"speed\":1}}"); // 窗帘
+	private static String mTestCtrlCmd1 = String.format("{\"ctrl\":{\"speed\":2}}"); // 窗帘
 	private static int mWifiConfigTimeout = (60 * 5);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;
 	private static String mMacStr = null;
+	private static int i = 0;
 
 	public static void main(String argv[]) {
 
@@ -113,7 +115,14 @@ public class testLelink {
 	            c = System.in.read();  
 	            switch (c) {
 	            	case '7': {
-						String dataStr = mTestCtrlCmd;
+						String dataStr;
+						if (i == 0) {
+							dataStr = mTestCtrlCmd;
+							i = 1;
+						} else {
+							dataStr = mTestCtrlCmd1;
+							i = 0;
+						}
 						Log.e(TAG, "Control device test...\n" + dataStr);
 						try {
 							jsonCmd = new JSONObject();
@@ -280,8 +289,7 @@ public class testLelink {
 				 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态。
 				 * 如果该设备已经连接云，则必须传入token(由getState广域网获得)
 				 */
-				dataStr = mTestCtrlCmd;
-				Log.e(TAG, "Control device test...\n" + dataStr);
+				Log.e(TAG, "==========>Control device test...\n" + dataStr);
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_DEV_CMD);

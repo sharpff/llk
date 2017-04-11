@@ -551,16 +551,16 @@ public class LeLink {
 				}
 			}
 			if (dataStr != null) {
-				String jsonStr;
-				try {
-					com.alibaba.fastjson.JSONObject dataFJson = com.alibaba.fastjson.JSONObject.parseObject(dataStr);
-					jsonStr = dataFJson.toJSONString();
-				} catch (Exception e) {
-					LOGE("Data json error");
-					e.printStackTrace();
-					return false;
-				}
-				mWaitSendCmds.put(String.valueOf(mSeqId), jsonStr);
+				// String jsonStr;
+				// try {
+				// 	// com.alibaba.fastjson.JSONObject dataFJson = com.alibaba.fastjson.JSONObject.parseObject(dataStr);
+				// 	// jsonStr = dataFJson.toJSONString();
+				// } catch (Exception e) {
+				// 	LOGE("Data json error");
+				// 	e.printStackTrace();
+				// 	return false;
+				// }
+				mWaitSendCmds.put(String.valueOf(mSeqId), dataStr);
 			}
 		}
 		try {
