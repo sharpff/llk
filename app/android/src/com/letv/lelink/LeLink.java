@@ -80,8 +80,8 @@ public class LeLink {
 	 * 
 	 * @return Lelink实例
 	 */
-	public static LeLink getInstance(String authStr, String macStr) {
-        return getInstance(authStr, macStr, null);
+	public static LeLink getInstance(String scriptStr, String authStr, String macStr) {
+        return getInstance(scriptStr, authStr, macStr, null);
 	}
 	
 	/**
@@ -102,7 +102,7 @@ public class LeLink {
 	 * 
 	 * @return Lelink实例
 	 */
-	public static LeLink getInstance(String authStr, String macStr, Listener listener) {
+	public static LeLink getInstance(String scriptStr, String authStr, String macStr, Listener listener) {
 		String infoJson = null;
 //		String macStr = "11:22:33:44:55:66";
 		JSONObject jsonObj = null;
@@ -502,18 +502,22 @@ public class LeLink {
 			return null;
 		}
 		synchronized (mCtrlLock) {
+			LOGE("===========> wait start");
 			try {
 				mCtrlLock.wait(1000 * timeout);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			LOGE("===========> wait end");
 		}
 		if (mWaitCtrlBackData == null) {
 			LOGE("Control timeout");
 			synchronized(this) {
+				LOGE("===========> onCtrlBack start");
 				if (mListener != null) {
 					mListener.onCtrlBack(subcmd, mWaitCtrlUuid, null);
 				}
+				LOGE("===========> onCtrlBack end");
 			}
 		}
 		return mWaitCtrlBackData;
@@ -658,9 +662,11 @@ public class LeLink {
 				try {
 					dataStr = new String(buf, "UTF-8");
 					synchronized(this) {
+						LOGE("===========> wait start");
 						if (mListener != null) {
 							mListener.onStateChange(uuid, dataStr);
 						}
+						LOGE("===========> wait end");
 					}
 				} catch (UnsupportedEncodingException e) {
 					e.printStackTrace();

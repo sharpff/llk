@@ -88,7 +88,7 @@ public class MainActivity extends Activity {
 			return;
 		}
 		mMacStr = "11:22:33:44:55:66";
-//		LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener);
+//		LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener);
 //		mTextView.append("\n\nInfo:\n " + LeLink.getSdkInfo());
 		mTestThread.start();
 	}
@@ -108,7 +108,7 @@ public class MainActivity extends Activity {
 			 */
 			Log.w(TAG, "Get SDK uuid ...");
 			mHandler.sendMessage(mHandler.obtainMessage(0, "Get SDK uuid ..."));
-			sdkUUID = LeLink.getInstance(mAuthStr, mMacStr).getSdkUUID();
+			sdkUUID = LeLink.getInstance(null, mAuthStr, mMacStr).getSdkUUID();
 			Log.i(TAG, "SDK UUID: " + sdkUUID);
 			mHandler.sendMessage(mHandler.obtainMessage(0, "SDK UUID: " + sdkUUID));
 			
@@ -137,7 +137,7 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				if (LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).airConfig(mJsonCmd.toString()) == 0) {
+				if (LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener).airConfig(mJsonCmd.toString()) == 0) {
 					Log.w(TAG, "airConfig ok!");
 					mHandler.sendMessage(mHandler.obtainMessage(0, "airConfig ok! " + System.currentTimeMillis()));
 				} else {
@@ -148,7 +148,7 @@ public class MainActivity extends Activity {
 			}
 			
 			Log.e(TAG, "Waitting auth...");
-			while (TEST_SDK_AUTH && (LeLink.getInstance(mAuthStr, mMacStr).getState() < LeCmd.State.CLOUD_ONLINE)) {
+			while (TEST_SDK_AUTH && (LeLink.getInstance(null, mAuthStr, mMacStr).getState() < LeCmd.State.CLOUD_ONLINE)) {
 				mHandler.sendMessage(mHandler.obtainMessage(0, "Waitting auth... " + System.currentTimeMillis()));
 				try {
 					Thread.sleep(500);
@@ -166,7 +166,7 @@ public class MainActivity extends Activity {
 				 */
 				Log.e(TAG, "Device discover test...");
 				mHandler.sendMessage(mHandler.obtainMessage(0, "Device discover test..."));
-				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).discover(mDiscoverTimeout);
+				retData = LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener).discover(mDiscoverTimeout);
 				if (retData != null) {
 					Log.w(TAG, "Find devices:\n" + retData);
 					mHandler.sendMessage(mHandler.obtainMessage(0, "Find devices:\n" + retData));
@@ -213,7 +213,7 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).getState(mJsonCmd.toString(), mJsonData.toString());
+				retData = LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener).getState(mJsonCmd.toString(), mJsonData.toString());
 				if (retData != null) {
 					Log.w(TAG, "Get state:\n" + retData);
 					mHandler.sendMessage(mHandler.obtainMessage(0, "Get state " + System.currentTimeMillis() + "\n" + retData));
@@ -256,7 +256,7 @@ public class MainActivity extends Activity {
 					return;
 				}
 				mHandler.sendMessage(mHandler.obtainMessage(0, mJsonCmd.toString()));
-				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).ctrl(mJsonCmd.toString(), dataStr);
+				retData = LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener).ctrl(mJsonCmd.toString(), dataStr);
 				if (retData != null) {
 					Log.w(TAG, "ctrl return:\n" + retData);
 					mHandler.sendMessage(mHandler.obtainMessage(0, "ctrl return: " + System.currentTimeMillis() + "\n" + retData));
@@ -292,7 +292,7 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).getState(mJsonCmd.toString(), mJsonData.toString());
+				retData = LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener).getState(mJsonCmd.toString(), mJsonData.toString());
 				if (retData != null) {
 					Log.w(TAG, "OTA state:\n" + retData);
 					mHandler.sendMessage(mHandler.obtainMessage(0, "OTA state:\n" + retData));
@@ -319,7 +319,7 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				retData = LeLink.getInstance(mAuthStr, mMacStr, mLeLinkListener).ctrl(mJsonCmd.toString(), dataStr);
+				retData = LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener).ctrl(mJsonCmd.toString(), dataStr);
 				Log.e(TAG, "Do OTA: " + retData);
 				mHandler.sendMessage(mHandler.obtainMessage(0, "Do OTA: " + retData));
 			}
