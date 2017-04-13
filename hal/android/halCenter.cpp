@@ -176,7 +176,7 @@ static void *netTaskFun(void *data)
 	APPLOG("LeLink Task run...");
 	while (gNativeContext.runTask)
 	{
-        lelinkPollingState(200, gNativeContext.ctxR2R, gNativeContext.ctxQ2A);
+        lelinkPollingState(50, gNativeContext.ctxR2R, gNativeContext.ctxQ2A);
         //lelinkDoPollingQ2A(gNativeContext.ctxQ2A);
         //lelinkDoPollingR2R(gNativeContext.ctxR2R);
 	}

@@ -682,10 +682,11 @@ static int sdevGetValidChannel(void) {
 }
 
 extern void postReboot();
-void reboot(int isAsync) {
+int reboot(int isAsync) {
     if (isAsync) {
         postReboot();
     } else {
         halReboot();
     }
+    return 0;
 }
