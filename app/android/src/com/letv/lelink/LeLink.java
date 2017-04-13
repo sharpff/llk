@@ -516,11 +516,11 @@ public class LeLink {
 		if (mWaitCtrlBackData == null) {
 			LOGE("Control timeout");
 			synchronized(this) {
-				LOGE("===========> onCtrlBack start");
+				LOGE("===========> doOnCtrlBack start");
 				if (mListener != null) {
 					mListener.onCtrlBack(subcmd, mWaitCtrlUuid, null);
 				}
-				LOGE("===========> onCtrlBack end");
+				LOGE("===========> doOnCtrlBack end");
 			}
 		}
 		return mWaitCtrlBackData;

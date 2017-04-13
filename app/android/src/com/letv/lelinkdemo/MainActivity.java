@@ -12,6 +12,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.letv.lelink.LeCmd;
@@ -33,12 +36,13 @@ public class MainActivity extends Activity {
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
 //	private static String mTestDevUUID = "10000100101000010007C80E77ABCD5A"; // 插排
 //	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
-	private static String mTestDevUUID = "10000100141001010012C89346E0046E"; // 晾霸
+	private static String mTestDevUUID = "10000100201001310023C89346D6F9AA"; // 晾霸
 //	private static String mTestTevToken = "A9B864558E3CC920DEEDD13A6B1DE4FF"; // auto set by uuid, depend on TEST_GET_STATE
-	private static String mTestTevToken = null; // auto set by uuid, depend on TEST_GET_STATE
+	private static String mTestTevToken = "34F9D666E59475612B13A244400AC945"; // auto set by uuid, depend on TEST_GET_STATE
 //	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
 //	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"action\":1}}"); // 窗帘
-	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"light\":1}}"); // 晾霸
+	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"speed\":1}}"); // 窗帘
+	private static String mTestCtrlCmd1 = String.format("{\"ctrl\":{\"speed\":2}}"); // 窗帘
 	private static int mWifiConfigTimeout = (60 * 2);
 	private static int mDiscoverTimeout = 10;
 	private static int mOtherTimeout = 10;
@@ -47,6 +51,9 @@ public class MainActivity extends Activity {
 	private String mAuthStr = null;
 	private TextView mTextView = null;
 
+	private EditText Ev1 = null;
+	private static int i = 0;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		int rd = -1;
@@ -55,8 +62,9 @@ public class MainActivity extends Activity {
 		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		mTextView = (TextView) findViewById(R.id.hello);
 		
+		mTextView = (TextView) findViewById(R.id.hello);
+
 		// sdk info
 		Log.i(TAG, LeLink.getSdkInfo());
 		mTextView.append("\n\nInfo:\n " + LeLink.getSdkInfo());
@@ -91,7 +99,71 @@ public class MainActivity extends Activity {
 //		LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener);
 //		mTextView.append("\n\nInfo:\n " + LeLink.getSdkInfo());
 		mTestThread.start();
+		
+		initView();
 	}
+	
+	public void initView() {  
+		
+        Ev1 = (EditText)findViewById(R.id.editText1);    
+        
+        //第一种方式    
+        Button Btn1 = (Button)findViewById(R.id.button1);//获取按钮资源    
+        Btn1.setOnClickListener(new Button.OnClickListener(){//创建监听    
+            public void onClick(View v) {    
+                String dataStr = null;
+                String strTmp = "点击Button01";    
+                Ev1.setText(strTmp);  
+
+				try {
+					mJsonCmd = new JSONObject();
+					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_DEV_CMD);
+					mJsonCmd.put(LeCmd.K.UUID, mTestDevUUID);
+					mJsonCmd.put(LeCmd.K.TOKEN, mTestTevToken);
+					mJsonCmd.put(LeCmd.K.TIMEOUT, mOtherTimeout);
+//					mJsonCmd.put(LeCmd.K.ADDR, "192.168.3.238");
+				} catch (JSONException e) {
+					e.printStackTrace();
+					return;
+				}
+				if (i == 0) {
+					dataStr = mTestCtrlCmd;
+					i = 1;
+				} else {
+					dataStr = mTestCtrlCmd1;
+					i = 0;
+				}
+
+				ctrlTest(mJsonCmd, dataStr);  
+            }    
+  
+        }); 
+  
+    }  
+
+
+    public void ctrlTest(JSONObject mJsonCmd, String ctrlData) {
+		String retData = null;
+
+		/*
+		 * 控制设备状态 必须传入subcmd, uuid, timeout
+		 * 
+		 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态。
+		 * 如果该设备已经连接云，则必须传入token(由getState广域网获得)
+		 */
+		Log.e(TAG, "Control device test..." + ctrlData);
+		mHandler.sendMessage(mHandler.obtainMessage(0, "Control device test... " + System.currentTimeMillis()));
+		mHandler.sendMessage(mHandler.obtainMessage(0, mJsonCmd.toString()));
+		retData = LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener).ctrl(mJsonCmd.toString(), ctrlData);
+		if (retData != null) {
+			Log.w(TAG, "ctrl return:\n" + retData);
+			mHandler.sendMessage(mHandler.obtainMessage(0, "ctrl return: " + System.currentTimeMillis() + "\n" + retData));
+		} else {
+			Log.e(TAG, "Can't ctrl");
+			mHandler.sendMessage(mHandler.obtainMessage(0, "Can't ctrl"));
+			return;
+		}
+    }
 
 	private Thread mTestThread = new Thread(new Runnable() {
 
@@ -235,15 +307,6 @@ public class MainActivity extends Activity {
 			}
 			
 			if (TEST_CTRL_DEV) {
-				/*
-				 * 控制设备状态 必须传入subcmd, uuid, timeout
-				 * 
-				 * 如果是传入addr代表通过局域网获得状态。反之，如果没有传入addr表示通过广域网获得状态。
-				 * 如果该设备已经连接云，则必须传入token(由getState广域网获得)
-				 */
-				dataStr = mTestCtrlCmd;
-				Log.e(TAG, "Control device test..." + dataStr);
-				mHandler.sendMessage(mHandler.obtainMessage(0, "Control device test... " + System.currentTimeMillis()));
 				try {
 					mJsonCmd = new JSONObject();
 					mJsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_DEV_CMD);
@@ -255,16 +318,7 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 					return;
 				}
-				mHandler.sendMessage(mHandler.obtainMessage(0, mJsonCmd.toString()));
-				retData = LeLink.getInstance(null, mAuthStr, mMacStr, mLeLinkListener).ctrl(mJsonCmd.toString(), dataStr);
-				if (retData != null) {
-					Log.w(TAG, "ctrl return:\n" + retData);
-					mHandler.sendMessage(mHandler.obtainMessage(0, "ctrl return: " + System.currentTimeMillis() + "\n" + retData));
-				} else {
-					Log.e(TAG, "Can't ctrl");
-					mHandler.sendMessage(mHandler.obtainMessage(0, "Can't ctrl"));
-					return;
-				}
+				ctrlTest(mJsonCmd, mTestCtrlCmd);
 			}
 			
 			if (TEST_OTA_CHECK) {
