@@ -1286,7 +1286,7 @@ int sengineCall(const char *script, int scriptSize, const char *funcName, const 
     lua_State *L = NULL;
 
     if(isIfExist(funcName) < 0) {
-        LELOGE("[lua engine] sengineCall NO function => %s", funcName);
+        //LELOGE("[lua engine] sengineCall NO function => %s", funcName);
         return -1;
     }
 
