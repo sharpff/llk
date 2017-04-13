@@ -931,8 +931,10 @@ static const char *sanitize_resource_name(session_t *s, const char *resource)
 		return resource;
 }
 
-#include "pack.h"
-#include "data.h"
+// #include "pack.h"
+// #include "data.h"
+const uint8_t *getPreSharedIV();
+const uint8_t *getTerminalToken();
 /*
   - Get partial content from upper layer.
   - Send out to peer over network.
@@ -942,7 +944,8 @@ static int _http_retrieve_and_send_content(session_t *s, const http_req_t *req)
 {
 	uint8_t iv[AES_LEN] = { 0 };
 	uint8_t key[AES_LEN] = { 0 };
-	uint8_t encBuf[ENC_SIZE(AES_LEN, MAX_REQ_RESP_HDR_SIZE + 1)] = {0};
+	// uint8_t encBuf[ENC_SIZE(AES_LEN, MAX_REQ_RESP_HDR_SIZE + 1)] = {0};
+	uint8_t encBuf[2064] = {0};
 	int encLen = 0, ret;
 	http_session_t http_session = (http_session_t) s;
 	void *buf = s->pbuf.buf;
