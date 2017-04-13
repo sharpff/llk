@@ -4,7 +4,7 @@
 
 BINARYDIR := Debug
 PLATFORM := linux_arm
-MYXPREFIX := arm-none-linux-gnueabi-
+MYXPREFIX := arm-linux-gnueabihf-
 
 MAIN_PATH=$(CURDIR)/../..
 #Toolchain
@@ -23,7 +23,7 @@ ADDITIONAL_LINKER_INPUTS :=
 MACOS_FRAMEWORKS := 
 LINUX_PACKAGES := 
 
-CFLAGS := -ggdb -ffunction-sections -O0
+CFLAGS := -ggdb -ffunction-sections -O0 -fomit-frame-pointer
 CXXFLAGS := -ggdb -ffunction-sections -O0
 ASFLAGS := 
 LDFLAGS := -Wl,-gc-sections
