@@ -208,7 +208,7 @@ public class LeLink {
 	 * @return -1 - 错误; 0 - 成功; 1 - 超时
 	 */
 	public int airConfig(String jsonStr) {
-		int startTime, timeout, tryTimes = 1;
+		int startTime, timeout;
 		int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_MULTICAST;
 		// int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_BROADCAST;
 		// int airConfigType = LeCmd.V.AIR_CONFIG_TYPE_SOFTAP;
@@ -243,7 +243,6 @@ public class LeLink {
 			while (((int) (System.currentTimeMillis() / 1000) - startTime < timeout) && !mIsGetDevHello) {
 				sendJson.put(LeCmd.K.TYPE, airConfigType);
 				airConfig(mPtr, sendJson.toString());
-				tryTimes++;
 			}
 		} catch (JSONException e) {
 			LOGE("Parameter json error");
@@ -387,10 +386,13 @@ public class LeLink {
 			}
 			LOGI("Wait over! for '" + mWaitGetUuid + "'");
 			if (mFindDevs.size() <= 0) {
+				LOGE("===========> pre onGetStateBack");
 				synchronized(this) {
+					LOGE("===========> onGetStateBack start");
 					if(!isDiscover && mListener != null) {
 						mListener.onGetStateBack(subcmd, mWaitGetUuid, null);
 					}
+					LOGE("===========> onGetStateBack end");
 				}
 				LOGI("Wait timeout!!");
 				return null;
@@ -501,6 +503,7 @@ public class LeLink {
 			LOGE("ctrl send error");
 			return null;
 		}
+		LOGE("===========> pre wait");
 		synchronized (mCtrlLock) {
 			LOGE("===========> wait start");
 			try {
@@ -623,10 +626,13 @@ public class LeLink {
 		if (MSG_TYPE_LELINKSTATE == type) {
 			mState = buf[1];
 			LOGI("State: " + buf[0] + " -> " + buf[1]);
+			LOGE("===========> pre onLelinkStateChange");
 			synchronized(this) {
+				LOGE("===========> onLelinkStateChange start");
 				if(mListener != null) {
 					mListener.onLelinkStateChange(buf[0], buf[1]);
 				}
+				LOGE("===========> onLelinkStateChange end");
 			}
 			return ret;
 		}
@@ -661,12 +667,13 @@ public class LeLink {
 					|| (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_STATUS_REQ)) {
 				try {
 					dataStr = new String(buf, "UTF-8");
+					LOGE("===========> onStateChange pre");
 					synchronized(this) {
-						LOGE("===========> wait start");
+						LOGE("===========> onStateChange start");
 						if (mListener != null) {
 							mListener.onStateChange(uuid, dataStr);
 						}
-						LOGE("===========> wait end");
+						LOGE("===========> onStateChange end");
 					}
 				} catch (UnsupportedEncodingException e) {
 					e.printStackTrace();
@@ -675,10 +682,13 @@ public class LeLink {
 			} else if (cmd == LeCmd.CLOUD_IND_REQ && subcmd == LeCmd.Sub.CLOUD_IND_MSG_REQ) {
 				try {
 					dataStr = new String(buf, "UTF-8");
+					LOGE("===========> onPushMessage pre");
 					synchronized(this) {
+						LOGE("===========> onPushMessage start");
 						if (mListener != null) {
 							mListener.onPushMessage(dataStr);
 						}
+						LOGE("===========> onPushMessage end");
 					}
 				} catch (UnsupportedEncodingException e) {
 					e.printStackTrace();
@@ -709,7 +719,9 @@ public class LeLink {
 				LOGI("Get device hello");
 				send(sendCmdJson, null);
 				mIsGetDevHello = true;
+				LOGE("===========> onAirConfigBack pre");
 				synchronized (this) {
+					LOGE("===========> onAirConfigBack start");
 					if (mListener != null) {
 						try {
 							dataStr = new String(buf, "UTF-8");
@@ -719,6 +731,7 @@ public class LeLink {
 						}
 						mListener.onAirConfigBack(uuid, dataStr);
 					}
+					LOGE("===========> onAirConfigBack end");
 				}
 			}
 			break;
@@ -743,7 +756,9 @@ public class LeLink {
 					synchronized (mCtrlLock) {
 						mCtrlLock.notifyAll();
 					}
+					LOGE("===========> onCtrlBack pre");
 					synchronized (this) {
+						LOGE("===========> onCtrlBack start");
 						if (mListener != null) {
 							if ((cmd == LeCmd.CTRL_RSP && subcmd == LeCmd.Sub.CTRL_CMD_RSP)
 									|| (cmd == LeCmd.CLOUD_MSG_CTRL_C2R_RSP && subcmd == LeCmd.Sub.CLOUD_MSG_CTRL_C2R_RSP)) {
@@ -752,6 +767,7 @@ public class LeLink {
 								mListener.onCtrlBack(subcmd, uuid, dataStr);
 							}
 						}
+						LOGE("===========> onCtrlBack end");
 					}
 				} else if (cmd == LeCmd.DISCOVER_RSP || cmd == LeCmd.CLOUD_REPORT_RSP) {
 					LOGI("Get '" + uuid + "' Data:\n" + dataStr);
@@ -774,7 +790,9 @@ public class LeLink {
 						} else { // getstate not
 							LOGW("getState respond, but uuid: " + uuid + ", need: " + mWaitGetUuid);
 						}
+						LOGE("===========> onGetStateBack pre");
 						synchronized (this) {
+							LOGE("===========> onGetStateBack start");
 							if (mListener != null) {
 								if ((cmd == LeCmd.DISCOVER_RSP && subcmd == LeCmd.Sub.DISCOVER_RSP)
 										|| (cmd == LeCmd.CLOUD_REPORT_RSP && subcmd == LeCmd.Sub.CLOUD_REPORT_RSP)) {
@@ -783,14 +801,18 @@ public class LeLink {
 									mListener.onGetStateBack(subcmd, uuid, dataStr);
 								}
 							}
+							LOGE("===========> onGetStateBack end");
 						}
 					} else {
 						LOGI("Discover '" + keyuuid + "', Data:\n" + dataStr);
 						mFindDevs.put(keyuuid, dataJson);
+						LOGE("===========> onDiscoverBack pre");
 						synchronized (this) {
+							LOGE("===========> onDiscoverBack start");
 							if (mListener != null) {
 								mListener.onDiscoverBack(uuid, dataStr);
 							}
+							LOGE("===========> onDiscoverBack end");
 						}
 					}
 				} else if (cmd == LeCmd.CLOUD_GET_TARGET_RSP && subcmd == LeCmd.Sub.CLOUD_GET_TARGET_RSP) {

@@ -30,7 +30,7 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a);
 int lelinkNwPostCmdExt(const void *node);
 int resetConfigData(int bussinessOnly);
 
-void reboot(int isAsync);
+int reboot(int isAsync);
 
 #ifdef __cplusplus
 }
