@@ -192,3 +192,9 @@ static size_t httpFetchData(void *priv, void *buf, size_t max_len)
     APPLOG("%d/%d", info->nowLen, info->imgLen);
     return ret;
 }
+
+int halUpdateFirmwareExt(void *info) {
+    OTAInfo_t *ptr = (OTAInfo_t *)info;
+    APPLOG("halUpdateFirmwareExt type[%d]", ptr->type);
+    return 0;
+}

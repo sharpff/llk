@@ -178,14 +178,18 @@ int leOTA(OTAType_t type, const char *url, const uint8_t *sig, int sigLen)
             }
             break;
         // test only -e
-        case OTA_TYPE_OTHER: {
-                status = halUpdateFirmwareExt(&info);
-            } break;
         default:
-            status = -1;
-            LELOGE("Update type(%d) error", type);
+            if (OTA_TYPE_OTHER >= type) {
+                status = -1;
+                LELOGE("Update type(%d) error", type);                
+            }
             break;
     }
+
+    if (OTA_TYPE_OTHER < type) {
+        status = halUpdateFirmwareExt(&info);
+    }
+
     if(0 > status) {
         LELOGE("Update error! status = %d", status);
     } else {

@@ -2145,19 +2145,6 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
         }
 
         switch (type) {
-            case OTA_TYPE_SDEVFW:
-            case OTA_TYPE_FW: {
-                node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
-                node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
-                ret = lelinkNwPostCmd(ctx, &node);
-                if (!ret) {
-                    tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
-                } else {
-                    otaSetLatestSig(data);
-                    otaSetLatestType(type);
-                    otaSetLatestUrl(url, strlen(url));
-                }
-            }break;
             case OTA_TYPE_AUTH:
             case OTA_TYPE_PRIVATE:
             case OTA_TYPE_SDEVINFO:
@@ -2186,9 +2173,25 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
                 }
             }break;
             default:
-                tmpCmdInfo->status = LELINK_ERR_PARAM_INVALID;
+                if (OTA_TYPE_OTHER >= type){
+                    tmpCmdInfo->status = LELINK_ERR_PARAM_INVALID;
+                }
             break;
-        }    
+        }
+
+        if (OTA_TYPE_SDEVFW == type || OTA_TYPE_FW == type || 
+            OTA_TYPE_OTHER < type) {
+            node.cmdId = LELINK_CMD_ASYNC_OTA_REQ;
+            node.subCmdId = LELINK_SUBCMD_ASYNC_OTA_REQ;
+            ret = lelinkNwPostCmd(ctx, &node);
+            if (!ret) {
+                tmpCmdInfo->status = LELINK_ERR_BUSY_ERR;
+            } else {
+                otaSetLatestSig(data);
+                otaSetLatestType(type);
+                otaSetLatestUrl(url, strlen(url));
+            }
+        } 
         // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
         if (LELINK_ERR_SUCCESS == tmpCmdInfo->status && 
             (OTA_TYPE_PRIVATE == type || OTA_TYPE_AUTH == type || OTA_TYPE_SDEVINFO == type || OTA_TYPE_FW == type || force)) {

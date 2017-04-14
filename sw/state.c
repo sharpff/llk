@@ -414,7 +414,7 @@ static int stateProcSnifferGot(StateContext *cntx) {
         ret = halDoApConnect(NULL, 0);
     }
     ginConfigStatus = 1;
-    LELOG("stateProcSnifferGot ret[%d] ginConfigStatus[%d][%d]", ret, ginConfigStatus, cfg.data.nwCfg.configStatus);
+    // LELOG("stateProcSnifferGot ret[%d] ginConfigStatus[%d][%d]", ret, ginConfigStatus, cfg.data.nwCfg.configStatus);
     return ret;
 }
 
