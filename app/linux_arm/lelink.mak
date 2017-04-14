@@ -2,7 +2,7 @@
 # For lelink lib
 #
 
-SYS_MACROS := LINUX PF_VAL=3
+SYS_MACROS := LINUX PF_VAL=10
 MYXPATH := 
 MYXPREFIX := arm-linux-gnueabihf-
 
