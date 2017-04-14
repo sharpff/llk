@@ -2530,16 +2530,17 @@ static int flagHeartBeatMinus(void) {
 }
 
 int httpCPostWrapper(const char *url, const uint8_t *input, int inputLen, uint8_t *output, int outputLen, void *fetchCB);
-int httpCPost(const char *url, const char *payloadIn, int payloadInLen, char *payloadOut, int payloadOutLen, ContentFetchCB fetchCB) {
+int httpCPost(const char *url, const char *pbIn, int pbInLen, char *payloadOut, int payloadOutLen, ContentFetchCB fetchCB) {
     int readBytes = 0, ret = 0;
     CmdHeaderInfo cmdInfo;
     uint8_t iv[AES_LEN] = { 0 };
     uint8_t key[AES_LEN] = { 0 };
     uint8_t *dataEnc = NULL;
     uint8_t *dataDec = NULL;
-    uint8_t *aesEnc = NULL;
+    uint8_t *encPayload = NULL;
     // uint8_t *aesDec = NULL;
-    int dataEncLen, dataDecLen, aesEncLen, aesDecLen;
+    int dataLen, encPayloadLen, payloadLen;
+    int dataEncLen, dataDecLen, aesDecLen;
 
     memset(&cmdInfo, 0 ,sizeof(cmdInfo));
     APPLOG("Connecting to : %s ", url);
@@ -2551,35 +2552,74 @@ int httpCPost(const char *url, const char *payloadIn, int payloadInLen, char *pa
         goto HTTPC_FAILED;
     }
 
-    if (payloadIn && payloadInLen > 0) {
-        APPLOG("Data to post: %s", payloadIn);
-
-        memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
-        memcpy(key, (void *)getTerminalToken(), AES_LEN);
-        aesEncLen = ENC_SIZE(AES_LEN, payloadInLen + 1);
-        aesEnc = halMalloc(aesEncLen);
-
-        // paload encrypt
-        ret = aes(iv, 
-            key, 
-            aesEnc,
-            &payloadInLen, /* in-len/out-enc size */
-            aesEncLen,
-            1);
-        if (0 > ret) {
-            APPLOGE("httpcCPostInner aes [%d]", ret);
+    if (pbIn && pbInLen > 0) {
+        APPLOG("Data to post: %s", pbIn);
+        dataEncLen = sizeof(CommonHeader) + ENC_SIZE(AES_LEN, sizeof(CmdHeader) + 1) + ENC_SIZE(AES_LEN, sizeof(PayloadHeader) + pbInLen + 1);
+        dataEnc = halMalloc(dataEncLen);
+        ret = doPack(NULL, ENC_TYPE_STRATEGY_213, &cmdInfo, pbIn, pbInLen, dataEnc, dataEncLen);
+        if (0 >= ret) {
+            APPLOGE("doPack failed");
             ret = -2;
             goto HTTPC_FAILED;
         }
+        // memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
+        // memcpy(key, (void *)getTerminalToken(), AES_LEN);
 
-        // total encrypt
-        cmdInfo.cmdId =  LELINK_CMD_SERVICE_REQ;
-        cmdInfo.subCmdId = LELINK_SUBCMD_SERVICE_RSP;
-        cmdInfo.seqId = genSeqId();
-        cmdInfo.randID = genRand();
-        dataEncLen = sizeof(CommonHeader) + RSA_LEN*ENC_PIECES(RSA_RAW_LEN, sizeof(CmdHeader) + sizeof(PayloadHeader) + payloadInLen + 1);
-        dataEnc = halMalloc(dataEncLen);
-        ret = doPack(NULL, ENC_TYPE_STRATEGY_11, &cmdInfo, (const uint8_t *)payloadIn, payloadInLen, dataEnc, dataEncLen);
+        // cmdInfo.subCmdId = LELINK_SUBCMD_SERVICE_REQ;
+        // payloadLen = sizeof(PayloadHeader) + pbInLen;
+        // encPayloadLen = ENC_SIZE(AES_LEN, payloadLen + 1);
+        // encPayload = halMalloc(encPayloadLen);
+        // PACK_GEN_PAYLOAD(encPayload, cmdInfo.subCmdId, encPayload, pbInLen);
+        // APPLOG("encPayloadLen [%d]", encPayloadLen);
+
+        // // 2nd
+        // ret = aes(iv, 
+        //     key, 
+        //     encPayload,
+        //     &payloadLen, /* in-len/out-enc size */
+        //     encPayloadLen,
+        //     1);
+        // if (0 > ret) {
+        //     APPLOGE("2nd aes [%d]", ret);
+        //     ret = -2;
+        //     goto HTTPC_FAILED;
+        // }
+
+        // LELOG("payloadLen [%d]", payloadLen);
+        // {
+        //     int i = 0;
+        //     for (i = 0; i < payloadLen; i++) {
+        //         if (0 == (i) % 16) {
+        //             APPPRINTF("\n");
+        //         }
+        //         APPPRINTF("%02x ", encPayload[i]);
+        //     }
+        //     APPPRINTF("\n");
+        // }
+
+        // // total encrypt
+        // cmdInfo.cmdId =  LELINK_CMD_SERVICE_REQ;
+        // getTerminalUUID(cmdInfo.uuid, MAX_UUID);
+
+        // dataEncLen = sizeof(CommonHeader) + ENC_SIZE(AES_LEN, sizeof(CmdHeader) + payloadLen + 1);
+        // dataEnc = halMalloc(dataEncLen);
+        // PACK_GEN_CMD_HEADER(&dataEnc[sizeof(CommonHeader)], (&cmdInfo), &dataEnc[sizeof(CmdHeader)], payloadLen, cmdInfo.uuid);
+        // LELOG("cmdId[%d] subCmdId[%d] seqId[%d] randID[%04x]", (((CmdHeader *)(cmdHeader))dataEnc)->cmdId, (((CmdHeader *)(cmdHeader))dataEnc)->subCmdId, (((CmdHeader *)(cmdHeader))dataEnc)->seqId, (((CmdHeader *)(cmdHeader))dataEnc)->randID);
+
+        // dataLen = sizeof(CommonHeader) + sizeof(CmdHeader) + payloadLen;
+        // // 1st
+        // memcpy(key, (void *)getPreSharedToken(), AES_LEN);
+        // ret = aes(iv, 
+        //     key, 
+        //     &dataEnc[sizeof(CommonHeader)],
+        //     &dataLen, /* in-len/out-enc size */
+        //     dataEncLen,
+        //     1);
+        // if (0 > ret) {
+        //     APPLOGE("1st aes [%d]", ret);
+        //     ret = -2;
+        //     goto HTTPC_FAILED;
+        // }
     }
 
     readBytes = httpCPostWrapper(url, dataEnc, ret, payloadOut, payloadOutLen, fetchCB);
@@ -2619,8 +2659,8 @@ int httpCPost(const char *url, const char *payloadIn, int payloadInLen, char *pa
     APPLOG("rv[%d/%d], content: %s", aesDecLen, payloadOutLen, dataDec);
 
 HTTPC_FAILED:
-    if (aesEnc)
-        halFree(aesEnc);
+    // if (encPayload)
+    //     halFree(encPayload);
     if (dataEnc)
         halFree(dataEnc);
     // if (aesDec)

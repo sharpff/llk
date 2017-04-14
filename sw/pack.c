@@ -415,7 +415,7 @@ int doPack(void *ctx,
             // gen common header
             PACK_GEN_COMMON_HEADER(commonHeader, encType, cmdHeader, rawSize1, encSize1);
             ret = sizeof(CommonHeader) + encSize1;
-            
+
             if(0) {
                 uint8_t tmpStr[42] = {0};
                 bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
@@ -581,6 +581,77 @@ int doPack(void *ctx,
             //     }
 
             // }
+        }break;
+        case ENC_TYPE_STRATEGY_213: {
+            uint8_t iv[AES_LEN] = { 0 };
+            uint8_t key[AES_LEN] = { 0 };
+            rawSize1 = encSize1 = sizeof(CmdHeader);
+            rawSize2 = encSize2 = sizeof(PayloadHeader) + pbLen;
+            if (nwLen < sizeof(CommonHeader) + ENC_SIZE(AES_LEN, rawSize1 + 1) + ENC_SIZE(AES_LEN, rawSize2 + 1)) {
+                LELOGW("LELINK_ERR_BUFFER_SPACE_ERR [%d] ", LELINK_ERR_BUFFER_SPACE_ERR);
+                return LELINK_ERR_BUFFER_SPACE_ERR;
+            }
+            memset(beingEncBuf, 0, sizeof(beingEncBuf));
+
+            PACK_INIT_HEADER(nw, ENC_SIZE(AES_LEN, sizeof(CmdHeader) + 1));
+
+            // gen payload
+            PACK_GEN_PAYLOAD(&beingEncBuf[ENC_SIZE(AES_LEN, rawSize1 + 1)], cmdInfo->subCmdId, protocolBuf, pbLen);
+
+            
+            /* 2nd
+             * Q2A's token in cmdInfo is EMPTY
+             * LocalRsp: encrypt with terminal token
+             * LocalReq: encrypt with cached/peer token
+             */
+            if (!cmdInfo->token[0]) { // for LocalRsp
+                memcpy(key, (void *)getTerminalToken(), AES_LEN); 
+            } else { // for LocalReq
+                memcpy(key, (void *)cmdInfo->token, AES_LEN); 
+            }
+            if(0) {
+                uint8_t tmpStr[42] = {0};
+                bytes2hexStr(key, sizeof(key), tmpStr, sizeof(tmpStr));
+                LELOG("AESKEY: [%s]", tmpStr);
+            }
+            memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
+            ret = aes(iv, 
+                key, 
+                &beingEncBuf[ENC_SIZE(AES_LEN, rawSize1 + 1)],
+                &encSize2, /* in-len/out-enc size */
+                ENC_SIZE(AES_LEN, rawSize2 + 1),
+                1);
+            if (0 > ret) {
+                LELOGW("LELINK_ERR_ENC2_ERR [%d] ", LELINK_ERR_ENC2_ERR);
+                return LELINK_ERR_ENC2_ERR;
+            }
+            memcpy(payloadHeader, &beingEncBuf[ENC_SIZE(AES_LEN, rawSize1 + 1)], encSize2);
+
+            // gen cmd header
+            PACK_GEN_CMD_HEADER(&beingEncBuf, cmdInfo, &beingEncBuf[ENC_SIZE(AES_LEN, rawSize1 + 1)], encSize2, cmdInfo->uuid);
+            beingEncLen += encSize2;
+
+            /* 1st
+             * always encrypt with the terminal token.
+             */
+            memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
+            memcpy(key, (void *)getPreSharedToken(), AES_LEN); // shared token
+            ret = aes(iv, 
+                key, 
+                beingEncBuf,
+                &encSize1, /* in-len/out-enc size */
+                ENC_SIZE(AES_LEN, rawSize1 + 1),
+                1);
+            if (0 > ret) {
+                LELOGW("LELINK_ERR_ENC1_ERR [%d] ", LELINK_ERR_ENC1_ERR);
+                return LELINK_ERR_ENC1_ERR;
+            }
+            memcpy(cmdHeader, beingEncBuf, encSize1);
+            beingEncLen += encSize1;
+
+            // gen common header
+            PACK_GEN_COMMON_HEADER(commonHeader, encType, cmdHeader, rawSize1 + rawSize2, encSize1 + encSize2);
+            ret = sizeof(CommonHeader) + encSize1 + encSize2;
         }break;
 
         default:
