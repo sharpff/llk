@@ -174,7 +174,7 @@ int halFlashErase(void *dev, uint32_t startAddr, uint32_t size){
     int fd, ret, append;
     char fileName[64] = {0};
     sprintf(fileName, "./0x%x.bin", startAddr);
-    fd = open(fileName, O_WRONLY | O_CREAT);
+    fd = open(fileName, O_WRONLY | O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
     if (0 >= fd) {
         APPLOG("ERASE FAILED [%d]", errno);
         return fd;
@@ -196,7 +196,7 @@ int halFlashWrite(void *dev, const uint8_t *data, int len, uint32_t startAddr, i
     sprintf(fileName, "./0x%x.bin", startAddr);
     fd = open(fileName, O_WRONLY);
     if (0 >= fd) {
-        APPLOG("WRITE FAILED [%d]", errno);
+        APPLOGE("WRITE FAILED [%d]", errno);
         return fd;
     }
     lseek(fd, offsetToBegin, SEEK_SET);

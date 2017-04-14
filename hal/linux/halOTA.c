@@ -100,7 +100,7 @@ int halUpdateFirmware(OTAInfo_t *info) {
             break;
         }
         // APPLOG("has read bytes [%d]", nSize);
-        // halFlashErase(hdl, FOTA_PARITION_TMP + totalSize, FOTA_PARITION_TMP);
+        halFlashErase(hdl, FOTA_PARITION_TMP + totalSize, nSize);
         ret = halFlashWrite(hdl, buf, nSize, FOTA_PARITION_TMP, totalSize);
         if (0 >= ret) {
             APPLOGE("fail to write flash, ret = %d", ret);
