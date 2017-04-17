@@ -7,7 +7,7 @@ MTK_BSPEXT_ENABLE                   = y
 MTK_PING_OUT_ENABLE                 = n #y
 MTK_WIFI_TGN_VERIFY_ENABLE          = n #y
 MTK_MINICLI_ENABLE                  = y
-MTK_CLI_TEST_MODE_ENABLE            = y
+MTK_CLI_TEST_MODE_ENABLE            = n
 MTK_CLI_EXAMPLE_MODE_ENABLE         = n
 MTK_SMTCN_ENABLE                    = y
 MTK_WIFI_WPS_ENABLE                 = n
@@ -26,7 +26,7 @@ MTK_DEBUG_LEVEL                     = info
 # System service debug feature for internal use
 MTK_SUPPORT_HEAP_DEBUG              = n
 MTK_HEAP_SIZE_GUARD_ENABLE          = n
-MTK_OS_CPU_UTILIZATION_ENABLE       = y
+MTK_OS_CPU_UTILIZATION_ENABLE       = n
 MTK_ALINK_ENABLE                    = n
 MTK_LELINK_ENABLE                   = y
 MTK_IPERF_ENABLE                    = n

@@ -606,9 +606,10 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
     // char name[MAX_RULE_NAME] = {0};
     int ret = 0;
     int sDevIdx = 0;
-    char buf[MAX_BUF] = {0};
+    static char buf[MAX_BUF] = {0};
     SDevNode node;
 
+    memset(buf, 0, sizeof(buf));
     memset(&node, 0, sizeof(SDevNode));
     ret = json_init(&jobj, jsonToken, NUM_TOKENS, (char *)status, len);
     if (WM_SUCCESS != ret) {
@@ -1719,7 +1720,8 @@ int sengineIs1Version() {
 int sengineSetAction(const char *json, int jsonLen) {
     int ret = 0, type, len, i, j, ret1;
     uint8_t bin[512] = {0};
-    char jsonMerged[2*MAX_BUF] = {0};
+    static char jsonMerged[2*MAX_BUF] = {0};
+    memset(jsonMerged, 0, sizeof(jsonMerged));
     // char *jsonOut = json;
     // int jsonOutLen = jsonLen;
     // IOHDL *ioHdl = NULL;

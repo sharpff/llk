@@ -160,7 +160,7 @@ static int platform_launch_lelink_start(void) {
 
     if (pdPASS != xTaskCreate(mtk_thread_lelink_proc,
 							  "thread_lelink_proc",
-							  1024*5,  //16K stack size;
+							  1024*4,  //16K stack size;
 							  NULL,
 							  1,
 							  NULL)) {

@@ -332,8 +332,7 @@ static int stateProcStart(StateContext *cntx) {
     if (0 == ret) {
         if(getDevFlag(DEV_FLAG_RESET)) {
             // TODO: wait for mt7687 flash ready?
-            halDelayms(500);
-            setDevFlag(DEV_FLAG_RESET, 0);
+            // halDelayms(500);
             wifiConfigByMonitor = cfg.data.devCfg.initCfgWiFiMode ? 1 : 0;
         } else {
             wifiConfigByMonitor = !(cfg.data.devCfg.initCfgWiFiMode) ? 1 : 0;
@@ -347,13 +346,16 @@ static int stateProcStart(StateContext *cntx) {
             LELOG("configure wifi by softAp(%d)", ret);
         }
     }
-    // LELOG("stateProcStart [%d]", ret);
     LELOG("stateProcStart [%d] -e", ret);
     return ret;
 }
 
 static int stateProcConfiguring(StateContext *cntx) {
     int ret = 0;
+    if (E_STATE_START == ginStateCntx.from && getDevFlag(DEV_FLAG_RESET)) {
+        LELOG("******************* reboot due to reset");
+        setDevFlag(DEV_FLAG_RESET, 0);
+    }
     if (1 == ginConfigStatus) {
         ret = 1;
     }

@@ -232,10 +232,10 @@ redo:
     case 'p': {
             int status = -1;
             const char *url = "http://bus.dev.leinlife.com/letv_udp_terminal/rest/test";
-            const char *payloadIn = "abc";
+            const char *payloadIn = "{\"status\":\"aaa\"}";
             char payloadOut[MAX_BUF] = {0};
             APPLOG("=======> handle start");
-            status = httpCPost(url, payloadIn, 3, payloadOut, sizeof(payloadOut), NULL);
+            status = httpCPost(url, payloadIn, strlen(payloadIn), payloadOut, sizeof(payloadOut), NULL);
             APPLOG("<======= handle [%d] end", status);
             counts = 0;
         }break;
