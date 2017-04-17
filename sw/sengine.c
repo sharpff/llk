@@ -1919,7 +1919,7 @@ int senginePollingSlave(void) {
             // LELOG("==>senginePollingSlave datas.datasCounts[%x][%d]", datas.arrDatasCounts[i/2], datas.arrDatasCounts[i/2]);
             memcpy(&currLen, &datas.arrDatasCounts[i/sizeof(uint16_t)], sizeof(uint16_t));
             // LELOG("[SENGINE]_s1OptDoSplit_[%d]_cmd: curr piece len[%d]", i/sizeof(uint16_t), currLen);
-            memcpy(datas.arrDatas, &bin[appendLen], currLen);
+            // memcpy(datas.arrDatas, &bin[appendLen], currLen);
 
             if (0)
             {
@@ -1931,7 +1931,7 @@ int senginePollingSlave(void) {
                 LELOG("ioRead type[0x%x] bin[%s]", ioHdl[x].ioType, hexStr);
             }
             ret = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_GET_VALIDKIND,
-                    datas.arrDatas, currLen, (uint8_t *)&whatKind, sizeof(whatKind));
+                    &bin[appendLen], currLen, (uint8_t *)&whatKind, sizeof(whatKind));
             // LELOG("sengineCall ret size [%d], currLen[%d] whatKind [%d]", ret, currLen, whatKind);
             if (0 >= ret) {
                 // LELOGW("senginePollingSlave sengineCall "S1_GET_VALIDKIND" [%d]", ret);
@@ -1947,7 +1947,7 @@ int senginePollingSlave(void) {
                         extern int lelinkNwPostCmdExt(const void *node);
                         int len = 0;
                         len = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-                                &datas.arrDatas[appendLen], currLen, (uint8_t *)status, sizeof(status));
+                                &bin[appendLen], currLen, (uint8_t *)status, sizeof(status));
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else {
