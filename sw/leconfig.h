@@ -281,7 +281,7 @@ const char *aalGetVerExt(void);
     uint16_t flag; \
     uint16_t nodeReserved;
 
-// #define LELINK_OTA_VERIFICATION
+#define LELINK_OTA_VERIFICATION
 
 #define MONITOR_CONFIG4
 
