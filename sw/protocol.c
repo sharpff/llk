@@ -2535,92 +2535,32 @@ int httpCPost(const char *url, const char *pbIn, int pbInLen, char *payloadOut, 
     CmdHeaderInfo cmdInfo;
     uint8_t *dataEnc = NULL;
     uint8_t *dataDec = NULL;
-    // uint8_t *aesDec = NULL;
     uint32_t dataEncLen, dataDecLen;
 
     memset(&cmdInfo, 0 ,sizeof(cmdInfo));
-    APPLOG("Connecting to : %s ", url);
-    APPLOG("Website: %s", url);
+    LELOG("Connecting to : %s ", url);
+    LELOG("Website: %s", url);
 
     if (!isCloudOnlined()) {
-        APPLOGE("httpcCPostInner failed !isCloudOnlined");
+        LELOGE("httpcCPostInner failed !isCloudOnlined");
         ret = -1;
         goto HTTPC_FAILED;
     }
 
     if (pbIn && pbInLen > 0) {
-        APPLOG("Data to post: %s", pbIn);
+        LELOG("Data to post: %s", pbIn);
         dataEncLen = sizeof(CommonHeader) + ENC_SIZE(AES_LEN, sizeof(CmdHeader) + 1) + ENC_SIZE(AES_LEN, sizeof(PayloadHeader) + pbInLen + 1);
         dataEnc = halCalloc(1, dataEncLen);
-        APPLOG("aaaaaaaaa to post: %s", pbIn);
         cmdInfo.status = 0;
         cmdInfo.cmdId = LELINK_CMD_SERVICE_REQ; 
         cmdInfo.subCmdId = LELINK_SUBCMD_SERVICE_REQ;
         getTerminalUUID((uint8_t *)cmdInfo.uuid, sizeof(cmdInfo.uuid));
         ret = doPack(NULL, ENC_TYPE_STRATEGY_213, &cmdInfo, (const uint8_t*)pbIn, pbInLen, dataEnc, dataEncLen);
         if (0 >= ret) {
-            APPLOGE("doPack failed");
+            LELOGE("doPack failed");
             ret = -2;
             goto HTTPC_FAILED;
         }
-        // memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
-        // memcpy(key, (void *)getTerminalToken(), AES_LEN);
-
-        // cmdInfo.subCmdId = LELINK_SUBCMD_SERVICE_REQ;
-        // payloadLen = sizeof(PayloadHeader) + pbInLen;
-        // encPayloadLen = ENC_SIZE(AES_LEN, payloadLen + 1);
-        // encPayload = halCalloc(1, encPayloadLen);
-        // PACK_GEN_PAYLOAD(encPayload, cmdInfo.subCmdId, encPayload, pbInLen);
-        // APPLOG("encPayloadLen [%d]", encPayloadLen);
-
-        // // 2nd
-        // ret = aes(iv, 
-        //     key, 
-        //     encPayload,
-        //     &payloadLen, /* in-len/out-enc size */
-        //     encPayloadLen,
-        //     1);
-        // if (0 > ret) {
-        //     APPLOGE("2nd aes [%d]", ret);
-        //     ret = -2;
-        //     goto HTTPC_FAILED;
-        // }
-
-        // LELOG("payloadLen [%d]", payloadLen);
-        // {
-        //     int i = 0;
-        //     for (i = 0; i < payloadLen; i++) {
-        //         if (0 == (i) % 16) {
-        //             APPPRINTF("\n");
-        //         }
-        //         APPPRINTF("%02x ", encPayload[i]);
-        //     }
-        //     APPPRINTF("\n");
-        // }
-
-        // // total encrypt
-        // cmdInfo.cmdId =  LELINK_CMD_SERVICE_REQ;
-        // getTerminalUUID(cmdInfo.uuid, MAX_UUID);
-
-        // dataEncLen = sizeof(CommonHeader) + ENC_SIZE(AES_LEN, sizeof(CmdHeader) + payloadLen + 1);
-        // dataEnc = halCalloc(1, dataEncLen);
-        // PACK_GEN_CMD_HEADER(&dataEnc[sizeof(CommonHeader)], (&cmdInfo), &dataEnc[sizeof(CmdHeader)], payloadLen, cmdInfo.uuid);
-        // LELOG("cmdId[%d] subCmdId[%d] seqId[%d] randID[%04x]", (((CmdHeader *)(cmdHeader))dataEnc)->cmdId, (((CmdHeader *)(cmdHeader))dataEnc)->subCmdId, (((CmdHeader *)(cmdHeader))dataEnc)->seqId, (((CmdHeader *)(cmdHeader))dataEnc)->randID);
-
-        // dataLen = sizeof(CommonHeader) + sizeof(CmdHeader) + payloadLen;
-        // // 1st
-        // memcpy(key, (void *)getPreSharedToken(), AES_LEN);
-        // ret = aes(iv, 
-        //     key, 
-        //     &dataEnc[sizeof(CommonHeader)],
-        //     &dataLen, /* in-len/out-enc size */
-        //     dataEncLen,
-        //     1);
-        // if (0 > ret) {
-        //     APPLOGE("1st aes [%d]", ret);
-        //     ret = -2;
-        //     goto HTTPC_FAILED;
-        // }
     }
 
     readBytes = httpCPostWrapper(url, dataEnc, ret, (uint8_t*)payloadOut, payloadOutLen, fetchCB);
@@ -2629,7 +2569,7 @@ int httpCPost(const char *url, const char *pbIn, int pbInLen, char *payloadOut, 
         LELOGE("httpCPostWrapper [%d] ", readBytes);
         goto HTTPC_FAILED;        
     }
-    APPLOG("TEST rv[%d], content: %s", readBytes, payloadOut);
+    LELOG("TEST readBytes[%d]", readBytes);
 
     // total decrypt
     memset(&cmdInfo, 0 ,sizeof(cmdInfo));
@@ -2641,31 +2581,13 @@ int httpCPost(const char *url, const char *pbIn, int pbInLen, char *payloadOut, 
         goto HTTPC_FAILED;
     }
 
-    // // paload decrypt
-    // aesDecLen = ret;
-    // ret = aes(iv, 
-    //     key, 
-    //     dataDec,
-    //     &aesDecLen, /* in-len/out-enc size */
-    //     dataDecLen,
-    //     0);
-    // if (0 > ret) {
-    //     LELOGE("LELINK_ERR_DEC1_ERR [%d] ", ret);
-    //     ret = -5;
-    //     goto HTTPC_FAILED;
-    // }
     memcpy(payloadOut, dataDec, ret);
-    // ret = payloadOutLen;
 
-    APPLOG("rv[%d/%d], content: %s", ret, payloadOutLen, dataDec);
+    LELOG("rv[%d/%d], content: %s", ret, payloadOutLen, dataDec);
 
 HTTPC_FAILED:
-    // if (encPayload)
-    //     halFree(encPayload);
     if (dataEnc)
         halFree(dataEnc);
-    // if (aesDec)
-    //     halFree(aesDec);
     if (dataDec)
         halFree(dataDec);
 

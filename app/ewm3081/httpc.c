@@ -9,9 +9,10 @@
 
 // ------------------------------------------------------
 #include "leconfig.h"
+#include <errno.h>
 #include "httpc.h"
-#define ASSERT(exp) \
- (void)( (exp) || (APPLOGE("%s", #exp)))
+// #define ASSERT(exp) \
+//  (void)( (exp) || (APPLOGE("%s", #exp)))
 #define httpc_entry(...)
 #define net_get_sock_error(x) x
 #define net_socket socket
@@ -134,10 +135,10 @@ typedef struct {
 static int _http_raw_recv(session_t *s, char *buf, int maxlen,
 			  int wait_for_to)
 {
-	//ASSERT(maxlen != 0);
+	APPASSERT(maxlen != 0);
 
 	int rv;
-	unsigned int ceiling = halGetTimeStamp() + 1;
+	unsigned int ceiling = halGetTimeStamp() + 10;
 
 	while (1) {
 #ifdef CONFIG_ENABLE_HTTPC_SECURE
@@ -404,7 +405,8 @@ static int tcp_socket(int *sockfd,
 				// memset(&tmp, 0, sizeof(struct sockaddr_in));
 				// memcpy(&tmp.sin_addr.s_addr,
 				// 	entry->h_addr_list[0], entry->h_length);
-				host = ip[0];
+				// host = inet_ntoa(tmp.sin_addr);
+                host = ip[0];
 			} else {
 				APPLOGE("No entry for host %s found", hostname);
 					;// g_wm_stats.wm_ht_dns_fail++;
@@ -512,14 +514,17 @@ static inline int tcp_connect(int *sockfd,
 
 {
 	struct sockaddr addr;
+	struct sockaddr_in *tmpAddr = NULL;
+	uint8_t *s_ip = NULL;
 	int r = tcp_socket(sockfd, &addr, hostname, port,
 			 retry_cnt, socket_timeout);
 	if (r != WM_SUCCESS) {
 		APPLOG("Socket creation for %s:%d failed", hostname, port);
 		return r;
 	}
-
-	APPLOG("Connecting .. %s:%d", hostname, port);
+	tmpAddr = (struct sockaddr_in *)&addr;
+	s_ip = (uint8_t*)(&(tmpAddr->sin_addr.s_addr));
+	APPLOG("Connecting .. %s:%d [%d.%d.%d.%d]", hostname, port, s_ip[0], s_ip[1], s_ip[2], s_ip[3]);
 	if (connect(*sockfd, &addr, sizeof(addr)) != 0) {
 		APPLOGE("tcp connect failed %s:%d errno=%d", hostname, port,
 			errno);
@@ -941,7 +946,7 @@ static const char *sanitize_resource_name(session_t *s, const char *resource)
 
 	/* Check if the resource string starts with a '/' */
 	if (resource[0] != default_resource[0]) {
-		APPLOG("Have to extract\n\r");
+		APPLOG("Have to extract");
 		/* The resource string is either a valid URL or just garbage */
 		r = http_parse_URL(resource, s->pbuf.buf, MAX_REQ_RESP_HDR_SIZE,
 				   &url);
@@ -1061,7 +1066,7 @@ static int _http_prepare_req(session_t *s, const http_req_t *req,
 		_http_add_header(s, "Connection", "keep-alive");
 
 	if (field_flags & HDR_ADD_CONN_CLOSE) {
-		//ASSERT(!(field_flags & HDR_ADD_CONN_KEEP_ALIVE));
+		APPASSERT(!(field_flags & HDR_ADD_CONN_KEEP_ALIVE));
 		_http_add_header(s, "Connection", "close");
 	}
 	if (field_flags & HDR_ADD_CONTENT_TYPE_JSON) {
@@ -1207,6 +1212,7 @@ http_session_error:
 http_session_open_fail:
 	return status;
 }
+
 static void parse_keep_alive_header(const char *value, http_resp_t *resp)
 {
 	int ret;
@@ -1270,7 +1276,7 @@ static int load_header_fields(char *header, int len, int *off,
 			break;
 		}
 		/* FIXME: can this happen ? */
-		//ASSERT(header[offset] != '\r' && header[offset + 1] != '\n');
+		APPASSERT(header[offset] != '\r' && header[offset + 1] != '\n');
 
 		/* Extract the name-value pair */
 		pair = &header[offset];
@@ -1566,7 +1572,7 @@ static int _http_get_response_hdr_value(session_t *s,
 {
 	/* We should already know the offset from where the name-value
 	   pairs in the http header start */
-	//ASSERT(s->pbuf.hdr_fields_start_offset != -1);
+	APPASSERT(s->pbuf.hdr_fields_start_offset != -1);
 
 	/* Create a local copy as this function may be called more than
 	   once */
@@ -1584,7 +1590,7 @@ static int _http_get_response_hdr_value(session_t *s,
 			break;
 		}
 		/* FIXME: can this happen ? */
-		//ASSERT(header[offset] != '\r' && header[offset + 1] != '\n');
+		APPASSERT(header[offset] != '\r' && header[offset + 1] != '\n');
 
 		int pair_len;
 		char *name, *val;
@@ -2000,22 +2006,22 @@ int http_read_content(http_session_t handle, void *buf, uint32_t max_len)
 #ifdef DUMP_RECV_DATA
 	char *buff = buf;
 	int i;
-	wmprintf("\n\rHTTPC: ********** HTTPC data *************\n\r");
+	APPLOG("\n\rHTTPC: ********** HTTPC data *************\n\r");
 	if (size_read > 0) {
 		for (i = 0; i < size_read; i++) {
 			if (buff[i] == '\r')
 				continue;
 			if (buff[i] == '\n') {
-				wmprintf("\n\r");
+				APPLOG("\n\r");
 				continue;
 			}
-			wmprintf("%c", buff[i]);
+			APPLOG("%c", buff[i]);
 		}
-		wmprintf("\n\r");
+		APPLOG("\n\r");
 	} else {
-		wmprintf("Size: %d Not reading\n\r", size_read);
+		APPLOG("Size: %d Not reading\n\r", size_read);
 	}
-	wmprintf("HTTPC: ***********************************\n\r");
+	APPLOG("HTTPC: ***********************************\n\r");
 #endif /* DUMP_RECV_DATA */
 
 	return size_read;
@@ -2132,3 +2138,70 @@ SSL_CTX *http_get_tls_context_from_handle(http_session_t handle)
 		return s->httpc_cfg.ctx;
 }
 #endif /* CONFIG_ENABLE_HTTPC_SECURE */
+
+
+int httpCPostWrapper(const char *url, const uint8_t *input, int inputLen, uint8_t *output, int outputLen, void *fetchCB) {
+    http_session_t handle;
+    http_resp_t *resp;
+    int readBytes = 0;
+	int rv = 0;
+    http_req_t req = {
+        .type = HTTP_POST,
+        .resource = url,
+        .version = HTTP_VER_1_1,
+        .content = input,
+        .content_len = inputLen,
+        .content_fetch_cb = fetchCB
+    };
+
+	rv = http_open_session(&handle, url, NULL);
+    if (rv != 0) {
+        APPLOGE("Open session failed: %s (%d)", url, rv);
+        return -1;
+    }
+
+    rv = http_prepare_req(handle, &req,
+                  STANDARD_HDR_FLAGS |
+                  HDR_ADD_CONN_KEEP_ALIVE);
+    if (rv != 0) {
+        APPLOGE("Prepare request failed: %d", rv);
+	    http_close_session(&handle);
+        return -2;
+    }
+
+    rv = http_send_request(handle, &req);
+    if (rv != 0) {
+        APPLOGE("Send request failed: %d", rv);
+	    http_close_session(&handle);
+        return -3;
+    }
+
+    rv = http_get_response_hdr(handle, &resp);
+    // APPLOG("%s : Status code: %d; chunked[%d] content_length[%d]\n [%s:%s] protocol[%s] [%s,%s]", url,
+    //  (resp)->status_code,
+    //  (resp)->chunked,
+    //  (resp)->content_length,
+    //  (resp)->content_type,
+    //  (resp)->content_encoding,
+    //  (resp)->protocol,
+    //  (resp)->reason_phrase,
+    //  (resp)->server
+    //  );
+
+    while (1) {
+        rv = http_read_content(handle, output, outputLen);
+        if (rv == 0 || rv < 0) {
+            break;
+        }
+        readBytes += rv;
+    }
+    if (rv != 0) {
+        APPLOGE("Get resp header failed: %d", rv);
+	    http_close_session(&handle);
+        return -4;
+    }
+
+    http_close_session(&handle);
+
+    return readBytes;
+}

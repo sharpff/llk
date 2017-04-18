@@ -137,7 +137,7 @@ static int _http_raw_recv(session_t *s, char *buf, int maxlen,
 	APPASSERT(maxlen != 0);
 
 	int rv;
-	unsigned int ceiling = halGetTimeStamp() + 1;
+	unsigned int ceiling = halGetTimeStamp() + 10;
 
 	while (1) {
 #ifdef CONFIG_ENABLE_HTTPC_SECURE
@@ -484,7 +484,7 @@ static inline int tcp_connect(int *sockfd,
 {
 	struct sockaddr addr;
 	struct sockaddr_in *tmpAddr = NULL;
-	int8_t *s_ip = NULL;
+	uint8_t *s_ip = NULL;
 	int r = tcp_socket(sockfd, &addr, hostname, port,
 			 retry_cnt, socket_timeout);
 	if (r != WM_SUCCESS) {

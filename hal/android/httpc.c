@@ -484,7 +484,7 @@ static inline int tcp_connect(int *sockfd,
 {
 	struct sockaddr addr;
 	struct sockaddr_in *tmpAddr = NULL;
-	int8_t *s_ip = NULL;
+	uint8_t *s_ip = NULL;
 	int r = tcp_socket(sockfd, &addr, hostname, port,
 			 retry_cnt, socket_timeout);
 	if (r != WM_SUCCESS) {
