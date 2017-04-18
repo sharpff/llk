@@ -2551,7 +2551,7 @@ int httpCPost(const char *url, const char *pbIn, int pbInLen, char *payloadOut, 
     if (pbIn && pbInLen > 0) {
         APPLOG("Data to post: %s", pbIn);
         dataEncLen = sizeof(CommonHeader) + ENC_SIZE(AES_LEN, sizeof(CmdHeader) + 1) + ENC_SIZE(AES_LEN, sizeof(PayloadHeader) + pbInLen + 1);
-        dataEnc = halMalloc(dataEncLen);
+        dataEnc = halCalloc(1, dataEncLen);
         APPLOG("aaaaaaaaa to post: %s", pbIn);
         cmdInfo.status = 0;
         cmdInfo.cmdId = LELINK_CMD_SERVICE_REQ; 
@@ -2569,7 +2569,7 @@ int httpCPost(const char *url, const char *pbIn, int pbInLen, char *payloadOut, 
         // cmdInfo.subCmdId = LELINK_SUBCMD_SERVICE_REQ;
         // payloadLen = sizeof(PayloadHeader) + pbInLen;
         // encPayloadLen = ENC_SIZE(AES_LEN, payloadLen + 1);
-        // encPayload = halMalloc(encPayloadLen);
+        // encPayload = halCalloc(1, encPayloadLen);
         // PACK_GEN_PAYLOAD(encPayload, cmdInfo.subCmdId, encPayload, pbInLen);
         // APPLOG("encPayloadLen [%d]", encPayloadLen);
 
@@ -2603,7 +2603,7 @@ int httpCPost(const char *url, const char *pbIn, int pbInLen, char *payloadOut, 
         // getTerminalUUID(cmdInfo.uuid, MAX_UUID);
 
         // dataEncLen = sizeof(CommonHeader) + ENC_SIZE(AES_LEN, sizeof(CmdHeader) + payloadLen + 1);
-        // dataEnc = halMalloc(dataEncLen);
+        // dataEnc = halCalloc(1, dataEncLen);
         // PACK_GEN_CMD_HEADER(&dataEnc[sizeof(CommonHeader)], (&cmdInfo), &dataEnc[sizeof(CmdHeader)], payloadLen, cmdInfo.uuid);
         // LELOG("cmdId[%d] subCmdId[%d] seqId[%d] randID[%04x]", (((CmdHeader *)(cmdHeader))dataEnc)->cmdId, (((CmdHeader *)(cmdHeader))dataEnc)->subCmdId, (((CmdHeader *)(cmdHeader))dataEnc)->seqId, (((CmdHeader *)(cmdHeader))dataEnc)->randID);
 
@@ -2634,7 +2634,7 @@ int httpCPost(const char *url, const char *pbIn, int pbInLen, char *payloadOut, 
     // total decrypt
     memset(&cmdInfo, 0 ,sizeof(cmdInfo));
     dataDecLen = readBytes;
-    dataDec = halMalloc(dataDecLen);
+    dataDec = halCalloc(1, dataDecLen);
     if (0 > (ret = doUnpack(NULL, (uint8_t *)payloadOut, readBytes, dataDec, dataDecLen, &cmdInfo, NULL))) {
         LELOGE("doUnpack [%d] ", ret);
         ret = -4;

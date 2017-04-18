@@ -137,7 +137,7 @@ static int _http_raw_recv(session_t *s, char *buf, int maxlen,
 	APPASSERT(maxlen != 0);
 
 	int rv;
-	unsigned int ceiling = halGetTimeStamp() + 1;
+	unsigned int ceiling = halGetTimeStamp() + 10;
 
 	while (1) {
 #ifdef CONFIG_ENABLE_HTTPC_SECURE

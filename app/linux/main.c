@@ -231,11 +231,13 @@ redo:
         }break;
     case 'p': {
             int status = -1;
-            const char *url = "http://bus.dev.leinlife.com/letv_udp_terminal/rest/test";
-            const char *payloadIn = "{\"status\":\"aaa\"}";
+            // const char *url = "http://bus.dev.leinlife.com/letv_udp_terminal/rest/test";
+            const char *url = "http://bus.dev.leinlife.com/letv_udp_terminal/devices/camera/communicate";
+            const char *payloadIn1 = "{\"service\":{\"deviceTaskId\":\"1234\",\"serviceType\":\"2\",\"action\":\"1\"}}";
+            const char *payloadIn2 = "{\"service\":{\"deviceTaskId\":\"1235\",\"serviceType\":\"2\",\"action\":\"2\",\"taskId\":\"5\",\"s3Url\":\"s3s.lecloud.com/newbucket3/test1.s3\"}}";
             char payloadOut[MAX_BUF] = {0};
             APPLOG("=======> handle start");
-            status = httpCPost(url, payloadIn, strlen(payloadIn), payloadOut, sizeof(payloadOut), NULL);
+            status = httpCPost(url, payloadIn2, strlen(payloadIn2), payloadOut, sizeof(payloadOut), NULL);
             APPLOG("<======= handle [%d] end", status);
             counts = 0;
         }break;
