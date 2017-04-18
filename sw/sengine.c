@@ -1971,7 +1971,7 @@ int senginePollingSlave(void) {
                             break;
                         }
                         len = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-                            datas.arrDatas, currLen, (uint8_t *)status, sizeof(status));
+                            &bin[appendLen], currLen, (uint8_t *)status, sizeof(status));
                         if (0 >= len) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                             break;

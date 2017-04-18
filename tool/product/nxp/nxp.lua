@@ -245,9 +245,9 @@ function s1OptDoSplit(data)
 	return string.len( strDataCountLen ), strDataCountLen, string.len( data ), data
 end
 
-function s1OptMergeCurrStatus2Action(action, currStatus)
-	return string.len(action), action
-end
+-- function s1OptMergeCurrStatus2Action(action, currStatus)
+-- 	return string.len(action), action
+-- end
 
 --[[ EXTERNAL
 	s1GetValidKind
