@@ -75,6 +75,7 @@ void halFreeEx(void *ptr, const char *filename, uint32_t line) {
 #endif
 
 int halReboot() {
+    exit(-1);
     return 0;
 }
 

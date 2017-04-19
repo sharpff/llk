@@ -2395,6 +2395,9 @@ static int cbAsyncOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *
         otaInfoClean();
     }
 
+    if (0 > ret) {
+        halReboot();
+    }
     LELOG("cbAsyncOTALocalReq -e");
     return (ret > 0) ? 0 : ret;
 }
