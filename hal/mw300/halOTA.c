@@ -84,12 +84,12 @@ int halUpdateFirmware(OTAInfo_t *info) {
     #ifdef LELINK_OTA_VERIFICATION
     ret = lelinkVerify(p->start, info->imgLen);
     #else
-    update_complete();
-    return 0;
+    ret = 0;
     #endif
     APPLOG("halUpdateFirmware lelinkVerify[%d]", ret);
     if (0 == ret) {
         update_complete();
+        halReboot();
     } else {
         update_abort();
         return -3;
