@@ -18,8 +18,8 @@ $MAIN_PATH/lelinkTool.py \
 # 配置wifi网络
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid ff \
-    --passwd fengfeng2qiqi \
+    --ssid LLGD \
+    --passwd 12345678 \
     -o ./0x1c8000.bin
 
 # 合并配置数据

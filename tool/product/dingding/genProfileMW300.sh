@@ -27,6 +27,8 @@ $MAIN_PATH/lelinkTool.py \
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
     --wmode mon \
+    --ssid LLGD \
+    --passwd 12345678 \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \

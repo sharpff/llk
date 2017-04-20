@@ -181,6 +181,10 @@ static int cbCloudMsgCtrlC2RConfirmShareLocalReq(void *ctx, const CmdHeaderInfo*
 static void cbCloudMsgCtrlC2RConfirmShareRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudMsgCtrlR2TConfirmShareRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudMsgCtrlR2TConfirmShareLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
+static int cbCloudMsgCtrlC2RSyncSlaveLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen);
+static void cbCloudMsgCtrlC2RSyncSlaveRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlR2TSyncSlaveRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
+static int cbCloudMsgCtrlR2TSyncSlaveLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
 
 static int cbCloudIndOTARemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen);
 static int cbCloudIndOTALocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen);
@@ -285,6 +289,10 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_RSP, cbCloudMsgCtrlC2RConfirmShareRemoteRsp, NULL },
     { LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_REQ, NULL, cbCloudMsgCtrlR2TConfirmShareRemoteReq },
     { LELINK_CMD_CLOUD_MSG_CTRL_R2T_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_RSP, NULL, cbCloudMsgCtrlR2TConfirmShareLocalRsp },
+    { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_SYNC_SLAVE_REQ, cbCloudMsgCtrlC2RSyncSlaveLocalReq, NULL },
+    { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_SYNC_SLAVE_RSP, cbCloudMsgCtrlC2RSyncSlaveRemoteRsp, NULL },
+    { LELINK_CMD_CLOUD_MSG_CTRL_R2T_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_SYNC_SLAVE_REQ, NULL, cbCloudMsgCtrlR2TSyncSlaveRemoteReq },
+    { LELINK_CMD_CLOUD_MSG_CTRL_R2T_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_R2T_SYNC_SLAVE_RSP, NULL, cbCloudMsgCtrlR2TSyncSlaveLocalRsp },
     // STATUS CHAGNED ind from cloud
     { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_STATUS_REQ, NULL, cbCloudIndStatusRemoteReq },
     { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_STATUS_RSP, NULL, cbCloudIndStatusLocalRsp},
@@ -2297,6 +2305,52 @@ static int cbCloudMsgCtrlR2TConfirmShareLocalRsp(void *ctx, const CmdHeaderInfo*
     LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -s");
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, NULL, 0, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TConfirmShareLocalRsp -e");
+
+    return ret;
+}
+
+static int cbCloudMsgCtrlC2RSyncSlaveLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *dataOut, int dataLen) {
+    int ret = 0;
+    char buf[MAX_BUF] = {0};
+
+    LELOG("cbCloudMsgCtrlC2RSyncSlaveLocalReq -s");
+    ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)buf, sizeof(buf));
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)buf, ret, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlC2RSyncSlaveLocalReq -e");
+
+    return ret;
+}
+
+static void cbCloudMsgCtrlC2RSyncSlaveRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    LELOG("cbCloudMsgCtrlC2RSyncSlaveRemoteRsp -s");
+    if (0 < dataLen) {
+        LELOG("[%d][%s]", dataLen, (char *)dataIn);
+    }
+    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
+    LELOG("cbCloudMsgCtrlC2RSyncSlaveRemoteRsp -e");
+    return;
+}
+
+static int cbCloudMsgCtrlR2TSyncSlaveRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    LELOG("cbCloudMsgCtrlR2TSyncSlaveRemoteReq -s");
+    if (0 < dataLen) {
+        LELOG("[%d][%s]", dataLen, (char *)dataIn);
+    }
+    // halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
+    setTerminalAction(cmdInfo, (const char *)dataIn, dataLen);
+    LELOG("cbCloudMsgCtrlR2TSyncSlaveRemoteReq -e");
+    return 1;
+}
+
+static int cbCloudMsgCtrlR2TSyncSlaveLocalRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *data, int len, uint8_t *dataOut, int dataLen) {
+    int ret;
+    char buf[MAX_BUF] = {0};
+
+    LELOG("cbCloudMsgCtrlR2TSyncSlaveLocalRsp -s");
+    ret = halCBLocalRsp(ctx, cmdInfo, data, len, buf, sizeof(buf));
+    // senginePollingSlave(); TODO
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)buf, ret, dataOut, dataLen);
+    LELOG("cbCloudMsgCtrlR2TSyncSlaveLocalRsp -e");
 
     return ret;
 }

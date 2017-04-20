@@ -167,12 +167,13 @@ void native_sniffer_airconfig_processing(const wlan_frame_t *frame, const uint16
         // wmprintf("SSID: %s crc[0x%02x-0x%02x]\r\n", ginSsid, latest_ssid_crc8);
         #endif      
     } else  if (frame->frame_type == DATA){
+        int ret = 0;
         const uint8_t *tmp_dest;
         const uint8_t *tmp_src;
         const uint8_t *tmp_bssid;
-        static uint16_t base = 0;
-        static target_item_t item;
-        int i = 0;
+        // static uint16_t base = 0;
+        // static target_item_t item;
+        // int i = 0;
         tmp_dest = (uint8_t*)frame->frame_data.data_info.dest;
         tmp_bssid = (uint8_t*)frame->frame_data.data_info.bssid;
         tmp_src  = (uint8_t*)frame->frame_data.data_info.src; 
@@ -180,37 +181,8 @@ void native_sniffer_airconfig_processing(const wlan_frame_t *frame, const uint16
         if (!gin_airconfig_running)
             return;
 
-        if (!gin_airconfig_channel_locked)
-        {
 #if 0
-            wmprintf("********* Data Packet Info *********");
-            if (frame->frame_data.data_info.frame_ctrl_flags & 0x08)
-                wmprintf("\r\nThis is a retransmission\r\n");
-            wmprintf("\r\nType: 0x%x", frame->frame_type);
-            wmprintf("\r\nFrame Control flags: 0x%x",
-                frame->frame_data.data_info.frame_ctrl_flags);
-            wmprintf("\r\nBSSID: ");
-            print_mac(frame->frame_data.data_info.bssid);
-            wmprintf("\r\nSource: ");
-            print_mac(frame->frame_data.data_info.src);
-            wmprintf("\r\nDestination: ");
-            print_mac(frame->frame_data.data_info.dest);
-            wmprintf("\r\nSequence Number: %d",
-            wlan_get_seq_num(frame->frame_data.data_info.seq_frag_num));
-            wmprintf("\r\nFragmentation Number: %d",
-            wlan_get_frag_num(frame->frame_data.data_info.seq_frag_num));
-            wmprintf("\r\nQoS Control Flags: 0x%x",
-                frame->frame_data.data_info.qos_ctrl);
-            wmprintf("\r\n*******************************\r\n");
-
-            /**address#3 is is the destination address*/
-            tmp_dest = frame->frame_data.data_info.src;
-            /*address #2 is the source address*/
-            tmp_src  = frame->frame_data.data_info.bssid;
-
-#endif
-
-
+        if (!gin_airconfig_channel_locked) {
             // only multicast
             if (!(0x01 == tmp_dest[0] && 0x00 == tmp_dest[1] && 0x5E == tmp_dest[2])) {
                 // only broadcast
@@ -234,7 +206,6 @@ void native_sniffer_airconfig_processing(const wlan_frame_t *frame, const uint16
             //         len
             //     );
             // }
-
             item.data = len;
             memcpy(item.mac_src, tmp_src, sizeof(item.mac_src));
             memcpy(item.mac_dst, tmp_dest, sizeof(item.mac_dst));
@@ -265,6 +236,46 @@ void native_sniffer_airconfig_processing(const wlan_frame_t *frame, const uint16
                 gin_airconfig_sniffer_got = 1;
             }
         }
+#else
+        // only multicast
+        if (!(0x01 == tmp_dest[0] && 0x00 == tmp_dest[1] && 0x5E == tmp_dest[2])) {
+            return;
+        }
+        ret = airhug_feed_data(tmp_src, tmp_dest, tmp_bssid, len);
+        if(1 == ret) {
+            gin_airconfig_channel_locked = 1;
+        } else if (2 == ret) {
+            ap_passport_t passport;
+            APPLOG("airhug_get ...");
+            if(!airhug_get(passport.ssid, sizeof(passport.ssid), passport.psk, sizeof(passport.psk))) {
+                APPLOG("AIRHUG GET: '%s' '%s'", passport.ssid, passport.psk);
+                {
+                    int ret = 0;
+                    PrivateCfg cfg;
+                    lelinkStorageReadPrivateCfg(&cfg);
+                    APPLOG("read last ssid[%s], psk[%s], configStatus[%d]", 
+                            cfg.data.nwCfg.config.ssid,
+                            cfg.data.nwCfg.config.psk, 
+                            cfg.data.nwCfg.configStatus);
+                    strcpy(cfg.data.nwCfg.config.ssid, passport.ssid);
+                    cfg.data.nwCfg.config.ssid_len = strlen(passport.ssid);
+                    cfg.data.nwCfg.config.ssid[cfg.data.nwCfg.config.ssid_len] = '\0';
+                    strcpy(cfg.data.nwCfg.config.psk, passport.psk);
+                    cfg.data.nwCfg.config.psk_len = strlen(passport.psk);
+                    cfg.data.nwCfg.config.psk[cfg.data.nwCfg.config.psk_len] = '\0';
+                    cfg.data.nwCfg.configStatus = 1;
+                    ret = lelinkStorageWritePrivateCfg(&cfg);
+                    APPLOG("WRITEN config[%d] configStatus[%d]", ret, cfg.data.nwCfg.configStatus);
+                }
+                inner_set_ap_info(&passport);
+                gin_airconfig_sniffer_got = 1;
+            } else {
+                gin_airconfig_channel_locked = 0;
+                APPLOG("airhug_get() error!!!");
+            }
+            airhug_reset();
+        }
+#endif
     }
 }
 

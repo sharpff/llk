@@ -1718,7 +1718,7 @@ int sengineIs1Version() {
 }
 
 int sengineSetAction(const char *json, int jsonLen) {
-    int ret = 0, type, len, i, j, ret1;
+    int ret = 0, type, len, i, ret1;
     uint8_t bin[512] = {0};
     static char jsonMerged[2*MAX_BUF] = {0};
     memset(jsonMerged, 0, sizeof(jsonMerged));
@@ -1778,30 +1778,21 @@ int sengineSetAction(const char *json, int jsonLen) {
                 continue;
             }
         } else {
+            LELOG("ioWrite ret[%d]", ret);
             for ( i=0; i<ret; ) {
                 type = bin[i];
                 len = bin[i+1];
-                for (j = 0; j < ioGetHdlCounts(); j++) {
-                    if (type == ioHdl[j].ioType) {
-                        if (NULL == ioHdl[j].hdl) {
-                            LELOGW("ioWrite type[0x%x] hdl is NULL", ioHdl[x].ioType);
-                        } else {
-                            ret1 = ioWrite(ioHdl[j].ioType, ioHdl[j].hdl, &bin[i+2], len);
-                            // LELOG("ioWrite data[0x%x] len[%d]", bin[2], len);
-                            if (ret1 <= 0) {
-                                LELOGW("sengineSetStatus ioWrite2.0 [%d]", ret);
-                            }
-                        }
-                        i = i+len+2;
-                        if(i < ret) {
-                            // uint8_t bin[MAX_BUF] = {0};
-                            halDelayms(100);
-                            // ioRead(ioHdl[j].ioType, ioHdl[j].hdl, bin, sizeof(bin));
-                        }
-                        break;
-                     }
+                if (type == ioHdl[x].ioType) {
+                    ret1 = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &bin[i+2], len);
+                    LELOG("ioWrite data[0x%x] len[%d]", bin[2], len);
+                    if (ret1 <= 0) {
+                        LELOGW("sengineSetStatus ioWrite2.0 [%d]", ret);
+                    }
+                    i = i+len+2;
+                    if (i < ret) {
+                        halDelayms(100);
+                    }
                 }
-                // LELOGW("ioWrite next i = [%d] [%d]", i, ret);
             }
         }
     FOR_EACH_IO_HDL_END;
@@ -1887,9 +1878,8 @@ static void sengineIODataHandler(const char *status, int len, int isSDEV) {
     }
 }
 
-int senginePollingSlave(void) {
+int sengineReadSlave(char *dataOut, int dataOutLen) {
     Datas datas = {0};
-    char status[MAX_BUF] = {0};
     uint8_t bin[MAX_BUF] = {0};
     uint16_t currLen = 0, appendLen = 0;
     int whatKind = WHATKIND_MAIN_DEV_DATA, ret = 0, size = 0, i;
@@ -1947,14 +1937,17 @@ int senginePollingSlave(void) {
                         extern int lelinkNwPostCmdExt(const void *node);
                         int len = 0;
                         len = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-                                &bin[appendLen], currLen, (uint8_t *)status, sizeof(status));
+                                &bin[appendLen], currLen, (uint8_t *)dataOut, dataOutLen);
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else {
-                            sengineIODataHandler(status, len, 0);
+                            sengineIODataHandler(dataOut, len, 0);
                         }
                     }
                     break;
+                case WHATKIND_MAIN_DEV_SYNC_SLAVE: {
+
+                    }break;
                 // for sub devs
                 case WHATKIND_SUB_DEV_RESET: {
                         LELOG("WHATKIND_SUB_DEV_RESET");
@@ -1971,7 +1964,7 @@ int senginePollingSlave(void) {
                             break;
                         }
                         len = sengineCall(1, (const char *)ginScriptCfg->data.script, ginScriptCfg->data.size, S1_PRI2STD,
-                            &bin[appendLen], currLen, (uint8_t *)status, sizeof(status));
+                            &bin[appendLen], currLen, (uint8_t *)dataOut, dataOutLen);
                         if (0 >= len) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                             break;
@@ -1979,19 +1972,19 @@ int senginePollingSlave(void) {
 
                         if (WHATKIND_SUB_DEV_JOIN == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_JOIN");
-                            if (0 > sdevInsert(tmpArr, status, len)) {
+                            if (0 > sdevInsert(tmpArr, dataOut, len)) {
                                 LELOGE("sdevInsert is FAILED");
                                 break;
                             }
                         } else if (WHATKIND_SUB_DEV_INFO == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_INFO");
-                            sdevInfoRsp(tmpArr, status, len);
+                            sdevInfoRsp(tmpArr, dataOut, len);
                         } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_DATA");
-                            sengineIODataHandler(status, len, 1);
+                            sengineIODataHandler(dataOut, len, 1);
                         } else if (WHATKIND_SUB_DEV_LEAVE == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_LEAVE");
-                            sdevRemove(tmpArr, status, len);
+                            sdevRemove(tmpArr, dataOut, len);
                         }
                     }
                     break;
@@ -2004,7 +1997,13 @@ int senginePollingSlave(void) {
             //LEPRINTF("\r\n");
         }
     FOR_EACH_IO_HDL_END;
-    
+
+    return 0;
+}
+
+int senginePollingSlave(void) {
+    char data[MAX_BUF] = {0};
+    sengineReadSlave(data, sizeof(data));
     return 0;
 }
 /*

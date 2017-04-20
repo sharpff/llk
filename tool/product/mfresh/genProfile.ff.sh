@@ -19,7 +19,7 @@ $MAIN_PATH/lelinkTool.py \
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid ff \
+    --ssid LLGD \
     --passwd 12345678 \
     -o ./0x1c8000.bin
 

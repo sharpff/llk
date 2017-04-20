@@ -9,13 +9,13 @@ $MAIN_PATH/lelinkTool.py \
     -o ./0x1c2000.bin
 
 $MAIN_PATH/lelinkTool.py \
-    -t ./dingding.lua \
+    -t ./dingdingMT7687.lua \
     -o ./0x1c3000.bin
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid ff \
-    --passwd fengfeng2qiqi \
+    --ssid LLGD \
+    --passwd 12345678 \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \

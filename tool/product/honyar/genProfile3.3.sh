@@ -14,13 +14,14 @@ $MAIN_PATH/lelinkTool.py \
 
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
-    --ssid ff \
-    --passwd fengfeng2qiqi \
+    --ssid LLGD \
+    --passwd 12345678 \
     -o ./0x1c8000.bin
 
 $MAIN_PATH/lelinkTool.py \
     ./0x1c2000.bin 0x1000 \
     ./0x1c3000.bin 0x5000 \
+    ./0x1c8000.bin 0x1000 \
     -o ./cust.bin
 
 $MAIN_PATH/lelinkTool.py \

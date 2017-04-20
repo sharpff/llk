@@ -237,10 +237,25 @@ redo:
             const char *payloadIn2 = "{\"service\":{\"deviceTaskId\":\"1235\",\"serviceType\":\"2\",\"action\":\"2\",\"taskId\":\"5\",\"s3Url\":\"s3s.lecloud.com/newbucket3/test1.s3\"}}";
             char payloadOut[MAX_BUF] = {0};
             APPLOG("=======> handle start");
-            status = httpCPost(url, payloadIn2, strlen(payloadIn2), payloadOut, sizeof(payloadOut), NULL);
+            status = httpCPost(url, payloadIn1, strlen(payloadIn1), payloadOut, sizeof(payloadOut), NULL);
             APPLOG("<======= handle [%d] end", status);
             counts = 0;
         }break;
+    case 'a': {
+            // set peer token
+            if (!node.uuid[0]) {
+                uint8_t peerToken[AES_LEN] = {0};
+                // set peer token
+                if (ginBeCtrlToken[0]) {
+                    memcpy(peerToken, ginBeCtrlToken, AES_LEN);
+                }
+                memcpy(node.token, peerToken, sizeof(node.token)); 
+            }
+            node.cmdId = LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ;
+            node.subCmdId = LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_SYNC_SLAVE_REQ;
+            memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
+        }
+        break;
     }
     
     // MUTEX_LOCK;
