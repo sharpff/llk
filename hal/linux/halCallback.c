@@ -90,27 +90,28 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 // sizeOTA = strlen(ginOTAUrl + RSA_LEN) + RSA_LEN;
 
                 // type = OTA_TYPE_FW;
-                // type = OTA_TYPE_FW_SCRIPT;
+                type = OTA_TYPE_FW_SCRIPT;
                 // type = OTA_TYPE_IA_SCRIPT;
                 // type = OTA_TYPE_AUTH;
                 // type = OTA_TYPE_PRIVATE;
                 // type = OTA_TYPE_SDEVINFO;
                 // type = OTA_TYPE_SDEVFW;
-                type = 31;
+                // type = 31;
                 
                 switch (type) {
                     case OTA_TYPE_FW: {
-                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/lecamera", type, 35);
+                        // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/lecamera", type, 35);
                         // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo_6-2.0.git.010.28.ga9e9bf8.1.bin", type, 35);
                         // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/n9.bin", type, 35);
                         // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mico_app.bin", type, 35);
-                        // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mt7687_fota_le_demo.bin", type, 35);
+                        sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/mt7687_fota_le_demo.bin", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/le_demo.bin", type, 35);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/fei/le_demo.bin", type, 35);
                     } break;
                     case OTA_TYPE_FW_SCRIPT: {
-                            sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/nxp.bin", type, 35);
-                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/9188L.lua", type, 0);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/nxp.bin", type, 35);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/9188L.lua", type, 1);
+                            sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/9188LNew.lua", type, 1);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/lbest.lua", type, 0);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/nxp.bin", type, 0);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/kfr.lua", type, 35);
@@ -175,6 +176,9 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 const char *confirmMgs = "{\"account\":\"user1\",\"uuid\":\"10000100051000310024223456abcdef\",\"accepted\":1}";
                 ret = len < strlen(confirmMgs) ? len : strlen(confirmMgs);
                 memcpy(data, confirmMgs, ret);
+            } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_SYNC_SLAVE_REQ == cmdInfo->subCmdId) {
+                const char *test = "{\"test\":\"abc\"}";
+                memcpy(data, test, strlen(test));                
             }
         }break;
         case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {
