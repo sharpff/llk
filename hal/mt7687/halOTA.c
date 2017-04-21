@@ -216,6 +216,7 @@ int halUpdateFirmware(OTAInfo_t *info) {
 	buf = NULL;
 
     #ifdef LELINK_OTA_VERIFICATION
+	// ret = lelinkVerify(FOTA_PARITION_TMP, info->imgLen);
     ret = lelinkVerify(CM4_FLASH_TMP_ADDR, info->imgLen);
     #else
     ret = 0;
