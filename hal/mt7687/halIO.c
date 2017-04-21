@@ -587,7 +587,7 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
 	if (ret < HAL_FLASH_STATUS_OK)
       	return ret;
 	else
-		return 0;
+		return len;
 }
 
 void halCommonInit(commonManager_t* dev) {
