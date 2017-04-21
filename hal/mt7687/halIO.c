@@ -584,12 +584,10 @@ int halFlashRead(void *dev, uint8_t *data, int len, uint32_t startAddr, int32_t 
 
     ret = hal_flash_read(startAddr + offsetToBegin, data, len);
 
-    if (ret < HAL_FLASH_STATUS_OK){
-        APPLOGE("halFlashRead [%d]", ret);
-        return ret;
-    }
-    else
-      return len;
+	if (ret < HAL_FLASH_STATUS_OK)
+      	return ret;
+	else
+		return len;
 }
 
 void halCommonInit(commonManager_t* dev) {
