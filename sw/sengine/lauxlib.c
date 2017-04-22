@@ -949,13 +949,13 @@ static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
           // for fw script(script1)
           if (1 == ctx->sType) {
             if (used > (halGetSReservedHeap() + ctx->sBasicSize)) {
-            // LELOG("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 used[%d] basic[%d]", used, ctx->sBasicSize);
+            // LELOGW("s1 auto release used[%d] basic[%d]", used, ctx->sBasicSize);
               return NULL;
             }
           // for ia script(script2)
           } else {
             if (used > ctx->sBasicSize) {
-            // LELOG("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb used[%d] basic[%d]", used, ctx->sBasicSize);
+              LELOGE("S2 no memory used[%d] basic[%d]", used, ctx->sBasicSize);
               return NULL;
             }
           }
