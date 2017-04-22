@@ -392,14 +392,14 @@ static int isRetryPackage(const void *cmdInfo) {
     return ret;
 }
 
-void setTerminalAction(const void *cmdInfo, const char *status, int len) {
+int setTerminalAction(const void *cmdInfo, const char *status, int len) {
     char val[MAX_BUF] = {0};
     int ret = 0, ret1;
     
     if (!isRetryPackage(cmdInfo)) {
     // cloud logical(push)
         if (0 >= (ret = getCtrlData(status, len, JSON_NAME_CTRL, val, sizeof(val)))) {
-            LELOG("setTerminalAction--cloud [%d][%s]", len, status);
+            LELOG("setTerminalAction-- cloud [%d][%s]", len, status);
             cloudMsgHandler(status, len);
         } else {
             len = ret;
@@ -408,10 +408,10 @@ void setTerminalAction(const void *cmdInfo, const char *status, int len) {
 
         // local logical
             ret1 = localActionHandler(val, len);
-            LELOG("setTerminalAction[%s]-- slave[%d] local[%d]", val, ret, ret1);
+            LELOG("localActionHandler got[%s]-- slave ret[%d] local ret[%d]", val, ret, ret1);
         }
     }
-
+    return ret;
 }
 
 int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData) {

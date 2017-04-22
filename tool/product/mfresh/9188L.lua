@@ -105,43 +105,34 @@ end
 
 -- {0x42,0x00,0x0D,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xCB}
 -- {0x42,0x00,0x0E,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x05,0x01,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xCD}
--- function s1apiGetDevStatus( ... )
--- 	local status = '{"pwr":0, "envtemp":21, "humidity":14, "indoor_pm25":36, "mode":2, "used":3409}'
--- 	return string.len(status), status
--- end
+function s1apiGetDevStatus( ... )
+	local status = '{"pwr":0, "envtemp":21, "humidity":14, "indoor_pm25":36, "mode":2, "used":3409}'
+	return string.len(status), status
+end
 
--- function s1apiGetCurrCvtType( ... )
--- 	return 1
--- end
+function s1apiGetCurrCvtType( ... )
+	return 1
+end
 
 function genPriDataFormat(items, ioType)
     local r = {}
     local k = 1
 	for i = 1, #items do
-		r[k] = ioType -- io type
-		k = k + 1
-		r[k] = #items[i] -- current item len
-		k = k + 1
+		r[#r+1] = ioType -- io type
+		r[#r+1] = #items[i] -- current item len
 
 		-- -- CUST YOUR CONFIG START
-		-- r[k] = 0x05 -- ack wait ms (little-endian L)
-		-- k = k + 1
-		-- r[k] = 0x00 -- ack wait ms (little-endian H)
-		-- k = k + 1
-		-- r[k] = 0x30 -- write delay ms (little-endian L)
-		-- k = k + 1
-		-- r[k] = 0x00 -- write delay ms (little-endian H)
-		-- k = k + 1
-		-- r[k] = 0x00 -- reserved
-		-- k = k + 1
-		-- r[k] = 0x00 -- reserved
-		-- k = k + 1
+		r[#r+1] = 0x05 -- ack wait ms (little-endian L)
+		r[#r+1] = 0x00 -- ack wait ms (little-endian H)
+		r[#r+1] = 0x30 -- write delay ms (little-endian L)
+		r[#r+1] = 0x00 -- write delay ms (little-endian H)
+		r[#r+1] = 0x00 -- reserved
+		r[#r+1] = 0x00 -- reserved
 		-- -- CUST YOUR CONFIG END
 
 		for j = 1, #items[i] do
-			r[k] = items[i][j]
-			-- print(string.format('%02x \r\n', items[i][j]))
-			k = k + 1
+			r[#r+1] = items[i][j]
+			-- print(string.format('%02x \r\n', r[#r]))
 		end
 	end
     return r
@@ -150,7 +141,6 @@ end
 function s1CvtStd2Pri(json)
     local sum = 0
     local count = 0
-    -- local offset = 0
     local item = 1
     local ctrl = cjson.decode(json)
     local cvtType = s1apiGetCurrCvtType()
@@ -163,15 +153,11 @@ function s1CvtStd2Pri(json)
         local speed = ctrl["speed"]
 		if pwr == 0 then
 			cmdtb[item][4] = 0x30
-			-- print('mmmmmmmmmmmm6\r\n')
 		else
 			local tb = cjson.decode(currStatus)
 			local pwr_old = tb["pwr"]
 		
-			-- print(string.format('====> %d %d\r\n', pwr_old, speed))
 			if pwr_old == 0 and speed ~= nil and speed ~= 6 then
-				-- offset = 25
-				-- print('mmmmmmmmmmmm4\r\n')
 				item = 2
 			end
 		end
@@ -202,26 +188,10 @@ function s1CvtStd2Pri(json)
 		end
 		local ospm2 = ctrl["outdoor_pm25"]
 		if ospm2 ~= nil then
-			-- for i=1, #cmdtb do
-			-- 	cmdtb[i] = cmdtb[i]
-			-- end
 			cmdtb[item][3] = 0x0E
 			cmdtb[item][15] = ospm2 & 0xff
 			cmdtb[item][16] = (ospm2 >> 8) & 0xff
 		end
-		-- if offset == 0 then
-		-- 	for i = 3, #cmdtb - 28 do
-		-- 		sum = sum + cmdtb[i]
-		-- 	end
-		-- 	cmdtb[27] = sum & 0xff
-		-- 	count = 27
-		-- else
-		-- 	for i = 30, #cmdtb - 1 do
-		-- 		sum = sum + cmdtb[i]
-		-- 	end
-		-- 	cmdtb[54] = sum & 0xff
-		-- 	count = 54
-		--    end
 	 	for j = 1, item do
 	 		sum = 0
 			for i = 1, #cmdtb[j] - 1 do
@@ -236,10 +206,6 @@ function s1CvtStd2Pri(json)
 			tmp = cmdtb
 		end
 		cmdtb = genPriDataFormat(tmp, cvtType)
-		-- for l = 1, #cmdtb do
-			-- a[l] = a[l]
-			-- print(string.format('aa %02x \r\n', a[l]))
-		-- end
 	end
     LOGTBL(cmdtb)
     local cmd = tableToString(cmdtb)

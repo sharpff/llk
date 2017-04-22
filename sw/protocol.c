@@ -2323,22 +2323,27 @@ static int cbCloudMsgCtrlC2RSyncSlaveLocalReq(void *ctx, const CmdHeaderInfo* cm
 
 static void cbCloudMsgCtrlC2RSyncSlaveRemoteRsp(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
     LELOG("cbCloudMsgCtrlC2RSyncSlaveRemoteRsp -s");
+    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     if (0 < dataLen) {
         LELOG("[%d][%s]", dataLen, (char *)dataIn);
     }
-    halCBRemoteRsp(ctx, cmdInfo, dataIn, dataLen);
     LELOG("cbCloudMsgCtrlC2RSyncSlaveRemoteRsp -e");
     return;
 }
 
 static int cbCloudMsgCtrlR2TSyncSlaveRemoteReq(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dataIn, int dataLen) {
+    int ret = 0;
     LELOG("cbCloudMsgCtrlR2TSyncSlaveRemoteReq -s");
     if (0 < dataLen) {
         LELOG("[%d][%s]", dataLen, (char *)dataIn);
     }
     // halCBRemoteReq(ctx, cmdInfo, dataIn, dataLen);
-    setTerminalAction(cmdInfo, (const char *)dataIn, dataLen);
-    LELOG("cbCloudMsgCtrlR2TSyncSlaveRemoteReq -e");
+    ret = setTerminalAction(cmdInfo, (const char *)dataIn, dataLen);
+    if (0 < ret) {
+        halDelayms(ret > LELINK_FREQUENCY*1000 ? LELINK_FREQUENCY*1000 : ret);
+    }
+    LELOG("cbCloudMsgCtrlR2TSyncSlaveRemoteReq [%d] -e", ret);
+
     return 1;
 }
 
@@ -2347,8 +2352,9 @@ static int cbCloudMsgCtrlR2TSyncSlaveLocalRsp(void *ctx, const CmdHeaderInfo* cm
     char buf[MAX_BUF] = {0};
 
     LELOG("cbCloudMsgCtrlR2TSyncSlaveLocalRsp -s");
-    ret = halCBLocalRsp(ctx, cmdInfo, data, len, buf, sizeof(buf));
-    // senginePollingSlave(); TODO
+    // ret = halCBLocalRsp(ctx, cmdInfo, data, len, buf, sizeof(buf));
+    ret = sengineReadSlave(buf, sizeof(buf));
+    LELOG("[%d][%s]", ret, (char *)buf);
     ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)buf, ret, dataOut, dataLen);
     LELOG("cbCloudMsgCtrlR2TSyncSlaveLocalRsp -e");
 

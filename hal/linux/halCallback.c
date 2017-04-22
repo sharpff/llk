@@ -110,8 +110,8 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                     } break;
                     case OTA_TYPE_FW_SCRIPT: {
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/nxp.bin", type, 35);
-                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/9188L.lua", type, 1);
-                            sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/9188LNew.lua", type, 1);
+                            // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/9188LOld.lua", type, 1);
+                            sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/9188L.lua", type, 1);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/lbest.lua", type, 0);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/nxp.bin", type, 0);
                             // sprintf(ginOTAUrl, "{\"url\":\"%s\",\"type\":%d,\"force\":%d}", "http://115.182.63.167/feng/kfr.lua", type, 35);
@@ -177,8 +177,13 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
                 ret = len < strlen(confirmMgs) ? len : strlen(confirmMgs);
                 memcpy(data, confirmMgs, ret);
             } else if (LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_SYNC_SLAVE_REQ == cmdInfo->subCmdId) {
-                const char *test = "{\"test\":\"abc\"}";
-                memcpy(data, test, strlen(test));                
+                if (a) {
+                    strcpy(cmdCtrl, cmd1);
+                } else {
+                    strcpy(cmdCtrl, cmd2);
+                }
+                ret = strlen(cmdCtrl);
+                memcpy(data, cmdCtrl, ret);
             }
         }break;
         case LELINK_CMD_CLOUD_HEARTBEAT_REQ: {

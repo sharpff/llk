@@ -1720,6 +1720,7 @@ int sengineIs1Version() {
 int sengineSetAction(const char *json, int jsonLen) {
     int ret = 0, type, len, i, ret1;
     uint8_t bin[512] = {0};
+    uint16_t totalWaitMS = 0, totalWriteMS = 0;
     static char jsonMerged[2*MAX_BUF] = {0};
     memset(jsonMerged, 0, sizeof(jsonMerged));
     // char *jsonOut = json;
@@ -1739,6 +1740,7 @@ int sengineSetAction(const char *json, int jsonLen) {
     //         continue;
     //     }
 
+    LELOG("sengineSetAction -s");
     FOR_EACH_IO_HDL_START;
         memcpy(jsonMerged, json, jsonLen);
         jsonMerged[jsonLen] = 0;
@@ -1778,26 +1780,44 @@ int sengineSetAction(const char *json, int jsonLen) {
                 continue;
             }
         } else {
+            uint16_t waitMS = 0;
+            uint16_t writeDelayMS = 0;
+            int ioHeaderSize = 8;
             LELOG("ioWrite ret[%d]", ret);
             for ( i=0; i<ret; ) {
                 type = bin[i];
                 len = bin[i+1];
+                memcpy(&waitMS, &bin[i+2], 2);
+                memcpy(&writeDelayMS, &bin[i+4], 2);
                 if (type == ioHdl[x].ioType) {
-                    ret1 = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &bin[i+2], len);
-                    LELOG("ioWrite data[0x%x] len[%d]", bin[2], len);
+                    ret1 = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &bin[i+ioHeaderSize], len);
+                    LELOG("ioWrite waitMS[%d], writeDelayMS[%d], data[0x%x], len[%d]", 
+                        waitMS, writeDelayMS, bin[ioHeaderSize], len);
                     if (ret1 <= 0) {
                         LELOGW("sengineSetStatus ioWrite2.0 [%d]", ret);
                     }
-                    i = i+len+2;
+                    i = i+len+ioHeaderSize;
                     if (i < ret) {
-                        halDelayms(100);
+                        halDelayms(writeDelayMS);
                     }
                 }
+                if (waitMS > totalWaitMS) {
+                    totalWaitMS = waitMS;
+                }
+                totalWriteMS += writeDelayMS;
+                LELOG("ioWrite waitMS[%d], writeDelayMS[%d]", waitMS, writeDelayMS);
             }
         }
     FOR_EACH_IO_HDL_END;
 
-    return ret;
+    LELOG("totalWriteMS[%d] totalWaitMS[%d]", totalWriteMS, totalWaitMS);
+    if (totalWaitMS > totalWriteMS) {
+        totalWaitMS -= totalWriteMS;
+    } else {
+        totalWaitMS = 0;
+    }
+    LELOG("sengineSetAction -e");
+    return totalWaitMS;
 }
 
 int sengineGetStatusVal(char *status, int len) {
@@ -1882,7 +1902,7 @@ int sengineReadSlave(char *dataOut, int dataOutLen) {
     Datas datas = {0};
     uint8_t bin[MAX_BUF] = {0};
     uint16_t currLen = 0, appendLen = 0;
-    int whatKind = WHATKIND_MAIN_DEV_DATA, ret = 0, size = 0, i;
+    int whatKind = WHATKIND_MAIN_DEV_DATA, ret = 0, size = 0, i, ret1 = 0;
 
     FOR_EACH_IO_HDL_START;
         currLen = 0;
@@ -1941,6 +1961,7 @@ int sengineReadSlave(char *dataOut, int dataOutLen) {
                         if (len <= 0) {
                             LELOGW("senginePollingSlave sengineCall("S1_PRI2STD") [%d]", len);
                         } else {
+                            ret1 = len;
                             sengineIODataHandler(dataOut, len, 0);
                         }
                     }
@@ -1998,7 +2019,7 @@ int sengineReadSlave(char *dataOut, int dataOutLen) {
         }
     FOR_EACH_IO_HDL_END;
 
-    return 0;
+    return ret1;
 }
 
 int senginePollingSlave(void) {

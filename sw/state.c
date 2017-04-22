@@ -69,7 +69,6 @@
 #define WIFI_CFG_BY_MONITOR_TIME    (60 * 3)
 #define WIFI_CFG_BY_SOFTAP_TIME     (60 * 3)
 #define HEATBEAT_FREQUENCY          (12)
-#define LELINK_FREQUENCY            (5)
 static uint8_t wifiConfigByMonitor = 0;
 // static uint32_t wifiConfigTime = 0;
 static uint32_t wifiConfigTimeout = 0;

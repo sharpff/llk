@@ -28,7 +28,7 @@ void getOriRemoteServer(char *ip, int len, uint16_t *port);
 
 uint16_t getProtocolVer();
 int getVer(char *fwVer, int size);
-void setTerminalAction(const void *cmdInfo, const char *status, int len);
+int setTerminalAction(const void *cmdInfo, const char *status, int len);
 int getTerminalStatus(char *status, int len);
 void cacheSetTerminalStatus(const char *status, int len);
 int cacheGetTerminalStatus(char *status, int len);

@@ -7,6 +7,8 @@ extern "C"
 #endif
 #include "leconfig.h"
 
+#define LELINK_FREQUENCY            (5)
+
 typedef enum {
     E_STATE_NONE = -1,
     E_STATE_START,
