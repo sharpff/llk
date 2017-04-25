@@ -45,6 +45,8 @@ public class LeCmd {
 		public static final int CTRL_CMD_RSP = 2;
 		public static final int CTRL_GET_STATUS_REQ = 3;
 		public static final int CTRL_GET_STATUS_RSP = 4;
+		public static final int CTRL_SYNC_SLAVE_REQ = 5;
+		public static final int CTRL_SYNC_SLAVE_RSP = 6;
 		/* CLOUD_GET_TARGET */
 		public static final int CLOUD_GET_TARGET_REQ = 1;
 		public static final int CLOUD_GET_TARGET_RSP = 2;
@@ -63,6 +65,8 @@ public class LeCmd {
 	    public static final int CLOUD_MSG_CTRL_C2R_TELL_SHARE_RSP = 6;
 	    public static final int CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_REQ = 7;
 	    public static final int CLOUD_MSG_CTRL_C2R_CONFIRM_SHARE_RSP = 8;
+	    public static final int CLOUD_MSG_CTRL_C2R_SYNC_SLAVE_REQ = 9;
+	    public static final int CLOUD_MSG_CTRL_C2R_SYNC_SLAVE_RSP = 10;
 		/* CLOUD_MSG_CTRL_R2T */
 		public static final int CLOUD_MSG_CTRL_R2T_REQ = 1;
 		public static final int CLOUD_MSG_CTRL_R2T_RSP = 2;
@@ -72,6 +76,8 @@ public class LeCmd {
 	    public static final int CLOUD_MSG_CTRL_R2T_TELL_SHARE_RSP = 6;
 	    public static final int CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_REQ = 7;
 	    public static final int CLOUD_MSG_CTRL_R2T_CONFIRM_SHARE_RSP = 8;
+	    public static final int CLOUD_MSG_CTRL_R2T_SYNC_SLAVE_REQ = 9;
+	    public static final int CLOUD_MSG_CTRL_R2T_SYNC_SLAVE_RSP = 10;
 	    /* CLOUD_MSG_CTRL_R2T */
 		public static final int CLOUD_REPORT_REQ = 1;
 		public static final int CLOUD_REPORT_RSP = 2;

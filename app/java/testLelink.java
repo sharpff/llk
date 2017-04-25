@@ -45,9 +45,9 @@ public class testLelink {
 	private static boolean TEST_OTA_CHECK = false;
 	private static boolean TEST_OTA_DO = false;
 	private static boolean TEST_AUTO_UUID = false; // depend on TEST_DISCOVER_DEV
-	private static String mTestDevUUID = "10000100201001310023C89346D6F9AA"; // test
+	private static String mTestDevUUID = "10000100201001310023244E7B4000A0"; // test
 //	private static String mTestDevUUID = "10000100091000610006C80E77ABCD40"; // 窗帘
-	private static String mTestTevToken = "2AF1BFC079FFE4D0ACF1820D0B393EE8"; // auto set by uuid, depend on TEST_GET_STATE
+	private static String mTestTevToken = "546CC24012960B861855A45189D8D9C5"; // auto set by uuid, depend on TEST_GET_STATE
 	// private static String mTestTevToken = null; // auto set by uuid, depend on TEST_GET_STATE
 	// private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"idx1\":%d,\"idx2\":%d,\"idx3\":%d,\"idx4\":%d}}", 0, 0, 1, 0); // 插排
 	private static String mTestCtrlCmd = String.format("{\"ctrl\":{\"speed\":1}}"); // 窗帘
@@ -127,6 +127,36 @@ public class testLelink {
 						try {
 							jsonCmd = new JSONObject();
 							jsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CTRL_DEV_CMD);
+							jsonCmd.put(LeCmd.K.UUID, mTestDevUUID);
+							jsonCmd.put(LeCmd.K.TOKEN, mTestTevToken);
+							jsonCmd.put(LeCmd.K.TIMEOUT, mOtherTimeout);
+		//					jsonCmd.put(LeCmd.K.ADDR, "192.168.3.238");
+						} catch (JSONException e) {
+							e.printStackTrace();
+							return;
+						}
+						String retData = mLeLink.ctrl(jsonCmd.toString(), dataStr);
+						if (retData != null) {
+							retData += "\n";
+							Log.w(TAG, "ctrl return:\n" + retData);
+						} else {
+							Log.e(TAG, "Can't ctrl");
+							// return;
+						}
+	            	}break;
+	            	case 'a': {
+						String dataStr;
+						if (i == 0) {
+							dataStr = mTestCtrlCmd;
+							i = 1;
+						} else {
+							dataStr = mTestCtrlCmd1;
+							i = 0;
+						}
+						Log.e(TAG, "Control device test...\n" + dataStr);
+						try {
+							jsonCmd = new JSONObject();
+							jsonCmd.put(LeCmd.K.SUBCMD, LeCmd.Sub.CLOUD_MSG_CTRL_C2R_SYNC_SLAVE_REQ);
 							jsonCmd.put(LeCmd.K.UUID, mTestDevUUID);
 							jsonCmd.put(LeCmd.K.TOKEN, mTestTevToken);
 							jsonCmd.put(LeCmd.K.TIMEOUT, mOtherTimeout);

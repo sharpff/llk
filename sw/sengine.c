@@ -1433,7 +1433,7 @@ int sengineHasDevs(void) {
 }
 
 int s1apiGetCurrCvtType(lua_State *L) {
-    lua_pushnumber(L, ginCurrCvtType);    //key  
+    lua_pushinteger(L, ginCurrCvtType);    //key  
     return 1;
 }
 
@@ -1781,41 +1781,41 @@ int sengineSetAction(const char *json, int jsonLen) {
             }
         } else {
             uint16_t waitMS = 0;
-            uint16_t writeDelayMS = 0;
+            uint16_t delayMS = 0;
             int ioHeaderSize = 8;
             LELOG("ioWrite ret[%d]", ret);
-            for ( i=0; i<ret; ) {
+            for (i = 0; i < ret;) {
                 type = bin[i];
                 len = bin[i+1];
                 memcpy(&waitMS, &bin[i+2], 2);
-                memcpy(&writeDelayMS, &bin[i+4], 2);
+                memcpy(&delayMS, &bin[i+4], 2);
                 if (type == ioHdl[x].ioType) {
                     ret1 = ioWrite(ioHdl[x].ioType, ioHdl[x].hdl, &bin[i+ioHeaderSize], len);
-                    LELOG("ioWrite waitMS[%d], writeDelayMS[%d], data[0x%x], len[%d]", 
-                        waitMS, writeDelayMS, bin[ioHeaderSize], len);
+                    LELOG("ioWrite waitMS[%d], delayMS[%d], data[0x%x], len[%d]", 
+                        waitMS, delayMS, bin[ioHeaderSize], len);
                     if (ret1 <= 0) {
                         LELOGW("sengineSetStatus ioWrite2.0 [%d]", ret);
                     }
                     i = i+len+ioHeaderSize;
                     if (i < ret) {
-                        halDelayms(writeDelayMS);
+                        halDelayms(delayMS);
                     }
+                    totalWaitMS += waitMS;
+                    totalWriteMS += delayMS;
+                } else {
+                    break;
                 }
-                if (waitMS > totalWaitMS) {
-                    totalWaitMS = waitMS;
-                }
-                totalWriteMS += writeDelayMS;
-                LELOG("ioWrite waitMS[%d], writeDelayMS[%d]", waitMS, writeDelayMS);
+                LELOG("ioWrite totalWaitMS[%d], totalWriteMS[%d]", totalWaitMS, totalWriteMS);
             }
         }
     FOR_EACH_IO_HDL_END;
 
-    LELOG("totalWriteMS[%d] totalWaitMS[%d]", totalWriteMS, totalWaitMS);
     if (totalWaitMS > totalWriteMS) {
         totalWaitMS -= totalWriteMS;
     } else {
         totalWaitMS = 0;
     }
+    LELOG("totalWaitMS[%d], totalWriteMS[%d]", totalWaitMS, totalWriteMS);
     LELOG("sengineSetAction -e");
     return totalWaitMS;
 }
@@ -2002,6 +2002,7 @@ int sengineReadSlave(char *dataOut, int dataOutLen) {
                             sdevInfoRsp(tmpArr, dataOut, len);
                         } else if (WHATKIND_SUB_DEV_DATA == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_DATA");
+                            ret1 = len;
                             sengineIODataHandler(dataOut, len, 1);
                         } else if (WHATKIND_SUB_DEV_LEAVE == whatKind) {
                             LELOG("WHATKIND_SUB_DEV_LEAVE");

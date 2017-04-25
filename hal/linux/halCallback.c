@@ -59,7 +59,8 @@ int halCBLocalReq(void *ctx, const CmdHeaderInfo* cmdInfo, uint8_t *data, int le
         
         }break;
         case LELINK_CMD_CTRL_REQ: {
-            if (LELINK_SUBCMD_CTRL_CMD_REQ == cmdInfo->subCmdId) {
+            if (LELINK_SUBCMD_CTRL_CMD_REQ == cmdInfo->subCmdId || 
+                LELINK_SUBCMD_CTRL_SYNC_SLAVE_REQ == cmdInfo->subCmdId) {
                 if (a) {
                     strcpy(cmdCtrl, cmd1);
                 } else {

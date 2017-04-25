@@ -105,26 +105,27 @@ end
 
 -- {0x42,0x00,0x0D,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xCB}
 -- {0x42,0x00,0x0E,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x05,0x01,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xCD}
-function s1apiGetDevStatus( ... )
-	local status = '{"pwr":0, "envtemp":21, "humidity":14, "indoor_pm25":36, "mode":2, "used":3409}'
-	return string.len(status), status
-end
+-- function s1apiGetDevStatus( ... )
+-- 	local status = '{"pwr":0, "envtemp":21, "humidity":14, "indoor_pm25":36, "mode":2, "used":3409}'
+-- 	return string.len(status), status
+-- end
 
-function s1apiGetCurrCvtType( ... )
-	return 1
-end
+-- function s1apiGetCurrCvtType( ... )
+-- 	return 1
+-- end
 
 function genPriDataFormat(items, ioType)
     local r = {}
     local k = 1
+    -- print('r len is '..#r..'\r\n')
 	for i = 1, #items do
 		r[#r+1] = ioType -- io type
 		r[#r+1] = #items[i] -- current item len
 
 		-- -- CUST YOUR CONFIG START
-		r[#r+1] = 0x05 -- ack wait ms (little-endian L)
+		r[#r+1] = 0x00 -- ack wait ms (little-endian L)
 		r[#r+1] = 0x00 -- ack wait ms (little-endian H)
-		r[#r+1] = 0x30 -- write delay ms (little-endian L)
+		r[#r+1] = 0x00 -- write delay ms (little-endian L)
 		r[#r+1] = 0x00 -- write delay ms (little-endian H)
 		r[#r+1] = 0x00 -- reserved
 		r[#r+1] = 0x00 -- reserved
@@ -135,6 +136,10 @@ function genPriDataFormat(items, ioType)
 			-- print(string.format('%02x \r\n', r[#r]))
 		end
 	end
+
+	-- for m = 1, #r do
+	-- 	print(string.format('r[%d] = %02x \r\n', m, r[m]))
+	-- end
     return r
 end
 
@@ -145,8 +150,10 @@ function s1CvtStd2Pri(json)
     local ctrl = cjson.decode(json)
     local cvtType = s1apiGetCurrCvtType()
     local lenStatus, currStatus = s1apiGetDevStatus()
+    -- print('aa '..currStatus..'\r\n')
     local cmdtb = {}
     if cvtType == 1 then
+    	-- stringToTable('aaaa')
     	cmdtb = {{0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xBB},
 					{0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xC0}}
         local pwr = ctrl["pwr"]
@@ -207,7 +214,7 @@ function s1CvtStd2Pri(json)
 		end
 		cmdtb = genPriDataFormat(tmp, cvtType)
 	end
-    LOGTBL(cmdtb)
+    -- LOGTBL(cmdtb)
     local cmd = tableToString(cmdtb)
     return #cmd, cmd
 end
@@ -230,12 +237,11 @@ function s1CvtPri2Std(bin)
     	lastData = tb["indoor_pm25"]
     end
     if cvtType == 1 then
-        dataTbl = stringToTable(bin)
-		if #dataTbl > 27 then
-            if 0x14 == dataTbl[27] then
-				s1apiRebootDevice()
-			end
-        end
+        dataTbl = stringToTable(string.sub(bin,string.len(bin)-24,string.len(bin)))
+        -- LOGTBL(dataTbl)
+		if 0x14 == dataTbl[2] then
+			s1apiRebootDevice()
+		end
 		for i = 1, 24 do
 			sum = sum + dataTbl[i]
 		end

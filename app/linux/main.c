@@ -256,6 +256,30 @@ redo:
             memcpy(node.uuid, ginCtrlUUID, MAX_UUID);
         }
         break;
+    case 'b': {
+            node.cmdId = LELINK_CMD_CTRL_REQ; 
+            node.subCmdId = LELINK_SUBCMD_CTRL_SYNC_SLAVE_REQ;
+            APPLOGE("0 cmdId[%d]", node.cmdId);
+            strncpy(node.ndIP, ginCtrlIP, MAX_IPLEN); // TODO: caution 
+            // strncpy(node.ndIP, "192.168.3.100", MAX_IPLEN); // TODO: caution
+            node.ndPort = LOCAL_TEST_PORT;
+            // node.rspVal = 1;
+            // node.noAck = 1;
+            // APPLOG("2 cmdId[%d], subCmdId[%d]\r\n", node.cmdId, node.subCmdId);
+            APPLOGE("1 subCmdId[%d]", node.subCmdId);
+            if (!node.uuid[0]) {
+                // uint8_t peerToken[AES_LEN] = {0x15, 0x7e, 0x83, 0x5e, 0x6c, 0x0b, 0xc5, 0x54, 0x74, 0xab, 0xcd, 0x91, 0xe0, 0x0e, 0x69, 0x79};
+                uint8_t peerToken[AES_LEN] = {0};
+                if (ginBeCtrlToken[0]) {
+                    memcpy(peerToken, ginBeCtrlToken, AES_LEN);
+                    APPLOGE("X cmdId[%d]", node.cmdId);
+                }
+                memcpy(node.token, peerToken, sizeof(node.token)); 
+                APPLOGE("2 cmdId[%d]", node.cmdId);
+            }
+            APPLOGE("3 cmdId[%d]", node.cmdId);
+        }
+        break; 
     }
     
     // MUTEX_LOCK;

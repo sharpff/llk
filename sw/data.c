@@ -411,7 +411,7 @@ int setTerminalAction(const void *cmdInfo, const char *status, int len) {
             LELOG("localActionHandler got[%s]-- slave ret[%d] local ret[%d]", val, ret, ret1);
         }
     }
-    return ret;
+    return ret < 0 ? 0 : ret;
 }
 
 int forEachNodeSDevForNumCB(SDevNode *currNode, void *uData) {

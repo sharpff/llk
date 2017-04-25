@@ -41,7 +41,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '1.1'
+	local str = '2.0.0'
 	return string.len(str), str
 end
 
@@ -51,21 +51,15 @@ end
 	1. PIPE/IPC json <-> json
 ]]
 function s1GetCvtType()
-    -- combained uart(0x1) & gpio(0x2)
+    -- combained uart(0x1)
     local str = [[
-    {
-    "whatCvtType":0,
-    "uart":[
-    	{
-    		"id":1, 
-    		"baud":"9600-8N1"
-    	}
-    	]
-	}
+    {"whatCvtType":1,
+     "common":[{"num":2,"id":"2-3","mux":"7-7"}],
+     "uart":[{"id":0, "baud":"115200-8N1"}]
+    }
     ]]
-	local delay = 5
-
-	return string.len(str), str, delay
+    local delay = 5
+    return string.len(str), str, delay
 end
 
 --[[ MUST
@@ -91,40 +85,35 @@ end
 	WIFI 重置命令判别
 ]]
 function s1GetValidKind(data)
-	local reset = string.char(0xa5, 0xa5, 0x5a, 0x5a, 0x98, 0xc1, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00)
-
-	-- print (data, #data)
-
-	--[[ MUST
-		wifi reset cmd
-	]]
-	--print ('start\r\n')
-	--tmpTbl = stringToTable(data)
-	--LOGTBL(tmpTbl)
-	--tmpTbl = stringToTable(reset)
-	--LOGTBL(tmpTbl)
-	--print (string.find(data, reset))
-	--print ('\r\n')
-	
-	if nil ~= string.find(data, reset) then
-		--print '1'
-		return 1
-	end
-
-	--[[ MUST
-		valid LOW LEVEL status cmd
-	]]
-	if 9 == #data then
-		-- print '2'
-		return 2
-	end
-
-	-- print '0'
-	-- invalid kind
-	return 0
-	-- return 0
+	return 2
 end
 
+--[[ MUST
+	make sure s1GetVer is '2.x.x'
+]]
+function genPriDataFormat(items, ioType)
+    local r = {}
+    local k = 1
+	for i = 1, #items do
+		r[#r+1] = ioType -- io type
+		r[#r+1] = #items[i] -- current item len
+
+		-- -- CUST YOUR CONFIG START
+		r[#r+1] = 0xff -- ack wait ms (little-endian L)
+		r[#r+1] = 0x00 -- ack wait ms (little-endian H)
+		r[#r+1] = 0x00 -- write delay ms (little-endian L)
+		r[#r+1] = 0x00 -- write delay ms (little-endian H)
+		r[#r+1] = 0x00 -- reserved
+		r[#r+1] = 0x00 -- reserved
+		-- -- CUST YOUR CONFIG END
+
+		for j = 1, #items[i] do
+			r[#r+1] = items[i][j]
+		end
+	end
+
+    return r
+end
 -- 杜亚窗帘电机
 -- bb 00 00 00 00 00 00 fa 44 不明
 -- bb 01 00 00 00 00 00 fa 44 逆时针 有目的
@@ -138,22 +127,12 @@ end
 -- {"ctrl":{"action":1}}
 function s1CvtStd2Pri(json)
 	local ctrl = cjson.decode(json)
-	local cmdTbl = { 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x44 }
+	cmdTbl = {stringToTable('{"test":1}'),
+		stringToTable('{"function":1}')}
+
 	local dataStr = ""
 
-	-- 打开
-	if (ctrl["action"] == 1) then
-		cmdTbl[2] = 0x02
-	-- 关闭
-	elseif (ctrl["action"] == 2) then
-		cmdTbl[2] = 0x01
-	-- 暂停
-	elseif (ctrl["action"] == 3) then
-		cmdTbl[2] = 0x03
-	-- 测量
-	else
-		cmdTbl[2] = 0x05
-	end
+	cmdTbl = genPriDataFormat(cmdTbl, 1) -- in PIPE case ioType val should be 4
 	LOGTBL(cmdTbl)
 
 	-- u have to make the bin as string for the return value
@@ -165,16 +144,9 @@ end
 	return value: return 0, 0, if the input param 'bin' is not valid
 ]]
 function s1CvtPri2Std(bin)
-	local dataTbl = {}
-	local str = '{"percentage":%d}'
-	dataTbl = stringToTable(bin)
-	-- for i = 1, #bin
-	-- 		 (bin[i])
-	-- end
-	-- LOGTBL(dataTbl)
-
-	str = string.format(str, 100 - dataTbl[3])
-	-- str = string.format(str, #dataTbl)
-	-- print (str)
+	-- presume data
+	bin = '{"result":1}'
+	str = bin
+	print (str..'\r\n')
 	return string.len(str), str
 end
