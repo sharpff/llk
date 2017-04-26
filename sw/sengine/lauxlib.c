@@ -949,13 +949,14 @@ static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
           // for fw script(script1)
           if (1 == ctx->sType) {
             if (used > (halGetSReservedHeap() + ctx->sBasicSize)) {
-            // LELOGW("s1 auto release used[%d] basic[%d]", used, ctx->sBasicSize);
+              // LELOGW("---- S1 auto release used[%d] basic[%d] L[0x%x]", used, ctx->sBasicSize, L);
+              LELOGW("---- S1 auto release used[%d] basic[%d] L[0x%x] g[0x%x]", used, ctx->sBasicSize, L, g);
               return NULL;
             }
           // for ia script(script2)
           } else {
-            if (used > ctx->sBasicSize) {
-              LELOGE("S2 no memory used[%d] basic[%d]", used, ctx->sBasicSize);
+            if (used > (halGetS2ReservedHeap() + ctx->sBasicSize)) {
+              LELOGW("---- S2 auto release used[%d] [%d][%d] basic[%d] halGetS2ReservedHeap()[%u]", used, (g)->totalbytes, (g)->GCdebt, ctx->sBasicSize, halGetS2ReservedHeap());
               return NULL;
             }
           }
@@ -974,14 +975,18 @@ static int panic (lua_State *L) {
 }
 
 
-LUALIB_API lua_State *luaL_newstate (void *ptr) {
+LUALIB_API lua_State *luaL_newstate (void * ptr) {
   lua_State *L = lua_newstate(l_alloc, ptr);
+  SContext *ctx = (SContext *)ptr;
   if (L) {
-    if (ptr) {
-      SContext *ctx = (SContext *)ptr;
+    if (ctx) {
       ctx->ud = L;      
     }
     lua_atpanic(L, &panic);
+  } else {
+    if (ctx) {
+      ctx->ud = NULL;
+    }
   }
   return L;
 }

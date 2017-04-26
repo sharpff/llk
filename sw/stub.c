@@ -134,8 +134,12 @@ LELINK_WEAK int halWatchDogFeed(void) {
     return 0;
 }
 
-LELINK_WEAK size_t halGetSReservedHeap() {
-    return 64*1024;
+LELINK_WEAK uint32_t halGetSReservedHeap() {
+    return SCACHE_SIZE;
+}
+
+LELINK_WEAK uint32_t halGetS2ReservedHeap() {
+    return SCACHE_SIZE;
 }
 
 LELINK_WEAK int halUpdateFirmwareExt(void *info) {

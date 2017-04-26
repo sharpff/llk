@@ -26,7 +26,8 @@ void show_mem_info(){
 // 在SDRAM中申请100Kheap
 #include "section_config.h"
 
-#define SDRAM_HEAP_SIZE (100*1024)
+#define SDRAM_HEAP_SIZE (256*1024)
+
 
 SDRAM_DATA_SECTION static volatile uint8_t sdram_heap[SDRAM_HEAP_SIZE] = {0};
 

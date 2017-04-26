@@ -274,9 +274,9 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     TIMEOUT_END
 
     if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED) {
-        // TIMEOUT_BEGIN(1000)
-        // senginePollingRules(NULL, 0);
-        // TIMEOUT_END
+        TIMEOUT_BEGIN(1000)
+        senginePollingRules(NULL, 0);
+        TIMEOUT_END
 
         TIMEOUT_BEGIN(300)
         sengineQuerySlave(QUERIETYPE_STATE);

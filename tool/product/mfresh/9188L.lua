@@ -144,18 +144,22 @@ function genPriDataFormat(items, ioType)
 end
 
 function s1CvtStd2Pri(json)
-    local sum = 0
+    print('[LUA] s1CvtStd2Pri START \r\n')
+    local sum = 0x00
     local count = 0
-    local item = 1
+    local item = 0x01
     local ctrl = cjson.decode(json)
     local cvtType = s1apiGetCurrCvtType()
     local lenStatus, currStatus = s1apiGetDevStatus()
-    -- print('aa '..currStatus..'\r\n')
-    local cmdtb = {}
+    local cmdTbl = {}
     if cvtType == 1 then
-    	-- stringToTable('aaaa')
-    	cmdtb = {{0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xBB},
-					{0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xC0}}
+    	local cmdtb = {}
+    	local s1 = ""
+    	local s2 = ""
+    	s1 = string.char(0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xBB)
+    	s2 = string.char(0x42,0x00,0x03,0x31,0x00,0x50,0x00,0x00,0x00,0x00,0xA1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x27,0x00,0x00,0x1C,0x11,0xC0)
+    	cmdtb[1] = stringToTable(s1)
+    	cmdtb[2] = stringToTable(s2)
         local pwr = ctrl["pwr"]
         local speed = ctrl["speed"]
 		if pwr == 0 then
@@ -165,7 +169,7 @@ function s1CvtStd2Pri(json)
 			local pwr_old = tb["pwr"]
 		
 			if pwr_old == 0 and speed ~= nil and speed ~= 6 then
-				item = 2
+				item = 0x02
 			end
 		end
 		if speed ~= nil then
@@ -200,7 +204,7 @@ function s1CvtStd2Pri(json)
 			cmdtb[item][16] = (ospm2 >> 8) & 0xff
 		end
 	 	for j = 1, item do
-	 		sum = 0
+	 		sum = 0x00
 			for i = 1, #cmdtb[j] - 1 do
 				sum = sum + cmdtb[j][i]
 			end
@@ -212,10 +216,11 @@ function s1CvtStd2Pri(json)
 		else
 			tmp = cmdtb
 		end
-		cmdtb = genPriDataFormat(tmp, cvtType)
+		cmdTbl = genPriDataFormat(tmp, cvtType)
 	end
-    -- LOGTBL(cmdtb)
-    local cmd = tableToString(cmdtb)
+    LOGTBL(cmdTbl)
+    local cmd = tableToString(cmdTbl)
+    print('[LUA] s1CvtStd2Pri END \r\n')
     return #cmd, cmd
 end
 

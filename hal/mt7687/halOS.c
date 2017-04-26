@@ -206,7 +206,7 @@ int halWatchDogInit(void) {
 
 int halWatchDogFeed(void) {
     hal_wdt_feed(HAL_WDT_FEED_MAGIC);
-    APPLOG("halWatchDogFeed [%d]", halGetTimeStamp());
+    // APPLOG("halWatchDogFeed [%d]", halGetTimeStamp());
     return 0;
 }
 
@@ -215,6 +215,6 @@ int halWatchDogDeInit(void) {
     return 0;
 }
 
-LELINK_WEAK size_t halGetSReservedHeap() {
-    return 24*1024;
-}
+// LELINK_WEAK size_t halGetSReservedHeap() {
+//     return 24*1024;
+// }

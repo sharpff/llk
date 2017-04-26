@@ -1281,29 +1281,30 @@ int s1apiOptTable2String(lua_State *L);
 int s1apiOptLogTable(lua_State *L);
 int s1apiRebootDevice(lua_State *L);
 
+static lua_State *L1 = NULL;
+static lua_State *L2 = NULL;
 static SContext *getSContext(int sType) {
     int i = 0;
     static SContext ginContext[] = {
         {NULL, MAX_SCRIPT_SIZE, 1},
-        {NULL, MAX_SCRIPT2_SIZE + 16*1024, 2}, // no need to used presently (TODO)
+        {NULL, MAX_SCRIPT2_SIZE, 2}, // no need to used presently (TODO)
     };
     for (i = 0; i < sizeof(ginContext)/sizeof(SContext); i++) {
         if (sType == ginContext[i].sType) {
             return &ginContext[i];
         }
     }
+    LELOGE("getSContext ============================");
     return NULL;
 }
 
-static lua_State* sengineGet(int sType, const char *script, int scriptSize)
-{
-    static lua_State *L1 = NULL;
-    static lua_State *L2 = NULL;
+static lua_State* sengineGet(int sType, const char *script, int scriptSize) {
+
     lua_State **L = NULL;
 
     if (script == NULL || scriptSize <= 0) {
         LELOGE("[lua engine] param error");
-        goto err_out;
+        return NULL;
     }
     if (1 == sType) {
         if(L1) {
@@ -1312,21 +1313,16 @@ static lua_State* sengineGet(int sType, const char *script, int scriptSize)
         L = &L1;
     } else {
         if(L2) {
-            lua_close(L2);
+            return L2;
         }
         L = &L2;
     }
 
     if(!(*L = luaL_newstate(getSContext(sType)))) {
         LELOGE("[lua engine] luaL_newstate");
-        goto err_out;
+        goto SGET_ERROR;
     }
-    // lua_register(L, "bitshift", bitshift);
-    // lua_register(L, "bitshiftL", bitshiftL);
-    // lua_register(L, "bitand", bitand);
-    // lua_register(L, "bitor", bitor);
-    // lua_register(L, "bitxor", bitxor);
-    // lua_register(L, "bitnor", bitnor);
+
     lua_register(*L, "s2apiSetCurrStatus", s2apiSetCurrStatus);
     lua_register(*L, "s2apiGetLatestStatus", s2apiGetLatestStatus);
     lua_register(*L, "s1apiGetCurrCvtType", s1apiGetCurrCvtType);
@@ -1345,73 +1341,95 @@ static lua_State* sengineGet(int sType, const char *script, int scriptSize)
     if (luaL_loadbuffer(*L, script, scriptSize, "lelink") || lua_pcall(*L, 0, 0, 0)) {
         lua_pop(*L, 1);
         LELOGE("[lua engine] lua code syntax error");
-        goto err_out;
+        goto SGET_ERROR;
     }
+
+    // LELOG("sengineGet sType[%d] L[0x%x]", sType, *L);
     return *L;
-err_out:
-    if(L) {
-        lua_close(*L);
-        L = NULL;
+SGET_ERROR:
+    *L = NULL;
+    return *L;
+}
+
+int sengineGive(int sType, lua_State *L) {   
+    SContext *ptr = NULL;
+    if (NULL == L) {
+        return -1;
     }
-    return NULL;
+    ptr = getSContext(sType);
+    if (1 == sType && SCACHE_SIZE == halGetSReservedHeap()) {
+        // LELOG("sengineGive sType[%d] L[0x%x]", sType, L);    
+        lua_close(L);L1 = NULL;
+        ptr->ud = NULL;
+    }
+    if (2 == sType && SCACHE_SIZE == halGetS2ReservedHeap()) {
+        // LELOG("sengineGive sType[%d] L[0x%x]", sType, L);    
+        lua_close(L);L2 = NULL;
+        ptr->ud = NULL;
+    }
+    return 0;
 }
 
 int sengineCall(int sType, const char *script, int scriptSize, const char *funcName, const uint8_t *input, int inputLen, uint8_t *output, int outputLen)
 {
     int ret = 0;
     lua_State *L = NULL;
+    IO io_ret = { 0, 0 };
+    LF_IMPL lf_impl = { 0, 0 };
 
+    // LELOG("sengineCall sType[%d] -s", sType);    
     if(isIfExist(funcName) < 0) {
-        //LELOGE("[lua engine] sengineCall NO function => %s", funcName);
-        return -1;
+        // LELOGE("[lua engine] sengineCall NO function => %s", funcName);
+        ret = -1;
+        goto SCALL_FAILED;
     }
     if(!(L = sengineGet(sType, script, scriptSize))) {
-        LELOGE("[lua engine] sengineGet error");
-        return -2;
+        LELOGE("[lua engine] sengineGet error [0x%x]", L);
+        ret = -2;
+        goto SCALL_FAILED;
     }
 
+    lf_impl = get_lf_impl(funcName, 0);
+    if (NULL == lf_impl.lf_impl_input) {
+        ret = -3;
+        LELOGE("[lua engine] get_lf_impl [%s]", funcName);
+        goto SCALL_FAILED;
+    }
+
+    lua_getglobal(L, funcName);
+    
+    // do push param
+    io_ret = lf_impl.lf_impl_input(L, input, inputLen);
+
+    if (lua_pcall(L, io_ret.param, io_ret.ret, 0))
     {
-        IO io_ret = { 0, 0 };
-        LF_IMPL lf_impl = { 0, 0 };
-        lf_impl = get_lf_impl(funcName, 0);
-        if (NULL == lf_impl.lf_impl_input)
-        {
-            return -3;
+        const char *err = lua_tostring(L, -1);
+        if (strcmp(S1_OPT_HAS_SUBDEVS, funcName) && 
+            strcmp(S1_OPT_MERGE_ST2ACT, funcName) && 
+            strcmp(S1_OPT_DO_SPLIT, funcName))
+            LELOGE("[lua engine] lua error: %s => %s", err, funcName);
+        lua_pop(L, 1);
+        if((char *)strstr(err, "call") != NULL) {
+            setIfExist(funcName, -1);
         }
-
-        lua_getglobal(L, funcName);
-        
-        // do push param
-        io_ret = lf_impl.lf_impl_input(L, input, inputLen);
-
-        if (lua_pcall(L, io_ret.param, io_ret.ret, 0))
+        ret = -4;
+        LELOGE("[lua engine] lua_pcall error funcName[%s]", funcName);
+        goto SCALL_FAILED;
+    }
+    else
+    {
+        // int param_num = 0;
+        setIfExist(funcName, 1);
+        if (lf_impl.lf_impl_func)
         {
-            const char *err = lua_tostring(L, -1);
-            if (strcmp(S1_OPT_HAS_SUBDEVS, funcName) && 
-                strcmp(S1_OPT_MERGE_ST2ACT, funcName) && 
-                strcmp(S1_OPT_DO_SPLIT, funcName))
-                LELOGE("[lua engine] lua error: %s => %s", err, funcName);
-            lua_pop(L, 1);
-            if((char *)strstr(err, "call") != NULL) {
-                setIfExist(funcName, -1);
-            }
-            ret = -4;
-        }
-        else
-        {
-            // int param_num = 0;
-            setIfExist(funcName, 1);
-            if (lf_impl.lf_impl_func)
-            {
-                ret = lf_impl.lf_impl_func(L, output, outputLen);
-                lua_pop(L, io_ret.ret);
-            }
+            ret = lf_impl.lf_impl_func(L, output, outputLen);
+            lua_pop(L, io_ret.ret);
         }
     }
 
-    //wmprintf("[config]: config[0x%x] lua[0x%x] timer[0x%x] ", SYS_CONFIG_OFFSET, LUA_STORE_ADDRESS, JOYLINK_TIMER_MEM_ADDR);
-
-    // LELOG("[lua engine] END -----------");
+SCALL_FAILED:
+    sengineGive(sType, L);
+    // LELOG("sengineCall sType[%d] -e", sType);    
     return ret;
 }
 

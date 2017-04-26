@@ -5,7 +5,7 @@
 #include "MICORTOS.h"
 #include "MICOPLATFORM.h"
 #include "mico.h"
-
+#include "t11_debug.h"
 
 static mico_mutex_t os_mutex;
 int halLockInit(void) {
@@ -48,7 +48,7 @@ void *halCalloc(int n, size_t size) {
     return ptr;
 }
 
-void *halMalloc(size_t size) {
+void *halMalloc(size_t size) { 
     void* ret = malloc(size);
     if(NULL==ret){
         APPLOG("halMalloc(%d) = %p",size,ret);
@@ -67,7 +67,8 @@ void *halRealloc(void *ptr, size_t size) {
 #endif
 void *halMallocEx(size_t size, const char *filename, uint32_t line) {
     void *ptr = malloc(size);
-    //APPLOG("malloc:[%d][0x%x][%d][%s]", size, ptr, line, filename);
+    // debug("malloc:[%d][0x%x][%d][%s]", size, ptr, line, filename);
+
     if(ptr==NULL) {
         // APPLOG("halMalloc(%d) = %p",size,ptr);
     }
@@ -128,7 +129,7 @@ int halWatchDogInit(void) {
 
 int halWatchDogFeed(void) {
     MICOUpdateSystemMonitor (&ginMonitor, APP_WATCHDOG_TIMEOUT_SECONDS * 1000);
-    printf("halWatchDogFeed:) [%d]\n", halGetTimeStamp());
+    // printf("halWatchDogFeed:) [%d]\n", halGetTimeStamp());
     return 0;
 }
 
@@ -137,5 +138,5 @@ int halWatchDogDeInit(void) {
 }
 
 size_t halGetSReservedHeap() {
-    return 8*1024;
+    return 56*1024;
 }

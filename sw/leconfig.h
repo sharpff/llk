@@ -45,6 +45,7 @@ extern "C"
     #pragma error "SHA1_LEN > AES_LEN"
 #endif
 #define MAX_BUF (1024+256)
+#define SCACHE_SIZE (1073741824)
 
 
 #define USED(a) ((void)a)
@@ -138,7 +139,7 @@ typedef struct {
 } commonManager_t;
 
 typedef struct {
-    void *ud;
+    void volatile *ud;
     uint32_t sBasicSize;
     uint8_t sType;
 } SContext;
@@ -241,7 +242,7 @@ extern unsigned long halLogTimeStamp(void);
 int halWatchDogInit(void);
 int halWatchDogFeed(void);
 int halWatchDogDeInit(void);
-size_t halGetSReservedHeap();
+uint32_t halGetSReservedHeap();
 int halUpdateFirmwareExt(void *info);
 const char *aalGetVerExt(void);
 
