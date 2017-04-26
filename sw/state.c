@@ -274,9 +274,9 @@ int lelinkPollingState(uint32_t msDelay, void *r2r, void *q2a) {
     TIMEOUT_END
 
     if(ginStateCntx.stateIdCurr >= E_STATE_AP_CONNECTED) {
-        TIMEOUT_BEGIN(1000)
-        senginePollingRules(NULL, 0);
-        TIMEOUT_END
+        // TIMEOUT_BEGIN(1000)
+        // senginePollingRules(NULL, 0);
+        // TIMEOUT_END
 
         TIMEOUT_BEGIN(300)
         sengineQuerySlave(QUERIETYPE_STATE);
@@ -676,7 +676,7 @@ static int sdevGetValidChannel(void) {
         if(channel > 0 && channel < 12) {
             d11 = wifich[channel] - zbch[0];
             d25 = zbch[1] - wifich[channel];
-            ch = (d11 > d25) ? 11 : 25;
+            ch = (d11 > d25) ? 11 : 11;
         }
     }
     return ch;

@@ -101,7 +101,7 @@ extern uint32_t SystemCoreClock;
 #define configTOTAL_HEAP_SIZE           ( ( size_t ) ( 100 * 1024 ) ) /* 2 iperf instances need 68KB to run on AP mode */
 #else
 //#define configTOTAL_HEAP_SIZE           ( ( size_t ) ( 68 * 1024 ) ) /* 2 iperf instances need 68KB to run on AP mode */
-#define configTOTAL_HEAP_SIZE           ( ( size_t ) ( 161 * 1024 ) )   /* heap size slim*/
+#define configTOTAL_HEAP_SIZE           ( ( size_t ) ( 162 * 1024 ) )   /* heap size slim*/
 #endif
 #endif
 
