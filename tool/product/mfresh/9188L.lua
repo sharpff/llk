@@ -42,7 +42,7 @@ end
 ]]
 function s1GetVer()
 	-- body
-	local str = '2.0.4'
+	local str = '2.0.5'
 	return string.len(str), str
 end
 
