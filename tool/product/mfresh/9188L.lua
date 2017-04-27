@@ -125,7 +125,7 @@ function genPriDataFormat(items, ioType)
 		-- -- CUST YOUR CONFIG START
 		r[#r+1] = 0x00 -- ack wait ms (little-endian L)
 		r[#r+1] = 0x00 -- ack wait ms (little-endian H)
-		r[#r+1] = 0x00 -- write delay ms (little-endian L)
+		r[#r+1] = 0x05 -- write delay ms (little-endian L)
 		r[#r+1] = 0x00 -- write delay ms (little-endian H)
 		r[#r+1] = 0x00 -- reserved
 		r[#r+1] = 0x00 -- reserved
