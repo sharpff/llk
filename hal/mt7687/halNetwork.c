@@ -123,7 +123,7 @@ static void hal_hostbyname_proc(void *args) {
         if (NULL != hostinfo) {
             break;
         }
-        halDelayms(500);
+        halDelayms(20);
     }
     ginIPdone = 1;
     os_memset(&tmp, 0, sizeof(struct sockaddr_in));
