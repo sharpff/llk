@@ -107,8 +107,8 @@ int halGetBroadCastAddr(char *broadcastAddr, int len) {
     strcpy(broadcastAddr, ip);
     return strlen(ip);
 }
-
-static char ginIP[32];
+#define NAME_SIZE 32
+static char ginIP[NAME_SIZE];
 static int  ginIPdone = 0;
 static TaskHandle_t hostByName = NULL;
 
@@ -116,14 +116,14 @@ static void hal_hostbyname_proc(void *args) {
     struct hostent* hostinfo;
     struct sockaddr_in tmp;
     char* name = (char *)args;
-    os_memset(ginIP, 0, 32);
+    os_memset(ginIP, 0, NAME_SIZE);
     while (1) {
         hostinfo = lwip_gethostbyname(name);
-        // APPLOG("halGetHostByName name[%s] hostinfo[%p]", name, hostinfo);
+        APPLOG("halGetHostByName name[%s] hostinfo[%p]", name, hostinfo);
         if (NULL != hostinfo) {
             break;
         }
-        halDelayms(20);
+        halDelayms(500);
     }
     ginIPdone = 1;
     os_memset(&tmp, 0, sizeof(struct sockaddr_in));
@@ -134,11 +134,21 @@ static void hal_hostbyname_proc(void *args) {
 }
 
 int halGetHostByNameNB(const char *name, char ip[4][32], int len) {
-    if (!isalpha((uint8_t)name[0])) {
+    int nameLen = strlen(name);
+    static char ginName[NAME_SIZE] = {0};
+    if ((nameLen + 1) > NAME_SIZE) {
+        LOG_E(common, "url is too long!");
         return -1;
     }
+    os_memset(ginName, 0, sizeof(ginName));
+    os_memcpy(ginName, name, nameLen);
+    if (!isalpha((uint8_t)ginName[0])) {
+        LOG_E(common, "not a url!");
+        return -2;
+    }
+    APPLOG("halGetHostByNameNB [%s]", ginName);
     if (ginIPdone) {
-        strcpy(ip[0], ginIP);
+        os_memcpy(ip[0], ginIP, NAME_SIZE);
         return 0;
     }
     ginIPdone = 0;
@@ -146,14 +156,14 @@ int halGetHostByNameNB(const char *name, char ip[4][32], int len) {
         if (pdPASS != xTaskCreate(hal_hostbyname_proc,
                               "hal_hostbyname_proc",
                               1024,
-                              name,
+                              ginName,
                               1,
                               &hostByName)) {
             LOG_E(common, "create host name task fail");
-            return -2;
+            return -3;
         }
     }
-    return -3;
+    return -4;
 }
 
 int halGetHostByName(const char *name, char ip[4][32], int len) { 
