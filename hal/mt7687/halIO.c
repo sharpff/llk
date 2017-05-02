@@ -438,17 +438,17 @@ static void halEINTIrqHandler(void *data) {
             hal_gpio_get_input(handler->gid, &gpio_data);
             //APPLOG("halEINTIrqHandler state[%d] [%d]", gpio_data, handler->state);
             if (gpio_data == handler->state) {
-                handler->count++;
-                if(handler->timeout && handler->count == 1) {
-                    handler->timeStamp = xTaskGetTickCount();
-                }
                 if (handler->longPressStart) {
+                    handler->count++;
                     if(xTaskGetTickCount() - handler->longPressStart > 2*1000/portTICK_PERIOD_MS) {
                         handler->longPress = 1;
                         handler->count = 0;
                         handler->timeStamp = 0;
                     }
                     handler->longPressStart = 0;
+                }
+                if(handler->timeout && handler->count == 1) {
+                    handler->timeStamp = xTaskGetTickCount();
                 }
             } else {
                 //APPLOG("halEINTIrqHandler longPressStart");
