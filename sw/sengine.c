@@ -638,9 +638,9 @@ static int sdevUpdate(SDevNode *arr, const char *status, int len) {
                     sdevArraySet(sDevIdx, &node, SDEV_BUF_TYPE_STATUS);  
                     if (0 != ret) {
                         postStatusChanged(sDevIdx + 1);
-                        if (0 < getSDevStatus(sDevIdx, buf, sizeof(buf))) {
-                            senginePollingRules(buf, sizeof(buf));
-                        }
+                    }
+                    if (0 < getSDevStatus(sDevIdx, buf, sizeof(buf))) {
+                        senginePollingRules(buf, sizeof(buf));
                     }
                     LELOG("=> sDevIdx[%d] ud[%s] mac[%s] sdev[%s] sdevStatus[%s]", sDevIdx, node.ud, node.mac, node.sdevInfo, node.sdevStatus);
                 // }
