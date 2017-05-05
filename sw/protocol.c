@@ -2269,6 +2269,7 @@ static void intDoOTA(void *ctx, const CmdHeaderInfo* cmdInfo, const uint8_t *dat
                 otaSetLatestSig(data);
                 otaSetLatestType(type);
                 otaSetLatestUrl(url, strlen(url));
+                tmpCmdInfo->status = LELINK_ERR_SUCCESS;
             }
         } 
         // OTA_TYPE_PRIVATE OTA_TYPE_AUTH OTA_TYPE_FW should trig a reboot
