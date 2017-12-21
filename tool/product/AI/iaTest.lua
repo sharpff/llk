@@ -61,7 +61,7 @@ end
 ]]
 function getBeingReservedInfo()
     -- CUSTOMIZATION START
-    local tblInfo = {'10000100101000010007E81863C38E75-00124B000CC39852'}
+    local tblInfo = {'10000100131000010011B01BD2F0002C-00124B0011E829D4'}
     -- CUSTOMIZATION END
     return tblInfo
 end
@@ -152,8 +152,7 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
     local tblConditions = {}
     local tblConditionsOld = {}
     local retIdx = 1;
-    -- local tblNewStatus = tblRmt["status"]
-    local tblNewStatus = tblRmt["sDevStatus"]
+    local tblNewStatus = tblRmt["status"]
     if nil == tblNewStatus then
         return ok
     end
@@ -161,96 +160,30 @@ function s2IsConditionOKExt(selfStatus, rmtStatus)
     -- CONDITION(s) START
     tblConditions[retIdx] = 0
     tblConditionsOld[retIdx] = 0
+    print ('tblNewStatus["ias"] '..tblNewStatus["ias"]..'\r\n')
     -- if nil ~= string.find(rmtUUID, '10000100101000010007E81863C38E75') then
-        if 1 == tblNewStatus["ias"] and 0 ~= cmpValInOldStatus('10000100101000010007E81863C38E75-00124B000CC39852', tblNewStatus["ias"], "ias") then
+        if 10 ~= tblNewStatus["ias"] and 0 ~= cmpValInOldStatus('10000100131000010011B01BD2F0002C-00124B0011E829D4', tblNewStatus["ias"], "ias") then
             tblConditions[retIdx] = 1
             print('ok 1\r\n')
         end
     -- else
-        tblOldStatus = getOldStatus('10000100101000010007E81863C38E75-00124B000CC39852')
-        if tblOldStatus then
-            if 1 == tblOldStatus["ias"] then
-                tblConditionsOld[retIdx] = 1
-                print('okOld 1\r\n')
-            end
-        end
+        -- tblOldStatus = getOldStatus('10000100131000010011B01BD2F0002C-00124B0011E829D4')
+        -- if tblOldStatus then
+        --     if 1 == tblOldStatus["ias"] then
+        --         tblConditionsOld[retIdx] = 1
+        --         print('okOld 1\r\n')
+        --     end
+        -- end
     -- end
-    retIdx = retIdx + 1
-    
-    tblConditions[retIdx] = 0
-    tblConditionsOld[retIdx] = 0
-    -- if nil ~= string.find(rmtUUID, '10000100101000010007E81863C38E75') then
-        if 0 == tblNewStatus["idx2"] and 0 ~= cmpValInOldStatus('10000100101000010007E81863C38E75', tblNewStatus["idx2"], "idx2") then
-            tblConditions[retIdx] = 1
-            print('ok 2\r\n')
-        end
-    -- else
-        tblOldStatus = getOldStatus('10000100101000010007E81863C38E75')
-        if tblOldStatus then
-            if 0 == tblOldStatus["idx2"] then
-                tblConditionsOld[retIdx] = 1
-                print('okOld 2\r\n')
-            end
-        end
-    -- end
-    retIdx = retIdx + 1
-    
-    tblConditions[retIdx] = 0
-    tblConditionsOld[retIdx] = 0
-    -- if nil ~= string.find(rmtUUID, '10000100101000010007E81863C38E75') then
-        if 0 == tblNewStatus["idx3"] and 0 ~= cmpValInOldStatus('10000100101000010007E81863C38E75', tblNewStatus["idx3"], "idx3") then
-            tblConditions[retIdx] = 1
-            print('ok 3\r\n')
-        end
-    -- else
-        tblOldStatus = getOldStatus('10000100101000010007E81863C38E75')
-        if tblOldStatus then
-            if 0 == tblOldStatus["idx3"] then
-                tblConditionsOld[retIdx] = 1
-                print('okOld 3\r\n')
-            end
-        end
-    -- end
-    retIdx = retIdx + 1
-    
-    tblConditions[retIdx] = 0
-    tblConditionsOld[retIdx] = 0
-    -- if nil ~= string.find(rmtUUID, '10000100101000010007E81863C38E75') then
-        if 1 == tblNewStatus["idx4"] and 0 ~= cmpValInOldStatus('10000100101000010007E81863C38E75', tblNewStatus["idx4"], "idx4") then
-            tblConditions[retIdx] = 1
-            print('ok 4\r\n')
-        end
-    -- else
-        tblOldStatus = getOldStatus('10000100101000010007E81863C38E75')
-        if tblOldStatus then
-            if 1 == tblOldStatus["idx4"] then
-                tblConditionsOld[retIdx] = 1
-                print('okOld 4\r\n')
-            end
-        end
-    -- end
-    retIdx = retIdx + 1
+
     
 
     -- CONDITION(s) END
 
-    if 1 == tblConditions[1] and 1 == tblConditionsOld[2] and 1 == tblConditionsOld[3] and 1 == tblConditionsOld[4] then
+    if 1 == tblConditions[1] then
         print('match 1\r\n')
         ok = 1
     end
-    if 1 == tblConditions[2] and 1 == tblConditionsOld[1] and 1 == tblConditionsOld[3] and 1 == tblConditionsOld[4] then
-        print('match 2\r\n')
-        ok = 1
-    end
-    if 1 == tblConditions[3] and 1 == tblConditionsOld[1] and 1 == tblConditionsOld[2] and 1 == tblConditionsOld[4] then
-        print('match 3\r\n')
-        ok = 1
-    end
-    if 1 == tblConditions[4] and 1 == tblConditionsOld[1] and 1 == tblConditionsOld[2] and 1 == tblConditionsOld[3] then
-        print('match 4\r\n')
-        ok = 1
-    end
-
     -- CUSTOMIZATION END
 
     if ((toStoreStatus == 1) and 
@@ -291,7 +224,7 @@ function s2GetSelfCtrlCmd()
     local selfCtrl = ''
     
     -- CUSTOMIZATION START
-    selfCtrl = '{"idx1":1,"idx2":0,"idx3":0}'
+    selfCtrl = '{"light":1,"mode":1}'
     -- CUSTOMIZATION END
     return string.len(selfCtrl), selfCtrl
 end

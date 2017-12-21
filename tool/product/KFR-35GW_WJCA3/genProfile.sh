@@ -18,6 +18,7 @@ $MAIN_PATH/lelinkTool.py \
 # 配置wifi网络
 $MAIN_PATH/lelinkTool.py \
     --genpriv \
+    --wmode sap \
     --ssid LLGD \
     --passwd 12345678 \
     -o ./0x1c8000.bin

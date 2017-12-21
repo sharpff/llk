@@ -1,8 +1,8 @@
 #!/bin/bash
 MAIN_PATH="../.."
 $MAIN_PATH/lelinkTool.py \
-    -a iot.test.leinlife.com \
-    -p 9003 \
+    -a iot.leinlife.com \
+    -p 9011 \
     -u 10000100131000010011 \
     -k MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCSdNYdqzMcZGsouJHNPDIH4Xy3qMojTn4cnQobMLdXJJTycrIOJnR1GJJQEJ7j7ZcJSH2TMdWpzoxQvIdBmNigxJ1A3fYngtT6bUSqt5lLjk6l9cqPeVMlybVJpUvR/axWwm0i1mdKwfRf2FoC4V12mDBqjem69D2jPlNiBahnPQIDAQAB \
     -s ULyp6Ki3cGiQsHT/7lTPzF7M213oKitlcyIO7dU46E0aA9/OQgPaJ9CRkEBOVpL5weFG6zAnxWq0UtZb6XDDDfagbyYbvS0mmdDJDhxKkRweuz5tSKpKx/wST3gFbAThbsIwXKQ2k16ZJx59AnHTRtNudxDylHCYicCrCz4tWIY= \

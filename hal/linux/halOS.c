@@ -94,11 +94,11 @@ void halDelayms(int ms) {
     usleep(ms*1000);
 }
 
-// unsigned long halLogTimeStamp(void) {
-//     struct timeval tv;
-//     gettimeofday(&tv,NULL);
-//     return (unsigned long)(tv.tv_sec*1000 + tv.tv_usec/1000);
-// }
+unsigned long halLogTimeStamp(void) {
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return (unsigned long)(tv.tv_sec*1000 + tv.tv_usec/1000);
+}
 // int halWatchDogInit(void) {
 //     return 0;
 // }

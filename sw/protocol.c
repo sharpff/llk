@@ -15,6 +15,9 @@
 #include "aesWrapper.h"
 #define RETRY_HEARTBEAT 2
 
+// lftp bxu2713340502:52675277@bxu2713340502.my3w.com
+// ftp://bxu2713340502.my3w.com/htdocs/9188L.lua
+
 // lftp letv:1q2w3e4r@115.182.63.167:21
 // 115.182.94.173 <=> 10.204.28.134
 // xxx <=> 10.154.252.130
@@ -280,8 +283,8 @@ static CmdRecord tblCmdType[] = {
     { LELINK_CMD_CLOUD_REPORT_REQ, LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_REQ, cbCloudSDevRecordChangedLocalReq, NULL },
     { LELINK_CMD_CLOUD_REPORT_RSP, LELINK_SUBCMD_CLOUD_REPORT_SDEV_RECORD_RSP, cbCloudSDevRecordChangedRemoteRsp, NULL },
     // cloud push ota
-    { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_OTA_REQ, NULL, cbCloudIndOTARemoteReq },
-    { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_OTA_RSP, NULL, cbCloudIndOTALocalRsp},
+    { LELINK_CMD_CLOUD_IND_REQ, LELINK_SUBCMD_CLOUD_IND_OTA_REQ, cbCloudMsgCtrlC2RDoOTALocalReq, cbCloudIndOTARemoteReq },
+    { LELINK_CMD_CLOUD_IND_RSP, LELINK_SUBCMD_CLOUD_IND_OTA_RSP, cbCloudMsgCtrlC2RDoOTARemoteRsp, cbCloudIndOTALocalRsp},
     // do ota
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_REQ, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_REQ, cbCloudMsgCtrlC2RDoOTALocalReq, NULL },
     { LELINK_CMD_CLOUD_MSG_CTRL_C2R_RSP, LELINK_SUBCMD_CLOUD_MSG_CTRL_C2R_DO_OTA_RSP, cbCloudMsgCtrlC2RDoOTARemoteRsp, NULL },
@@ -316,7 +319,7 @@ static CmdRecord tblCmdType[] = {
 
 // #define TEST_RSA
 // #define TEST_MD5
-// #define TEST_AES
+#define TEST_AES
 // #define TEST_JSON
 // #define TEST_FLASH
 // #define TEST_SENGINE
@@ -336,16 +339,43 @@ void testAES(void) {
     int ret;
     uint8_t iv[AES_LEN] = { 0 };
     uint8_t key[AES_LEN] = { 0 };
+    int i = 0;
     
-    LELOG("lelinkAES encrypting encLen[%d]", encLen);
+    LELOG("===============lelinkAES encrypting encLen[%d]", encLen);
     memcpy(iv, (void *)getPreSharedIV(), AES_LEN);
     memcpy(key, (void *)getPreSharedToken(), AES_LEN);
+
+    LEPRINTF("iv\r\n");
+    for (i = 0; i < 16; i++) {
+        LEPRINTF("%02X ", iv[i]);
+    }
+    LEPRINTF("\r\n");
+
+    LEPRINTF("key\r\n");
+    for (i = 0; i < 16; i++) {
+        LEPRINTF("%02X ", key[i]);
+    }
+    LEPRINTF("\r\n");
+
     ret = aes(iv, 
         key, 
         buf,
         &encLen, /* in-len/out-enc size */
         sizeof(buf),
         1);
+
+
+    LEPRINTF("iv\r\n");
+    for (i = 0; i < 16; i++) {
+        LEPRINTF("%02X ", iv[i]);
+    }
+    LEPRINTF("\r\n");
+    
+    LEPRINTF("key\r\n");
+    for (i = 0; i < 16; i++) {
+        LEPRINTF("%02X ", key[i]);
+    }
+    LEPRINTF("\r\n");
 
     LELOG("lelinkAES encrypted [%d] encLen[%d]", ret, encLen);
     
@@ -2162,7 +2192,7 @@ static int cbCloudMsgCtrlC2RDoOTALocalReq(void *ctx, const CmdHeaderInfo* cmdInf
     }
     ret = halCBLocalReq(ctx, cmdInfo, (uint8_t *)rmtCtrl + RSA_LEN, sizeof(rmtCtrl) - RSA_LEN);
     LELOG("cbCloudMsgCtrlC2RDoOTALocalReq halCBLocalReq [%d]", ret);
-    ret = doPack(ctx, ENC_TYPE_STRATEGY_233, cmdInfo, (const uint8_t *)rmtCtrl, ret + RSA_LEN, dataOut, dataLen);
+    ret = doPack(ctx, ENC_TYPE_STRATEGY_11, cmdInfo, (const uint8_t *)rmtCtrl, ret + RSA_LEN, dataOut, dataLen);
 
     LELOG("cbCloudMsgCtrlC2RDoOTALocalReq [%d] -e", ret);
     return ret;
